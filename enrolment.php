@@ -1,10 +1,14 @@
+<?php 
+session_start();
+if(@$_SESSION['user_type']!=''){
+?>
 <!doctype html>
 <html lang="en">
 
     <head>
         
         <meta charset="utf-8" />
-        <title>Light Sidebar | Upzet - Admin & Dashboard Template</title>
+        <title>Enrolment</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta content="Premium Multipurpose Admin & Dashboard Template" name="description" />
         <meta content="Themesdesign" name="author" />
@@ -52,7 +56,7 @@
                             <div class="col-xl-12">
                                 <div class="card">
                                     <div class="card-body">
-                                        <form class="student_enquiry_form" id="student_enquiry_form">
+                                        <form class="student_enrol_form" id="student_enrol_form">
                                         <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
@@ -70,8 +74,8 @@
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="venue">Venue</label>
-                                                        <select name="qualifications" class="form-control" id="qualifications">
+                                                        <label class="form-label" for="venue_name">Venue</label>
+                                                        <select name="venue_name" class="form-control" id="venue_name">
                                                                 <option value="0">--select--</option>
                                                                 <option value="1">Adeladie</option>
                                                                 <option value="2">New Jersey</option>
@@ -115,8 +119,8 @@
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="courses">How did you hear about Milton College</label>
-                                                        <select name="courses" class="form-control" id="courses">
+                                                        <label class="form-label" for="source">How did you hear about Milton College</label>
+                                                        <select name="source" class="form-control" id="source">
                                                             <option value="0">--select--</option>
                                                             <option value="1">Friends</option>
                                                             <option value="2">Google</option>
@@ -128,7 +132,7 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <button class="btn btn-primary" type="submit">Submit Form</button>
+                                            <button class="btn btn-primary" id="enrolment_check" type="button" >Submit Form</button>
                                         </form>
                                     </div>
                                 </div>
@@ -150,5 +154,95 @@
         <!-- Right bar overlay-->
         <div class="rightbar-overlay"></div>
         <?php include('includes/footer_includes.php'); ?>
+        <script>
+            $(document).on('click','#enrolment_check',function(){
+                var given_name=$('#given_name').val().trim();
+                var name_main=$('#name_main').val().trim();
+                var qualifications=$('#qualifications').val()==0 ? '' : $('#qualifications').val();
+                var source=$('#source').val()==0 ? '' : $('#source').val();
+                var middle_name=$('#middle_name').val().trim();
+                var venue=$('#venue_name').val()==0 ? '' : $('#venue_name').val();
+
+                if(qualifications==''|| given_name=='' ||name_main=='' ||source==''||middle_name==''||venue==''){
+                    if(qualifications==''){
+                        $('#qualifications').addClass('invalid-div');
+                        $('#qualifications').removeClass('valid-div');
+                        $('#qualifications').closest('div').find('.error-feedback').show();
+                    }else{
+                        $('#qualifications').addClass('valid-div');
+                        $('#qualifications').removeClass('invalid-div');                        
+                        $('#qualifications').closest('div').find('.error-feedback').hide();
+                    }
+                    if(given_name==''){
+                        $('#given_name').addClass('invalid-div');
+                        $('#given_name').removeClass('valid-div');
+                        $('#given_name').closest('div').find('.error-feedback').show();
+                    }else{
+                        $('#given_name').addClass('valid-div');
+                        $('#given_name').removeClass('invalid-div');
+                        $('#given_name').closest('div').find('.error-feedback').hide();
+                    }
+                    if(name_main==''){
+                        $('#name_main').addClass('invalid-div');
+                        $('#name_main').removeClass('valid-div');
+                        $('#name_main').closest('div').find('.error-feedback').show();
+                    }else{
+                        $('#name_main').addClass('valid-div');
+                        $('#name_main').removeClass('invalid-div');
+                        $('#name_main').closest('div').find('.error-feedback').hide();
+                    }
+                    if(source==''){
+                        $('#source').addClass('invalid-div');
+                        $('#source').removeClass('valid-div');
+                        $('#source').closest('div').find('.error-feedback').show();
+                    }else{
+                        $('#source').addClass('valid-div');
+                        $('#source').removeClass('invalid-div');
+                        $('#source').closest('div').find('.error-feedback').hide();
+                    }
+                    if(middle_name==''){
+                        $('#middle_name').addClass('invalid-div');
+                        $('#middle_name').removeClass('valid-div');
+                        $('#middle_name').closest('div').find('.error-feedback').show();
+                    }else{
+                        $('#middle_name').addClass('valid-div');
+                        $('#middle_name').removeClass('invalid-div');
+                        $('#middle_name').closest('div').find('.error-feedback').hide();
+                    }
+                    if(venue==''){
+                        $('#venue_name').addClass('invalid-div');
+                        $('#venue_name').removeClass('valid-div');
+                        $('#venue_name').closest('div').find('.error-feedback').show();
+                    }else{
+                        $('#venue_name').addClass('valid-div');
+                        $('#venue_name').removeClass('invalid-div');
+                        $('#venue_name').closest('div').find('.error-feedback').hide();
+                    }
+                }else{
+                    console.log(venue);
+                    details={formName:'student_enrol',qualifications:qualifications,venues:venue,middle_name:middle_name,source:source,name_main:name_main,given_name:given_name};
+                    $.ajax({
+                        type:'post',
+                        url:'includes/datacontrol.php',
+                        data:details,
+                        success:function(data){
+                            if(data==0){
+                            document.getElementById('student_enrol_form').reset();
+                            $('#toast-text').html('New Record added Successfully');
+                                $('#borderedToast1Btn').trigger('click');
+                            }else{
+                                $('.toast-text2').html('Cannot add record. Please try again later');
+                                $('#borderedToast2Btn').trigger('click');
+                            }
+                        }
+                    })
+                }
+
+            })
+        </script>
     </body>
 </html>
+<?php }else{ 
+header("Location: index.php");
+}
+?>

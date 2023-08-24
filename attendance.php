@@ -64,10 +64,11 @@ if(@$_SESSION['user_type']==1){
                                         <div>
                                         <input name="file" type="file" accept=".XLSX,.XLX,.CSV" id="upload_file" class="form-control d-none" onchange="uploadFile()">
                                             <form action="#" id="dropzone" class="dropzone">
-                                                <div class="fallback">
-                                                    <img src="assets/images/thumbnails/xlsx.png" alt="">
+                                                <div class="fallback text-center" id="image-name-div" style="display:none"> 
+                                                      <img src="assets/images/thumbnails/xlsx.png" style="width:15%" alt="">
+                                                      <div id="image-name"></div>
                                                 </div>
-                                                <div class="dz-message needsclick text-center mt-5">
+                                                <div class="dz-message needsclick text-center mt-5" id="dz-message">
                                                     <div class="mb-3">
                                                         <i class="display-4 text-muted mdi mdi-cloud-upload-outline"></i>
                                                     </div>                                                    
@@ -77,7 +78,7 @@ if(@$_SESSION['user_type']==1){
                                         </div>
         
                                         <div class="text-center mt-4">
-                                            <button type="button" class="btn btn-primary waves-effect waves-light">Send Files</button>
+                                            <button type="button" class="btn btn-primary waves-effect waves-light" onclick="send_file()" id="send_file">Send Files</button>
                                         </div>
                                     </div>
                                 </div>
@@ -98,16 +99,35 @@ if(@$_SESSION['user_type']==1){
         <div class="rightbar-overlay"></div>
         <?php include('includes/footer_includes.php'); ?>
         <script>
-
+var uniFile='';
 function uploadFile(){
     var filesUp=$('#upload_file').prop('files')[0];   
     sendFile(filesUp);
 }
 
-function sendFile(Files){
-    console.log(Files);
+function sendFile(Files){ 
+    uniFile =Files;
+    $('#dz-message').hide();
+    $('#image-name-div').show();
+    $('#image-name').html(Files.name);
 }
 
+function send_file(){
+    var filesUp= uniFile =='' ? $('#upload_file').prop('files')[0] : uniFile;
+    var formsData=new FormData();
+    formsData.append('fileUpload',filesUp);
+    formsData.append('formName','uploadExcel');
+    $.ajax({
+        type:'post',
+        data:formsData,
+        url:'includes/datacontrol.php',
+        contentType: false,
+        processData:false,
+        success:function(data){
+            console.log(data)
+        }
+    })
+}
 
 
 $('#dropzone').on(
@@ -134,8 +154,7 @@ $('#dropzone').on({
     drop:function(e){
             e.preventDefault();
            e.stopPropagation();  
-           sendFile(e.originalEvent.dataTransfer.files[0]);
-        //    uploadFile();  
+           sendFile(e.originalEvent.dataTransfer.files[0]);        
     },
     click:function(e){
             e.preventDefault();
@@ -143,18 +162,7 @@ $('#dropzone').on({
         $('#upload_file').trigger('click');
     }
 }
-    
-    // function(e){
-    //     console.log(e.originalEvent);
-    //     // if(e.originalEvent.dataTransfer && e.originalEvent.dataTransfer.files.length) {
-    //     //     e.preventDefault();
-    //     //     e.stopPropagation();
-    //     //     // /*UPLOAD FILES HERE*/
-    //     //     // upload(e.originalEvent.dataTransfer.files);
-    //     //     // uploadFile();
-    //     //     sendFile(e.originalEvent.dataTransfer.files);
-    //     // }
-    // }
+
 );
 
             $(document).on('click','#invoice_submit',function(){

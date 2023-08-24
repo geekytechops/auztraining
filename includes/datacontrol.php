@@ -181,6 +181,15 @@ if(@$_REQUEST['name']=='student_invoices'){
     header("Content-Type: application/json");
     echo json_encode($invoices);
 }
+
+
+if(@$_POST['name']=='uploadExcel'){
+
+print_r($_FILES);
+
+}
+
+
 if(@$_REQUEST['name']=='student_enrol'){
     $enrol['data']=[];
     $query=mysqli_query($connection,"SELECT * from student_enrolment where st_enrol_status!=1");

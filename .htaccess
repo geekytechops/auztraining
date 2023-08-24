@@ -1,0 +1,11 @@
+Options -Indexes
+RewriteEngine On
+
+# Redirect requests for .php files to extensionless URLs
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^([^\.]+)$ $1.php [NC,L]
+
+# Redirect requests for non-existing files or directories to a 404 page
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ 404.php [L]

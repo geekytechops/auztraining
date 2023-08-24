@@ -1,0 +1,77 @@
+:root{
+  --backgroundcolor:#1a237e;
+  --bordercolor:#1a237e;
+  --color:#1a237e;
+}
+.btn-primary {
+background-color: var(--backgroundcolor);
+border-color: var(--bordercolor);
+}
+.btn-primary:active , .btn-primary:focus {
+  background-color: var(--backgroundcolor);
+  border-color: var(--bordercolor);
+  box-shadow: 0 0 0 0.15rem #5c6bc0;
+  }
+.btn-primary:hover {
+  color: var(--color);
+  background-color: #fff;
+  border-color:  var(--color);
+  box-shadow: 0 0 0 0.15rem #5c6bc0;
+}
+#sidebar-menu>ul>li:hover>a{
+    color: var(--color) !important;
+}
+#sidebar-menu>ul>li:hover>a i {
+    color: var(--color) !important;
+}
+.mm-active .active {
+  color: var(--color) !important;
+}
+.mm-active .active i{
+  color: var(--color) !important;
+}
+.valid-div{
+  border-color: var(--bordercolor);
+  padding-right: calc(1.5em + .94rem);
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'><path fill='%231a237e' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right calc(.375em + .235rem) center;
+  background-size: calc(.75em + .47rem) calc(.75em + .47rem);
+}
+.invalid-div{  
+    border-color: #ff002e;
+    padding-right: calc(1.5em + .94rem);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23ff3d60'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23ff3d60' stroke='none'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(.375em + .235rem) center;
+    background-size: calc(.75em + .47rem) calc(.75em + .47rem);
+
+}
+.error-feedback {
+  display: none;
+  width: 100%;
+  margin-top: .25rem;
+  font-size: 80%;
+  color: #ff002e;
+}
+#borderedToast1,#borderedToast2{
+  z-index: 9999;
+}
+table.dataTable.nowrap th, table.dataTable.nowrap td{
+  white-space: break-spaces !important;
+}
+.dropzone{
+  cursor:pointer;
+}
+/* .toast{
+  width: 350px;
+max-width: 100%;
+font-size: .875rem;
+pointer-events: auto;
+background-color:unset !important;
+background-clip: unset !important;
+border: unset !important;
+-webkit-box-shadow: unset !important;
+box-shadow: unset !important;
+border-radius: unset !important;
+} */

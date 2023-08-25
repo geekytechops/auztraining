@@ -130,7 +130,7 @@ if(isset($_GET['check'])){
                         <div class="row">
                             <div class="col-xl-12">
                                 <div class="card">
-                                    <div class="card-body">
+                                    <div class="card-body" id="docs_div">
                                     </div>
                                 </div>
                             </div>
@@ -166,7 +166,12 @@ if(isset($_GET['check'])){
                     contentType: false,
                     processData:false,
                     success:function(data){
-                        console.log(JSON.parse(data));
+                        var objectImages=JSON.parse(data);
+                        var columnStart='<div class="col-md-3"><div class="mb-3">';
+                        var columnEnd=' </div></div></div>';
+                        for(i=0;i<Object.keys(objectImages).length;i++){
+                            $('#docs_div').append(columnStart+'<label class="form-label" for="validationCustom02">'+Object.values(objectImages)[i]+'</label><div class="shop-city"><img src="assets/images/thumbnails/'+Object.keys(objectImages)[i]+'" style="width:15%">'+columnEnd);
+                        }
                     }
                 })
             }

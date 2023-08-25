@@ -63,6 +63,9 @@ table.dataTable.nowrap th, table.dataTable.nowrap td{
 .dropzone{
   cursor:pointer;
 }
+.dataTables_scrollHeadInner,table{
+  width: 100% !important;
+}
 /* .toast{
   width: 350px;
 max-width: 100%;

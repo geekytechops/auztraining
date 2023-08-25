@@ -52,8 +52,126 @@ if(@$_SESSION['user_type']==1){
                             </div>
                         </div>
                         <!-- end page title -->
-
                         <div class="row">
+                            <div class="col-lg-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h4 class="card-title">Student Records</h4>
+
+                                        <div class="accordion" id="accordionExample">
+                                            <div class="accordion-item">
+                                                <h2 class="accordion-header" id="headingOne">
+                                                    <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                                    Student Enquiries
+                                                    </button>
+                                                </h2>
+                                                <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+                                                    <div class="accordion-body">
+                                                        <table id="datatable" class="table table-striped table-bordered nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th scope="col-3">Enquiry ID</th>
+                                                                    <th scope="col-2">Student Name</th>
+                                                                    <th scope="col-2">Contact Number</th>
+                                                                    <th scope="col-2">Email</th>
+                                                                    <th scope="col-2">Course</th>
+                                                                    <th scope="col-1">Fee</th>
+                                                                    <th scope="col-1">Visa Status</th>
+                                                                    <th scope="col-1">Action</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="accordion-item">
+                                                <h2 class="accordion-header" id="headingTwo">
+                                                    <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                                    Students Enrolled
+                                                    </button>
+                                                </h2>
+                                                <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
+                                                    <div class="accordion-body">
+                                                            <table id="datatable_enrol" class="table table-striped table-bordered  nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
+                                                        <thead>
+                                                            <tr>
+                                                                <th scope="col">Name</th>
+                                                                <th scope="col">Given Name</th>
+                                                                <th scope="col">Middle Name</th>
+                                                                <th scope="col">Qualification</th>
+                                                                <th scope="col">Venue</th>
+                                                                <th scope="col">Source</th>
+                                                                <th scope="col">Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+
+                                                        </tbody>
+                                                    </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="accordion-item">
+                                                <h2 class="accordion-header" id="headingThree">
+                                                    <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                                    Invoices
+                                                    </button>
+                                                </h2>
+                                                <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
+                                                    <div class="accordion-body">
+                                                                <table id="datatable_invoices" class="table table-striped table-bordered nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100% !important;">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th scope="col">Student Name</th>
+                                                                    <th scope="col">Course</th>
+                                                                    <th scope="col">Course Fee</th>
+                                                                    <th scope="col">Paid Amount</th>
+                                                                    <th scope="col">Due Amount</th>
+                                                                    <th scope="col">Payment Date</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- end accordion -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h4 class="card-title mb-4">All Students</h4>  
+                                            <table id="datatable-all" class="table nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
+                                                <thead>
+                                                    <tr>
+                                                        <th scope="col">Student ID</th>
+                                                        <th scope="col">Student Name</th>
+                                                        <th scope="col">Contact Number</th>
+                                                        <th scope="col">Email</th>
+                                                        <th scope="col">Course</th>
+                                                        <th scope="col">Enroled Date</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+
+                                                </tbody>
+                                            </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- <div class="row">
                             <div class="col-lg-12">
                                 <div class="card">
                                     <div class="card-body">
@@ -76,9 +194,7 @@ if(@$_SESSION['user_type']==1){
                                                 </tbody>
                                             </table>
                                     </div>
-                                    <!-- end card-body -->
                                 </div>
-                                <!-- end card -->
                                 <div class="card">
                                     <div class="card-body">
                                         <h4 class="card-title mb-4">Students Enrolled</h4>  
@@ -99,9 +215,8 @@ if(@$_SESSION['user_type']==1){
                                                 </tbody>
                                             </table>
                                     </div>
-                                    <!-- end card-body -->
                                 </div>
-                                <!-- end card -->
+
                                 <div class="card">
                                     <div class="card-body">
                                         <h4 class="card-title mb-4">Invoices</h4>  
@@ -121,13 +236,12 @@ if(@$_SESSION['user_type']==1){
                                                 </tbody>
                                             </table>
                                     </div>
-                                    <!-- end card-body -->
                                 </div>
-                                <!-- end card -->
+                                
                             </div>
-                            <!-- end col -->
-                        </div>
-                        <!-- end row -->
+                            
+                        </div> -->
+                    
 
                     </div> <!-- container-fluid -->
                 </div>
@@ -191,6 +305,18 @@ if(@$_SESSION['user_type']==1){
                         { data: 'std_fee' },
                         { data: 'std_visa_status' },
                         { data: 'action' },
+                    ],
+                });
+                $('#datatable-all').DataTable({lengthMenu: [5, 10, 20],language:{paginate:{previous:"<i class='mdi mdi-chevron-left'>",next:"<i class='mdi mdi-chevron-right'>"}},drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},
+                scrollX: true,
+                    ajax: 'includes/datacontrol.php?name=all_students',
+                        columns: [
+                        { data: 'st_unique_id' },                                    
+                        { data: 'st_enrol_name' },                                    
+                        { data: 'std_phno' },
+                        { data: 'std_email' },
+                        { data: 'course' },
+                        { data: 'std_date' },
                     ],
                 });
 

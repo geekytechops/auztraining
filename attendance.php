@@ -112,7 +112,7 @@ function sendFile(Files){
     $('#image-name').html(Files.name);
 }
 
-function send_file(){
+function send_file(){    
     var filesUp= uniFile =='' ? $('#upload_file').prop('files')[0] : uniFile;
     var formsData=new FormData();
     formsData.append('fileUpload',filesUp);

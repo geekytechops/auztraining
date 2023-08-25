@@ -68,15 +68,18 @@ $courseName=strtoupper($_POST['courseName'][0]);
 $courseId=$_POST['courses'];
 $source=$_POST['source'];
 $name_main=$_POST['name_main'];
+$emailAddress=$_POST['emailAddress'];
+$contactName=$_POST['contactName'];
 $given_name=$_POST['given_name'];
 $checkId=$_POST['checkId'];
 $dateYear=date("Y");
 
 if($checkId==0){
 
-$query=mysqli_query($connection,"INSERT INTO student_enrolment(st_qualifications,st_enquiry_id,st_enrol_course,st_venue,st_middle_name,st_name,st_source,st_given_name)VALUES('$qualifications','$st_enquiry_id',$courseId,'$venue','$middle_name','$name_main',$source,'$given_name')");
+$query=mysqli_query($connection,"INSERT INTO student_enrolment(st_qualifications,st_email,st_mobile,st_enquiry_id,st_enrol_course,st_venue,st_middle_name,st_name,st_source,st_given_name)VALUES('$qualifications','$emailAddress','$contactName','$st_enquiry_id',$courseId,'$venue','$middle_name','$name_main',$source,'$given_name')");
 $lastId=mysqli_insert_id($connection);
 $uniqueId=sprintf($dateYear.$courseName.$courseId.'%04d', $lastId);
+
 $querys=mysqli_query($connection,"UPDATE student_enrolment SET st_unique_id='$uniqueId' WHERE st_enrol_id=$lastId");
 $error=mysqli_error($connection);
 if($error!=''){
@@ -87,7 +90,7 @@ if($error!=''){
 
 }else{
 
-    if(mysqli_query($connection,"UPDATE student_enrolment SET `st_qualifications`='$qualifications',`st_enrol_course`=$courseId,`st_venue`='$venue',`st_middle_name`='$middle_name',`st_name`='$name_main',`st_source`=$source,`st_given_name`='$given_name' WHERE `st_enrol_id`=$checkId")){
+    if(mysqli_query($connection,"UPDATE student_enrolment SET `st_qualifications`='$qualifications',`st_email`='$emailAddress',`st_mobile`='$contactName',`st_enrol_course`=$courseId,`st_venue`='$venue',`st_middle_name`='$middle_name',`st_name`='$name_main',`st_source`=$source,`st_given_name`='$given_name' WHERE `st_enrol_id`=$checkId")){
         echo 2;
     }else{
         echo 0;
@@ -182,14 +185,6 @@ if(@$_REQUEST['name']=='student_invoices'){
     echo json_encode($invoices);
 }
 
-
-if(@$_POST['name']=='uploadExcel'){
-
-print_r($_FILES);
-
-}
-
-
 if(@$_REQUEST['name']=='student_enrol'){
     $enrol['data']=[];
     $query=mysqli_query($connection,"SELECT * from student_enrolment where st_enrol_status!=1");
@@ -227,5 +222,116 @@ if(@$_REQUEST['name']=='student_enrol'){
     header("Content-Type: application/json");
     echo json_encode($enrol);
 }
+
+
+if(@$_REQUEST['name']=='all_students'){
+    $enrol['data']=[];
+    $query=mysqli_query($connection,"SELECT st_unique_id,st_name,st_mobile,st_email,st_enrol_course,created_date from student_enrolment where st_enrol_status!=1");
+    while($queryRes=mysqli_fetch_array($query)){
+
+        $enrolDate=date('d-M-Y',strtotime($queryRes['created_date']));
+
+        if($queryRes['st_enrol_course']==1){
+            $course='Basic';
+        }else if($queryRes['st_enrol_course']==2){
+            $course='Intermediate';
+        }else{
+            $course='Expert';
+        }
+
+        $uniq_id='<a href="studentData?check='.base64_encode($queryRes['st_unique_id']).'" style="color:var(--color)">'.$queryRes['st_unique_id'].'</a>';
+
+        array_push($enrol['data'],array('st_unique_id'=>$uniq_id,'st_enrol_name'=>$queryRes['st_name'], 'std_phno'=>$queryRes['st_mobile'],'std_email'=>$queryRes['st_email'],'course'=>$course,'std_date'=>$enrolDate));
+        
+    }
+    header("Content-Type: application/json");
+    echo json_encode($enrol);
+}
+
+if(@$_POST['formName']=='studentDocs'){
+ 
+    $arrayUploaded=array();
+    $count=count($_FILES['fileUpload']["name"]);
+    $excelArr=array('xlsx','xlx','csv');
+    $targetDir = "uploads/"; // Adjust the directory as needed
+    for($i=0;$i<$count;$i++){
+        $fileName=explode('.',$_FILES["fileUpload"]["name"][$i])[0];        
+        $fileType = pathinfo('uploads/'.basename($_FILES["fileUpload"]["name"][$i]), PATHINFO_EXTENSION);
+        $currentSeconds = round(microtime(true) * 1000);
+        $targetFile = $targetDir . $fileName.'_'.$currentSeconds.'.'.$fileType;
+        if (move_uploaded_file($_FILES["fileUpload"]["tmp_name"][$i], $targetFile)) {
+
+            if (in_array($fileType, $excelArr)) {
+                array_push($arrayUploaded,'includes/uploads/'.$targetFile);
+            }            
+        }
+    }
+
+    echo json_encode($arrayUploaded);
+
+}
+
+?>
+
+<?php 
+
+if(@$_POST['formName']=='uploadExcel'){
+    
+require 'vendor/autoload.php'; 
+
+
+    $targetDir = "uploads/"; // Adjust the directory as needed
+    $targetFile = $targetDir . basename($_FILES["fileUpload"]["name"]);
+    $uploadOk = 1;
+
+    // Check if the file is an Excel file
+    if ($fileType != "xlsx" && $fileType != "xls") {
+        echo "Only Excel files are allowed.";
+        $uploadOk = 0;
+    }
+
+    if ($uploadOk == 0) {
+        echo "Sorry, your file was not uploaded.";
+    } else {
+        if (move_uploaded_file($_FILES["fileUpload"]["tmp_name"], $targetFile)) {
+            echo "The file " . basename($_FILES["fileUpload"]["name"]) . " has been uploaded.";
+
+            // Load the uploaded Excel file
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($targetFile);
+            $worksheet = $spreadsheet->getActiveSheet();
+
+            // Get the column headers from the first row
+            $headers = [];
+            $cellIterator = $worksheet->getRowIterator()->current()->getCellIterator();
+            foreach ($cellIterator as $cell) {
+                $headers[] = $cell->getValue();
+            }
+
+            // Prepare and execute INSERT statements for each row
+            foreach ($worksheet->getRowIterator(2) as $row) { // Start from the second row
+                $cellIterator = $row->getCellIterator();
+                $cellIterator->setIterateOnlyExistingCells(FALSE);
+
+                $data = [];
+                foreach ($cellIterator as $cell) {
+                    $data[] = $cell->getValue();
+                }
+
+                // Assuming your Excel has columns named same as database columns
+                $sql = "INSERT INTO test (" . implode(", ", $headers) . ") VALUES ('" . implode("', '", $data) . "')";
+                if ($connection->query($sql) !== TRUE) {
+                    echo "Error: " . $connection->error;
+                }
+            }
+        } else {
+            echo "Sorry, there was an error uploading your file.";
+        }
+    }
+
+// Close the database connection
+$connection->close();
+
+}
+
 
 ?>

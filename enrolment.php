@@ -171,6 +171,24 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
+                                                        <label class="form-label" for="mobile_num">Contact Number</label>
+                                                        <input type="text" class="form-control number-field" id="mobile_num" placeholder="Contact Number" value="<?php echo $queryRes['st_mobile'] ?>" >
+                                                        <div class="error-feedback">
+                                                            Please enter the Contact Number
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="email">Email Address</label>
+                                                        <input type="text" class="form-control" id="email" placeholder="Email Address" value="<?php echo $queryRes['st_email'] ?>" >
+                                                        <div class="error-feedback">
+                                                            Please enter the Email Address
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
                                                         <label class="form-label" for="source">How did you hear about Milton College</label>
                                                         <select name="source" class="form-control" id="source">
                                                             <option value="0">--select--</option>
@@ -224,8 +242,11 @@ if(@$_SESSION['user_type']!=''){
                 var courseName=$('#courses').find(":selected").text();
                 var venue=$('#venue_name').val()==0 ? '' : $('#venue_name').val();
                 var enquiry_id=$('#enquiry_id').val();
+                var contactName=$('#mobile_num').val();
+                var emailAddress=$('#email').val();
+                var emailregexp = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
 
-                if(qualifications==''|| given_name=='' ||name_main=='' ||source==''||middle_name==''||venue==''){
+                if(qualifications==''|| given_name=='' ||name_main=='' ||source==''||middle_name==''||venue==''||  ( contactName=='' || contactName.length!=10 ) ||emailAddress==''|| (emailAddress!='' && !emailAddress.match(emailregexp)==true ) ){
                     if(qualifications==''){
                         $('#qualifications').addClass('invalid-div');
                         $('#qualifications').removeClass('valid-div');
@@ -234,6 +255,24 @@ if(@$_SESSION['user_type']!=''){
                         $('#qualifications').addClass('valid-div');
                         $('#qualifications').removeClass('invalid-div');                        
                         $('#qualifications').closest('div').find('.error-feedback').hide();
+                    }
+                    if(emailAddress==''){
+                        $('#email').addClass('invalid-div');
+                        $('#email').removeClass('valid-div');
+                        $('#email').closest('div').find('.error-feedback').show();
+                    }else{
+                        $('#email').addClass('valid-div');
+                        $('#email').removeClass('invalid-div');                        
+                        $('#email').closest('div').find('.error-feedback').hide();
+                    }
+                    if(contactName==''){
+                        $('#mobile_num').addClass('invalid-div');
+                        $('#mobile_num').removeClass('valid-div');
+                        $('#mobile_num').closest('div').find('.error-feedback').show();
+                    }else{
+                        $('#mobile_num').addClass('valid-div');
+                        $('#mobile_num').removeClass('invalid-div');                        
+                        $('#mobile_num').closest('div').find('.error-feedback').hide();
                     }
                     if(courses==''){
                         $('#courses').addClass('invalid-div');
@@ -300,13 +339,13 @@ if(@$_SESSION['user_type']!=''){
                     }
                 }else{
                     var checkId=$("#check_update").val();
-                    details={formName:'student_enrol',qualifications:qualifications,venues:venue,middle_name:middle_name,source:source,name_main:name_main,checkId:checkId,courseName:courseName,courses:courses,enquiry_id:enquiry_id,given_name:given_name};
+                    details={formName:'student_enrol',qualifications:qualifications,contactName:contactName,emailAddress:emailAddress,venues:venue,middle_name:middle_name,source:source,name_main:name_main,checkId:checkId,courseName:courseName,courses:courses,enquiry_id:enquiry_id,given_name:given_name};
                     $.ajax({
                         type:'post',
                         url:'includes/datacontrol.php',
                         data:details,
                         success:function(data){
-                            if(data==1){
+                            if(data==0){
                                 document.getElementById('student_enrol_form').reset();
                                 $('#toast-text').html('New Record added Successfully');
                                 $('#borderedToast1Btn').trigger('click');

@@ -27,13 +27,13 @@
                             </li>
                             <li>
                                 <a href="enrolment" class="waves-effect">
-                                    <i class="mdi mdi-account-plus"></i>
+                                    <i class="mdi   mdi-account-plus"></i>
                                     <span>Enrolment</span>
                                 </a>
                             </li>
                             <li>
                                 <a href="attendance" class="waves-effect">
-                                    <i class="mdi mdi-account-plus"></i>
+                                    <i class="mdi mdi-file-excel"></i>
                                     <span>Attendance</span>
                                 </a>
                             </li>

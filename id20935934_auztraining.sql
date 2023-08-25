@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Aug 24, 2023 at 11:37 AM
+-- Generation Time: Aug 25, 2023 at 02:23 AM
 -- Server version: 8.0.31
--- PHP Version: 8.2.0
+-- PHP Version: 8.0.26
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -54,13 +54,13 @@ INSERT INTO `courses` (`course_id`, `course_name`, `course_status`, `created_dat
 DROP TABLE IF EXISTS `invoices`;
 CREATE TABLE IF NOT EXISTS `invoices` (
   `inv_id` int NOT NULL AUTO_INCREMENT,
-  `inv_auto_id` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `st_unique_id` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `inv_std_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `inv_auto_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `st_unique_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `inv_std_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `inv_course` tinyint(1) NOT NULL,
-  `inv_fee` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `inv_paid` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `inv_due` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `inv_fee` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `inv_paid` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `inv_due` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `inv_payment_date` date NOT NULL,
   `created_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `inv_status` tinyint(1) NOT NULL DEFAULT '0',
@@ -126,18 +126,33 @@ INSERT INTO `source` (`source_id`, `source_name`, `source_status`, `created_date
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `student_docs`
+--
+
+DROP TABLE IF EXISTS `student_docs`;
+CREATE TABLE IF NOT EXISTS `student_docs` (
+  `st_doc_id` int NOT NULL AUTO_INCREMENT,
+  `st_doc_names` text NOT NULL,
+  `st_doc_status` tinyint(1) NOT NULL,
+  `created_date` timestamp NOT NULL,
+  PRIMARY KEY (`st_doc_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `student_enquiry`
 --
 
 DROP TABLE IF EXISTS `student_enquiry`;
 CREATE TABLE IF NOT EXISTS `student_enquiry` (
   `st_id` int NOT NULL AUTO_INCREMENT,
-  `st_enquiry_id` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `st_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `st_phno` varchar(10) COLLATE utf8mb4_general_ci NOT NULL,
-  `st_email` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `st_enquiry_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `st_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `st_phno` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `st_email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `st_course` tinyint(1) NOT NULL,
-  `st_fee` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `st_fee` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `st_visa_status` tinyint(1) NOT NULL,
   `st_enquiry_status` tinyint(1) NOT NULL DEFAULT '0',
   `created_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -161,27 +176,31 @@ INSERT INTO `student_enquiry` (`st_id`, `st_enquiry_id`, `st_name`, `st_phno`, `
 DROP TABLE IF EXISTS `student_enrolment`;
 CREATE TABLE IF NOT EXISTS `student_enrolment` (
   `st_enrol_id` int NOT NULL AUTO_INCREMENT,
-  `st_unique_id` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `st_unique_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `st_enquiry_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `st_qualifications` tinyint(1) NOT NULL,
   `st_enrol_course` tinyint(1) DEFAULT NULL,
-  `st_venue` varchar(15) COLLATE utf8mb4_general_ci NOT NULL,
-  `st_middle_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `st_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `st_venue` varchar(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `st_middle_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `st_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `st_mobile` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `st_email` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `st_source` tinyint(1) NOT NULL,
-  `st_given_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `st_given_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `st_enrol_status` tinyint(1) NOT NULL,
   `created_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`st_enrol_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `student_enrolment`
 --
 
-INSERT INTO `student_enrolment` (`st_enrol_id`, `st_unique_id`, `st_enquiry_id`, `st_qualifications`, `st_enrol_course`, `st_venue`, `st_middle_name`, `st_name`, `st_source`, `st_given_name`, `st_enrol_status`, `created_date`) VALUES
-(1, '2023I20001', '', 2, 2, '2', 'john', 'Mikers', 2, 'Mike', 0, '2023-08-24 05:36:08'),
-(2, '2023E30002', 'EQ00001', 3, 3, '3', 'test 3', 'test 2', 3, 'new mike', 0, '2023-08-24 05:38:45');
+INSERT INTO `student_enrolment` (`st_enrol_id`, `st_unique_id`, `st_enquiry_id`, `st_qualifications`, `st_enrol_course`, `st_venue`, `st_middle_name`, `st_name`, `st_mobile`, `st_email`, `st_source`, `st_given_name`, `st_enrol_status`, `created_date`) VALUES
+(1, '2023I20001', '', 2, 2, '2', 'john', 'Mikers', '6546546544', 'test@gmail.com', 2, 'Mike', 0, '2023-08-24 14:48:05'),
+(2, '2023E30002', 'EQ00001', 3, 3, '3', 'test 3', 'test 2', '9879879877', 'test2@gmail.com', 3, 'new mike', 0, '2023-08-24 14:48:09'),
+(3, '2023B10003', '', 2, 1, '1', 'gesfsd', 'etsegsdfsd', '8973216547', 'test5@gmail.com', 1, 'testiering', 0, '2023-08-24 14:58:51'),
+(4, '2023I20004', '', 1, 2, '3', 'John', 'Surya', '6549872312', 'test3@gmail.com', 2, 'Mike', 0, '2023-08-24 14:57:25');
 
 -- --------------------------------------------------------
 
@@ -192,10 +211,10 @@ INSERT INTO `student_enrolment` (`st_enrol_id`, `st_unique_id`, `st_enquiry_id`,
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE IF NOT EXISTS `users` (
   `user_id` int NOT NULL AUTO_INCREMENT,
-  `user_log_id` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `user_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `user_email` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `user_password` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `user_log_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `user_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `user_email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `user_password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `user_type` tinyint(1) NOT NULL,
   `user_status` tinyint(1) NOT NULL DEFAULT '0',
   `created_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -136,6 +136,20 @@ if($id['user_id']=='' || $id['user_id']=='undefined'){
     echo 0;
 }
 }
+
+if(@$_REQUEST['name']=='singleinvoice'){
+    $studentId=$_REQUEST['id'];
+    $invoices['data']=[];
+    $query=mysqli_query($connection,"SELECT * FROM `invoices` WHERE `st_unique_id`='$studentId'");
+    while($queryRes=mysqli_fetch_array($query)){
+
+    array_push($invoices['data'],array('autoId'=>$queryRes['inv_auto_id'],'course'=>$queryRes['inv_course'], 'fee'=>$queryRes['inv_fee'],'paid'=>$queryRes['inv_paid'],'date'=>$queryRes['inv_payment_date']));
+
+    }
+    header("Content-Type: application/json");
+    echo json_encode($invoices);
+}
+
 if(@$_REQUEST['name']=='studentEnquiry'){
     $enquiries['data']=[];
     $query=mysqli_query($connection,"SELECT * from student_enquiry where st_enquiry_status!=1");
@@ -251,11 +265,14 @@ if(@$_REQUEST['name']=='all_students'){
 if(@$_POST['formName']=='studentDocs'){
  
     $arrayUploaded=array();
+    $enrollId=$_POST['enrollId'];
     $count=count($_FILES['fileUpload']["name"]);
     $excelArr=array('xlsx','xlx','csv');
     $pdfArr=array('pdf');
     $docArr=array('doc','docx');
-    $targetDir = "uploads/"; // Adjust the directory as needed
+    $targetDir = "uploads/";
+    $dbImgArray=array();
+
     for($i=0;$i<$count;$i++){
         $fileName=explode('.',$_FILES["fileUpload"]["name"][$i])[0];        
         $fileType = pathinfo('uploads/'.basename($_FILES["fileUpload"]["name"][$i]), PATHINFO_EXTENSION);
@@ -264,17 +281,40 @@ if(@$_POST['formName']=='studentDocs'){
         if (move_uploaded_file($_FILES["fileUpload"]["tmp_name"][$i], $targetFile)) {
 
             if (in_array($fileType, $excelArr)) {
-                $arrayUploaded['xlsx.png']='includes/uploads/'.$targetFile;
+                array_push($arrayUploaded,'includes/uploads/'.$targetFile."||xlsx.png");                
             }elseif(in_array($fileType, $pdfArr)){
-                $arrayUploaded['pdf.png']='includes/uploads/'.$targetFile;
+                array_push($arrayUploaded,'includes/uploads/'.$targetFile."||pdf.png");
             }elseif(in_array($fileType, $docArr)){
-                $arrayUploaded['docx.png']='includes/uploads/'.$targetFile;
+                array_push($arrayUploaded,'includes/uploads/'.$targetFile."||docx.png");                
             }
         }
     }
 
-    echo json_encode($arrayUploaded);
+    $selectQry=mysqli_query($connection,"SELECT st_unique_id,st_doc_names FROM `student_docs` WHERE `st_unique_id`='$enrollId'");
+    $rows=mysqli_num_rows($selectQry);
+    if($rows==0){
+        $qry=mysqli_query($connection,"INSERT INTO `student_docs` (`st_unique_id`,`st_doc_names`) VALUES('$enrollId','".json_encode($arrayUploaded)."')");
+        $inserted=mysqli_insert_id($connection);
+        if($inserted!=''){
+            echo json_encode($arrayUploaded);
+        }else{
+            echo 0; 
+        }
+    }else{
+        $selectQryRes=mysqli_fetch_array($selectQry);
+        $fetchArray=array_merge(json_decode($selectQryRes['st_doc_names']),$arrayUploaded);
 
+        // if(($key = array_search(4, $array1)) !== false) {
+        //     unset($array1[$key]);
+        // }
+
+        $qry=mysqli_query($connection,"UPDATE `student_docs` SET `st_doc_names`= '".json_encode($fetchArray)."' WHERE `st_unique_id`='$enrollId'");
+        if($qry){
+            echo json_encode($fetchArray);
+        }else{
+            echo 0; 
+        }
+    }
 }
 
 ?>
@@ -302,19 +342,15 @@ require 'vendor/autoload.php';
         if (move_uploaded_file($_FILES["fileUpload"]["tmp_name"], $targetFile)) {
             echo "The file " . basename($_FILES["fileUpload"]["name"]) . " has been uploaded.";
 
-            // Load the uploaded Excel file
             $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($targetFile);
             $worksheet = $spreadsheet->getActiveSheet();
 
-            // Get the column headers from the first row
             $headers = [];
             $cellIterator = $worksheet->getRowIterator()->current()->getCellIterator();
             foreach ($cellIterator as $cell) {
                 $headers[] = $cell->getValue();
             }
-
-            // Prepare and execute INSERT statements for each row
-            foreach ($worksheet->getRowIterator(2) as $row) { // Start from the second row
+            foreach ($worksheet->getRowIterator(2) as $row) { 
                 $cellIterator = $row->getCellIterator();
                 $cellIterator->setIterateOnlyExistingCells(FALSE);
 
@@ -323,7 +359,6 @@ require 'vendor/autoload.php';
                     $data[] = $cell->getValue();
                 }
 
-                // Assuming your Excel has columns named same as database columns
                 $sql = "INSERT INTO test (" . implode(", ", $headers) . ") VALUES ('" . implode("', '", $data) . "')";
                 if ($connection->query($sql) !== TRUE) {
                     echo "Error: " . $connection->error;
@@ -334,7 +369,6 @@ require 'vendor/autoload.php';
         }
     }
 
-// Close the database connection
 $connection->close();
 
 }

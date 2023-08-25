@@ -15,7 +15,7 @@
 
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
 
-<div id="borderedToast1" class="toast-container position-absolute p-3 top-0 end-0 fade hide" role="alert" aria-live="assertive" aria-atomic="true">
+<div id="borderedToast1" class="toast-container position-fixed p-3 top-0 end-0 fade hide" role="alert" aria-live="assertive" aria-atomic="true">
 <div class="align-items-center text-white btn-primary border-0">
     <div class="d-flex">
         <div class="toast-body" id="toast-text">
@@ -26,7 +26,7 @@
 </div>
 </div>
 <button type="button" class="btn btn-primary d-none" id="borderedToast1Btn"></button>
-<div id="borderedToast2" class="toast-container position-absolute p-3 top-0 end-0 fade hide" role="alert" aria-live="assertive" aria-atomic="true">
+<div id="borderedToast2" class="toast-container position-fixed p-3 top-0 end-0 fade hide" role="alert" aria-live="assertive" aria-atomic="true">
 <div class="align-items-center text-white bg-danger border-0">
     <div class="d-flex">
         <div class="toast-body toast-text2" id="toast-text">

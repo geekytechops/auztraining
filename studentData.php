@@ -15,6 +15,10 @@ if(isset($_GET['check'])){
     if($queryRes['st_unique_id']=="" ){
         header('Location:dashboard');
     }
+    $selectQry=mysqli_query($connection,"SELECT st_unique_id,st_doc_names FROM `student_docs` WHERE `st_unique_id`='$enrolId'");
+    // $selectinvoicesQry=mysqli_query($connection,"SELECT * FROM `invoices` WHERE `st_unique_id`='$enrolId'");
+
+
 }else{
     $Updatestatus=0;
     $enrolId=0;
@@ -80,7 +84,7 @@ if(isset($_GET['check'])){
                                                 <div class="col-md-3">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="validationCustom01">Student ID</label>
-                                                        <div class="shop-name">
+                                                        <div class="">
                                                         <?php echo $queryRes['st_unique_id'];  ?>
                                                         </div>
                                                     </div>
@@ -88,29 +92,63 @@ if(isset($_GET['check'])){
                                                 <div class="col-md-3">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="validationCustom02">Student Name</label>
-                                                        <div class="shop-location">
+                                                        <div class="">
                                                         <?php echo $queryRes['st_name'];  ?>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="validationCustom02">City</label>
-                                                        <div class="shop-city">
+                                                        <label class="form-label" for="validationCustom02">Email</label>
+                                                        <div class="">
                                                         <a href="mailto:<?php echo $queryRes['st_email'];  ?>"><?php echo $queryRes['st_email'];  ?></a>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="validationCustom02">Email</label>
-                                                        <div class="shop-email">
+                                                        <label class="form-label" for="validationCustom02">Phone Number</label>
+                                                        <div class="">
                                                         <a href="tel:<?php echo $queryRes['st_mobile'];  ?>" ><?php echo $queryRes['st_mobile'];  ?></a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="validationCustom02">Enquirt ID</label>
+                                                        <div class="">
+                                                        <p><?php echo $queryRes['st_enquiry_id']!="" ? $queryRes['st_enquiry_id'] : "Not Found" ;  ?></p>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </form>
+                                    </div>
+                                </div>
+                                <!-- end card -->
+                            </div> <!-- end col -->
+                        </div>   
+                        <!-- end row -->
+
+                        <div class="row">
+                            <div class="col-xl-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h4 class="card-title mb-3">Invoices</h4>
+                                        <table id="datatable" class="table table-striped table-bordered nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col-3">Invoice ID</th>
+                                                    <th scope="col-2">Course</th>
+                                                    <th scope="col-2">Fee</th>
+                                                    <th scope="col-2">Amount Paid</th>
+                                                    <th scope="col-2">Payment Date</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                                 <!-- end card -->
@@ -124,13 +162,35 @@ if(isset($_GET['check'])){
                             </div>
                             <div class="col-md-6 text-end">
                                 <button type="button" value="Upload" class="btn btn-primary" onclick="$('#files').trigger('click');">Upload</button>
-                                <input type="file" id="files" class="files d-none" multiple onchange="uplaodFiles(this)">
+                                <input type="file" id="files" class="files d-none" accept=".docx,.doc,.xlsx,.xlx,.pdf" multiple onchange="uplaodFiles(this)">
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-xl-12">
                                 <div class="card">
-                                    <div class="card-body" id="docs_div">
+                                    <div class="card-body row" id="docs_div">
+                                    <?php 
+                                    $columnStart='';
+                                    $selectQryRes=mysqli_fetch_array($selectQry);
+                                    $imageArray=json_decode($selectQryRes['st_doc_names']);
+                                    for($i=0;$i<count($imageArray);$i++){
+                                        $columnStart='<div class="col-md-2 text-center"><div class="mb-3">';
+                                        $columnEnd='</div></div></div>';
+
+                                        $imageFull=explode('||',$imageArray[$i])[0];
+                                        $thumb=explode('||',$imageArray[$i])[1];
+
+                                        $posSlash=strripos($imageFull,'/');
+                                        $mainImage=substr($imageFull,$posSlash+1);
+                                        $ext=explode('.',$mainImage)[1];
+
+                                        $imageName=substr($mainImage,0,strripos($mainImage,'_')).'.'.$ext;
+
+
+                                        $imageDiv.=$columnStart.'<label class="form-label" style="width:90%" for="validationCustom02">'.$imageName.'</label><div class="shop-city"><a href="includes/uploads/'.$mainImage.'"><img src="assets/images/thumbnails/'.$thumb.'" style="width:70%"></a>'.$columnEnd;
+                                    }
+                                    echo $imageDiv;
+                                    ?>
                                     </div>
                                 </div>
                             </div>
@@ -151,14 +211,35 @@ if(isset($_GET['check'])){
         <?php include('includes/footer_includes.php'); ?>
         <script>
 
+
+                $(document).ready(function () {
+                    $('#datatable').DataTable({lengthMenu: [5, 10, 20],language:{paginate:{previous:"<i class='mdi mdi-chevron-left'>",next:"<i class='mdi mdi-chevron-right'>"}},drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},
+                    scrollX: true,
+                        ajax: 'includes/datacontrol.php?name=singleinvoice&id=<?php echo $enrolId; ?>',
+                            columns: [
+                            { data: 'autoId' },                                    
+                            { data: 'course' },                                    
+                            { data: 'fee' },
+                            { data: 'paid' },
+                            { data: 'date' },
+                        ],
+                    });
+                });
+
             function uplaodFiles(element){
                 var files=$(element).prop('files');
                 var formDatas=new FormData();
-
+                var allowedFormats=['docx','doc','xlsx','xlx','pdf'];                
+                var formatError=0;
                 for (const file of files) {
+                    if(!allowedFormats.includes(file.name.split('.')[1])){
+                        formatError=1;
+                    }
                     formDatas.append('fileUpload[]',file);
-                }                
+                }
                 formDatas.append('formName','studentDocs');
+                formDatas.append('enrollId','<?php echo $enrolId; ?>');
+                if(formatError==0){
                 $.ajax({
                     type:'post',
                     url:'includes/datacontrol.php',
@@ -166,14 +247,26 @@ if(isset($_GET['check'])){
                     contentType: false,
                     processData:false,
                     success:function(data){
-                        var objectImages=JSON.parse(data);
-                        var columnStart='<div class="col-md-3"><div class="mb-3">';
+                        var Images=JSON.parse(data);
+                        var columnStart='<div class="col-md-2 text-center"><div class="mb-3">';
                         var columnEnd=' </div></div></div>';
-                        for(i=0;i<Object.keys(objectImages).length;i++){
-                            $('#docs_div').append(columnStart+'<label class="form-label" for="validationCustom02">'+Object.values(objectImages)[i]+'</label><div class="shop-city"><img src="assets/images/thumbnails/'+Object.keys(objectImages)[i]+'" style="width:15%">'+columnEnd);
+                        $('#docs_div').html('');
+                        for(i=0;i<Images.length;i++){
+                            var pathImage=Images[i].split('||')[0];
+                            var thumb=Images[i].split('||')[1];
+                            var nameOnly=Images[i].split('||')[0].split('.')[0];
+                            var Type=Images[i].split('||')[0].split('.')[1];                            
+                                                        
+                            var subs=(nameOnly.substring(nameOnly.lastIndexOf('/') + 1));
+                            var imageName=(nameOnly.substring(nameOnly.lastIndexOf('/') + 1)).substring(0,subs.lastIndexOf('_'))+'.'+Type;
+                            $('#docs_div').append(columnStart+'<label class="form-label" style="width:90%" for="validationCustom02">'+imageName+'</label><div class="shop-city"><a href="includes/uploads/'+subs+'"><img src="assets/images/thumbnails/'+thumb+'" style="width:70%">'+columnEnd);
                         }
+                        $('#toast-text').html('Files Uploaded Successfully');
+                        $('#borderedToast1Btn').trigger('click');
                     }
-                })
+                })}else{
+                    alert("Attachments with 'docx','doc','xlsx','xlx','pdf' formats are only allowed")
+                }
             }
 
         </script>

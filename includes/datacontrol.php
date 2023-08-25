@@ -253,6 +253,8 @@ if(@$_POST['formName']=='studentDocs'){
     $arrayUploaded=array();
     $count=count($_FILES['fileUpload']["name"]);
     $excelArr=array('xlsx','xlx','csv');
+    $pdfArr=array('pdf');
+    $docArr=array('doc','docx');
     $targetDir = "uploads/"; // Adjust the directory as needed
     for($i=0;$i<$count;$i++){
         $fileName=explode('.',$_FILES["fileUpload"]["name"][$i])[0];        
@@ -262,8 +264,12 @@ if(@$_POST['formName']=='studentDocs'){
         if (move_uploaded_file($_FILES["fileUpload"]["tmp_name"][$i], $targetFile)) {
 
             if (in_array($fileType, $excelArr)) {
-                array_push($arrayUploaded,'includes/uploads/'.$targetFile);
-            }            
+                $arrayUploaded['xlsx.png']='includes/uploads/'.$targetFile;
+            }elseif(in_array($fileType, $pdfArr)){
+                $arrayUploaded['pdf.png']='includes/uploads/'.$targetFile;
+            }elseif(in_array($fileType, $docArr)){
+                $arrayUploaded['docx.png']='includes/uploads/'.$targetFile;
+            }
         }
     }
 

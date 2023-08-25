@@ -171,6 +171,8 @@ if(isset($_GET['check'])){
                                     <div class="card-body row" id="docs_div">
                                     <?php 
                                     $columnStart='';
+                                    $selectQryRows=mysqli_num_rows($selectQry);
+                                    if($selectQryRows!=0){
                                     $selectQryRes=mysqli_fetch_array($selectQry);
                                     $imageArray=json_decode($selectQryRes['st_doc_names']);
                                     for($i=0;$i<count($imageArray);$i++){
@@ -190,6 +192,7 @@ if(isset($_GET['check'])){
                                         $imageDiv.=$columnStart.'<label class="form-label" style="width:90%" for="validationCustom02">'.$imageName.'</label><div class="shop-city"><a href="includes/uploads/'.$mainImage.'"><img src="assets/images/thumbnails/'.$thumb.'" style="width:70%"></a>'.$columnEnd;
                                     }
                                     echo $imageDiv;
+                                    }
                                     ?>
                                     </div>
                                 </div>

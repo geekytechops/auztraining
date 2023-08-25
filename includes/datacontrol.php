@@ -326,8 +326,9 @@ if(@$_POST['formName']=='uploadExcel'){
 require 'vendor/autoload.php'; 
 
 
-    $targetDir = "uploads/"; // Adjust the directory as needed
+    $targetDir = "uploads/attendance/"; // Adjust the directory as needed
     $targetFile = $targetDir . basename($_FILES["fileUpload"]["name"]);
+    $fileType = pathinfo($targetFile, PATHINFO_EXTENSION);
     $uploadOk = 1;
 
     // Check if the file is an Excel file
@@ -340,7 +341,7 @@ require 'vendor/autoload.php';
         echo "Sorry, your file was not uploaded.";
     } else {
         if (move_uploaded_file($_FILES["fileUpload"]["tmp_name"], $targetFile)) {
-            echo "The file " . basename($_FILES["fileUpload"]["name"]) . " has been uploaded.";
+            // echo "The file " . basename($_FILES["fileUpload"]["name"]) . " has been uploaded.";
 
             $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($targetFile);
             $worksheet = $spreadsheet->getActiveSheet();
@@ -350,7 +351,9 @@ require 'vendor/autoload.php';
             foreach ($cellIterator as $cell) {
                 $headers[] = $cell->getValue();
             }
+            $tbody='';
             foreach ($worksheet->getRowIterator(2) as $row) { 
+                $tbody.='<tr>';
                 $cellIterator = $row->getCellIterator();
                 $cellIterator->setIterateOnlyExistingCells(FALSE);
 
@@ -359,11 +362,20 @@ require 'vendor/autoload.php';
                     $data[] = $cell->getValue();
                 }
 
-                $sql = "INSERT INTO test (" . implode(", ", $headers) . ") VALUES ('" . implode("', '", $data) . "')";
+                $unixTimestamp = ($data[2] - 25569) * 86400; 
+
+                $tbody.='<td>'.$data[0].'</td>';
+                $tbody.='<td>'.$data[1].'</td>';
+                $tbody.='<td>'.date('m-d-Y',$unixTimestamp).'</td>';
+
+                // $sql = "INSERT INTO student_attendance (" . implode(", ", $headers) . ") VALUES ('" . implode("', '", $data) . "')";
+                $sql = "INSERT INTO student_attendance (`st_unique_id`,`st_course_unit`,`st_unit_date`) VALUES ('".$data[0]."','".$data[1]."','".date('Y-m-d',$unixTimestamp)."')";
                 if ($connection->query($sql) !== TRUE) {
                     echo "Error: " . $connection->error;
                 }
+                $tbody.='</tr>';
             }
+            echo $tbody;
         } else {
             echo "Sorry, there was an error uploading your file.";
         }

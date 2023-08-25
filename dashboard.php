@@ -346,6 +346,12 @@ if(@$_SESSION['user_type']==1){
                         { data: 'inv_payment_date' },
                     ],
                 });
+
+                $('#accordionExample').on('show.bs.collapse', function(e){
+                setTimeout(function () {
+                    $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
+                }, 10);
+                });
             })
         </script>
     </body>

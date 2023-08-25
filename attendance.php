@@ -62,9 +62,9 @@ if(@$_SESSION['user_type']==1){
                                         </p>
         
                                         <div>
-                                        <input name="file" type="file" accept=".XLSX,.XLX,.CSV" id="upload_file" class="form-control d-none" onchange="uploadFile()">
+                                            <input name="file" type="file" accept=".XLSX,.XLX,.CSV" id="upload_file" class="form-control d-none" onchange="uploadFile()">
                                             <form action="#" id="dropzone" class="dropzone">
-                                                <div class="fallback text-center" id="image-name-div" style="display:none"> 
+                                                <div class="fallback text-center m-4" id="image-name-div" style="display:none"> 
                                                       <img src="assets/images/thumbnails/xlsx.png" style="width:15%" alt="">
                                                       <div id="image-name"></div>
                                                 </div>
@@ -76,7 +76,19 @@ if(@$_SESSION['user_type']==1){
                                                 </div>
                                             </form>
                                         </div>
-        
+                                        <div id="attendaceTable" class="d-none">
+                                            <table class="table table-bordered border-primary mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Student ID</th>
+                                                        <th>Course Unit</th>
+                                                        <th>Date</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="table-body">
+                                                </tbody>
+                                            </table>
+                                        </div>
                                         <div class="text-center mt-4">
                                             <button type="button" class="btn btn-primary waves-effect waves-light" onclick="send_file()" id="send_file">Send Files</button>
                                         </div>
@@ -107,9 +119,16 @@ function uploadFile(){
 
 function sendFile(Files){ 
     uniFile =Files;
-    $('#dz-message').hide();
-    $('#image-name-div').show();
-    $('#image-name').html(Files.name);
+    var allowedExt=['xlsx','xlx','csv'];
+        if(allowedExt.includes(Files.name.split('.')[1])){
+            $('#dz-message').hide();
+            $('#image-name-div').show();
+            $('#image-name').html(Files.name);
+        }else{
+            alert('Only SpreadSheet Files are allowed to Upload');
+            uniFile='';
+            $('#upload_file').val('');
+        }
 }
 
 function send_file(){    
@@ -117,16 +136,27 @@ function send_file(){
     var formsData=new FormData();
     formsData.append('fileUpload',filesUp);
     formsData.append('formName','uploadExcel');
-    $.ajax({
-        type:'post',
-        data:formsData,
-        url:'includes/datacontrol.php',
-        contentType: false,
-        processData:false,
-        success:function(data){
-            console.log(data)
-        }
-    })
+    if(filesUp!=undefined && filesUp!=''){
+        $.ajax({
+            type:'post',
+            data:formsData,
+            url:'includes/datacontrol.php',
+            contentType: false,
+            processData:false,
+            success:function(data){
+                $('#table-body').html(data);
+                $('#myModalLabel').html('Uploaded Data');
+                $('.modal-body').html($('#attendaceTable').html());
+                $('#upload_file').val('');
+                $('#dz-message').show();
+                $('#image-name-div').hide();
+                $('#image-name').html();
+                $('#model_trigger').trigger('click');
+            }
+        })
+    }else{
+        alert("Please upload attendace Sheet to submit");
+    }
 }
 
 
@@ -164,25 +194,6 @@ $('#dropzone').on({
 }
 
 );
-
-            $(document).on('click','#invoice_submit',function(){
-                $.ajax({
-                        type:'post',
-                        url:'includes/datacontrol.php',
-                        data:details,
-                        success:function(data){
-                            if(data==0){
-                            document.getElementById('invoice_form').reset();
-                            $('#toast-text').html('New Invoice added Successfully');
-                                $('#borderedToast1Btn').trigger('click');
-                            }else{
-                                $('.toast-text2').html('Cannot add record. Please try again later');
-                                $('#borderedToast2Btn').trigger('click');
-                            }
-                        }
-                    })
-
-            })
         </script>
     </body>
 </html>

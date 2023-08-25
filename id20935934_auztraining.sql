@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Aug 25, 2023 at 02:23 AM
+-- Generation Time: Aug 25, 2023 at 03:40 PM
 -- Server version: 8.0.31
 -- PHP Version: 8.0.26
 
@@ -126,17 +126,78 @@ INSERT INTO `source` (`source_id`, `source_name`, `source_status`, `created_date
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `student_attendance`
+--
+
+DROP TABLE IF EXISTS `student_attendance`;
+CREATE TABLE IF NOT EXISTS `student_attendance` (
+  `st_at_id` int NOT NULL AUTO_INCREMENT,
+  `st_unique_id` varchar(255) NOT NULL,
+  `st_course_unit` varchar(255) NOT NULL,
+  `st_unit_date` date NOT NULL,
+  `st_unit_status` tinyint(1) NOT NULL DEFAULT '0',
+  `st_unit_created_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`st_at_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `student_attendance`
+--
+
+INSERT INTO `student_attendance` (`st_at_id`, `st_unique_id`, `st_course_unit`, `st_unit_date`, `st_unit_status`, `st_unit_created_date`) VALUES
+(1, '2023B10001', 'units9', '2023-09-09', 0, '2023-08-25 14:59:33'),
+(2, '2023B10002', 'units9', '2023-09-07', 0, '2023-08-25 14:59:33'),
+(3, '2023B10003', 'units9', '2023-09-07', 0, '2023-08-25 14:59:33'),
+(4, '2023B10001', 'units9', '2023-09-09', 0, '2023-08-25 15:07:44'),
+(5, '2023B10002', 'units9', '2023-09-07', 0, '2023-08-25 15:07:44'),
+(6, '2023B10003', 'units9', '2023-09-07', 0, '2023-08-25 15:07:44'),
+(7, '2023B10001', 'units9', '2023-09-09', 0, '2023-08-25 15:07:55'),
+(8, '2023B10002', 'units9', '2023-09-07', 0, '2023-08-25 15:07:55'),
+(9, '2023B10003', 'units9', '2023-09-07', 0, '2023-08-25 15:07:55'),
+(10, '2023B10001', 'units9', '2023-09-09', 0, '2023-08-25 15:08:09'),
+(11, '2023B10002', 'units9', '2023-09-07', 0, '2023-08-25 15:08:09'),
+(12, '2023B10003', 'units9', '2023-09-07', 0, '2023-08-25 15:08:09'),
+(13, '2023B10001', 'units9', '2023-09-09', 0, '2023-08-25 15:17:46'),
+(14, '2023B10002', 'units9', '2023-09-07', 0, '2023-08-25 15:17:46'),
+(15, '2023B10003', 'units9', '2023-09-07', 0, '2023-08-25 15:17:46'),
+(16, '2023B10001', 'units9', '2023-09-09', 0, '2023-08-25 15:18:46'),
+(17, '2023B10002', 'units9', '2023-09-07', 0, '2023-08-25 15:18:46'),
+(18, '2023B10003', 'units9', '2023-09-07', 0, '2023-08-25 15:18:46'),
+(19, '2023B10001', 'units9', '2023-09-09', 0, '2023-08-25 15:19:04'),
+(20, '2023B10002', 'units9', '2023-09-07', 0, '2023-08-25 15:19:04'),
+(21, '2023B10003', 'units9', '2023-09-07', 0, '2023-08-25 15:19:04'),
+(22, '2023B10001', 'units9', '2023-09-09', 0, '2023-08-25 15:20:05'),
+(23, '2023B10002', 'units9', '2023-09-07', 0, '2023-08-25 15:20:05'),
+(24, '2023B10003', 'units9', '2023-09-07', 0, '2023-08-25 15:20:05'),
+(25, '2023B10001', 'units9', '2023-09-09', 0, '2023-08-25 15:38:09'),
+(26, '2023B10002', 'units9', '2023-09-07', 0, '2023-08-25 15:38:09'),
+(27, '2023B10003', 'units9', '2023-09-07', 0, '2023-08-25 15:38:09'),
+(28, '2023B10001', 'units9', '2023-09-09', 0, '2023-08-25 15:39:30'),
+(29, '2023B10002', 'units9', '2023-09-07', 0, '2023-08-25 15:39:30'),
+(30, '2023B10003', 'units9', '2023-09-07', 0, '2023-08-25 15:39:30');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `student_docs`
 --
 
 DROP TABLE IF EXISTS `student_docs`;
 CREATE TABLE IF NOT EXISTS `student_docs` (
   `st_doc_id` int NOT NULL AUTO_INCREMENT,
+  `st_unique_id` varchar(255) NOT NULL,
   `st_doc_names` text NOT NULL,
   `st_doc_status` tinyint(1) NOT NULL,
   `created_date` timestamp NOT NULL,
   PRIMARY KEY (`st_doc_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `student_docs`
+--
+
+INSERT INTO `student_docs` (`st_doc_id`, `st_unique_id`, `st_doc_names`, `st_doc_status`, `created_date`) VALUES
+(1, '2023E30002', '[\"includes/uploads/uploads/locations_1692971460075.xlsx||xlsx.png\",\"includes/uploads/uploads/Uma resume_1692971460075.docx||docx.png\"]', 0, '0000-00-00 00:00:00');
 
 -- --------------------------------------------------------
 

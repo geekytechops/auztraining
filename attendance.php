@@ -56,10 +56,16 @@ if(@$_SESSION['user_type']==1){
                             <div class="col-12">
                                 <div class="card">
                                     <div class="card-body">
-        
-                                        <h4 class="card-title">Dropzone</h4>
-                                        <p class="card-title-desc">Please Drop the Attendance Spreadsheet.
-                                        </p>
+
+                                        <div class="row">
+                                            <div class="col-6">
+                                            <h4 class="card-title">Dropzone</h4>
+                                            <p class="card-title-desc"><b>Note:</b> Only Excel sheets are allowed to upload.</p>
+                                            </div>
+                                            <div class="col-6 text-end">
+                                                <a href="assets/docs/excel_sample.xlsx"><button type="button" class="btn btn-primary"><i class="mdi mdi-download"></i> Download Sample</button></a>
+                                            </div>
+                                        </div>
         
                                         <div>
                                             <input name="file" type="file" accept=".XLSX,.XLX,.CSV" id="upload_file" class="form-control d-none" onchange="uploadFile()">

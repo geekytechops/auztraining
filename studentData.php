@@ -15,7 +15,25 @@ if(isset($_GET['check'])){
     if($queryRes['st_unique_id']=="" ){
         header('Location:dashboard');
     }
-    $selectQry=mysqli_query($connection,"SELECT st_unique_id,st_doc_names FROM `student_docs` WHERE `st_unique_id`='$enrolId'");
+    $selectQry=mysqli_query($connection,"SELECT * FROM `student_docs` WHERE `st_unique_id`='$enrolId'");
+    $courses=mysqli_fetch_array(mysqli_query($connection,"SELECT * from courses where course_status!=1 AND course_id=".$queryRes['st_enrol_course']));
+
+
+    $selectQryRowss=mysqli_num_rows($selectQry);
+    if($selectQryRowss!=0){
+    $selectQryRess=mysqli_fetch_array($selectQry);
+    $thumbs=array();
+    $imageArrays=json_decode($selectQryRess['st_doc_names']);
+    for($i=0;$i<count($imageArrays);$i++){
+
+        $imageFulls=explode('||',$imageArrays[$i])[0];
+        array_push($thumbs,explode('||',$imageArrays[$i])[1]);
+    
+    }
+    }
+
+    $documents=mysqli_fetch_all(mysqli_query($connection,"SELECT document_name,document_shortcode FROM documents where document_shortcode!=1"),MYSQLI_ASSOC);
+
     // $selectinvoicesQry=mysqli_query($connection,"SELECT * FROM `invoices` WHERE `st_unique_id`='$enrolId'");
 
 
@@ -121,6 +139,14 @@ if(isset($_GET['check'])){
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <div class="col-md-3">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="validationCustom02">Course</label>
+                                                        <div class="">
+                                                        <p><?php echo $courses['course_sname'].'-'.$courses['course_name'];  ?></p>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </form>
                                     </div>
@@ -155,26 +181,70 @@ if(isset($_GET['check'])){
                             </div> <!-- end col -->
                         </div>   
                         <!-- end row -->
-
                         <div class="row align-items-baseline mb-2">
                             <div class="col-md-6">
-                                <h5 class="mb-sm-0">Document</h5>
-                            </div>
-                            <div class="col-md-6 text-end">
-                                <button type="button" value="Upload" class="btn btn-primary" onclick="$('#files').trigger('click');">Upload</button>
-                                <input type="file" id="files" class="files d-none" accept=".docx,.doc,.xlsx,.xlx,.pdf" multiple onchange="uplaodFiles(this)">
-                            </div>
+                                <h5 class="mb-sm-0">Document Check List</h5>
+                            </div>                            
                         </div>
+
+                        <div class="row">
+                            <div class="col-xl-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h4 class="card-title mb-3">Uploaded</h4>
+                                        <?php 
+                                        
+                                        for($i=0;$i<count($documents);$i++){
+                                            if($documents[$i]['document_shortcode']==$thumbs[$i]){
+
+                                        ?>
+                                        <label class="btn btn-g-primary" for="btncheck11"><?php echo $documents[$i]['document_name'] ?> <i class="mdi mdi-check-bold"></i></label>
+                                        <?php }
+                                     } ?>
+                                    </div>
+                                    <div class="card-body">
+                                        <h4 class="card-title mb-3">Missing</h4>
+                                        <?php 
+                                        
+                                        for($i=0;$i<count($documents);$i++){
+                                            if($documents[$i]['document_shortcode']!=$thumbs[$i]){
+
+                                        ?>                                
+                                        <label class="btn btn-danger" for="btncheck11"><?php echo $documents[$i]['document_name'] ?> <i class="mdi mdi-close-thick"></i></label>
+                                        <?php } 
+                                    } ?>                                        
+                                    </div>
+                                </div>
+                                <!-- end card -->
+                            </div> <!-- end col -->
+                        </div>   
+                        <!-- end row -->
+                        <div class="row align-items-baseline mb-2">
+                            <div class="col-md-6">
+                                <h5 class="mb-sm-0">Files</h5>
+                            </div>                            
+                        </div>
+
                         <div class="row">
                             <div class="col-xl-12">
                                 <div class="card">
                                     <div class="card-body row" id="docs_div">
                                     <?php 
+                                    $selectQry=mysqli_query($connection,"SELECT * FROM `student_docs` WHERE `st_unique_id`='$enrolId'");
+                                    $imageDiv='';
                                     $columnStart='';
                                     $selectQryRows=mysqli_num_rows($selectQry);
                                     if($selectQryRows!=0){
                                     $selectQryRes=mysqli_fetch_array($selectQry);
                                     $imageArray=json_decode($selectQryRes['st_doc_names']);
+
+                                    echo "<div class='row mb-2'><div class='col-md-3'><strong>Created Date: </strong>".date('d-m-Y',strtotime($selectQryRes['created_date']))."</div>";
+
+                                    if($selectQryRes['st_modified_date']!=''){
+                                    echo "<div class='col-md-3'><strong>Modified Date: </strong>".date('d-m-Y',strtotime($selectQryRes['st_modified_date']))."</div>";
+                                    }
+                                    echo '</div>';
+
                                     for($i=0;$i<count($imageArray);$i++){
                                         $columnStart='<div class="col-md-2 text-center"><div class="mb-3">';
                                         $columnEnd='</div></div></div>';
@@ -187,9 +257,9 @@ if(isset($_GET['check'])){
                                         $ext=explode('.',$mainImage)[1];
 
                                         $imageName=substr($mainImage,0,strripos($mainImage,'_')).'.'.$ext;
+                                        $studentDocs=mysqli_fetch_array(mysqli_query($connection,"SELECT document_name from documents where document_shortcode='$thumb'"));
 
-
-                                        $imageDiv.=$columnStart.'<label class="form-label" style="width:90%" for="validationCustom02">'.$imageName.'</label><div class="shop-city"><a href="includes/uploads/'.$mainImage.'"><img src="assets/images/thumbnails/'.$thumb.'" style="width:70%"></a>'.$columnEnd;
+                                        $imageDiv.=$columnStart.'<label class="form-label" style="width:90%" for="validationCustom02">'.$studentDocs['document_name'].'</label><div class="shop-city"><a href="includes/uploads/'.$mainImage.'"><img src="assets/images/thumbnails/pdf.png" style="width:70%"></a>'.$columnEnd;
                                     }
                                     echo $imageDiv;
                                     }

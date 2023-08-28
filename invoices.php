@@ -1,7 +1,9 @@
+<?php include('includes/dbconnect.php'); ?>
 <?php 
 session_start();
 // print_r($_SESSION);
 if(@$_SESSION['user_type']==1){
+    $courses=mysqli_query($connection,"SELECT * from courses where course_status!=1");
 ?>
 <!doctype html>
 <html lang="en">
@@ -52,22 +54,6 @@ if(@$_SESSION['user_type']==1){
                             </div>
                         </div>
                         <!-- end page title -->
-                        <div class="row">
-                        <div class="col-xl-12">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-2">
-                                            <div class="mb-3">
-                                                <label class="form-label" for="enrol_id">Student Enrolment ID</label>
-                                                <input type="text" id="enrol_id" class="form-control" name='enrol_id'>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- end card -->
-                        </div> <!-- end col -->
                         </div>
                         <!-- end row -->
                         <form class="invoice_form" id="invoice_form">
@@ -88,7 +74,7 @@ if(@$_SESSION['user_type']==1){
                                             <div class="">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="student_name">Student Name</label>
-                                                        <input type="text" id="student_name" class="form-control" placeholder="Student Name">
+                                                        <input type="text" id="student_name" class="form-control" placeholder="Student Name" readonly>
                                                         <div class="error-feedback">
                                                             Please Enter the student Name
                                                         </div>
@@ -97,12 +83,14 @@ if(@$_SESSION['user_type']==1){
                                             <div class="">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="course_name">Course Name</label>
-                                                        <select name="course_name" class="form-control" id="course_name">
-                                                            <option value="0">--select--</option>
-                                                            <option value="1">Basic</option>
-                                                            <option value="2">Intermediate</option>
-                                                            <option value="3">Expert</option>
-                                                        </select>  
+                                                        <select name="course_name" class="form-select" id="course_name" readonly>
+                                                        <option value="0">--select--</option>
+                                                        <?php 
+                                                        while($coursesRes=mysqli_fetch_array($courses)){
+                                                        ?>                                                            
+                                                            <option value="<?php echo $coursesRes['course_id']; ?>" <?php echo $coursesRes['course_id']==$queryRes['st_course'] ? 'selected' : ''; ?>><?php echo $coursesRes['course_sname'].'-'.$coursesRes['course_name']; ?></option>
+                                                            <?php } ?>
+                                                        </select>    
                                                         <div class="error-feedback">
                                                             Please Enter the Course Name
                                                         </div>
@@ -119,7 +107,7 @@ if(@$_SESSION['user_type']==1){
                                             <div class="">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="course_fee">Course Fee</label>
-                                                        <input type="text" id="course_fee" class="form-control number-field" placeholder="0.00">
+                                                        <input type="tel" id="course_fee" class="form-control price-field" placeholder="0.00">
                                                         <div class="error-feedback">
                                                             Please Enter the Course Fee
                                                         </div>
@@ -128,7 +116,7 @@ if(@$_SESSION['user_type']==1){
                                             <div class="">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="amount_paid">Amount Paid</label>
-                                                        <input type="text" id="amount_paid" class="form-control number-field" placeholder="0.00">
+                                                        <input type="tel" id="amount_paid" class="form-control price-field" placeholder="0.00">
                                                         <div class="error-feedback">
                                                             Please Enter the Paid Amount
                                                         </div>
@@ -137,12 +125,25 @@ if(@$_SESSION['user_type']==1){
                                             <div class="">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="amount_due">Amount Due</label>
-                                                        <input type="text" id="amount_due" class="form-control number-field" placeholder="0.00">
+                                                        <input type="tel" id="amount_due" class="form-control price-field" placeholder="0.00">
                                                         <div class="error-feedback">
                                                             Please Enter the Due Amount
                                                         </div>
                                                     </div>
-                                            </div>                                        
+                                            </div>                     
+                                            <div class="">
+                                                    <div class="mb-3">
+                                                <div class="d-flex justify-content-between align-items-end">
+                                                    <label class="form-label" for="enrol_id">Student Enrolment ID</label>
+                                                    <label class="btn btn-primary" id="lookedup"><i class="mdi mdi-eye"></i> Student Lookup</label>    
+                                                </div>                                                    
+                                                    <input type="text" id="enrol_id" class="form-control" name='enrol_id' placeholder="Enrolment ID" readonly>
+                                                        <div class="error-feedback">
+                                                            Please Enter the Enrolment ID
+                                                        </div>
+                                                    </div>
+                                            </div>                     
+
                                     </div>
                                 </div>
                                 <!-- end card -->
@@ -173,6 +174,23 @@ if(@$_SESSION['user_type']==1){
         <div class="rightbar-overlay"></div>
         <?php include('includes/footer_includes.php'); ?>
         <script>
+
+
+
+$(document).on('click','#lookedup',function(){
+    studetnLookup();
+    $('#model_trigger1').trigger('click');
+})
+// $('#model_trigger1').trigger('click');
+
+$(document).on('input','.price-field',function(){
+    $(this).val($(this).val().replace(/[^0-9]/gi, ''));
+    // var course_fee=$('#course_fee').val()=='' ? 0 : $('#course_fee').val();
+    // var amount_paid=$('#amount_paid').val()=='' ? 0 : $('#amount_paid').val();
+
+    // $('#amount_due').val(course_fee-amount_paid);
+})
+
             $(document).on('click','#invoice_submit',function(){
                 var payment_date=$('#payment_date').val().trim();
                 var student_name=$('#student_name').val().trim();
@@ -200,6 +218,15 @@ if(@$_SESSION['user_type']==1){
                         $('#student_name').addClass('valid-div');
                         $('#student_name').removeClass('invalid-div');
                         $('#student_name').closest('div').find('.error-feedback').hide();
+                    }
+                    if(enrol_id==''){
+                        $('#enrol_id').addClass('invalid-div');
+                        $('#enrol_id').removeClass('valid-div');
+                        $('#enrol_id').closest('div').find('.error-feedback').show();
+                    }else{
+                        $('#enrol_id').addClass('valid-div');
+                        $('#enrol_id').removeClass('invalid-div');
+                        $('#enrol_id').closest('div').find('.error-feedback').hide();
                     }
                     if(course_name==''){
                         $('#course_name').addClass('invalid-div');
@@ -244,13 +271,18 @@ if(@$_SESSION['user_type']==1){
                         url:'includes/datacontrol.php',
                         data:details,
                         success:function(data){
-                            if(data==0){
+                            if(data==1){
+                                $('.toast-text2').html('Cannot add record. Please try again later');    
+                                $('#borderedToast2Btn').trigger('click');
+                            }else{
                             document.getElementById('invoice_form').reset();
+                            $('#enrol_id').val('');
                             $('#toast-text').html('New Invoice added Successfully');
                                 $('#borderedToast1Btn').trigger('click');
-                            }else{
-                                $('.toast-text2').html('Cannot add record. Please try again later');
-                                $('#borderedToast2Btn').trigger('click');
+
+                                $('#myModalLabel').html('Enquiry ID Created:');
+                                $('.modal-body').html(data);
+                                $('#model_trigger').trigger('click');
                             }
                         }
                     })

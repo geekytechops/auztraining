@@ -9,40 +9,68 @@
                         <!-- Left Menu Start -->
                         <ul class="metismenu list-unstyled" id="side-menu">
                             <li class="menu-title">Forms</li>
-                            <?php 
-                            if(@$_SESSION['user_type']==1){
-                            ?>
                             <li>
-                                <a href="dashboard" class="waves-effect">
+                                <a href="dashboard.php" class="waves-effect">
                                     <i class="mdi mdi-home-variant-outline"></i>
                                     <span>Dashboard</span>
                                 </a>
                             </li>
-                            <?php } ?>
+                            <?php 
+                            if(@$_SESSION['user_type']==1){
+                            ?>
                             <li>
-                                <a href="student_enquiry" class="waves-effect">
+                                <a href="student_enquiry.php" class="waves-effect">
                                     <i class="fab fa-wpforms"></i>
                                     <span>Student's Enquiry</span>
                                 </a>
                             </li>
+                            <?php } ?>
+                            <?php 
+                            if(@$_SESSION['user_type']==1){
+                            ?>
                             <li>
-                                <a href="enrolment" class="waves-effect">
-                                    <i class="mdi   mdi-account-plus"></i>
+                                <a href="enrolment.php" class="waves-effect">
+                                    <i class="mdi mdi-account-plus"></i>
                                     <span>Enrolment</span>
                                 </a>
                             </li>
+                            <?php } ?>
+                            <?php 
+                            if(@$_SESSION['user_type']==0){
+                            ?>
                             <li>
-                                <a href="attendance" class="waves-effect">
+                                <a href="student_docs.php" class="waves-effect">
+                                    <i class="mdi mdi-file-upload"></i>
+                                    <span>Documents</span>
+                                </a>
+                            </li>
+                            <?php 
+                            }
+                            ?>
+                            <?php 
+                            if(@$_SESSION['user_type']==1){
+                            ?>
+                            <li>
+                                <a href="javascript: void(0);" class="has-arrow waves-effect">
                                     <i class="mdi mdi-file-excel"></i>
                                     <span>Attendance</span>
                                 </a>
+                                <ul class="sub-menu" aria-expanded="false">
+                                    <li><a href="attendance_record.php">Attendance Records</a></li>
+                                    <li><a href="attendance.php">Add Attendance</a></li>
+                                </ul>
                             </li>
+                            <?php } ?>
+                            <?php 
+                            if(@$_SESSION['user_type']==1){
+                            ?>
                             <li>
-                                <a href="invoices" class="waves-effect">
+                                <a href="invoices.php" class="waves-effect">
                                     <i class="fas fa-file-invoice"></i>
                                     <span>Invoices</span>
                                 </a>    
                             </li>
+                            <?php } ?>
                         </ul>
                     </div>
                     <!-- Sidebar -->

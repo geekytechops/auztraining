@@ -1,0 +1,14 @@
+[27-Aug-2023 04:37:01 UTC] PHP Warning:  Undefined array key "enquiry_id" in /home/admin/public_html/auztraining/includes/datacontrol.php on line 66
+[27-Aug-2023 04:38:07 UTC] PHP Warning:  Undefined array key "enquiry_id" in /home/admin/public_html/auztraining/includes/datacontrol.php on line 66
+[27-Aug-2023 04:40:08 UTC] PHP Warning:  Undefined array key "enquiry_id" in /home/admin/public_html/auztraining/includes/datacontrol.php on line 66
+[27-Aug-2023 04:43:01 UTC] PHP Warning:  Undefined array key "enquiry_id" in /home/admin/public_html/auztraining/includes/datacontrol.php on line 66
+[27-Aug-2023 04:58:06 UTC] PHP Fatal error:  Uncaught TypeError: mysqli_fetch_array(): Argument #1 ($result) must be of type mysqli_result, bool given in /home/admin/public_html/auztraining/includes/datacontrol.php:82
+Stack trace:
+#0 /home/admin/public_html/auztraining/includes/datacontrol.php(82): mysqli_fetch_array()
+#1 {main}
+  thrown in /home/admin/public_html/auztraining/includes/datacontrol.php on line 82
+[27-Aug-2023 04:59:15 UTC] PHP Fatal error:  Uncaught TypeError: mysqli_fetch_array(): Argument #1 ($result) must be of type mysqli_result, bool given in /home/admin/public_html/auztraining/includes/datacontrol.php:82
+Stack trace:
+#0 /home/admin/public_html/auztraining/includes/datacontrol.php(82): mysqli_fetch_array()
+#1 {main}
+  thrown in /home/admin/public_html/auztraining/includes/datacontrol.php on line 82

@@ -7,6 +7,22 @@
 background-color: var(--backgroundcolor);
 border-color: var(--bordercolor);
 }
+.btn-g-primary{
+  background-color: #0bb197;
+  border-color: #0bb197;
+  color:#fff;
+}
+.btn-g-primary:active,.btn-g-primary:focus{
+  background-color: #0bb197;
+  border-color: #0bb197;
+  box-shadow: 0 0 0 0.15rem #0bb197;
+}
+.btn-g-primary:hover{
+  color: #0bb197;
+  background-color: #fff;
+  border-color:  #0bb197;
+  box-shadow: 0 0 0 0.15rem #0bb197;
+}
 .btn-primary:active , .btn-primary:focus {
   background-color: var(--backgroundcolor);
   border-color: var(--bordercolor);
@@ -23,6 +39,9 @@ border-color: var(--bordercolor);
 }
 #sidebar-menu>ul>li:hover>a i {
     color: var(--color) !important;
+}
+.mm-active > a , .mm-active > a i{
+  color: var(--color) !important;
 }
 .mm-active .active {
   color: var(--color) !important;
@@ -62,6 +81,13 @@ table.dataTable.nowrap th, table.dataTable.nowrap td{
 }
 .dropzone{
   cursor:pointer;
+}
+.bg-align{
+  width: 30%;
+  height: 70%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
 }
 /* .dataTables_scrollHeadInner,table{
   width: 100% !important;

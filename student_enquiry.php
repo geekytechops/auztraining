@@ -105,12 +105,12 @@ if(@$_SESSION['user_type']!=''){
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="courses">Course Interested In</label>
-                                                        <select name="courses" class="form-control" id="courses">
+                                                        <select name="courses" class="form-select" id="courses">
                                                         <option value="0">--select--</option>
                                                         <?php 
                                                         while($coursesRes=mysqli_fetch_array($courses)){
                                                         ?>                                                            
-                                                            <option value="<?php echo $coursesRes['course_id']; ?>" <?php echo $coursesRes['course_id']==$queryRes['st_course'] ? 'selected' : ''; ?>><?php echo $coursesRes['course_name']; ?></option>
+                                                            <option value="<?php echo $coursesRes['course_id']; ?>" <?php echo $coursesRes['course_id']==$queryRes['st_course'] ? 'selected' : ''; ?>><?php echo $coursesRes['course_sname'].'-'.$coursesRes['course_name']; ?></option>
                                                             <?php } ?>
                                                         </select>    
                                                         <div class="error-feedback">
@@ -132,7 +132,7 @@ if(@$_SESSION['user_type']!=''){
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="visa_status">Visa Condition</label>
-                                                        <select name="visa_status" class="form-control" id="visa_status">
+                                                        <select name="visa_status" class="form-select" id="visa_status">
                                                         <option value="0">--select--</option>
                                                         <?php 
                                                         while($visaRes=mysqli_fetch_array($visaStatus)){
@@ -248,18 +248,22 @@ if(@$_SESSION['user_type']!=''){
                         url:'includes/datacontrol.php',
                         data:details,
                         success:function(data){
-                            if(data==1){
-                                document.getElementById('student_enquiry_form').reset();
-                                $('#toast-text').html('New Enquiry Added');
-                                $('#borderedToast1Btn').trigger('click');
+                            if(data==0){
+                                $('.toast-text2').html('Cannot add record. Please try again later');
+                                $('#borderedToast2Btn').trigger('click');
                             }else if(data==2){
                                 document.getElementById('student_enquiry_form').reset();
                                 $('#toast-text').html('Record Updated Successfully');
                                 $('#borderedToast1Btn').trigger('click');
-                                window.location.href="dashboard";
+                                window.location.href="dashboard.php";
                             }else{
-                                $('.toast-text2').html('Cannot add record. Please try again later');
-                                $('#borderedToast2Btn').trigger('click');
+                                document.getElementById('student_enquiry_form').reset();
+                                $('#toast-text').html('New Enquiry Added');
+                                $('#borderedToast1Btn').trigger('click');
+
+                                $('#myModalLabel').html('Enquiry ID Created:');
+                                $('.modal-body').html(data);
+                                $('#model_trigger').trigger('click');
                             }
                         }
                     })

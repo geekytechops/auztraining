@@ -24,7 +24,7 @@ if($checkId==0){
     if($error!=''){
         echo 0;
     }else{
-        echo 1;
+        echo $uniqueId;
     }
 
 }else{
@@ -78,14 +78,17 @@ if($checkId==0){
 
 $query=mysqli_query($connection,"INSERT INTO student_enrolment(st_qualifications,st_email,st_mobile,st_enquiry_id,st_enrol_course,st_venue,st_middle_name,st_name,st_source,st_given_name)VALUES('$qualifications','$emailAddress','$contactName','$st_enquiry_id',$courseId,'$venue','$middle_name','$name_main',$source,'$given_name')");
 $lastId=mysqli_insert_id($connection);
-$uniqueId=sprintf($dateYear.$courseName.$courseId.'%04d', $lastId);
+
+$courseID=mysqli_fetch_array(mysqli_query($connection,"SELECT * FROM courses WHERE course_id=$courseId"));
+
+$uniqueId=sprintf($dateYear.$courseID['course_sname'].'%04d', $lastId);
 
 $querys=mysqli_query($connection,"UPDATE student_enrolment SET st_unique_id='$uniqueId' WHERE st_enrol_id=$lastId");
 $error=mysqli_error($connection);
 if($error!=''){
     echo 1;
 }else{
-    echo 0;
+    echo $uniqueId;
 }
 
 }else{
@@ -107,10 +110,11 @@ $course_fee=$_POST['course_fee'];
 $course_name=$_POST['course_name'];
 $enrol_id=$_POST['enrol_id'];
 $student_name=$_POST['student_name'];
+$date=date('Y');
 
 $query=mysqli_query($connection,"INSERT INTO invoices(inv_std_name,st_unique_id,inv_course,inv_fee,inv_paid,inv_due,inv_payment_date)VALUES('$student_name','$enrol_id','$course_name','$course_fee','$amount_paid',$amount_due,'$payment_date')");
 $lastId=mysqli_insert_id($connection);
-$uniqueId=sprintf('INV%05d', $lastId);
+$uniqueId=sprintf('INV'.$date.'%05d', $lastId);
 
 $querys=mysqli_query($connection,"UPDATE invoices SET inv_auto_id='$uniqueId' WHERE inv_id=$lastId");
 
@@ -118,13 +122,13 @@ $error=mysqli_error($connection);
 if($error!=''){
     echo 1;
 }else{
-    echo 0;
+    echo $uniqueId;
 }
 }
 if(@$_POST['formName']=='login'){
 $email=$_POST['email'];
 $password=$_POST['password'];
-$query=mysqli_query($connection,"SELECT user_id,user_type,user_name FROM users WHERE user_email='$email' AND user_password='$password'");
+$query=mysqli_query($connection,"SELECT user_id,user_type,user_name,user_log_id FROM users WHERE user_email='$email' AND user_password='$password'");
 $error=mysqli_error($connection);
 $id=mysqli_fetch_array($query);
 if($id['user_id']=='' || $id['user_id']=='undefined'){
@@ -133,6 +137,7 @@ if($id['user_id']=='' || $id['user_id']=='undefined'){
     $_SESSION['user_id']=$id['user_id'];
     $_SESSION['user_type']=$id['user_type'];
     $_SESSION['user_name']=$id['user_name'];
+    $_SESSION['user_log_id']=$id['user_log_id'];
     echo 0;
 }
 }
@@ -155,13 +160,15 @@ if(@$_REQUEST['name']=='studentEnquiry'){
     $query=mysqli_query($connection,"SELECT * from student_enquiry where st_enquiry_status!=1");
     while($queryRes=mysqli_fetch_array($query)){
 
-        if($queryRes['st_course']==1){
-            $course='Basic';
-        }else if($queryRes['st_course']==2){
-            $course='Intermediate';
-        }else{
-            $course='Expert';
-        }
+        // if($queryRes['st_course']==1){
+        //     $course='Basic';
+        // }else if($queryRes['st_course']==2){
+        //     $course='Intermediate';
+        // }else{
+        //     $course='Expert';
+        // }
+
+        $courses=mysqli_fetch_array(mysqli_query($connection,"SELECT * from courses where course_status!=1 AND course_id=".$queryRes['st_course']));
 
         if($queryRes['st_visa_status']==1){
             $visaStatus='<i class="mdi mdi-checkbox-blank-circle text-warning me-1"></i> Pending';
@@ -173,7 +180,7 @@ if(@$_REQUEST['name']=='studentEnquiry'){
 
         $view='<button type="button" data="'.$queryRes['st_id'].'" class="btn btn-outline-primary btn-sm edit_enq" style="margin-right:10px;"><a href="student_enquiry.php?eq='.base64_encode($queryRes['st_id']).'">Edit</a></button><button onclick="delete_enq('.$queryRes['st_id'].')" type="button" class="btn btn-outline-danger btn-sm">Delete</button>';
 
-        array_push($enquiries['data'],array('st_enquiry_id'=>$queryRes['st_enquiry_id'],'std_name'=>$queryRes['st_name'], 'std_phno'=>$queryRes['st_phno'],'std_email'=>$queryRes['st_email'],'std_course'=>$course,'std_fee'=>$queryRes['st_fee'],'std_visa_status'=>$visaStatus,'action'=>$view));
+        array_push($enquiries['data'],array('st_enquiry_id'=>$queryRes['st_enquiry_id'],'std_name'=>$queryRes['st_name'], 'std_phno'=>$queryRes['st_phno'],'std_email'=>$queryRes['st_email'],'std_course'=>$courses['course_sname'].'-'.$courses['course_name'],'std_fee'=>$queryRes['st_fee'],'std_visa_status'=>$visaStatus,'action'=>$view));
         
     }
     header("Content-Type: application/json");
@@ -184,15 +191,17 @@ if(@$_REQUEST['name']=='student_invoices'){
     $query=mysqli_query($connection,"SELECT * from invoices");
     while($queryRes=mysqli_fetch_array($query)){
 
-        if($queryRes['inv_course']==1){
-            $course='Basic';
-        }else if($queryRes['inv_course']==2){
-            $course='Intermediate';
-        }else{
-            $course='Expert';
-        }
+        // if($queryRes['inv_course']==1){
+        //     $course='Basic';
+        // }else if($queryRes['inv_course']==2){
+        //     $course='Intermediate';
+        // }else{
+        //     $course='Expert';
+        // }
 
-        array_push($invoices['data'],array('inv_std_name'=>$queryRes['inv_std_name'], 'inv_fee'=>$queryRes['inv_fee'],'inv_paid'=>$queryRes['inv_paid'],'inv_course'=>$course,'inv_due'=>$queryRes['inv_due'],'inv_payment_date'=>$queryRes['inv_payment_date']));
+        $courses=mysqli_fetch_array(mysqli_query($connection,"SELECT * from courses where course_status!=1 AND course_id=".$queryRes['inv_course']));
+
+        array_push($invoices['data'],array('inv_id'=>$queryRes['inv_auto_id'],'inv_std_name'=>$queryRes['inv_std_name'], 'inv_fee'=>$queryRes['inv_fee'],'inv_paid'=>$queryRes['inv_paid'],'inv_course'=>$courses['course_sname'].'-'.$courses['course_name'],'inv_due'=>$queryRes['inv_due'],'inv_payment_date'=>$queryRes['inv_payment_date']));
         
     }
     header("Content-Type: application/json");
@@ -228,9 +237,10 @@ if(@$_REQUEST['name']=='student_enrol'){
             $source='Website';
         }
 
+
         $view='<button type="button" data="'.$queryRes['st_enrol_id'].'" class="btn btn-outline-primary btn-sm edit_enrol" style="margin-right:10px;"><a href="enrolment.php?enrol='.base64_encode($queryRes['st_enrol_id']).'">Edit</a></button><button onclick="delete_enrol('.$queryRes['st_enrol_id'].')" type="button" class="btn btn-outline-danger btn-sm">Delete</button>';
 
-        array_push($enrol['data'],array('st_enrol_name'=>$queryRes['st_name'], 'st_enrol_givenname'=>$queryRes['st_given_name'],'st_enrol_middlename'=>$queryRes['st_middle_name'],'st_enrol_qual'=>$qualifications,'st_enrol_venue'=>$venue,'st_enrol_source'=>$source,'action'=>$view));
+        array_push($enrol['data'],array('st_enrol_name'=>$queryRes['st_name'],'st_enrol_id'=>$queryRes['st_unique_id'],'st_enq_id'=>$queryRes['st_enquiry_id'], 'st_enrol_givenname'=>$queryRes['st_given_name'],'st_enrol_middlename'=>$queryRes['st_middle_name'],'st_enrol_qual'=>$qualifications,'st_enrol_venue'=>$venue,'st_enrol_source'=>$source,'action'=>$view));
         
     }
     header("Content-Type: application/json");
@@ -245,21 +255,108 @@ if(@$_REQUEST['name']=='all_students'){
 
         $enrolDate=date('d-M-Y',strtotime($queryRes['created_date']));
 
-        if($queryRes['st_enrol_course']==1){
-            $course='Basic';
-        }else if($queryRes['st_enrol_course']==2){
-            $course='Intermediate';
-        }else{
-            $course='Expert';
-        }
+        // if($queryRes['st_enrol_course']==1){
+        //     $course='Basic';
+        // }else if($queryRes['st_enrol_course']==2){
+        //     $course='Intermediate';
+        // }else{
+        //     $course='Expert';
+        // }
 
-        $uniq_id='<a href="studentData?check='.base64_encode($queryRes['st_unique_id']).'" style="color:var(--color)">'.$queryRes['st_unique_id'].'</a>';
+        $courses=mysqli_fetch_array(mysqli_query($connection,"SELECT * from courses where course_status!=1 AND course_id=".$queryRes['st_enrol_course']));
 
-        array_push($enrol['data'],array('st_unique_id'=>$uniq_id,'st_enrol_name'=>$queryRes['st_name'], 'std_phno'=>$queryRes['st_mobile'],'std_email'=>$queryRes['st_email'],'course'=>$course,'std_date'=>$enrolDate));
+        $uniq_id='<a href="studentData.php?check='.base64_encode($queryRes['st_unique_id']).'" style="color:var(--color)">'.$queryRes['st_unique_id'].'</a>';
+
+        $view='<button type="button" data="'.$queryRes['st_unique_id'].'" class="btn btn-outline-primary btn-sm edit_enrol" style="margin-right:10px;"><a href="studentData.php?check='.base64_encode($queryRes['st_unique_id']).'">View</a></button>';
+
+        array_push($enrol['data'],array('st_unique_id'=>$uniq_id,'st_enrol_name'=>$queryRes['st_name'], 'std_phno'=>$queryRes['st_mobile'],'std_email'=>$queryRes['st_email'],'course'=>$courses['course_sname'].'-'.$courses['course_name'],'std_date'=>$enrolDate,'action'=>$view));
         
     }
     header("Content-Type: application/json");
     echo json_encode($enrol);
+}
+
+
+if(@$_POST['formName']=='lookupLoad'){
+    if($_POST['selected']=='1'){
+        $query=mysqli_query($connection,"SELECT st_mobile as datas from student_enrolment WHERE st_enrol_status!=1");
+    }else{
+        $query=mysqli_query($connection,"SELECT st_email as datas from student_enrolment WHERE st_enrol_status!=1");
+    }
+    $body= "<option value='0'>--select--</option>";
+    while($queryRes=mysqli_fetch_array($query)){
+        $body.="<option value=".$queryRes['datas'].">".$queryRes['datas']."</option>";
+    }
+    echo $body;
+}
+
+if(@$_POST['formName']=='lookupdata'){
+    if($_POST['selected']=='1'){
+        $query=mysqli_fetch_array(mysqli_query($connection,"SELECT * from student_enrolment WHERE st_enrol_status!=1 AND st_mobile='".$_POST['values']."'"));
+    }else{
+        $query=mysqli_fetch_array(mysqli_query($connection,"SELECT * from student_enrolment WHERE st_enrol_status!=1 AND st_email='".$_POST['values']."'"));
+    }
+    
+    echo json_encode($query);
+}
+
+if(@$_POST['formName']=='lookupLoad2'){
+    if($_POST['selected']=='1'){
+        $query=mysqli_query($connection,"SELECT st_phno as datas from student_enquiry WHERE st_enquiry_status!=1");
+    }else{
+        $query=mysqli_query($connection,"SELECT st_email as datas from student_enquiry WHERE st_enquiry_status!=1");
+    }
+    $body= "<option value='0'>--select--</option>";
+    while($queryRes=mysqli_fetch_array($query)){
+        $body.="<option value=".$queryRes['datas'].">".$queryRes['datas']."</option>";
+    }
+    echo $body;
+}
+
+if(@$_POST['formName']=='lookupdata2'){
+    if($_POST['selected']=='1'){
+        $query=mysqli_fetch_array(mysqli_query($connection,"SELECT * from student_enquiry WHERE st_enquiry_status!=1 AND st_phno='".$_POST['values']."'"));
+    }else{
+        $query=mysqli_fetch_array(mysqli_query($connection,"SELECT * from student_enquiry WHERE st_enquiry_status!=1 AND st_email='".$_POST['values']."'"));
+    }
+    
+    echo json_encode($query);
+}
+
+
+if(@$_REQUEST['name']=='all_attendance'){
+    $attendance['data']=[];
+
+    $query=mysqli_fetch_all(mysqli_query($connection,"select DISTINCT(st_unique_id) from student_attendance"),MYSQLI_ASSOC); 
+    $queryCrs=mysqli_fetch_all(mysqli_query($connection,"select DISTINCT(st_course_unit) from student_attendance"),MYSQLI_ASSOC); 
+
+    $query=mysqli_query($connection,"select * from `student_attendance`");
+    while($queryRes=mysqli_fetch_array($query)){
+
+        $id=$queryRes['st_unique_id'];
+        $selectName=mysqli_fetch_array(mysqli_query($connection,"SELECT * FROM student_enrolment where st_unique_id='$id'"));
+        if($selectName!=''){
+        // echo "SELECT * FROM student_enrolment where st_unique_id='$id'";
+
+        array_push($attendance['data'],array('student_id'=>$queryRes['st_unique_id'],'student_name'=>$selectName['st_given_name'].' '.$selectName['st_middle_name'],'course'=>$queryRes['st_course_unit'],'mobile'=>$selectName['st_mobile'],'email'=>$selectName['st_email'],'attenddate'=>$queryRes['st_unit_date']));
+        }
+        
+    }
+    // header("Content-Type: application/json");
+    // echo json_encode($attendance);
+}
+
+if(@$_REQUEST['name']=='single_attendance'){
+    $attendance['data']=[];
+    $id=$_REQUEST['enrolid'];
+    $query=mysqli_query($connection,"select st1.st_unique_id as student_id,st1.st_course_unit as course ,st1.st_unit_date as at_date from student_attendance st1 inner join student_enrolment st2 where st1.st_unique_id=$id");
+    while($queryRes=mysqli_fetch_array($query)){
+
+        array_push($attendance['data'],array('student_id'=>$queryRes['student_id'],'student_name'=>$queryRes['name'].' '.$queryRes['mname'],'course'=>$queryRes['course'],'mobile'=>$queryRes['mobile'],'email'=>$queryRes['email'],'attenddate'=>$queryRes['at_date']));
+        
+    }
+    header("Content-Type: application/json");
+    echo json_encode($attendance);
 }
 
 if(@$_POST['formName']=='studentDocs'){
@@ -280,13 +377,19 @@ if(@$_POST['formName']=='studentDocs'){
         $targetFile = $targetDir . $fileName.'_'.$currentSeconds.'.'.$fileType;
         if (move_uploaded_file($_FILES["fileUpload"]["tmp_name"][$i], $targetFile)) {
 
-            if (in_array($fileType, $excelArr)) {
-                array_push($arrayUploaded,'includes/uploads/'.$targetFile."||xlsx.png");                
-            }elseif(in_array($fileType, $pdfArr)){
-                array_push($arrayUploaded,'includes/uploads/'.$targetFile."||pdf.png");
-            }elseif(in_array($fileType, $docArr)){
-                array_push($arrayUploaded,'includes/uploads/'.$targetFile."||docx.png");                
+            if($_POST['docType']=='dob'){
+                array_push($arrayUploaded,'includes/'.$targetFile."||dob");  
+            }else{
+                array_push($arrayUploaded,'includes/'.$targetFile."||address");  
             }
+
+            // if (in_array($fileType, $excelArr)) {
+            //     array_push($arrayUploaded,'includes/uploads/'.$targetFile."||xlsx.png");                
+            // }elseif(in_array($fileType, $pdfArr)){
+            //     array_push($arrayUploaded,'includes/uploads/'.$targetFile."||pdf.png");
+            // }elseif(in_array($fileType, $docArr)){
+            //     array_push($arrayUploaded,'includes/uploads/'.$targetFile."||docx.png");                
+            // }
         }
     }
 
@@ -296,7 +399,8 @@ if(@$_POST['formName']=='studentDocs'){
         $qry=mysqli_query($connection,"INSERT INTO `student_docs` (`st_unique_id`,`st_doc_names`) VALUES('$enrollId','".json_encode($arrayUploaded)."')");
         $inserted=mysqli_insert_id($connection);
         if($inserted!=''){
-            echo json_encode($arrayUploaded);
+            // echo json_encode($arrayUploaded);
+            echo 1;
         }else{
             echo 0; 
         }
@@ -308,13 +412,55 @@ if(@$_POST['formName']=='studentDocs'){
         //     unset($array1[$key]);
         // }
 
-        $qry=mysqli_query($connection,"UPDATE `student_docs` SET `st_doc_names`= '".json_encode($fetchArray)."' WHERE `st_unique_id`='$enrollId'");
+        $qry=mysqli_query($connection,"UPDATE `student_docs` SET `st_modified_date`='".date('Y-m-d')."',`st_doc_names`= '".json_encode($fetchArray)."' WHERE `st_unique_id`='$enrollId'");
         if($qry){
-            echo json_encode($fetchArray);
+            echo 1;
+            // echo json_encode($fetchArray);
         }else{
             echo 0; 
         }
     }
+}
+
+if(@$_POST['formName']=='deleteProof'){
+    $enrolid=$_POST['enrolID'];
+    $delType=$_POST['delType'];
+    $arrayUploaded=array();
+    if($delType=='dob_del'){
+        $type="dob";
+    }else{
+        $type="address";
+    }
+    
+    // echo "SELECT st_unique_id,st_doc_names FROM `student_docs` WHERE `st_unique_id`='$enrolid'"
+    $selectQry=mysqli_query($connection,"SELECT st_unique_id,st_doc_names FROM `student_docs` WHERE `st_unique_id`='$enrolid'");
+    $selectQryRes=mysqli_fetch_array($selectQry);
+    $fetchArray=json_decode($selectQryRes['st_doc_names']); 
+
+      
+        // if(($key = array_search($type, $fetchArray)) !== false) {
+
+        //     unset($fetchArray[$key]);
+        // }
+        $keyVal=0; 
+        foreach ($fetchArray as $value) {
+            if (strpos($value, $type) !== false) {
+                unset($fetchArray[$keyVal]);      
+                $arrayUploaded=array_values($fetchArray);
+            }
+            $keyVal++;
+        }
+        
+
+        $qry=mysqli_query($connection,"UPDATE `student_docs` SET `st_modified_date`='".date('Y-m-d')."',`st_doc_names`= '".json_encode($arrayUploaded)."' WHERE `st_unique_id`='$enrolid'");
+        if($qry){
+            echo 1;
+            // echo json_encode($fetchArray);
+        }else{
+            echo 0; 
+        }
+
+
 }
 
 ?>
@@ -353,7 +499,6 @@ require 'vendor/autoload.php';
             }
             $tbody='';
             foreach ($worksheet->getRowIterator(2) as $row) { 
-                $tbody.='<tr>';
                 $cellIterator = $row->getCellIterator();
                 $cellIterator->setIterateOnlyExistingCells(FALSE);
 
@@ -363,17 +508,19 @@ require 'vendor/autoload.php';
                 }
 
                 $unixTimestamp = ($data[2] - 25569) * 86400; 
+                if($data[0]!='' && $data[1]!='' ){
+                    $tbody.='<tr>';
+                    $tbody.='<td>'.$data[0].'</td>';
+                    $tbody.='<td>'.$data[1].'</td>';
+                    $tbody.='<td>'.date('m-d-Y',$unixTimestamp).'</td>';
 
-                $tbody.='<td>'.$data[0].'</td>';
-                $tbody.='<td>'.$data[1].'</td>';
-                $tbody.='<td>'.date('m-d-Y',$unixTimestamp).'</td>';
-
-                // $sql = "INSERT INTO student_attendance (" . implode(", ", $headers) . ") VALUES ('" . implode("', '", $data) . "')";
-                $sql = "INSERT INTO student_attendance (`st_unique_id`,`st_course_unit`,`st_unit_date`) VALUES ('".$data[0]."','".$data[1]."','".date('Y-m-d',$unixTimestamp)."')";
-                if ($connection->query($sql) !== TRUE) {
-                    echo "Error: " . $connection->error;
+                    // $sql = "INSERT INTO student_attendance (" . implode(", ", $headers) . ") VALUES ('" . implode("', '", $data) . "')";
+                    $sql = "INSERT INTO student_attendance (`st_unique_id`,`st_course_unit`,`st_unit_date`) VALUES ('".$data[0]."','".$data[1]."','".date('Y-m-d',$unixTimestamp)."')";
+                    if ($connection->query($sql) !== TRUE) {
+                        echo "Error: " . $connection->error;
+                    }
+                    $tbody.='</tr>';
                 }
-                $tbody.='</tr>';
             }
             echo $tbody;
         } else {

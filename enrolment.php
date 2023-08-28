@@ -68,26 +68,7 @@ if(@$_SESSION['user_type']!=''){
                             </div>
                         </div>
                         <!-- end page title -->
-                        <?php if($enrolId==0){ ?>
-                        <div class="row">
-                        <div class="col-xl-12">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-2">
-                                            <div class="mb-3">
-                                                <label class="form-label" for="enquiry_id">Enquiry ID</label>
-                                                <input type="text" id="enquiry_id" class="form-control" name='enquiry_id'>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- end card -->
-                        </div> <!-- end col -->
-                        </div>
                         <!-- end row -->
-                        <?php } ?>
                         <div class="row">
                             <div class="col-xl-12">
                                 <div class="card">
@@ -97,7 +78,7 @@ if(@$_SESSION['user_type']!=''){
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="qualifications">Qualification</label>
-                                                            <select name="qualifications" class="form-control" id="qualifications">
+                                                            <select name="qualifications" class="form-select" id="qualifications">
                                                                 <option value="0">--select--</option>
                                                             <?php 
                                                         while($qualificationsRes=mysqli_fetch_array($qualifications)){
@@ -113,12 +94,12 @@ if(@$_SESSION['user_type']!=''){
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="courses">Course Interested In</label>
-                                                        <select name="courses" class="form-control" id="courses">
+                                                        <select name="courses" class="form-select" id="courses">
                                                         <option value="0">--select--</option>
                                                         <?php 
                                                         while($coursesRes=mysqli_fetch_array($courses)){
                                                         ?>                                                            
-                                                            <option value="<?php echo $coursesRes['course_id']; ?>" <?php echo $coursesRes['course_id']==$queryRes['st_course'] ? 'selected' : ''; ?>><?php echo $coursesRes['course_name']; ?></option>
+                                                            <option value="<?php echo $coursesRes['course_id']; ?>" <?php echo $queryRes['st_enrol_course']==$coursesRes['course_id'] ? 'selected' : ''; ?>><?php echo $coursesRes['course_sname'].'-'.$coursesRes['course_name']; ?></option>
                                                             <?php } ?>
                                                         </select>    
                                                         <div class="error-feedback">
@@ -129,7 +110,7 @@ if(@$_SESSION['user_type']!=''){
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="venue_name">Venue</label>
-                                                        <select name="venue_name" class="form-control" id="venue_name">
+                                                        <select name="venue_name" class="form-select" id="venue_name">
                                                             <option value="0">--select--</option>
                                                         <?php 
                                                         while($venueRes=mysqli_fetch_array($venue)){
@@ -151,10 +132,10 @@ if(@$_SESSION['user_type']!=''){
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6">
+                                                <div class="col-md-6 d-none">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="name_main">I am</label>
-                                                        <input type="text" class="form-control" id="name_main" value="<?php echo $queryRes['st_name'] ?>" >
+                                                        <input type="text" class="form-control" id="name_main" value="test" >
                                                         <div class="error-feedback">
                                                             Please enter the Name
                                                         </div>
@@ -190,7 +171,7 @@ if(@$_SESSION['user_type']!=''){
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="source">How did you hear about Milton College</label>
-                                                        <select name="source" class="form-control" id="source">
+                                                        <select name="source" class="form-select" id="source">
                                                             <option value="0">--select--</option>
                                                         <?php 
                                                         while($sourceRes=mysqli_fetch_array($source)){
@@ -201,6 +182,15 @@ if(@$_SESSION['user_type']!=''){
                                                         <div class="error-feedback">
                                                             Please select atleast one option
                                                         </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 <?php echo $enrolId!=0 ? 'd-none' : '' ?>">
+                                                    <div class="mb-3">
+                                                <div class="d-flex justify-content-between align-items-end">
+                                                    <label class="form-label" for="enquiry_id">Enquiry ID</label>
+                                                    <label class="btn btn-primary" id="lookedup"><i class="mdi mdi-eye"></i> Student Lookup</label>    
+                                                </div>
+                                                    <input type="text" id="enquiry_id" class="form-control" placeholder="Enquiry ID" name='enquiry_id' value="<?php echo $queryRes['st_enquiry_id']; ?>">
                                                     </div>
                                                 </div>
                                             </div>
@@ -232,6 +222,12 @@ if(@$_SESSION['user_type']!=''){
         <div class="rightbar-overlay"></div>
         <?php include('includes/footer_includes.php'); ?>
         <script>
+
+$(document).on('click','#lookedup',function(){
+    studetnLookup();
+    $('#model_trigger1').trigger('click');
+})
+
             $(document).on('click','#enrolment_check',function(){
                 var given_name=$('#given_name').val().trim();
                 var name_main=$('#name_main').val().trim();
@@ -256,7 +252,7 @@ if(@$_SESSION['user_type']!=''){
                         $('#qualifications').removeClass('invalid-div');                        
                         $('#qualifications').closest('div').find('.error-feedback').hide();
                     }
-                    if(emailAddress==''){
+                    if( emailAddress=='' ||  (emailAddress!='' && !emailAddress.match(emailregexp)==true) ){
                         $('#email').addClass('invalid-div');
                         $('#email').removeClass('valid-div');
                         $('#email').closest('div').find('.error-feedback').show();
@@ -345,18 +341,24 @@ if(@$_SESSION['user_type']!=''){
                         url:'includes/datacontrol.php',
                         data:details,
                         success:function(data){
-                            if(data==0){
-                                document.getElementById('student_enrol_form').reset();
-                                $('#toast-text').html('New Record added Successfully');
-                                $('#borderedToast1Btn').trigger('click');
-                            }else if(data==2){
-                                document.getElementById('student_enrol_form').reset();
-                                $('#toast-text').html('Record Updated Successfully');
-                                $('#borderedToast1Btn').trigger('click');
-                                window.location.href="dashboard";
-                            }else{
+                            if(data==1 || data==0){
                                 $('.toast-text2').html('Cannot add record. Please try again later');
                                 $('#borderedToast2Btn').trigger('click');
+                            }else if(data==2){
+                                document.getElementById('student_enrol_form').reset();
+                                $('#enquiry_id').val('');
+                                $('#toast-text').html('Record Updated Successfully');
+                                $('#borderedToast1Btn').trigger('click');
+                                window.location.href="dashboard.php";
+                            }else{
+                                document.getElementById('student_enrol_form').reset();
+                                $('#enquiry_id').val('');
+                                $('#toast-text').html('New Record added Successfully');
+                                $('#borderedToast1Btn').trigger('click');
+
+                                $('#myModalLabel').html('Student ID Created:');
+                                $('.modal-body').html(data);
+                                $('#model_trigger').trigger('click');
                             }
                         }
                     })

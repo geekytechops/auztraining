@@ -1,7 +1,8 @@
+<?php include('includes/dbconnect.php'); ?>
 <?php 
 session_start();
 // print_r($_SESSION);
-if(@$_SESSION['user_type']==1){
+if(isset($_SESSION['user_type'])){
 ?>
 <!doctype html>
 <html lang="en">
@@ -52,6 +53,9 @@ if(@$_SESSION['user_type']==1){
                             </div>
                         </div>
                         <!-- end page title -->
+                        <?php 
+                        if($_SESSION['user_type']==1){
+                        ?>
                         <div class="row">
                             <div class="col-lg-12">
                                 <div class="card">
@@ -99,6 +103,8 @@ if(@$_SESSION['user_type']==1){
                                                         <thead>
                                                             <tr>
                                                                 <th scope="col">Name</th>
+                                                                <th scope="col">Student ID</th>
+                                                                <th scope="col">Enquiry ID</th>
                                                                 <th scope="col">Given Name</th>
                                                                 <th scope="col">Middle Name</th>
                                                                 <th scope="col">Qualification</th>
@@ -125,6 +131,7 @@ if(@$_SESSION['user_type']==1){
                                                                 <table id="datatable_invoices" class="table table-striped table-bordered nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100% !important;">
                                                             <thead>
                                                                 <tr>
+                                                                    <th scope="col">Invoice ID</th>
                                                                     <th scope="col">Student Name</th>
                                                                     <th scope="col">Course</th>
                                                                     <th scope="col">Course Fee</th>
@@ -160,6 +167,7 @@ if(@$_SESSION['user_type']==1){
                                                         <th scope="col">Email</th>
                                                         <th scope="col">Course</th>
                                                         <th scope="col">Enroled Date</th>
+                                                        <th scope="col">Action</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -242,7 +250,95 @@ if(@$_SESSION['user_type']==1){
                             
                         </div> -->
                     
+            <?php }else{ 
+                            
+                $enrolId=$_SESSION['user_log_id'];
+                $queryRess=mysqli_fetch_array(mysqli_query($connection,"SELECT * from student_enrolment where st_enrol_status!=1 and st_unique_id='$enrolId'"));
+                $selectQry=mysqli_query($connection,"SELECT st_unique_id,st_doc_names FROM `student_docs` WHERE `st_unique_id`='$enrolId'");
+                $course_id=$queryRess['st_enrol_course'];
+                $courses=mysqli_fetch_array(mysqli_query($connection,"SELECT * from courses where course_status!=1 AND course_id=$course_id"));                                
+            ?>
 
+                        <!-- end page title -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="mb-3">
+                                                    <label class="form-label" for="validationCustom01">Student ID</label>
+                                                    <div class="">
+                                                        <?php echo $_SESSION['user_log_id'];  ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="mb-3">
+                                                <label class="form-label" for="validationCustom01">Name</label>
+                                                    <div class="">
+                                                        <?php echo $queryRess['st_given_name'].' '.$queryRess['st_middle_name'];  ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="mb-3">
+                                                <label class="form-label" for="validationCustom01">Phone Number</label>
+                                                    <div class="">
+                                                        <?php echo $queryRess['st_mobile'];  ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="mb-3">
+                                                <label class="form-label" for="validationCustom01">Email</label>
+                                                    <div class="">
+                                                        <?php echo $queryRess['st_email'];  ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div> <!-- end col -->
+                        </div> <!-- end row -->
+                        <!-- end page title -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="mb-3">
+                                                    <label class="form-label" for="validationCustom01">Enquiry ID</label>
+                                                    <div class="">
+                                                        <?php echo $queryRess['st_enquiry_id'];  ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="mb-3">
+                                                <label class="form-label" for="validationCustom01">Enroled Date</label>
+                                                    <div class="">
+                                                        <?php echo $queryRess['created_date'];  ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="mb-3">
+                                                <label class="form-label" for="validationCustom01">Course</label>
+                                                    <div class="">
+                                                        <?php echo $courses['course_name'];  ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div> <!-- end col -->
+                        </div> <!-- end row -->
+
+                            <?php } ?>
                     </div> <!-- container-fluid -->
                 </div>
                 <!-- End Page-content -->
@@ -256,6 +352,9 @@ if(@$_SESSION['user_type']==1){
         <!-- Right bar overlay-->
         <div class="rightbar-overlay"></div>
         <?php include('includes/footer_includes.php'); ?>
+        <?php 
+        if($_SESSION['user_type']==1){
+        ?>
         <script>
 
             function delete_enq(eq_id){
@@ -275,7 +374,7 @@ if(@$_SESSION['user_type']==1){
                 })
             }
 
-            function delete_enq(enrol_id){
+            function delete_enrol(enrol_id){
                 $.ajax({
                     type:'post',
                     data:{enrol_id:enrol_id,formName:'delete_enrol'},
@@ -317,6 +416,7 @@ if(@$_SESSION['user_type']==1){
                         { data: 'std_email' },
                         { data: 'course' },
                         { data: 'std_date' },
+                        { data: 'action' },
                     ],
                 });
 
@@ -325,6 +425,8 @@ if(@$_SESSION['user_type']==1){
                     ajax: 'includes/datacontrol.php?name=student_enrol',
                         columns: [
                         { data: 'st_enrol_name' },                                    
+                        { data: 'st_enrol_id' },                                    
+                        { data: 'st_enq_id' },                                    
                         { data: 'st_enrol_givenname' },
                         { data: 'st_enrol_middlename' },
                         { data: 'st_enrol_qual' },
@@ -338,6 +440,7 @@ if(@$_SESSION['user_type']==1){
                 scrollX: true,
                     ajax: 'includes/datacontrol.php?name=student_invoices',
                         columns: [
+                        { data: 'inv_id' },                                    
                         { data: 'inv_std_name' },                                    
                         { data: 'inv_course' },
                         { data: 'inv_fee' },
@@ -354,9 +457,15 @@ if(@$_SESSION['user_type']==1){
                 });
             })
         </script>
+        <?php }else{ ?>
+            <script>
+
+            </script>
+        <?php } ?>
     </body>
 </html>
-<?php } else{
+ <?php
+  } else{ 
     header('Location: student_enquiry.php');
-    // echo "testss";
-} ?>
+} 
+?>

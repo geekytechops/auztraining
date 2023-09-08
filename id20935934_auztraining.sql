@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Aug 28, 2023 at 02:33 AM
+-- Generation Time: Sep 08, 2023 at 02:04 AM
 -- Server version: 8.0.31
 -- PHP Version: 8.0.26
 
@@ -217,22 +217,37 @@ CREATE TABLE IF NOT EXISTS `student_enquiry` (
   `st_id` int NOT NULL AUTO_INCREMENT,
   `st_enquiry_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `st_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `st_surname` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `st_phno` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `st_email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `st_course` tinyint(1) NOT NULL,
+  `st_course_type` tinyint(1) NOT NULL DEFAULT '0',
+  `st_street_details` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `st_suburb` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `st_state` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `st_post_code` varchar(10) COLLATE utf8mb4_general_ci NOT NULL,
+  `st_visited` tinyint(1) NOT NULL,
+  `st_heared` tinyint(1) NOT NULL,
+  `st_refered` tinyint(1) NOT NULL,
+  `st_refer_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `st_refer_alumni` tinyint(1) NOT NULL,
   `st_fee` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `st_remarks` tinyint(1) NOT NULL,
+  `st_shore` tinyint(1) NOT NULL,
+  `st_ethnicity` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `st_comments` text COLLATE utf8mb4_general_ci NOT NULL,
+  `st_appoint_book` tinyint(1) NOT NULL,
+  `st_enquiry_for` tinyint(1) NOT NULL DEFAULT '1',
   `st_visa_status` tinyint(1) NOT NULL,
   `st_enquiry_status` tinyint(1) NOT NULL DEFAULT '0',
+  `st_startplan_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `st_enquiry_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `st_created_by` int NOT NULL,
   `created_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `st_modified_by` int NOT NULL,
+  `st_modified_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`st_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `student_enquiry`
---
-
-INSERT INTO `student_enquiry` (`st_id`, `st_enquiry_id`, `st_name`, `st_phno`, `st_email`, `st_course`, `st_fee`, `st_visa_status`, `st_enquiry_status`, `created_date`) VALUES
-(1, 'EQ00001', 'Mike Sheifen', '9876443216', 'test2@gmail.com', 1, '2000', 1, 0, '2023-08-26 15:40:12');
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 

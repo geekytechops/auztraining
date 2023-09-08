@@ -75,26 +75,6 @@ if(@$_SESSION['user_type']!=''){
                                             <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="student_name">Student's Name</label>
-                                                        <input type="text" class="form-control" id="student_name" placeholder="Student Name" value="<?php echo $queryRes['st_name']; ?>" >
-                                                        <div class="error-feedback">
-                                                            Please enter the student's name
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="contact_num">Contact No</label>
-                                                        <input type="text" class="form-control number-field" maxlength="10" id="contact_num" placeholder="Contact Number" value="<?php echo $queryRes['st_phno']; ?>" >
-                                                        <div class="error-feedback">
-                                                            Please enter the Contact Number
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
                                                         <label class="form-label" for="email_address">Email</label>
                                                         <input type="text" class="form-control" id="email_address" placeholder="Email Address" value="<?php echo $queryRes['st_email']; ?>" >
                                                         <div class="error-feedback">
@@ -104,7 +84,144 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="courses">Course Interested In</label>
+                                                        <label class="form-label" for="enquiry_date">Date</label>
+                                                        <input type="date" class="form-control" id="enquiry_date" >
+                                                        <div class="error-feedback">
+                                                            Please select the Date
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="surname">Surname</label>
+                                                        <input type="text" class="form-control" id="surname" placeholder="Surname" value="" >
+                                                        <div class="error-feedback">
+                                                            Please enter the Surname
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="student_name">First Name</label>
+                                                        <input type="text" class="form-control" id="student_name" placeholder="Student Name" value="<?php echo $queryRes['st_name']; ?>" >
+                                                        <div class="error-feedback">
+                                                            Please enter the First name
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="enquiry_for">Enquiring For</label>
+                                                        <select name="enquiry_for" class="form-select" id="enquiry_for">
+                                                        <option value="0">--select--</option>
+                                                        <option value="1">Self</option>
+                                                        <option value="2">Family member</option>
+                                                        </select>  
+                                                        <div class="error-feedback">
+                                                            Please select atleast one option
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="course_type">Course Type</label>
+                                                        <select name="course_type" class="form-select" id="course_type">
+                                                        <option value="0">--select--</option>
+                                                        <option value="1">Rpl</option>
+                                                        <option value="2">Regular</option>
+                                                        <option value="3">Regular - Group</option>                                                         
+                                                        <option value="4">Regular - Group</option>                                                         
+                                                        <option value="5">Short course - Group</option>
+                                                        </select>  
+                                                        <div class="error-feedback">
+                                                            Please select atleast one option
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="contact_num">Mobile</label>
+                                                        <input type="text" class="form-control number-field" maxlength="10" id="contact_num" placeholder="Contact Number" value="<?php echo $queryRes['st_phno']; ?>" >
+                                                        <div class="error-feedback">
+                                                            Please enter the Contact Number
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="street_no">Street No / Name</label>
+                                                        <input type="text" class="form-control street_no" id="street_no" placeholder="Street No / Name" value="" >
+                                                        <div class="error-feedback">
+                                                            Please enter the Street Details
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="suburb">Suburb</label>
+                                                        <input type="text" class="form-control suburb" id="suburb" placeholder="Sub Urb" value="" >
+                                                        <div class="error-feedback">
+                                                            Please enter the Suburb
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="stu_state">State</label>
+                                                        <input type="text" class="form-control stu_state" id="stu_state" placeholder="State" value="" >
+                                                        <div class="error-feedback">
+                                                            Please enter the State
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="post_code">Post Code</label>
+                                                        <input type="tel" class="form-control number-field" maxlength="6" id="post_code" placeholder="Post Code" value="" >
+                                                        <div class="error-feedback">
+                                                            Please enter the Post Code
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="stu_state">Have you visited us before?*</label>
+                                                        <select name="courses" class="form-select" id="course_type">
+                                                        <option value="0">--select--</option>
+                                                        <option value="1">Word of Mouth</option>
+                                                        <option value="2">Family or Friends</option>
+                                                        <option value="3">Website</option>
+                                                        <option value="4">Gumtree</option>
+                                                    <optgroup label="Social Media">
+                                                        <option value="5">Facebook</option>
+                                                        <option value="6">Instagram</option>
+                                                        <option value="7">Linkedin</option>
+                                                    </optgroup>   
+                                                        <option value="8">Mail outs</option>
+                                                        <option value="9">Migration Agency</option>
+                                                        <option value="10">Other:</option>                                                     
+                                                        </select>  
+                                                        <div class="error-feedback">
+                                                            Please select atleast one option
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="stu_state">How did you hear about us?</label>
+                                                        <select name="courses" class="form-select" id="course_type">
+                                                        <option value="0">--select--</option>
+                                                        <option value="1">Yes</option>
+                                                        <option value="2">No</option>
+                                                        </select>  
+                                                        <div class="error-feedback">
+                                                            Please select atleast one option
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="courses">Which Course are you interested in?*</label>
                                                         <select name="courses" class="form-select" id="courses">
                                                         <option value="0">--select--</option>
                                                         <?php 
@@ -118,14 +235,47 @@ if(@$_SESSION['user_type']!=''){
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="payment_fee">Fee Promised</label>
-                                                        <input type="text" class="form-control number-field" maxlength="7" id="payment_fee" placeholder="0.00" value="<?php echo $queryRes['st_fee']; ?>" >
+                                                        <label class="form-label" for="plan_to_start_date">When do you plan to start?</label>
+                                                        <input type="date" class="form-control" id="plan_to_start_date" value="" >
                                                         <div class="error-feedback">
-                                                            Please enter the Promised Fee
+                                                            Please select the Plan to Start Date
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="refer_select">Have you been referred by someone?*</label>
+                                                        <select name="refer_select" class="form-select" id="refer_select">
+                                                        <option value="0">--select--</option>
+                                                        <option value="1">Yes</option>
+                                                        <option value="2">No</option>
+                                                        </select>                                                          
+                                                        <div class="error-feedback">
+                                                            Please select atleast one option
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                         <label class="form-label" for="referer_name">Please specify his / her name</label>
+                                                        <input type="text" class="form-control" id="referer_name" value="" placeholder="Name">
+                                                        <div class="error-feedback">
+                                                            Please Enter his / her name
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="refer_alumni">Is he / she an alumni*</label>
+                                                        <select name="refer_alumni" class="form-select" id="refer_alumni">
+                                                        <option value="0">--select--</option>
+                                                        <option value="1">Yes</option>
+                                                        <option value="2">No</option>
+                                                        </select>                                                          
+                                                        <div class="error-feedback">
+                                                            Please select atleast one option
                                                         </div>
                                                     </div>
                                                 </div>
@@ -142,6 +292,72 @@ if(@$_SESSION['user_type']!=''){
                                                         </select> 
                                                         <div class="error-feedback">
                                                             Please select a visa status
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="shore">Offshore or onshore</label>
+                                                        <select name="shore" class="form-select" id="shore">
+                                                        <option value="0">--select--</option>
+                                                        <option value="1">OffShort</option>
+                                                        <option value="2">OnShort</option>
+                                                        </select>                                                          
+                                                        <div class="error-feedback">
+                                                            Please select atleast one option
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="ethnicity">Ethnicity</label>
+                                                        <input type="text" class="form-control" id="ethnicity" placeholder="Ethnicity">
+                                                        <div class="error-feedback">
+                                                            Please enter the Ethnicity
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="payment_fee">Fees mentioned</label>
+                                                        <input type="text" class="form-control number-field" maxlength="7" id="payment_fee" placeholder="0.00" value="<?php echo $queryRes['st_fee']; ?>" >
+                                                        <div class="error-feedback">
+                                                            Please enter the Mentioned Fee
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="comments">Comments</label>
+                                                        <input type="text" class="form-control" id="comments" placeholder="Comments">
+                                                        <div class="error-feedback">
+                                                            Please enter the Comments
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="appointment_booked">Appointment booked for counseling or not?</label>
+                                                        <select name="appointment_booked" class="form-select" id="appointment_booked">
+                                                        <option value="0">--select--</option>
+                                                        <option value="1">Yes</option>
+                                                        <option value="2">No</option>
+                                                        </select>                                                          
+                                                        <div class="error-feedback">
+                                                            Please select atleast one option
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="remarks">Remarks</label>
+                                                        <select name="remarks" class="form-select" id="remarks">
+                                                        <option value="0">--select--</option>
+                                                        <option value="1">Good</option>
+                                                        <option value="2">Bad</option>
+                                                        </select>                                                          
+                                                        <div class="error-feedback">
+                                                            Please select atleast one option
                                                         </div>
                                                     </div>
                                                 </div>
@@ -178,12 +394,20 @@ if(@$_SESSION['user_type']!=''){
                 var studentName=$('#student_name').val().trim();
                 var contactName=$('#contact_num').val().trim();
                 var emailAddress=$('#email_address').val().trim();
+                var enquiryDate=$('#enquiry_date').val();
+                var surname=$('#surname').val();
+                var suburb=$('#suburb').val();
+                var stuState=$('#stu_state').val();
+                var postCode=$('#post_code').val();
+                var streetDetails=$('#street_no').val();
+                var enquiryFor=$('#enquiry_for').val()==0 ? '' : $('#enquiry_for').val();
+                var courseType=$('#course_type').val()==0 ? '' : $('#course_type').val();
                 var emailregexp = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
                 var courses=$('#courses').val()==0 ? '' : $('#courses').val();
                 var payment=$('#payment_fee').val().trim();
                 var visaStatus=$('#visa_status').val()==0 ? '' : $('#visa_status').val();
 
-                if(studentName==''|| ( contactName=='' || contactName.length!=10 ) ||emailAddress==''|| (emailAddress!='' && !emailAddress.match(emailregexp)==true ) ||courses==''||payment==''||visaStatus==''){
+                if(studentName==''|| ( contactName=='' || contactName.length!=10 ) ||emailAddress==''|| (emailAddress!='' && !emailAddress.match(emailregexp)==true ) ||courses==''|| surname=='' ||payment==''||visaStatus=='' || enquiryDate=='' || postCode==''){
                     if(studentName==''){
                         $('#student_name').addClass('invalid-div');
                         $('#student_name').removeClass('valid-div');
@@ -238,6 +462,36 @@ if(@$_SESSION['user_type']!=''){
                         $('#visa_status').addClass('valid-div');
                         $('#visa_status').removeClass('invalid-div');
                         $('#visa_status').closest('div').find('.error-feedback').hide();
+                    }
+
+                    if(enquiryDate==''){
+                        $('#enquiry_date').addClass('invalid-div');
+                        $('#enquiry_date').removeClass('valid-div');
+                        $('#enquiry_date').closest('div').find('.error-feedback').show();
+                    }else{
+                        $('#enquiry_date').addClass('valid-div');
+                        $('#enquiry_date').removeClass('invalid-div');
+                        $('#enquiry_date').closest('div').find('.error-feedback').hide();
+                    }
+
+                    if(surname==''){
+                        $('#surname').addClass('invalid-div');
+                        $('#surname').removeClass('valid-div');
+                        $('#surname').closest('div').find('.error-feedback').show();
+                    }else{
+                        $('#surname').addClass('valid-div');
+                        $('#surname').removeClass('invalid-div');
+                        $('#surname').closest('div').find('.error-feedback').hide();
+                    }
+
+                    if(enquiryFor==''){
+                        $('#enquiry_for').addClass('invalid-div');
+                        $('#enquiry_for').removeClass('valid-div');
+                        $('#enquiry_for').closest('div').find('.error-feedback').show();
+                    }else{
+                        $('#enquiry_for').addClass('valid-div');
+                        $('#enquiry_for').removeClass('invalid-div');
+                        $('#enquiry_for').closest('div').find('.error-feedback').hide();
                     }
                 }else{
                     var checkId=$("#check_update").val();

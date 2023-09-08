@@ -5,7 +5,16 @@ if(@$_POST['formName']=='logout'){
     session_destroy();
     header('Location: ../index.php');
 }
+if(@$_POST['formName']=='create_qr'){
+    $admin_id=$_POST['admin_id'];
+    $query=mysqli_query($connection,"INSERT INTO `enquiry_forms` (`enq_admin_id`)VALUES($admin_id);");
+    $last_inserted_id=mysqli_insert_id($connection);    
+    echo base64_encode($last_inserted_id);
+
+}
+
 if(@$_POST['formName']=='student_enquiry'){
+
 $studentName=$_POST['studentName'];
 $contactName=$_POST['contactName'];
 $emailAddress=$_POST['emailAddress'];
@@ -14,9 +23,31 @@ $payment=$_POST['payment'];
 $visaStatus=$_POST['visaStatus'];
 $checkId=$_POST['checkId'];
 
+$surname=$_POST['surname'];
+$suburb=$_POST['suburb'];
+$stuState=$_POST['stuState'];
+$postCode=$_POST['postCode'];
+$visit_before=$_POST['visit_before'];
+$hear_about=$_POST['hear_about'];
+$plan_to_start_date=$_POST['plan_to_start_date'];
+$refer_select=$_POST['refer_select'];
+$referer_name=$_POST['referer_name'];
+$refer_alumni=$_POST['refer_alumni'];
+$comments=$_POST['comments'];
+$appointment_booked=$_POST['appointment_booked'];
+$remarks=$_POST['remarks'];
+$streetDetails=$_POST['streetDetails'];
+$enquiryFor=$_POST['enquiryFor'];
+$courseType=$_POST['courseType'];
+$shore=$_POST['shore'];
+$ethnicity=$_POST['ethnicity'];
+$created_by=$_POST['admin_id'];
+
+
+
 if($checkId==0){
 
-    $query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_phno,st_email,st_course,st_fee,st_visa_status)VALUES('$studentName','$contactName','$emailAddress',$courses,'$payment',$visaStatus)");
+    $query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_phno,st_email,st_course,st_fee,st_visa_status,st_surname,st_suburb,st_state,st_post_code,st_visited,st_heared,st_startplan_date,st_refered,st_refer_name,st_refer_alumni,st_comments,st_appoint_book,st_remarks,st_street_details,st_enquiry_for,st_course_type,st_shore,st_ethnicity,st_created_by)VALUES('$studentName','$contactName','$emailAddress',$courses,'$payment',$visaStatus,'$surname','$suburb','$stuState',$postCode,$visit_before,$hear_about,'$plan_to_start_date',$refer_select,'$referer_name',$refer_alumni,'$comments',$appointment_booked,'$remarks','$streetDetails',$enquiryFor,$courseType,$shore,'$ethnicity',$created_by)");
     $lastId=mysqli_insert_id($connection);
     $uniqueId=sprintf('EQ%05d', $lastId);
     $querys=mysqli_query($connection,"UPDATE student_enquiry SET st_enquiry_id='$uniqueId' WHERE st_id=$lastId");
@@ -25,6 +56,13 @@ if($checkId==0){
         echo 0;
     }else{
         echo $uniqueId;
+
+        $mail_to=$emailAddress;
+        $mail_subject="Your Enquiry Successfully Created";
+        $mail_body="Please keep your enquiry ID noted for future uses<br><b>Enquiry ID: </b>".$uniqueId;
+        send_mail($mail_to,$mail_subject,$mail_body);
+
+
     }
 
 }else{

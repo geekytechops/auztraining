@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Sep 08, 2023 at 02:04 AM
+-- Generation Time: Sep 08, 2023 at 12:18 PM
 -- Server version: 8.0.31
--- PHP Version: 8.0.26
+-- PHP Version: 8.2.0
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -35,15 +35,30 @@ CREATE TABLE IF NOT EXISTS `courses` (
   `course_status` tinyint(1) NOT NULL DEFAULT '0',
   `created_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`course_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `courses`
 --
 
 INSERT INTO `courses` (`course_id`, `course_name`, `course_sname`, `course_status`, `created_date`) VALUES
-(1, 'AGING', 'A3', 0, '2023-08-26 15:30:33'),
-(2, 'DISABILITY', 'D1', 0, '2023-08-26 15:30:33');
+(1, 'A3', 'Certificate III in Individual Support (Ageing)', 0, '2023-09-08 04:10:15'),
+(2, 'D3', 'Certificate III in Individual Support (Disability)', 0, '2023-09-08 04:10:16'),
+(3, 'AD', 'Certificate III in Individual Support (Ageing & Disability)', 0, '2023-09-08 04:10:16'),
+(4, 'A4', 'Certificate IV in Ageing Support', 0, '2023-09-08 04:10:16'),
+(5, 'D4', 'Certificate IV in Disability', 0, '2023-09-08 04:10:16'),
+(6, 'HAS', 'Certificate III in Health Services Assistance', 0, '2023-09-08 04:10:16'),
+(7, 'FA', 'Provide First Aid', 0, '2023-09-08 04:10:16'),
+(8, 'BLS', 'Provide Basic Emergency Life Support', 0, '2023-09-08 04:10:16'),
+(9, 'CPR', 'Provide Cardiopulmonary Resuscitation (CPR)', 0, '2023-09-08 04:10:16'),
+(10, 'MEDR', 'Medication Course: Refresher', 0, '2023-09-08 04:10:16'),
+(11, 'MEDF', 'Medication Course: Full', 0, '2023-09-08 04:10:16'),
+(12, 'MHR', 'Manual Handling: Refresher', 0, '2023-09-08 04:10:16'),
+(13, 'MHF', 'Manual Handling: Full', 0, '2023-09-08 04:10:16'),
+(14, 'MH4', 'cert 4 in Mental health', 0, '2023-09-08 04:10:16'),
+(15, 'DMH', 'diploma in mental health', 0, '2023-09-08 04:10:16'),
+(16, 'BSG', 'insulin training - BSG', 0, '2023-09-08 04:10:16'),
+(17, 'DCS', 'Diploma in comm services', 0, '2023-09-08 04:10:16');
 
 -- --------------------------------------------------------
 
@@ -68,6 +83,29 @@ CREATE TABLE IF NOT EXISTS `documents` (
 INSERT INTO `documents` (`document_id`, `document_name`, `document_shortcode`, `document_status`, `document_created_date`) VALUES
 (1, 'Date of  Birth', 'dob', 0, '2023-08-27 11:50:16'),
 (2, 'Address', 'address', 0, '2023-08-27 11:50:16');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `enquiry_forms`
+--
+
+DROP TABLE IF EXISTS `enquiry_forms`;
+CREATE TABLE IF NOT EXISTS `enquiry_forms` (
+  `enq_form_id` int NOT NULL AUTO_INCREMENT,
+  `enq_admin_id` int DEFAULT NULL,
+  `enq_status` tinyint(1) NOT NULL,
+  `enq_created_on` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`enq_form_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `enquiry_forms`
+--
+
+INSERT INTO `enquiry_forms` (`enq_form_id`, `enq_admin_id`, `enq_status`, `enq_created_on`) VALUES
+(1, 1, 0, '2023-09-08 10:06:36'),
+(2, 1, 0, '2023-09-08 10:07:03');
 
 -- --------------------------------------------------------
 
@@ -217,37 +255,50 @@ CREATE TABLE IF NOT EXISTS `student_enquiry` (
   `st_id` int NOT NULL AUTO_INCREMENT,
   `st_enquiry_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `st_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `st_surname` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `st_surname` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `st_phno` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `st_email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `st_course` tinyint(1) NOT NULL,
   `st_course_type` tinyint(1) NOT NULL DEFAULT '0',
-  `st_street_details` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `st_suburb` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `st_state` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `st_post_code` varchar(10) COLLATE utf8mb4_general_ci NOT NULL,
+  `st_street_details` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `st_suburb` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `st_state` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `st_post_code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `st_visited` tinyint(1) NOT NULL,
   `st_heared` tinyint(1) NOT NULL,
   `st_refered` tinyint(1) NOT NULL,
-  `st_refer_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `st_refer_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `st_refer_alumni` tinyint(1) NOT NULL,
   `st_fee` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `st_remarks` tinyint(1) NOT NULL,
   `st_shore` tinyint(1) NOT NULL,
-  `st_ethnicity` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `st_comments` text COLLATE utf8mb4_general_ci NOT NULL,
+  `st_ethnicity` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `st_comments` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `st_appoint_book` tinyint(1) NOT NULL,
   `st_enquiry_for` tinyint(1) NOT NULL DEFAULT '1',
   `st_visa_status` tinyint(1) NOT NULL,
   `st_enquiry_status` tinyint(1) NOT NULL DEFAULT '0',
-  `st_startplan_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `st_startplan_date` datetime DEFAULT NULL,
   `st_enquiry_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `st_created_by` int NOT NULL,
   `created_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `st_modified_by` int NOT NULL,
-  `st_modified_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `st_modified_by` int DEFAULT NULL,
+  `st_modified_date` datetime DEFAULT NULL,
+  `st_gen_enq_id` int DEFAULT NULL,
   PRIMARY KEY (`st_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `student_enquiry`
+--
+
+INSERT INTO `student_enquiry` (`st_id`, `st_enquiry_id`, `st_name`, `st_surname`, `st_phno`, `st_email`, `st_course`, `st_course_type`, `st_street_details`, `st_suburb`, `st_state`, `st_post_code`, `st_visited`, `st_heared`, `st_refered`, `st_refer_name`, `st_refer_alumni`, `st_fee`, `st_remarks`, `st_shore`, `st_ethnicity`, `st_comments`, `st_appoint_book`, `st_enquiry_for`, `st_visa_status`, `st_enquiry_status`, `st_startplan_date`, `st_enquiry_date`, `st_created_by`, `created_date`, `st_modified_by`, `st_modified_date`, `st_gen_enq_id`) VALUES
+(1, 'EQ00001', 'TEst First', 'Test Surname', '9876549877', 'Test@gmail.com', 1, 1, 'TESTS Street', 'Test Suburb', 'TEST State', '987654', 1, 1, 1, 'TEst His', 1, '654', 1, 1, '', 'TESt Comment', 1, 1, 1, 0, '2023-09-09 00:00:00', '2023-09-08 09:22:50', 0, '2023-09-08 03:52:50', 0, '2023-09-08 09:22:50', NULL),
+(2, 'EQ00002', 'first name Test', 'Surname TEst', '9876544987', 'TESt@gmail.com', 1, 1, 'TEst Street', 'Test sub', 'Test test state', '987654', 1, 1, 1, 'TEst his name', 2, '9674', 1, 2, '', 'test comment', 1, 1, 1, 0, '2023-12-31 00:00:00', '2023-09-08 09:24:39', 0, '2023-09-08 03:54:39', 0, '2023-09-08 09:24:39', NULL),
+(3, 'EQ00003', 'Test name', 'Test Surname', '9876549877', 'test@gmail.com', 3, 1, 'Test Street', 'Test Surb', 'Test State', '654987', 2, 2, 1, 'test', 1, '654654', 0, 1, 'test', '', 1, 1, 2, 0, '0000-00-00 00:00:00', '2023-09-08 11:27:07', 1, '2023-09-08 05:57:07', NULL, NULL, NULL),
+(4, 'EQ00004', 'Test First', 'Test Surname', '9876549877', 'saisatya51@gmail.com', 2, 1, 'Trest Street', 'Test Sub', 'Test State', '987654', 1, 1, 1, 'test', 1, '654', 1, 1, 'TEst ethin', 'Test Comment', 1, 1, 1, 0, '2023-12-31 00:00:00', '2023-09-08 13:58:27', 1, '2023-09-08 08:28:27', NULL, NULL, NULL),
+(5, 'EQ00005', 'Test First', 'Test Surname', '9876549877', 'saisatya51@gmail.com', 1, 1, 'Test Street', 'Test Suburb', 'Test State', '987654', 1, 1, 1, 'Test Her Name', 1, '654654', 1, 1, 'Test Ethinincvity', '', 1, 1, 1, 0, '2023-12-31 00:00:00', '2023-09-08 14:02:47', 1, '2023-09-08 08:32:47', NULL, NULL, NULL),
+(6, 'EQ00006', 'Test First', 'Test Surname', '9876549877', 'saisatya51@gmail.com', 1, 1, 'Test Street', 'Test Sub', 'Test State', '987654', 1, 1, 1, 'Test Her test', 1, '684', 1, 1, 'Test Ethinicility', '', 1, 1, 1, 0, '2023-12-31 00:00:00', '2023-09-08 14:37:09', 1, '2023-09-08 09:07:09', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -265,8 +316,8 @@ CREATE TABLE IF NOT EXISTS `student_enrolment` (
   `st_venue` varchar(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `st_middle_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `st_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `st_mobile` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `st_email` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `st_mobile` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `st_email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `st_source` tinyint(1) NOT NULL,
   `st_given_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `st_enrol_status` tinyint(1) NOT NULL,

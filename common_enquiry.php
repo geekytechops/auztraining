@@ -1,22 +1,4 @@
 <?php include('includes/dbconnect.php'); ?>
-<?php 
-session_start();
-if(@$_SESSION['user_type']!=''){
-    
-            $courses=mysqli_query($connection,"SELECT * from courses where course_status!=1");
-        $visaStatus=mysqli_query($connection,"SELECT * from visa_statuses where visa_state_status!=1");
-
-    if(isset($_GET['eq'])){
-        $Updatestatus=1;
-        $eqId=base64_decode($_GET['eq']);
-        $queryRes=mysqli_fetch_array(mysqli_query($connection,"SELECT * from student_enquiry where st_enquiry_status!=1 and st_id=$eqId"));
-
-    }else{
-        $Updatestatus=0;
-        $eqId=0;
-    }
-
-?>
 <!doctype html>
 <html lang="en">
 
@@ -30,16 +12,20 @@ if(@$_SESSION['user_type']!=''){
         <!-- App favicon -->
         <link rel="shortcut icon" href="assets/images/favicon.ico">
         <?php include('includes/app_includes.php'); ?>
+        <style>
+            .main-content{
+                margin:0;
+            }
+            .page-content{
+                padding:20px 0px 0px 0px;
+            }
+        </style>
     </head>
 
     <body data-topbar="colored">
 
         <!-- Begin page -->
-        <div id="layout-wrapper">
-
-            
-            <?php include('includes/header.php'); ?>
-            <?php include('includes/sidebar.php'); ?>
+        <div id="layout-wrapper">        
             
             <!-- ============================================================== -->
             <!-- Start right Content here -->
@@ -49,26 +35,31 @@ if(@$_SESSION['user_type']!=''){
                 <div class="page-content">
                     <div class="container-fluid">
 
+                    <?php 
+                    session_start();
+                        
+                        if(isset($_GET['data'])){
+
+                            $courses=mysqli_query($connection,"SELECT * from courses where course_status!=1");
+                            $visaStatus=mysqli_query($connection,"SELECT * from visa_statuses where visa_state_status!=1");
+
+
+                            $Updatestatus=1;
+                            $eqId=base64_decode($_GET['data']);
+                            $query=mysqli_query($connection,"SELECT * FROM `enquiry_forms` where enq_status!=1 and enq_form_id=$eqId");
+                            if(mysqli_num_rows($query)!=0){
+                                $queryRes=mysqli_fetch_array($query);
+                            }else{
+                                
+                            }    
+
+                    ?>
+
                         <!-- start page title -->
                         <div class="row">
                             <div class="col-12">
                                 <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                                    <h4 class="mb-sm-0">Student's Enquiry</h4>
-
-                                    <div class="page-title-right">
-                                        
-                                        <ol class="breadcrumb m-0 align-items-baseline">
-                                        <li class="breadcrumb-item">
-                                            <button type="button" id="generate_qr" onclick="genQR()" class="btn btn-info waves-effect waves-light">Create QR Code <i class="mdi mdi-qrcode-edit"></i> 
-                                            </button>
-                                            <div class="d-none" id="qrcode"></div>
-                                            <a id="downloadLink" download="enquiry_QR.png" class="d-none">Download QR Code</a>
-                                            </li>
-                                            <li class="breadcrumb-item"><a href="javascript: void(0);">Forms</a></li>
-                                            <li class="breadcrumb-item active">Student's Enquiry</li>
-                                        </ol>
-                                    </div>
-
+                                    <h4 class="mb-sm-0">Enquiry Form</h4>
                                 </div>
                             </div>
                         </div>
@@ -383,6 +374,32 @@ if(@$_SESSION['user_type']!=''){
                         </div>
                         <!-- end row -->
 
+                        <?php 
+                        }else{ 
+                        ?>                        
+                        <div class="row vh-100">
+                            <div class="col-xl-12 d-flex align-items-center justify-content-center">
+                                <div class="card">
+                                    <div class="card-body d-flex align-items-center text-center" style="flex-direction:column">                                        
+                                        <div class="col-md-2">
+                                            <div class="mb-3">
+                                                <i class="fas fa-exclamation-triangle" style="font-size:50px;color:#ffa808"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-10">
+                                            <div class="mb-3">
+                                                <h4>The page you have followed is broken</h5>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <?php
+                        }
+                        ?>
+
                     </div> <!-- container-fluid -->
                 </div>
                 <!-- End Page-content -->                            
@@ -623,19 +640,18 @@ if(@$_SESSION['user_type']!=''){
                     data:{admin_id:"<?php echo $_SESSION['user_id']; ?>",formName:'create_qr'},
                     type:'post',
                     success:function(data){
-                        
-                        var qrcodeContainer = document.getElementById('qrcode');
-                        var updatedURL = removeLastSegmentFromURL(window.location.href)+'/common_enquiry.php?data='+data;
+                    
                         var qrcode = new QRCode(qrcodeContainer, {
-                        text: updatedURL,
+                        text: 'https://example.com', 
                         width: 128,
                         height: 128,
                         });
+                        var qrcodeContainer = document.getElementById('qrcode');
 
                         var downloadLink = document.getElementById('downloadLink');
 
                         var qrCodeDataURL = qrcodeContainer.querySelector('canvas').toDataURL('image/png');
-                        
+
                         downloadLink.href = qrCodeDataURL;
                         downloadLink.click();
                     
@@ -643,23 +659,7 @@ if(@$_SESSION['user_type']!=''){
                 })
 
             }
-            function removeLastSegmentFromURL(url) {
-            // Split the URL by "/"
-            var segments = url.split("/");
-
-            // Remove the last segment
-            segments.pop();
-
-            // Join the segments back together
-            var updatedURL = segments.join("/");
-
-            return updatedURL;
-            }
 
         </script>
     </body>
 </html>
-<?php }else{ 
-header("Location: index.php");
-}
-?>

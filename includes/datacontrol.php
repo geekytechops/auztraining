@@ -13,6 +13,50 @@ if(@$_POST['formName']=='create_qr'){
 
 }
 
+if(@$_POST['formName']=='student_enquiry_common'){
+
+
+    $studentName=$_POST['studentName'];
+    $contactName=$_POST['contactName'];
+    $emailAddress=$_POST['emailAddress'];
+    $courses=$_POST['courses'];
+    $checkId=$_POST['checkId'];
+
+    $surname=$_POST['surname'];
+    $suburb=$_POST['suburb'];
+    $stuState=$_POST['stuState'];
+    $postCode=$_POST['postCode'];
+    $visit_before=$_POST['visit_before'];
+    $hear_about=$_POST['hear_about'];
+    $plan_to_start_date=$_POST['plan_to_start_date'];
+    $refer_select=$_POST['refer_select'];
+    $referer_name=$_POST['referer_name'];
+    $refer_alumni=$_POST['refer_alumni'];
+    $streetDetails=$_POST['streetDetails'];
+    $enquiryFor=$_POST['enquiryFor'];
+    $created_by=$_POST['admin_id'];
+
+    $query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_phno,st_email,st_course,st_surname,st_suburb,st_state,st_post_code,st_visited,st_heared,st_startplan_date,st_refered,st_refer_name,st_refer_alumni,st_street_details,st_enquiry_for,st_created_by)VALUES('$studentName','$contactName','$emailAddress',$courses,'$surname','$suburb','$stuState',$postCode,$visit_before,$hear_about,'$plan_to_start_date',$refer_select,'$referer_name',$refer_alumni,'$streetDetails',$enquiryFor,$created_by)");
+    // echo "INSERT INTO student_enquiry(st_name,st_phno,st_email,st_course,st_surname,st_suburb,st_state,st_post_code,st_visited,st_heared,st_startplan_date,st_refered,st_refer_name,st_refer_alumni,st_street_details,st_enquiry_for,st_created_by)VALUES('$studentName','$contactName','$emailAddress',$courses,'$surname','$suburb','$stuState',$postCode,$visit_before,$hear_about,'$plan_to_start_date',$refer_select,'$referer_name',$refer_alumni,'$streetDetails',$enquiryFor,$created_by)";
+
+    $lastId=mysqli_insert_id($connection);
+    $uniqueId=sprintf('EQ%05d', $lastId);
+    $querys=mysqli_query($connection,"UPDATE student_enquiry SET st_enquiry_id='$uniqueId' WHERE st_id=$lastId");
+    $error=mysqli_error($connection);
+    if($error!=''){
+        echo 0;
+    }else{
+        echo $uniqueId;
+
+        $mail_to=$emailAddress;
+        $mail_subject="Your Enquiry Successfully Created";
+        $mail_body="Please keep your enquiry ID noted for future uses<br><b>Enquiry ID: </b>".$uniqueId;
+        send_mail($mail_to,$mail_subject,$mail_body);
+
+
+    }
+
+}
 if(@$_POST['formName']=='student_enquiry'){
 
 $studentName=$_POST['studentName'];

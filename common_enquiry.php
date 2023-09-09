@@ -47,12 +47,9 @@
                             $Updatestatus=1;
                             $eqId=base64_decode($_GET['data']);
                             $query=mysqli_query($connection,"SELECT * FROM `enquiry_forms` where enq_status!=1 and enq_form_id=$eqId");
-                            if(mysqli_num_rows($query)!=0){
+                            if($query && mysqli_num_rows($query)!=0){
                                 $queryRes=mysqli_fetch_array($query);
-                            }else{
                                 
-                            }    
-
                     ?>
 
                         <!-- start page title -->
@@ -114,22 +111,6 @@
                                                         <option value="0">--select--</option>
                                                         <option value="1">Self</option>
                                                         <option value="2">Family member</option>
-                                                        </select>  
-                                                        <div class="error-feedback">
-                                                            Please select atleast one option
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="course_type">Course Type</label>
-                                                        <select name="course_type" class="form-select" id="course_type">
-                                                        <option value="0">--select--</option>
-                                                        <option value="1">Rpl</option>
-                                                        <option value="2">Regular</option>
-                                                        <option value="3">Regular - Group</option>                                                         
-                                                        <option value="4">Regular - Group</option>                                                         
-                                                        <option value="5">Short course - Group</option>
                                                         </select>  
                                                         <div class="error-feedback">
                                                             Please select atleast one option
@@ -277,88 +258,6 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="visa_status">Visa Condition</label>
-                                                        <select name="visa_status" class="form-select" id="visa_status">
-                                                        <option value="0">--select--</option>
-                                                        <?php 
-                                                        while($visaRes=mysqli_fetch_array($visaStatus)){
-                                                        ?>                                                            
-                                                            <option value="<?php echo $visaRes['visa_id']; ?>" <?php echo $visaRes['visa_id']==$queryRes['st_visa_status'] ? 'selected' : ''; ?>><?php echo $visaRes['visa_status_name']; ?></option>
-                                                            <?php } ?>
-                                                        </select> 
-                                                        <div class="error-feedback">
-                                                            Please select a visa status
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="shore">Offshore or onshore</label>
-                                                        <select name="shore" class="form-select" id="shore">
-                                                        <option value="0">--select--</option>
-                                                        <option value="1">OffShort</option>
-                                                        <option value="2">OnShort</option>
-                                                        </select>                                                          
-                                                        <div class="error-feedback">
-                                                            Please select atleast one option
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="ethnicity">Ethnicity</label>
-                                                        <input type="text" class="form-control" id="ethnicity" placeholder="Ethnicity">
-                                                        <div class="error-feedback">
-                                                            Please enter the Ethnicity
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="payment_fee">Fees mentioned</label>
-                                                        <input type="text" class="form-control number-field" maxlength="7" id="payment_fee" placeholder="0.00" value="<?php echo $queryRes['st_fee']; ?>" >
-                                                        <div class="error-feedback">
-                                                            Please enter the Mentioned Fee
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="comments">Comments</label>
-                                                        <input type="text" class="form-control" id="comments" placeholder="Comments">
-                                                        <div class="error-feedback">
-                                                            Please enter the Comments
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="appointment_booked">Appointment booked for counseling or not?</label>
-                                                        <select name="appointment_booked" class="form-select" id="appointment_booked">
-                                                        <option value="0">--select--</option>
-                                                        <option value="1">Yes</option>
-                                                        <option value="2">No</option>
-                                                        </select>                                                          
-                                                        <div class="error-feedback">
-                                                            Please select atleast one option
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="remarks">Remarks</label>
-                                                        <select name="remarks" class="form-select" id="remarks">
-                                                        <option value="0">--select--</option>
-                                                        <option value="1">Good</option>
-                                                        <option value="2">Bad</option>
-                                                        </select>                                                          
-                                                        <div class="error-feedback">
-                                                            Please select atleast one option
-                                                        </div>
-                                                    </div>
-                                                </div>
                                             </div>
                                             <?php if($eqId==0){ ?>
                                             <button class="btn btn-primary" type="button" id="enquiry_form">Submit Enquiry</button>
@@ -374,6 +273,26 @@
                         </div>
                         <!-- end row -->
 
+                        <?php }else{ ?>
+                            <div class="row vh-100">
+                            <div class="col-xl-12 d-flex align-items-center justify-content-center">
+                                <div class="card">
+                                    <div class="card-body d-flex align-items-center text-center" style="flex-direction:column">                                        
+                                        <div class="col-md-2">
+                                            <div class="mb-3">
+                                                <i class="fas fa-exclamation-triangle" style="font-size:50px;color:#ffa808"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-10">
+                                            <div class="mb-3">
+                                                <h4>The page you have followed is broken</h5>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <?php } ?>
                         <?php 
                         }else{ 
                         ?>                        
@@ -442,19 +361,11 @@
                 var refer_select=$('#refer_select').val();
                 var referer_name=$('#referer_name').val();
                 var refer_alumni=$('#refer_alumni').val();
-                var shore=$('#shore').val();
-                var comments=$('#comments').val();
-                var appointment_booked=$('#appointment_booked').val();
-                var remarks=$('#remarks').val();
                 var streetDetails=$('#street_no').val();
-                var ethnicity=$('#ethnicity').val();                
                 var enquiryFor=$('#enquiry_for').val()==0 ? '' : $('#enquiry_for').val();
-                var courseType=$('#course_type').val()==0 ? '' : $('#course_type').val();
 
                 var emailregexp = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
                 var courses=$('#courses').val()==0 ? '' : $('#courses').val();
-                var payment=$('#payment_fee').val().trim();
-                var visaStatus=$('#visa_status').val()==0 ? '' : $('#visa_status').val();
 
                 if(refer_select==0){
                     refer_select_error=0;
@@ -470,7 +381,7 @@
                     refer_select_error=1;
                 }
 
-                if(studentName==''|| ( contactName=='' || contactName.length!=10 ) ||emailAddress==''|| (emailAddress!='' && !emailAddress.match(emailregexp)==true ) ||courses==''||payment==''||visaStatus=='' || enquiryDate=='' || refer_select_error==0 || surname=='' || enquiryFor==''|| postCode=='' || visit_before=='' ){
+                if(studentName==''|| ( contactName=='' || contactName.length!=10 ) ||emailAddress==''|| (emailAddress!='' && !emailAddress.match(emailregexp)==true ) ||courses==''|| enquiryDate=='' || refer_select_error==0 || surname=='' || enquiryFor==''|| postCode=='' || visit_before=='' ){
 
                     if(refer_select_error==0){
                         if(refer_select==0){
@@ -531,24 +442,7 @@
                         $('#courses').removeClass('invalid-div');
                         $('#courses').closest('div').find('.error-feedback').hide();
                     }
-                    if(payment==''){
-                        $('#payment_fee').addClass('invalid-div');
-                        $('#payment_fee').removeClass('valid-div');
-                        $('#payment_fee').closest('div').find('.error-feedback').show();
-                    }else{
-                        $('#payment_fee').addClass('valid-div');
-                        $('#payment_fee').removeClass('invalid-div');
-                        $('#payment_fee').closest('div').find('.error-feedback').hide();
-                    }
-                    if(visaStatus==''){
-                        $('#visa_status').addClass('invalid-div');
-                        $('#visa_status').removeClass('valid-div');
-                        $('#visa_status').closest('div').find('.error-feedback').show();
-                    }else{
-                        $('#visa_status').addClass('valid-div');
-                        $('#visa_status').removeClass('invalid-div');
-                        $('#visa_status').closest('div').find('.error-feedback').hide();
-                    }
+
 
                     if(enquiryDate==''){
                         $('#enquiry_date').addClass('invalid-div');
@@ -603,7 +497,7 @@
                 }else{
                     var checkId=$("#check_update").val();
                     
-                    details={formName:'student_enquiry',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,payment:payment,checkId:checkId,visaStatus:visaStatus,surname:surname,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,comments:comments,appointment_booked:appointment_booked,remarks:remarks,streetDetails:streetDetails,enquiryFor:enquiryFor,courseType:courseType,shore:shore,ethnicity:ethnicity,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
+                    details={formName:'student_enquiry_common',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,checkId:checkId,surname:surname,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,streetDetails:streetDetails,enquiryFor:enquiryFor,admin_id:0};
                     $.ajax({
                         type:'post',
                         url:'includes/datacontrol.php',
@@ -639,10 +533,11 @@
                     url:'includes/datacontrol.php',
                     data:{admin_id:"<?php echo $_SESSION['user_id']; ?>",formName:'create_qr'},
                     type:'post',
-                    success:function(data){
+                    success:function(data){                
+                        var updatedURL = removeLastSegmentFromURL(window.location.href);        
                     
                         var qrcode = new QRCode(qrcodeContainer, {
-                        text: 'https://example.com', 
+                        text: updatedURL+'/common_enquiry.php?data='+data, 
                         width: 128,
                         height: 128,
                         });
@@ -659,6 +554,19 @@
                 })
 
             }
+
+            function removeLastSegmentFromURL(url) {
+                // Split the URL by "/"
+                var segments = url.split("/");
+
+                // Remove the last segment
+                segments.pop();
+
+                // Join the segments back together
+                var updatedURL = segments.join("/");
+
+                return updatedURL;
+                }
 
         </script>
     </body>

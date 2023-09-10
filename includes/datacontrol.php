@@ -35,8 +35,9 @@ if(@$_POST['formName']=='student_enquiry_common'){
     $streetDetails=$_POST['streetDetails'];
     $enquiryFor=$_POST['enquiryFor'];
     $created_by=$_POST['admin_id'];
+    $form_id=$_POST['form_id'];
 
-    $query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_phno,st_email,st_course,st_surname,st_suburb,st_state,st_post_code,st_visited,st_heared,st_startplan_date,st_refered,st_refer_name,st_refer_alumni,st_street_details,st_enquiry_for,st_created_by)VALUES('$studentName','$contactName','$emailAddress',$courses,'$surname','$suburb','$stuState',$postCode,$visit_before,$hear_about,'$plan_to_start_date',$refer_select,'$referer_name',$refer_alumni,'$streetDetails',$enquiryFor,$created_by)");
+    $query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_phno,st_email,st_course,st_surname,st_suburb,st_state,st_post_code,st_visited,st_heared,st_startplan_date,st_refered,st_refer_name,st_refer_alumni,st_street_details,st_enquiry_for,st_created_by,st_gen_enq_id)VALUES('$studentName','$contactName','$emailAddress',$courses,'$surname','$suburb','$stuState',$postCode,$visit_before,$hear_about,'$plan_to_start_date',$refer_select,'$referer_name',$refer_alumni,'$streetDetails',$enquiryFor,$created_by,$form_id)");
     // echo "INSERT INTO student_enquiry(st_name,st_phno,st_email,st_course,st_surname,st_suburb,st_state,st_post_code,st_visited,st_heared,st_startplan_date,st_refered,st_refer_name,st_refer_alumni,st_street_details,st_enquiry_for,st_created_by)VALUES('$studentName','$contactName','$emailAddress',$courses,'$surname','$suburb','$stuState',$postCode,$visit_before,$hear_about,'$plan_to_start_date',$refer_select,'$referer_name',$refer_alumni,'$streetDetails',$enquiryFor,$created_by)";
 
     $lastId=mysqli_insert_id($connection);

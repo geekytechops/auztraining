@@ -47,7 +47,8 @@
                             $Updatestatus=1;
                             $eqId=base64_decode($_GET['data']);
                             $query=mysqli_query($connection,"SELECT * FROM `enquiry_forms` where enq_status!=1 and enq_form_id=$eqId");
-                            if($query && mysqli_num_rows($query)!=0){
+                            $query2=mysqli_query($connection,"SELECT * FROM `student_enquiry` where st_enquiry_status=0 and st_gen_enq_id=$eqId");
+                            if($query && mysqli_num_rows($query)!=0 && mysqli_num_rows($query2)==0){
                                 $queryRes=mysqli_fetch_array($query);
                                 
                     ?>
@@ -71,7 +72,7 @@
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="email_address">Email</label>
-                                                        <input type="text" class="form-control" id="email_address" placeholder="Email Address" value="<?php echo $queryRes['st_email']; ?>" >
+                                                        <input type="text" class="form-control" id="email_address" placeholder="Email Address" >
                                                         <div class="error-feedback">
                                                             Please enter the Email Address
                                                         </div>
@@ -98,7 +99,7 @@
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="student_name">First Name</label>
-                                                        <input type="text" class="form-control" id="student_name" placeholder="Student Name" value="<?php echo $queryRes['st_name']; ?>" >
+                                                        <input type="text" class="form-control" id="student_name" placeholder="Student Name">
                                                         <div class="error-feedback">
                                                             Please enter the First name
                                                         </div>
@@ -120,7 +121,7 @@
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="contact_num">Mobile</label>
-                                                        <input type="text" class="form-control number-field" maxlength="10" id="contact_num" placeholder="Contact Number" value="<?php echo $queryRes['st_phno']; ?>" >
+                                                        <input type="text" class="form-control number-field" maxlength="10" id="contact_num" placeholder="Contact Number" >
                                                         <div class="error-feedback">
                                                             Please enter the Contact Number
                                                         </div>
@@ -285,7 +286,7 @@
                                         </div>
                                         <div class="col-md-10">
                                             <div class="mb-3">
-                                                <h4>The page you have followed is broken</h5>
+                                                <h4>The page you have followed is Expired</h5>
                                             </div>
                                         </div>
                                     </div>
@@ -307,7 +308,7 @@
                                         </div>
                                         <div class="col-md-10">
                                             <div class="mb-3">
-                                                <h4>The page you have followed is broken</h5>
+                                                <h4>The page you have followed is Expired</h5>
                                             </div>
                                         </div>
                                     </div>
@@ -497,7 +498,7 @@
                 }else{
                     var checkId=$("#check_update").val();
                     
-                    details={formName:'student_enquiry_common',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,checkId:checkId,surname:surname,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,streetDetails:streetDetails,enquiryFor:enquiryFor,admin_id:0};
+                    details={formName:'student_enquiry_common',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,checkId:checkId,surname:surname,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,streetDetails:streetDetails,enquiryFor:enquiryFor,admin_id:0,form_id:'<?php echo $eqId; ?>'};
                     $.ajax({
                         type:'post',
                         url:'includes/datacontrol.php',

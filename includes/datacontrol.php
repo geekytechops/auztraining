@@ -87,7 +87,8 @@ $shore=$_POST['shore'];
 $ethnicity=$_POST['ethnicity'];
 $created_by=$_POST['admin_id'];
 
-
+$rpl_arrays=json_decode($_POST['rpl_arrays']);
+$short_grps=json_decode($_POST['short_grps']);
 
 if($checkId==0){
 
@@ -105,6 +106,20 @@ if($checkId==0){
         $mail_subject="Your Enquiry Successfully Created";
         $mail_body="Please keep your enquiry ID noted for future uses<br><b>Enquiry ID: </b>".$uniqueId;
         send_mail($mail_to,$mail_subject,$mail_body);
+
+        // insert course Type data
+
+        if($courseType==1){
+
+            $query=mysqli_query($connection,"INSERT INTO `rpl_enquries` (`enq_form_id`,`rpl_exp_in`,`rpl_exp_role`,`rpl_exp_years`,`rpl_exp_docs`,`rpl_exp_prev_qual`,`rpl_exp_qual_name`,`rpl_exp`) VALUES( $lastId,'".$rpl_arrays->exp_in."','".$rpl_arrays->exp_name."','".$rpl_arrays->exp_years."',".$rpl_arrays->exp_docs.",".$rpl_arrays->exp_prev.",'".$rpl_arrays->exp_prev_name."',".$rpl_arrays->rpl_exp." )");
+
+        }else if($courseType==5){
+         
+            
+            $query=mysqli_query($connection,"INSERT INTO `short_group_form` (`enq_form_id`,`sh_org_name`,`sh_grp_org_type`,`sh_grp_campus`,`sh_grp_date`,`sh_grp_num_stds`,`sh_grp_ind_exp`,`sh_grp_train_bef`,`sh_grp_con_us`,`sh_grp_phone`,`sh_grp_name`,`sh_grp_email`) VALUES( $lastId,'".$short_grps->short_grp_org_name."',".$short_grps->short_grp_org_type.",".$short_grps->short_grp_campus.",".$short_grps->short_grp_date.",".$short_grps->short_grp_num_std.",".$short_grps->short_grp_ind_exp.",".$short_grps->short_grp_before.",'".$short_grps->short_grp_con_type."','".$short_grps->short_grp_con_num."','".$short_grps->short_grp_con_name."','".$short_grps->short_grp_con_email."' )");
+
+
+        }
 
 
     }

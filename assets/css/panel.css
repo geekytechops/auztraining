@@ -104,3 +104,6 @@ border: unset !important;
 box-shadow: unset !important;
 border-radius: unset !important;
 } */
+.rpl_child , .rpl_prev_child{
+  display: none;
+}

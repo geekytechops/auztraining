@@ -407,6 +407,45 @@ if(@$_SESSION['user_type']!=''){
                         $('.refered_field').show();
                     }                 
                 })
+                $('.rpl_parent').on("change",function(){
+                    var value=$(this).val();
+                    if( value==0 || value==2 ){
+                        $('.rpl_child').hide();
+                    }else{
+                        $('.rpl_child').show();
+                    }                 
+                })
+                $('#course_type').on("change",function(){
+                    var value=$(this).val();
+                    if( value==1 ){
+                        $('#rpl_popup').trigger('click');
+                    }else if(value==5){                                            
+                        $('#short_group_popup').trigger('click');
+                    }else{
+                        // $('#rpl_close').trigger('click');
+                    }
+                })
+                $('.rpl_prev_parent').on("change",function(){
+                    var value=$(this).val();
+                    if( value==2 || value==0){
+                        $('.rpl_prev_child').hide();
+                    }else{                                            
+                        $('.rpl_prev_child').show();
+                    }
+                })
+
+                $('.rpl_close').click(function(){
+                    document.getElementById('rpl_form').reset();
+                    document.getElementById('short_group_form').reset();
+                    localStorage.setItem("rpl_array", '');
+                    $('#course_type').val(0).change();
+                 })
+                $('.short_group_close').click(function(){
+                    document.getElementById('rpl_form').reset();
+                    document.getElementById('short_group_form').reset();
+                    localStorage.setItem("rpl_array", '');
+                    $('#course_type').val(0).change();
+                })
             })
 
             $(document).on('click','#enquiry_form',function(){
@@ -585,8 +624,11 @@ if(@$_SESSION['user_type']!=''){
 
                 }else{
                     var checkId=$("#check_update").val();
+
+                    var rpl_arrays=localStorage.getItem("rpl_array");
+                    var short_grps=localStorage.getItem("short_grp");
                     
-                    details={formName:'student_enquiry',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,payment:payment,checkId:checkId,visaStatus:visaStatus,surname:surname,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,comments:comments,appointment_booked:appointment_booked,remarks:remarks,streetDetails:streetDetails,enquiryFor:enquiryFor,courseType:courseType,shore:shore,ethnicity:ethnicity,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
+                    details={formName:'student_enquiry',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,payment:payment,checkId:checkId,visaStatus:visaStatus,surname:surname,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,comments:comments,appointment_booked:appointment_booked,remarks:remarks,streetDetails:streetDetails,enquiryFor:enquiryFor,courseType:courseType,shore:shore,ethnicity:ethnicity,rpl_arrays:rpl_arrays,short_grps:short_grps,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
                     $.ajax({
                         type:'post',
                         url:'includes/datacontrol.php',
@@ -654,6 +696,200 @@ if(@$_SESSION['user_type']!=''){
             var updatedURL = segments.join("/");
 
             return updatedURL;
+            }
+
+            function submitRpl(){
+               var rpl_exp=$('#rpl_exp').val()==0 ? '' : $('#rpl_exp').val();
+               var exp_in=$('#exp_in').val()==0 ? '' : $('#exp_in').val();
+               var exp_docs=$('#exp_docs').val()==0 ? '' : $('#exp_docs').val();
+               var exp_prev=$('#exp_prev').val()==0 ? '' : $('#exp_prev').val();
+               var exp_name=$('#exp_name').val();
+               var exp_years=$('#exp_years').val();
+               var exp_prev_name=$('#exp_prev_name').val();
+
+               if(rpl_exp=='' || rpl_exp!='' && ( exp_in=='' ||  exp_docs=='' || exp_prev=='' || exp_name=='' || exp_years=='' ) || ( exp_prev==1 && exp_prev_name=='' ) ) {
+
+
+
+                    if(rpl_exp==''){
+                            $('#rpl_exp').addClass('invalid-div');
+                            $('#rpl_exp').removeClass('valid-div');
+                    }else{
+                            $('#rpl_exp').addClass('valid-div');
+                            $('#rpl_exp').removeClass('invalid-div');
+                    }
+
+                    if(rpl_exp!='' && ( exp_in=='' ||  exp_docs=='' || exp_prev=='' || exp_name=='' || exp_years=='' )){
+
+
+                        if(exp_in==''){
+                            $('#exp_in').addClass('invalid-div');
+                            $('#exp_in').removeClass('valid-div');
+                        }else{
+                                $('#exp_in').addClass('valid-div');
+                                $('#exp_in').removeClass('invalid-div');
+                        }
+
+                        if(exp_docs==''){
+                            $('#exp_docs').addClass('invalid-div');
+                            $('#exp_docs').removeClass('valid-div');
+                        }else{
+                            $('#exp_docs').addClass('valid-div');
+                            $('#exp_docs').removeClass('invalid-div');
+                        }
+
+                        if(exp_prev==''){
+                            $('#exp_prev').addClass('invalid-div');
+                            $('#exp_prev').removeClass('valid-div');
+                        }else{
+                            $('#exp_prev').addClass('valid-div');
+                            $('#exp_prev').removeClass('invalid-div');
+                        }
+
+                        if(exp_name==''){
+                            $('#exp_name').addClass('invalid-div');
+                            $('#exp_name').removeClass('valid-div');
+                        }else{
+                            $('#exp_name').addClass('valid-div');
+                            $('#exp_name').removeClass('invalid-div');
+                        }
+
+                        if(exp_years==''){
+                            $('#exp_years').addClass('invalid-div');
+                            $('#exp_years').removeClass('valid-div');
+                        }else{
+                            $('#exp_years').addClass('valid-div');
+                            $('#exp_years').removeClass('invalid-div');
+                        }
+
+                    }
+
+                    if( exp_prev==1 && exp_prev_name=='' ){
+
+                        if(exp_prev_name==''){
+                            $('#exp_prev_name').addClass('invalid-div');
+                            $('#exp_prev_name').removeClass('valid-div');
+                        }else{
+                            $('#exp_prev_name').addClass('valid-div');
+                            $('#exp_prev_name').removeClass('invalid-div');
+                        }
+
+                    }
+
+
+                }else{
+
+                    var rpl_array={"rpl_exp":rpl_exp,"exp_in":exp_in,"exp_docs":exp_docs,"exp_prev":exp_prev,"exp_name":exp_name,"exp_years":exp_years,"exp_prev_name":exp_prev_name};
+                    localStorage.setItem("rpl_array", JSON.stringify(rpl_array));
+                    $('#model_rpl_enq').modal('hide');
+                    
+                }
+
+            }
+
+            function submitShortGroup(){
+                var short_grp_org_name=$('#short_grp_org_name').val();
+                var short_grp_date=$('#short_grp_date').val();
+                var short_grp_num_std=$('#short_grp_num_std').val();
+                var short_grp_ind_exp=$('#short_grp_ind_exp').val()==0 ? '' : $('#short_grp_ind_exp').val();
+                var short_grp_con_type=$('#short_grp_con_type').val();
+                var short_grp_con_num=$('#short_grp_con_num').val();
+                var short_grp_con_name=$('#short_grp_con_name').val();
+                var short_grp_con_email=$('#short_grp_con_email').val();
+                var short_grp_org_type=$('#short_grp_org_type').val()==0 ? '' : $('#short_grp_org_type').val();
+                var short_grp_campus=$('#short_grp_campus').val()==0 ? '' : $('#short_grp_campus').val();
+                var short_grp_before=$('#short_grp_before').val()==0 ? '' : $('#short_grp_before').val();
+
+                if(short_grp_org_name=='' || short_grp_date=='' || short_grp_num_std=='' || short_grp_ind_exp=='' || short_grp_con_type=='' || short_grp_con_num=='' || short_grp_con_name=='' || short_grp_con_email=='' || short_grp_org_type=='' || short_grp_campus=='' || short_grp_before==''){
+                    
+
+                    if(short_grp_org_name==''){
+                        $('#short_grp_org_name').addClass('invalid-div');
+                        $('#short_grp_org_name').removeClass('valid-div');
+                    }else{
+                        $('#short_grp_org_name').addClass('valid-div');
+                        $('#short_grp_org_name').removeClass('invalid-div');
+                    }
+                    if(short_grp_date==''){
+                        $('#short_grp_date').addClass('invalid-div');
+                        $('#short_grp_date').removeClass('valid-div');
+                    }else{
+                        $('#short_grp_date').addClass('valid-div');
+                        $('#short_grp_date').removeClass('invalid-div');
+                    }
+                    if(short_grp_num_std==''){
+                        $('#short_grp_num_std').addClass('invalid-div');
+                        $('#short_grp_num_std').removeClass('valid-div');
+                    }else{
+                        $('#short_grp_num_std').addClass('valid-div');
+                        $('#short_grp_num_std').removeClass('invalid-div');
+                    }
+                    if(short_grp_ind_exp==''){
+                        $('#short_grp_ind_exp').addClass('invalid-div');
+                        $('#short_grp_ind_exp').removeClass('valid-div');
+                    }else{
+                        $('#short_grp_ind_exp').addClass('valid-div');
+                        $('#short_grp_ind_exp').removeClass('invalid-div');
+                    }
+                    if(short_grp_con_type==''){
+                        $('#short_grp_con_type').addClass('invalid-div');
+                        $('#short_grp_con_type').removeClass('valid-div');
+                    }else{
+                        $('#short_grp_con_type').addClass('valid-div');
+                        $('#short_grp_con_type').removeClass('invalid-div');
+                    }
+                    if(short_grp_con_num==''){
+                        $('#short_grp_con_num').addClass('invalid-div');
+                        $('#short_grp_con_num').removeClass('valid-div');
+                    }else{
+                        $('#short_grp_con_num').addClass('valid-div');
+                        $('#short_grp_con_num').removeClass('invalid-div');
+                    }
+                    if(short_grp_con_name==''){
+                        $('#short_grp_con_name').addClass('invalid-div');
+                        $('#short_grp_con_name').removeClass('valid-div');
+                    }else{
+                        $('#short_grp_con_name').addClass('valid-div');
+                        $('#short_grp_con_name').removeClass('invalid-div');
+                    }
+                    if(short_grp_con_email==''){
+                        $('#short_grp_con_email').addClass('invalid-div');
+                        $('#short_grp_con_email').removeClass('valid-div');
+                    }else{
+                        $('#short_grp_con_email').addClass('valid-div');
+                        $('#short_grp_con_email').removeClass('invalid-div');
+                    }
+                    if(short_grp_before==''){
+                        $('#short_grp_before').addClass('invalid-div');
+                        $('#short_grp_before').removeClass('valid-div');
+                    }else{
+                        $('#short_grp_before').addClass('valid-div');
+                        $('#short_grp_before').removeClass('invalid-div');
+                    }
+                    if(short_grp_campus==''){
+                        $('#short_grp_campus').addClass('invalid-div');
+                        $('#short_grp_campus').removeClass('valid-div');
+                    }else{
+                        $('#short_grp_campus').addClass('valid-div');
+                        $('#short_grp_campus').removeClass('invalid-div');
+                    }
+                    if(short_grp_org_type==''){
+                        $('#short_grp_org_type').addClass('invalid-div');
+                        $('#short_grp_org_type').removeClass('valid-div');
+                    }else{
+                        $('#short_grp_org_type').addClass('valid-div');
+                        $('#short_grp_org_type').removeClass('invalid-div');
+                    }
+
+
+                }else{
+
+                    
+                    var short_grp={"short_grp_org_name":short_grp_org_name,"short_grp_org_type":short_grp_org_type,"short_grp_campus":short_grp_campus,"short_grp_date":short_grp_date,"short_grp_num_std":short_grp_num_std,"short_grp_ind_exp":short_grp_ind_exp,"short_grp_con_type":short_grp_con_type,"short_grp_con_num":short_grp_con_num,"short_grp_con_name":short_grp_con_name, "short_grp_con_email":short_grp_con_email,"short_grp_before":short_grp_before};
+                    localStorage.setItem("short_grp", JSON.stringify(short_grp));
+                    $('#model_short_group').modal('hide');
+
+                }
             }
 
         </script>

@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Sep 08, 2023 at 12:18 PM
+-- Generation Time: Sep 10, 2023 at 01:23 PM
 -- Server version: 8.0.31
--- PHP Version: 8.2.0
+-- PHP Version: 8.0.26
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS `enquiry_forms` (
   `enq_status` tinyint(1) NOT NULL,
   `enq_created_on` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`enq_form_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `enquiry_forms`
@@ -105,7 +105,10 @@ CREATE TABLE IF NOT EXISTS `enquiry_forms` (
 
 INSERT INTO `enquiry_forms` (`enq_form_id`, `enq_admin_id`, `enq_status`, `enq_created_on`) VALUES
 (1, 1, 0, '2023-09-08 10:06:36'),
-(2, 1, 0, '2023-09-08 10:07:03');
+(2, 1, 0, '2023-09-08 10:07:03'),
+(3, 1, 0, '2023-09-08 16:20:23'),
+(4, 1, 0, '2023-09-08 16:46:27'),
+(5, 1, 0, '2023-09-10 10:44:43');
 
 -- --------------------------------------------------------
 
@@ -161,6 +164,67 @@ INSERT INTO `qualifications` (`qualification_id`, `qualification_name`, `qualifi
 (1, 'Masters Degree', 0, '2023-08-23 06:07:08'),
 (2, 'Bachelors Degree', 0, '2023-08-23 06:07:08'),
 (3, 'MCA', 0, '2023-08-23 06:07:16');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `rpl_enquries`
+--
+
+DROP TABLE IF EXISTS `rpl_enquries`;
+CREATE TABLE IF NOT EXISTS `rpl_enquries` (
+  `rpl_enq_id` int NOT NULL AUTO_INCREMENT,
+  `enq_form_id` int DEFAULT NULL,
+  `rpl_exp_in` varchar(255) DEFAULT NULL,
+  `rpl_exp_role` varchar(255) DEFAULT NULL,
+  `rpl_exp_years` varchar(10) DEFAULT NULL,
+  `rpl_exp_docs` tinyint(1) DEFAULT NULL,
+  `rpl_exp_prev_qual` tinyint(1) DEFAULT NULL,
+  `rpl_exp_qual_name` varchar(255) NOT NULL,
+  `rpl_exp` tinyint(1) NOT NULL,
+  `rpl_exp_created_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`rpl_enq_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `rpl_enquries`
+--
+
+INSERT INTO `rpl_enquries` (`rpl_enq_id`, `enq_form_id`, `rpl_exp_in`, `rpl_exp_role`, `rpl_exp_years`, `rpl_exp_docs`, `rpl_exp_prev_qual`, `rpl_exp_qual_name`, `rpl_exp`, `rpl_exp_created_date`) VALUES
+(1, 18, '1', 'testset', '20', 1, 1, 'testset', 1, '2023-09-10 13:03:22');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `short_group_form`
+--
+
+DROP TABLE IF EXISTS `short_group_form`;
+CREATE TABLE IF NOT EXISTS `short_group_form` (
+  `sh_grp_id` int NOT NULL AUTO_INCREMENT,
+  `enq_form_id` int NOT NULL,
+  `sh_org_name` varchar(255) NOT NULL,
+  `sh_grp_org_type` tinyint(1) NOT NULL,
+  `sh_grp_campus` tinyint(1) NOT NULL,
+  `sh_grp_date` date NOT NULL,
+  `sh_grp_num_stds` int NOT NULL,
+  `sh_grp_ind_exp` tinyint(1) NOT NULL,
+  `sh_grp_train_bef` tinyint(1) NOT NULL,
+  `sh_grp_con_us` varchar(255) NOT NULL,
+  `sh_grp_phone` varchar(255) NOT NULL,
+  `sh_grp_name` varchar(255) NOT NULL,
+  `sh_grp_email` varchar(255) NOT NULL,
+  `sh_grp_status` tinyint(1) NOT NULL DEFAULT '0',
+  `sh_grp_created_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`sh_grp_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `short_group_form`
+--
+
+INSERT INTO `short_group_form` (`sh_grp_id`, `enq_form_id`, `sh_org_name`, `sh_grp_org_type`, `sh_grp_campus`, `sh_grp_date`, `sh_grp_num_stds`, `sh_grp_ind_exp`, `sh_grp_train_bef`, `sh_grp_con_us`, `sh_grp_phone`, `sh_grp_name`, `sh_grp_email`, `sh_grp_status`, `sh_grp_created_date`) VALUES
+(1, 21, 'test Org', 1, 1, '0000-00-00', 20, 1, 1, 'test', '6546546544', 'testes', 'teste@gmail.com', 0, '2023-09-10 13:10:54');
 
 -- --------------------------------------------------------
 
@@ -286,7 +350,7 @@ CREATE TABLE IF NOT EXISTS `student_enquiry` (
   `st_modified_date` datetime DEFAULT NULL,
   `st_gen_enq_id` int DEFAULT NULL,
   PRIMARY KEY (`st_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `student_enquiry`
@@ -298,7 +362,23 @@ INSERT INTO `student_enquiry` (`st_id`, `st_enquiry_id`, `st_name`, `st_surname`
 (3, 'EQ00003', 'Test name', 'Test Surname', '9876549877', 'test@gmail.com', 3, 1, 'Test Street', 'Test Surb', 'Test State', '654987', 2, 2, 1, 'test', 1, '654654', 0, 1, 'test', '', 1, 1, 2, 0, '0000-00-00 00:00:00', '2023-09-08 11:27:07', 1, '2023-09-08 05:57:07', NULL, NULL, NULL),
 (4, 'EQ00004', 'Test First', 'Test Surname', '9876549877', 'saisatya51@gmail.com', 2, 1, 'Trest Street', 'Test Sub', 'Test State', '987654', 1, 1, 1, 'test', 1, '654', 1, 1, 'TEst ethin', 'Test Comment', 1, 1, 1, 0, '2023-12-31 00:00:00', '2023-09-08 13:58:27', 1, '2023-09-08 08:28:27', NULL, NULL, NULL),
 (5, 'EQ00005', 'Test First', 'Test Surname', '9876549877', 'saisatya51@gmail.com', 1, 1, 'Test Street', 'Test Suburb', 'Test State', '987654', 1, 1, 1, 'Test Her Name', 1, '654654', 1, 1, 'Test Ethinincvity', '', 1, 1, 1, 0, '2023-12-31 00:00:00', '2023-09-08 14:02:47', 1, '2023-09-08 08:32:47', NULL, NULL, NULL),
-(6, 'EQ00006', 'Test First', 'Test Surname', '9876549877', 'saisatya51@gmail.com', 1, 1, 'Test Street', 'Test Sub', 'Test State', '987654', 1, 1, 1, 'Test Her test', 1, '684', 1, 1, 'Test Ethinicility', '', 1, 1, 1, 0, '2023-12-31 00:00:00', '2023-09-08 14:37:09', 1, '2023-09-08 09:07:09', NULL, NULL, NULL);
+(6, 'EQ00006', 'Test First', 'Test Surname', '9876549877', 'saisatya51@gmail.com', 1, 1, 'Test Street', 'Test Sub', 'Test State', '987654', 1, 1, 1, 'Test Her test', 1, '684', 1, 1, 'Test Ethinicility', '', 1, 1, 1, 0, '2023-12-31 00:00:00', '2023-09-08 14:37:09', 1, '2023-09-08 09:07:09', NULL, NULL, NULL),
+(7, 'EQ00007', 'first', 'surname', '8309603262', 'saisatya51@gmail.com', 1, 0, 'agraharam street', 'bobbili', 'andhra pradesh', '535558', 1, 1, 1, 'his name', 1, '', 0, 0, NULL, '', 0, 1, 0, 0, '2023-12-31 00:00:00', '2023-09-08 22:29:20', 0, '2023-09-08 16:59:42', NULL, NULL, NULL),
+(8, 'EQ00008', 'first1', 'surnaeme1', '8309603262', 'saisatya51@gmail.com', 1, 0, 'agraharam street', 'bobbili', 'andhra pradesh', '535558', 4, 1, 1, 'his name', 1, '', 0, 0, NULL, '', 0, 1, 0, 0, '2023-12-31 00:00:00', '2023-09-08 22:30:39', 0, '2023-09-08 17:00:39', NULL, NULL, NULL),
+(9, 'EQ00009', 'first2', 'surname2', '8309603262', 'saisatya51@gmail.com', 1, 0, 'agraharam street', 'bobbili', 'andhra pradesh', '535558', 1, 1, 1, 'his name', 1, '', 0, 0, NULL, '', 0, 1, 0, 0, '2023-12-31 00:00:00', '2023-09-08 22:33:00', 0, '2023-09-08 17:03:00', NULL, NULL, NULL),
+(10, 'EQ00010', 'test', 'test', '6546546456', 'saiprakash359@gmail.com', 1, 1, 'agraharam street', 'bobbili', 'andhra pradesh', '535558', 2, 1, 1, 'test', 1, '20', 1, 1, 'test', '', 1, 1, 1, 0, '2023-12-31 00:00:00', '2023-09-10 16:28:59', 1, '2023-09-10 10:59:00', NULL, NULL, NULL),
+(11, 'EQ00011', 'test', 'test', '5465465465', 'saiprakash359@gmail.com', 1, 1, 'agraharam street', 'bobbili', 'andhra pradesh', '535558', 2, 1, 2, '', 0, '2000', 1, 1, 'bobbili', '', 1, 1, 1, 0, '2023-12-31 00:00:00', '2023-09-10 16:56:34', 1, '2023-09-10 11:26:35', NULL, NULL, NULL),
+(12, 'EQ00012', 'tes', 'test', '8309603262', 'test@gmail.com', 1, 1, 'agraharam street', 'bobbili', 'andhra pradesh', '535558', 1, 1, 2, '', 0, '20', 1, 1, 'bobbili', '', 1, 1, 1, 0, '2023-12-31 00:00:00', '2023-09-10 17:03:04', 1, '2023-09-10 11:33:04', NULL, NULL, NULL),
+(13, 'EQ00013', 'test', 'test', '8309603262', 'test@gmail.com', 1, 1, 'agraharam street', 'bobbili', 'andhra pradesh', '535558', 1, 1, 2, '', 0, '20', 1, 1, 'bobbili', '', 1, 1, 1, 0, '2023-12-31 00:00:00', '2023-09-10 17:05:16', 1, '2023-09-10 11:35:16', NULL, NULL, NULL),
+(14, 'EQ00014', 'John Kotln', 'tests', '8309603262', 'testse@gmail.com', 1, 1, 'agraharam street', 'bobbili', 'andhra pradesh', '535558', 2, 1, 1, 'restset', 1, '20', 1, 1, 'testes', '', 1, 1, 1, 0, '2023-12-30 00:00:00', '2023-09-10 18:20:20', 1, '2023-09-10 12:50:20', NULL, NULL, NULL),
+(15, 'EQ00015', 'John Kotln', 'test', '8309603262', 'test@gmail.com', 1, 1, 'agraharam street', 'bobbili', 'andhra pradesh', '535558', 2, 1, 1, 'test', 1, '32', 1, 1, 'gsg', '', 1, 1, 1, 0, '2023-12-31 00:00:00', '2023-09-10 18:27:05', 1, '2023-09-10 12:57:05', NULL, NULL, NULL),
+(16, 'EQ00016', 'John Kotln', 'test', '8309603262', 'tetts@gmail.com', 1, 1, 'agraharam street', 'bobbili', 'andhra pradesh', '535558', 1, 1, 1, 'test', 2, '20', 1, 1, 'bobbili', 'tst', 1, 1, 1, 0, '2023-12-31 00:00:00', '2023-09-10 18:29:26', 1, '2023-09-10 12:59:27', NULL, NULL, NULL),
+(17, 'EQ00017', 'John Kotln', 'testsetse', '8309603262', 'test@gmail.com', 1, 1, 'agraharam street', 'bobbili', 'andhra pradesh', '535558', 3, 1, 1, 'teststset', 1, '20', 0, 1, 'bobbili', '', 1, 1, 1, 0, '2023-12-31 00:00:00', '2023-09-10 18:31:37', 1, '2023-09-10 13:01:37', NULL, NULL, NULL),
+(18, 'EQ00018', 'John Kotln', 'test', '8309603262', 'test@gmail.com', 1, 1, 'agraharam street', 'bobbili', 'andhra pradesh', '535558', 4, 1, 1, 'testset', 1, '20', 0, 1, 'test', '', 1, 1, 2, 0, '2023-12-31 00:00:00', '2023-09-10 18:33:18', 1, '2023-09-10 13:03:18', NULL, NULL, NULL),
+(19, 'EQ00019', 'tsddsdfsf', 'testset', '8309603262', 'testets@gmail.com', 1, 5, 'agraharam street', 'bobbili', 'andhra pradesh', '535558', 2, 1, 2, '', 0, '20', 0, 1, 'tsetse', '', 1, 1, 1, 0, '2023-12-31 00:00:00', '2023-09-10 18:34:57', 1, '2023-09-10 13:04:57', NULL, NULL, NULL),
+(20, 'EQ00020', 'Prathip Kumar', 'setset', '8309603262', 'check@gmail.com', 1, 5, 'agraharam street', 'bobbili', 'andhra pradesh', '535558', 1, 1, 2, '', 0, '52', 0, 1, 'bobbili', '', 1, 1, 1, 0, '2023-12-31 00:00:00', '2023-09-10 18:36:33', 1, '2023-09-10 13:06:33', NULL, NULL, NULL),
+(21, 'EQ00021', 'John Kotln', 'testse', '8309603262', 'test@gmail.com', 1, 5, 'agraharam street', 'bobbili', 'andhra pradesh', '535558', 1, 1, 2, '', 0, '20', 0, 1, 'bobbili', '', 1, 1, 1, 0, '2023-12-31 00:00:00', '2023-09-10 18:40:51', 1, '2023-09-10 13:10:51', NULL, NULL, NULL),
+(22, 'EQ00022', 'Mike Sheifen', 'testset', '8309603262', 'testset@gmail.com', 2, 3, 'agraharam street', 'bobbili', 'andhra pradesh', '535558', 1, 1, 2, '', 0, '2000', 0, 1, 'tste', '', 0, 1, 1, 0, '2023-12-31 00:00:00', '2023-09-10 18:44:06', 1, '2023-09-10 13:14:06', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 

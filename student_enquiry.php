@@ -77,7 +77,7 @@ if(@$_SESSION['user_type']!=''){
                         <div class="row">
                             <div class="col-xl-12">
                                 <div class="card">
-                                    <div class="card-body">
+                                    <div class="card-body" id="student_enquiry_form_parent">
                                         <form class="student_enquiry_form" id="student_enquiry_form">
                                             <div class="row">
                                                 <div class="col-md-6">
@@ -638,11 +638,13 @@ if(@$_SESSION['user_type']!=''){
                                 $('.toast-text2').html('Cannot add record. Please try again later');
                                 $('#borderedToast2Btn').trigger('click');
                             }else if(data==2){
+                                $( "#student_enquiry_form_parent" ).load(window.location.href + " #student_enquiry_form" );
                                 document.getElementById('student_enquiry_form').reset();
                                 $('#toast-text').html('Record Updated Successfully');
                                 $('#borderedToast1Btn').trigger('click');
                                 window.location.href="dashboard.php";
                             }else{
+                                $( "#student_enquiry_form_parent" ).load(window.location.href + " #student_enquiry_form" );
                                 document.getElementById('student_enquiry_form').reset();
                                 $('#toast-text').html('New Enquiry Added');
                                 $('#borderedToast1Btn').trigger('click');

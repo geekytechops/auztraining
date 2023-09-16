@@ -13,9 +13,54 @@ if(isset($_SESSION['user_type'])){
         <title>Dashboard</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta content="Premium Multipurpose Admin & Dashboard Template" name="description" />
-        <meta content="Themesdesign" name="author" />
+        <meta content="Themesdesign" name="author" /> 
 
         <?php include('includes/app_includes.php'); ?>
+        <style>
+            tbody tr td:nth-child(5) {
+                white-space: break-spaces;
+                width:20%;
+            }
+            #datatable tbody tr td:nth-child(4) {
+                white-space: break-spaces;
+                width:10%;
+            }
+            #datatable tbody tr td:nth-child(3) {
+                white-space: break-spaces;
+                width:10%;
+            }
+            #student_filter_table {
+                display: block;
+                max-width: -moz-fit-content;
+                max-width: fit-content;
+                margin: 0 auto;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+
+            #student_filter_table th, #student_filter_table td { min-width: 200px; }
+
+            #student_filter_table::-webkit-scrollbar-track
+            {
+                -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+                background-color: #F2F2F2;
+                border-radius:5px;
+            }
+
+            #student_filter_table::-webkit-scrollbar
+            {
+                width: 10px;
+                height:5px;
+                background-color: #F2F2F2;
+            }
+
+            #student_filter_table::-webkit-scrollbar-thumb
+            {
+                background-color: var(--color);
+                border: 2px solid var(--color);
+                border-radius:5px;
+            }
+       </style>
 
     </head>
 
@@ -60,7 +105,7 @@ if(isset($_SESSION['user_type'])){
                             <div class="col-lg-12">
                                 <div class="card">
                                     <div class="card-body">
-                                        <h4 class="card-title">Student Records</h4>
+                                        <!-- <h4 class="card-title">Student Records</h4> -->
 
                                         <div class="accordion" id="accordionExample">
                                             <div class="accordion-item">
@@ -76,12 +121,12 @@ if(isset($_SESSION['user_type'])){
                                                                 <tr>
                                                                     <th scope="col-3">Enquiry ID</th>
                                                                     <th scope="col-2">Student Name</th>
-                                                                    <th scope="col-2">Contact Number</th>
-                                                                    <th scope="col-2">Email</th>
-                                                                    <th scope="col-2">Course</th>
+                                                                    <th scope="col-1">Contact Number</th>
+                                                                    <th scope="col-1">Email</th>
+                                                                    <th scope="col-1">Course</th>
                                                                     <th scope="col-1">Fee</th>
                                                                     <th scope="col-1">Visa Status</th>
-                                                                    <th scope="col-1">Action</th>
+                                                                    <th scope="col-2">Action</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
@@ -91,7 +136,7 @@ if(isset($_SESSION['user_type'])){
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="accordion-item">
+                                            <div class="accordion-item d-none">
                                                 <h2 class="accordion-header" id="headingTwo">
                                                     <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
                                                     Students Enrolled
@@ -120,7 +165,7 @@ if(isset($_SESSION['user_type'])){
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="accordion-item">
+                                            <div class="accordion-item d-none">
                                                 <h2 class="accordion-header" id="headingThree">
                                                     <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
                                                     Invoices
@@ -157,6 +202,65 @@ if(isset($_SESSION['user_type'])){
                             <div class="col-lg-12">
                                 <div class="card">
                                     <div class="card-body">
+                                        <h4 class="card-title mb-4">Student Filter</h4>  
+                                        <div class="d-flex" style="width:100%;">
+                                            <input type="text" class="form-control" style="width:30%;" id="filter_input" placeholder="Enter the Text">
+                                            <button id="student_filter" class="btn btn-dark ms-2" style="width:10%;">Export <i class="align-middle ms-2 mdi mdi-printer" style="font-size:20px;"></i></button>
+                                        </div>
+                                        <ul><li>Search with any of the columns to filter</li></ul>
+                                        <div class="print_header"></div>
+                                            <table id="student_filter_table" class="table nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Student ID</th>
+                                                        <th>Student Name</th>
+                                                        <th>Contact Number</th>
+                                                        <th>Email</th>
+                                                        <th>Course</th>
+                                                        <th>State</th>
+                                                        <th>Postal code</th>
+                                                        <th>Enroled Date</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+
+                                                <?php
+                                                
+                                                $query=mysqli_query($connection,"SELECT * from student_enquiry where st_enquiry_status!=1");
+                                                while($queryRes=mysqli_fetch_array($query)){
+                                                    $courses=mysqli_fetch_array(mysqli_query($connection,"SELECT * from courses where course_status!=1 AND course_id=".$queryRes['st_course']));
+                                            
+                                                    if($queryRes['st_visa_status']==1){
+                                                        $visaStatus='<i class="mdi mdi-checkbox-blank-circle text-warning me-1"></i> Pending';
+                                                    }else if($queryRes['st_visa_status']==2){
+                                                        $visaStatus='<i class="mdi mdi-checkbox-blank-circle text-success me-1"></i> Approved';
+                                                    }else{
+                                                        $visaStatus='<i class="mdi mdi-checkbox-blank-circle text-danger me-1"></i> Declined';
+                                                    }
+                                                
+                                                ?>
+                                                    <tr>
+                                                        <td><?php echo $queryRes['st_enquiry_id']; ?></td>
+                                                        <td><?php echo $queryRes['st_surname'].' '.$queryRes['st_name']; ?></td>
+                                                        <td><?php echo $queryRes['st_phno']; ?></td>
+                                                        <td><?php echo $queryRes['st_email']; ?></td>
+                                                        <td><?php echo $courses['course_sname'].'-'.$courses['course_name']; ?></td>
+                                                        <td><?php echo $queryRes['st_state']; ?></td>
+                                                        <td><?php echo $queryRes['st_post_code']; ?></td>
+                                                        <td><?php echo date('d M Y',strtotime($queryRes['st_enquiry_date'])); ?></td>
+                                                    </tr>
+
+                                                <?php } ?>    
+                                                </tbody>
+                                            </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- <div class="row">
+                            <div class="col-lg-12">
+                                <div class="card">
+                                    <div class="card-body">
                                         <h4 class="card-title mb-4">All Students</h4>  
                                             <table id="datatable-all" class="table nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
                                                 <thead>
@@ -177,7 +281,7 @@ if(isset($_SESSION['user_type'])){
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </div> -->
 
                         <!-- <div class="row">
                             <div class="col-lg-12">
@@ -357,14 +461,37 @@ if(isset($_SESSION['user_type'])){
         ?>
         <script>
 
-            function delete_enq(eq_id){
+            async function delete_enq(eq_id){
+
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Are you Sure ?',
+                    input: 'text',
+                    showCancelButton:!0,
+                    inputPlaceholder: 'Reason to Delete',
+                    confirmButtonText:"Delete!",
+                    confirmButtonColor:"#1cbb8c",
+                    cancelButtonColor:"#ff3d60",
+                    inputValidator: (value) => {
+                        if (!value) {
+                        return 'You need to write something!'
+                        }
+                    }
+                    }).then(function(t){
+                        if(t.isConfirmed){
+                            deleteFun(eq_id,t.value);
+                        }
+                    })
+                }
+
+                function deleteFun(eq_id,note){
+
                 $.ajax({
                     type:'post',
-                    data:{eq_id:eq_id,formName:'delete_enq'},
+                    data:{eq_id:eq_id,note:note,formName:'delete_enq'},
                     url:'includes/datacontrol.php',
                     success:function(data){
                         if(data==1){
-                            console.log(data);
                         var table = $('#datatable').DataTable();
                             table.ajax.reload();
                         }else{
@@ -373,6 +500,7 @@ if(isset($_SESSION['user_type'])){
                     }
                 })
             }
+
 
             function delete_enrol(enrol_id){
                 $.ajax({
@@ -392,8 +520,14 @@ if(isset($_SESSION['user_type'])){
             }
 
             $(document).ready(function () {
-                $('#datatable').DataTable({lengthMenu: [5, 10, 20],language:{paginate:{previous:"<i class='mdi mdi-chevron-left'>",next:"<i class='mdi mdi-chevron-right'>"}},drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},
-                scrollX: true,
+                $('#datatable').DataTable({
+                    lengthMenu: [5, 10, 20],
+                    language:{
+                        paginate:{
+                            previous:"<i class='mdi mdi-chevron-left'>",
+                            next:"<i class='mdi mdi-chevron-right'>"}},
+                            drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},
+                    // scrollX: true,
                     ajax: 'includes/datacontrol.php?name=studentEnquiry',
                         columns: [
                         { data: 'st_enquiry_id' },                                    
@@ -405,56 +539,101 @@ if(isset($_SESSION['user_type'])){
                         { data: 'std_visa_status' },
                         { data: 'action' },
                     ],
+                    // "dom": 'Blfrtip',
+                    // "buttons": ['pdf']
+    //                 dom: "<'row'<'col-sm-4'l><'col-sm-4 text-center'B><'col-sm-4'f>>" +
+    //   "<'row'<'col-sm-12'tr>>" +
+    //   "<'row'<'col-sm-5'i><'col-sm-7'p>>",
+    // buttons: [
+    //   {
+    //     extend: 'pdf',
+    //     className: "btn-sm",
+    //     text: 'EXPORT',
+    //     filename: function() {
+    //     return "Enquiries"
+    //     },
+    //     title: function() {
+    //     return "<div><div>Logo</div><div>Auztraining</div></div>"
+    //     },
+    //     exportOptions: {
+    //       columns: [ 1, 2, 3, 4, 5, 6]
+    //     }
+    //   }
+    // ]
                 });
-                $('#datatable-all').DataTable({lengthMenu: [5, 10, 20],language:{paginate:{previous:"<i class='mdi mdi-chevron-left'>",next:"<i class='mdi mdi-chevron-right'>"}},drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},
-                scrollX: true,
-                    ajax: 'includes/datacontrol.php?name=all_students',
-                        columns: [
-                        { data: 'st_unique_id' },                                    
-                        { data: 'st_enrol_name' },                                    
-                        { data: 'std_phno' },
-                        { data: 'std_email' },
-                        { data: 'course' },
-                        { data: 'std_date' },
-                        { data: 'action' },
-                    ],
-                });
-
-                $('#datatable_enrol').DataTable({lengthMenu: [5, 10, 20],language:{paginate:{previous:"<i class='mdi mdi-chevron-left'>",next:"<i class='mdi mdi-chevron-right'>"}},drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},
-                scrollX: true,
-                    ajax: 'includes/datacontrol.php?name=student_enrol',
-                        columns: [
-                        { data: 'st_enrol_name' },                                    
-                        { data: 'st_enrol_id' },                                    
-                        { data: 'st_enq_id' },                                    
-                        { data: 'st_enrol_givenname' },
-                        { data: 'st_enrol_middlename' },
-                        { data: 'st_enrol_qual' },
-                        { data: 'st_enrol_venue' },
-                        { data: 'st_enrol_source' },
-                        { data: 'action' },
-                    ],
-                });
+            //    $('#datatable-all').DataTable({
+            //     lengthMenu: [5, 10, 20],
+            //     language:{
+            //         paginate:{
+            //             previous:"<i class='mdi mdi-chevron-left'>",
+            //             next:"<i class='mdi mdi-chevron-right'>"}},
+            //    drawCallback:function(){
+            //     $(".dataTables_paginate > .pagination").addClass("pagination-rounded")
+            //     },
+            //     scrollX: true,
+            //         ajax: 'includes/datacontrol.php?name=all_students',
+            //             columns: [
+            //             { data: 'st_unique_id' },                                    
+            //             { data: 'st_enrol_name' },                                    
+            //             { data: 'std_phno' },
+            //             { data: 'std_email' },
+            //             { data: 'course' },
+            //             { data: 'std_date' },
+            //             { data: 'action' },
+            //         ]
+            //     });
+                // $('#datatable_enrol').DataTable({lengthMenu: [5, 10, 20],language:{paginate:{previous:"<i class='mdi mdi-chevron-left'>",next:"<i class='mdi mdi-chevron-right'>"}},drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},
+                // scrollX: true,
+                //     ajax: 'includes/datacontrol.php?name=student_enrol',
+                //         columns: [
+                //         { data: 'st_enrol_name' },                                    
+                //         { data: 'st_enrol_id' },                                    
+                //         { data: 'st_enq_id' },                                    
+                //         { data: 'st_enrol_givenname' },
+                //         { data: 'st_enrol_middlename' },
+                //         { data: 'st_enrol_qual' },
+                //         { data: 'st_enrol_venue' },
+                //         { data: 'st_enrol_source' },
+                //         { data: 'action' },
+                //     ],
+                // });
                 
-                $('#datatable_invoices').DataTable({lengthMenu: [5, 10, 20],language:{paginate:{previous:"<i class='mdi mdi-chevron-left'>",next:"<i class='mdi mdi-chevron-right'>"}},drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},
-                scrollX: true,
-                    ajax: 'includes/datacontrol.php?name=student_invoices',
-                        columns: [
-                        { data: 'inv_id' },                                    
-                        { data: 'inv_std_name' },                                    
-                        { data: 'inv_course' },
-                        { data: 'inv_fee' },
-                        { data: 'inv_paid' },
-                        { data: 'inv_due' },
-                        { data: 'inv_payment_date' },
-                    ],
-                });
+                // $('#datatable_invoices').DataTable({lengthMenu: [5, 10, 20],language:{paginate:{previous:"<i class='mdi mdi-chevron-left'>",next:"<i class='mdi mdi-chevron-right'>"}},drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},
+                // scrollX: true,
+                //     ajax: 'includes/datacontrol.php?name=student_invoices',
+                //         columns: [
+                //         { data: 'inv_id' },                                    
+                //         { data: 'inv_std_name' },                                    
+                //         { data: 'inv_course' },
+                //         { data: 'inv_fee' },
+                //         { data: 'inv_paid' },
+                //         { data: 'inv_due' },
+                //         { data: 'inv_payment_date' },
+                //     ],
+                // });
 
                 $('#accordionExample').on('show.bs.collapse', function(e){
                 setTimeout(function () {
                     $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
                 }, 10);
                 });
+            })
+
+            $("#filter_input").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $("#student_filter_table tbody tr").filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+
+            $('#student_filter').click(function(){
+
+                var divToPrint=document.getElementById("student_filter_table");
+                newWin=  window.open('', '_top', '','');       
+                newWin.document.write('<!DOCTYPE html PUBLIC \'-//W3C//DTD XHTML 1.0 Transitional//EN\' \'http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\'><html xmlns=\'http://www.w3.org/1999/xhtml\'><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><meta http-equiv=\'Content-Type\' content=\'text/html; charset=iso-8859-1\' /><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"><title>Patient Feed</title><style>@page { size:Legal landscape; } table, th, td { border: 1px solid;border-collapse: collapse;text-align: left;padding: 5px 10px;}  body { background: #FFF;color: #000;font-size: 12pt;padding: 0;} .print_div{ display:flex;justify-content:center; } .print_logo{ height: 85px;width: 10%;margin: 0;padding: 0;}  </style></head><body><div class="print_div"><img class="print_logo" src="assets/images/logo-dark.png"></div>'+divToPrint.outerHTML+'</body></html>');
+                newWin.print();
+                newWin.close();
+
             })
         </script>
         <?php }else{ ?>

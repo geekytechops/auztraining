@@ -86,3 +86,41 @@ if(lastPageName=='enrolment.php'){
      });
     }
 }
+function SuccessPop(Message,timing){
+    Swal.fire({
+        position: 'center',
+        icon: 'success',
+        title: Message,
+        showConfirmButton: true,
+        timer: timing
+    })
+}
+
+function ErrorPop(Message,timing){
+    Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: Message,
+        timer:timing
+        // footer: '<a href="">Why do I have this issue?</a>'
+      })
+} 
+
+// function DeletePop(){
+//     Swal.fire({
+//         icon: 'warning',
+//         title: 'Are you Sure ?',
+//         html:'<input type="text" id="delete_note" class="delete_note form-control" placeholder="Note" maxlength="150">',
+//         // text: Message,
+//         showCancelButton:!0,
+//         confirmButtonColor:"#1cbb8c",
+//         cancelButtonColor:"#ff3d60",
+//         confirmButtonText:"Add Note & delete!"
+//         // timer:timing
+//         // footer: '<a href="">Why do I have this issue?</a>'
+//       }).then(function(t){
+//         if(t.isConfirmed){
+//             deleteFun()
+//         }
+//       })
+// } 

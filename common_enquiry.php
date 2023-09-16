@@ -35,10 +35,7 @@
                 <div class="page-content">
                     <div class="container-fluid">
 
-                    <?php 
-                    session_start();
-                        
-                        if(isset($_GET['data'])){
+                    <?php                         
 
                             $courses=mysqli_query($connection,"SELECT * from courses where course_status!=1");
                             $visaStatus=mysqli_query($connection,"SELECT * from visa_statuses where visa_state_status!=1");
@@ -46,10 +43,6 @@
 
                             $Updatestatus=1;
                             $eqId=base64_decode($_GET['data']);
-                            $query=mysqli_query($connection,"SELECT * FROM `enquiry_forms` where enq_status!=1 and enq_form_id=$eqId");
-                            $query2=mysqli_query($connection,"SELECT * FROM `student_enquiry` where st_enquiry_status=0 and st_gen_enq_id=$eqId");
-                            if($query && mysqli_num_rows($query)!=0 && mysqli_num_rows($query2)==0){
-                                $queryRes=mysqli_fetch_array($query);
                                 
                     ?>
 
@@ -67,11 +60,12 @@
                             <div class="col-xl-12">
                                 <div class="card">
                                     <div class="card-body">
+                                    <div class="jelly" id="jelly_loader"></div>
                                         <form class="student_enquiry_form" id="student_enquiry_form">
                                             <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="email_address">Email</label>
+                                                        <label class="form-label" for="email_address">Email*</label>
                                                         <input type="text" class="form-control" id="email_address" placeholder="Email Address" >
                                                         <div class="error-feedback">
                                                             Please enter the Email Address
@@ -80,7 +74,7 @@
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="enquiry_date">Date</label>
+                                                        <label class="form-label" for="enquiry_date">Date*</label>
                                                         <input type="date" class="form-control" id="enquiry_date" >
                                                         <div class="error-feedback">
                                                             Please select the Date
@@ -89,7 +83,7 @@
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="surname">Surname</label>
+                                                        <label class="form-label" for="surname">Surname*</label>
                                                         <input type="text" class="form-control" id="surname" placeholder="Surname" value="" >
                                                         <div class="error-feedback">
                                                             Please enter the Surname
@@ -98,7 +92,7 @@
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="student_name">First Name</label>
+                                                        <label class="form-label" for="student_name">First Name*</label>
                                                         <input type="text" class="form-control" id="student_name" placeholder="Student Name">
                                                         <div class="error-feedback">
                                                             Please enter the First name
@@ -107,7 +101,7 @@
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="enquiry_for">Enquiring For</label>
+                                                        <label class="form-label" for="enquiry_for">Enquiring For*</label>
                                                         <select name="enquiry_for" class="form-select" id="enquiry_for">
                                                         <option value="0">--select--</option>
                                                         <option value="1">Self</option>
@@ -120,7 +114,16 @@
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="contact_num">Mobile</label>
+                                                        <label class="form-label" for="member_name">Name*</label>
+                                                        <input type="text" class="form-control" id="member_name" placeholder="Name" value="<?php echo $queryRes['st_name']; ?>" >
+                                                        <div class="error-feedback">
+                                                            Please enter the Name
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="contact_num">Mobile*</label>
                                                         <input type="text" class="form-control number-field" maxlength="10" id="contact_num" placeholder="Contact Number" >
                                                         <div class="error-feedback">
                                                             Please enter the Contact Number
@@ -156,7 +159,7 @@
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="post_code">Post Code</label>
+                                                        <label class="form-label" for="post_code">Post Code*</label>
                                                         <input type="tel" class="form-control number-field" maxlength="6" id="post_code" placeholder="Post Code" value="" >
                                                         <div class="error-feedback">
                                                             Please enter the Post Code
@@ -165,7 +168,7 @@
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="visit_before">Have you visited us before?*</label>
+                                                        <label class="form-label" for="visit_before">How did you hear about us?</label>
                                                         <select name="visit_before" class="form-select" id="visit_before">
                                                         <option value="0">--select--</option>
                                                         <option value="1">Word of Mouth</option>
@@ -188,7 +191,7 @@
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="hear_about">How did you hear about us?</label>
+                                                        <label class="form-label" for="hear_about">Have you visited us before?*</label>
                                                         <select name="hear_about" class="form-select" id="hear_about">
                                                         <option value="0">--select--</option>
                                                         <option value="1">Yes</option>
@@ -207,7 +210,7 @@
                                                         <?php 
                                                         while($coursesRes=mysqli_fetch_array($courses)){
                                                         ?>                                                            
-                                                            <option value="<?php echo $coursesRes['course_id']; ?>" <?php echo $coursesRes['course_id']==$queryRes['st_course'] ? 'selected' : ''; ?>><?php echo $coursesRes['course_sname'].'-'.$coursesRes['course_name']; ?></option>
+                                                            <option value="<?php echo $coursesRes['course_id']; ?>" ><?php echo $coursesRes['course_sname'].'-'.$coursesRes['course_name']; ?></option>
                                                             <?php } ?>
                                                         </select>    
                                                         <div class="error-feedback">
@@ -260,11 +263,7 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <?php if($eqId==0){ ?>
                                             <button class="btn btn-primary" type="button" id="enquiry_form">Submit Enquiry</button>
-                                            <?php }else{ ?>
-                                            <button class="btn btn-primary" type="button" id="enquiry_form">Update Enquiry</button>
-                                            <?php } ?>
                                             <input type="hidden" value="<?php echo $eqId; ?>" id="check_update">
                                         </form>
                                     </div>
@@ -273,52 +272,6 @@
                             </div> <!-- end col -->
                         </div>
                         <!-- end row -->
-
-                        <?php }else{ ?>
-                            <div class="row vh-100">
-                            <div class="col-xl-12 d-flex align-items-center justify-content-center">
-                                <div class="card">
-                                    <div class="card-body d-flex align-items-center text-center" style="flex-direction:column">                                        
-                                        <div class="col-md-2">
-                                            <div class="mb-3">
-                                                <i class="fas fa-exclamation-triangle" style="font-size:50px;color:#ffa808"></i>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-10">
-                                            <div class="mb-3">
-                                                <h4>The page you have followed is Expired</h5>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <?php } ?>
-                        <?php 
-                        }else{ 
-                        ?>                        
-                        <div class="row vh-100">
-                            <div class="col-xl-12 d-flex align-items-center justify-content-center">
-                                <div class="card">
-                                    <div class="card-body d-flex align-items-center text-center" style="flex-direction:column">                                        
-                                        <div class="col-md-2">
-                                            <div class="mb-3">
-                                                <i class="fas fa-exclamation-triangle" style="font-size:50px;color:#ffa808"></i>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-10">
-                                            <div class="mb-3">
-                                                <h4>The page you have followed is Expired</h5>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <?php
-                        }
-                        ?>
 
                     </div> <!-- container-fluid -->
                 </div>
@@ -344,6 +297,24 @@
                         $('.refered_field').show();
                     }                 
                 })
+
+                $('#enquiry_for').on('change',function(){
+                    var value=$(this).val();
+                    if( value==1){
+                        $('#member_name').val($('#student_name').val());
+                        $('#member_name').prop('readonly',true);
+                    }else{
+                        $('#member_name').prop('readonly',false);
+                        $('#member_name').val('');
+                    }
+                })
+
+                $('#student_name').keyup(function(){
+                    if($('#enquiry_for').val()==1){
+                        $('#member_name').val($('#student_name').val());
+                    }
+                })
+
             })
 
             $(document).on('click','#enquiry_form',function(){
@@ -361,6 +332,7 @@
                 var plan_to_start_date=$('#plan_to_start_date').val();
                 var refer_select=$('#refer_select').val();
                 var referer_name=$('#referer_name').val();
+                var memberName=$('#member_name').val().trim();
                 var refer_alumni=$('#refer_alumni').val();
                 var streetDetails=$('#street_no').val();
                 var enquiryFor=$('#enquiry_for').val()==0 ? '' : $('#enquiry_for').val();
@@ -455,6 +427,16 @@
                         $('#enquiry_date').closest('div').find('.error-feedback').hide();
                     }
 
+                    if(memberName=='' ){
+                        $('#member_name').addClass('invalid-div');
+                        $('#member_name').removeClass('valid-div');
+                        $('#member_name').closest('div').find('.error-feedback').show();
+                    }else{
+                        $('#member_name').addClass('valid-div');
+                        $('#member_name').removeClass('invalid-div');
+                        $('#member_name').closest('div').find('.error-feedback').hide();
+                    }
+
                     if(surname==''){
                         $('#surname').addClass('invalid-div');
                         $('#surname').removeClass('valid-div');
@@ -497,8 +479,10 @@
 
                 }else{
                     var checkId=$("#check_update").val();
+                    $('#jelly_loader').show();
+                    $('#student_enquiry_form').css('opacity','0.1');
                     
-                    details={formName:'student_enquiry_common',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,checkId:checkId,surname:surname,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,streetDetails:streetDetails,enquiryFor:enquiryFor,admin_id:0,form_id:'<?php echo $eqId; ?>'};
+                    details={formName:'student_enquiry_common',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,checkId:checkId,surname:surname,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,plan_to_start_date:plan_to_start_date,refer_select:refer_select,memberName:memberName,referer_name:referer_name,refer_alumni:refer_alumni,streetDetails:streetDetails,enquiryFor:enquiryFor,admin_id:0,form_type:1};
                     $.ajax({
                         type:'post',
                         url:'includes/datacontrol.php',
@@ -511,7 +495,13 @@
                                 document.getElementById('student_enquiry_form').reset();
                                 $('#toast-text').html('Record Updated Successfully');
                                 $('#borderedToast1Btn').trigger('click');
-                                window.location.href="dashboard.php";
+                                // window.location.href="dashboard.php";
+                                $('#jelly_loader').hide();
+                                $('#student_enquiry_form').css('opacity','');          
+                                // var UpdateStatus='<?php echo $Updatestatus; ?>';
+                                // if(UpdateStatus==1){
+                                //     location.reload();
+                                // }
                             }else{
                                 document.getElementById('student_enquiry_form').reset();
                                 $('#toast-text').html('New Enquiry Added');
@@ -520,6 +510,12 @@
                                 $('#myModalLabel').html('Enquiry ID Created:');
                                 $('.modal-body').html(data);
                                 $('#model_trigger').trigger('click');
+                                $('#jelly_loader').hide();
+                                $('#student_enquiry_form').css('opacity','');
+                                // var UpdateStatus='<?php echo $Updatestatus; ?>';
+                                // if(UpdateStatus==1){
+                                //     location.reload();
+                                // }
                             }
                         }
                     })

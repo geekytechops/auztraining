@@ -1,36 +1,30 @@
 <?php
-require "vendor/PHPMailer/src/PHPMailer.php";
-require "vendor/PHPMailer/src/OAuthTokenProvider.php";
-require "vendor/PHPMailer/src/OAuth.php";
-require "vendor/PHPMailer/src/SMTP.php";
-require "vendor/PHPMailer/src/POP3.php";
-require "vendor/PHPMailer/src/Exception.php";
-require 'vendor/PHPMailer/src/autoloader.php';
+
+// Include Composer's autoloader
+require 'vendor/autoload.php';
+
+use Symfony\Component\Mailer\Mailer;
+use Symfony\Component\Mailer\Transport;
+use Symfony\Component\Mime\Email;
+
+// Gmail SMTP configuration
+
+
+// Create the Mailer
+
+
+// Create an email message
+$email='';
 function send_mail($to,$subject,$body){
-
-
-    $adminemail = "saisatya51@zoho.in"; 
-
-    $mail = new PHPMailer\PHPMailer\PHPMailer();
-    $mail->isSMTP();
-    
-    $mail->Host = "smtp.zoho.in";
-    $mail->Port = "465";
-    $mail->SMTPSecure = 'ssl';
-    $mail->SMTPAuth   = true;
-    $mail->Username = $adminemail;
-    $mail->Password = "Saikiran@1998";
-    $mail->setFrom('saisatya51@zohomail.in','Dev');
-    
-
-    $mail->addAddress($to);
-    $mail->Subject = $subject;
-    $mail->msgHTML($body);
-    if (!$mail->send()) {
-        die('fail');
-    }else{
-    }
+    $transport = Transport::fromDsn('smtp://saisatya51@gmail.com:ghhqvnmackjofijg@smtp.gmail.com?encryption=tls');
+    $mailer = new Mailer($transport);   
+    $email = (new Email())
+    ->from('saisatya51@gmail.com')
+    ->to($to)
+    ->subject($subject)
+    // ->text('This is the plain text message.')
+    ->html($body);
+    $mailer->send($email);
 }
-
 
 ?>

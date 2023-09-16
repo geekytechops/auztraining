@@ -16,7 +16,15 @@ if(@$_POST['formName']=='create_qr'){
 if(@$_POST['formName']=='student_enquiry_common'){
 
 
-    $studentName=$_POST['studentName'];
+    $enquiryFor=$_POST['enquiryFor'];
+    if($enquiryFor==1){
+        $studentName=$_POST['studentName'];
+        $memberName=$_POST['memberName'];
+    }else{
+        $studentName=$_POST['memberName'];
+        $memberName=$_POST['studentName'];
+    }
+
     $contactName=$_POST['contactName'];
     $emailAddress=$_POST['emailAddress'];
     $courses=$_POST['courses'];
@@ -33,12 +41,10 @@ if(@$_POST['formName']=='student_enquiry_common'){
     $referer_name=$_POST['referer_name'];
     $refer_alumni=$_POST['refer_alumni'];
     $streetDetails=$_POST['streetDetails'];
-    $enquiryFor=$_POST['enquiryFor'];
     $created_by=$_POST['admin_id'];
-    $form_id=$_POST['form_id'];
+    $form_type=$_POST['form_type'];
 
-    $query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_phno,st_email,st_course,st_surname,st_suburb,st_state,st_post_code,st_visited,st_heared,st_startplan_date,st_refered,st_refer_name,st_refer_alumni,st_street_details,st_enquiry_for,st_created_by,st_gen_enq_id)VALUES('$studentName','$contactName','$emailAddress',$courses,'$surname','$suburb','$stuState',$postCode,$visit_before,$hear_about,'$plan_to_start_date',$refer_select,'$referer_name',$refer_alumni,'$streetDetails',$enquiryFor,$created_by,$form_id)");
-    // echo "INSERT INTO student_enquiry(st_name,st_phno,st_email,st_course,st_surname,st_suburb,st_state,st_post_code,st_visited,st_heared,st_startplan_date,st_refered,st_refer_name,st_refer_alumni,st_street_details,st_enquiry_for,st_created_by)VALUES('$studentName','$contactName','$emailAddress',$courses,'$surname','$suburb','$stuState',$postCode,$visit_before,$hear_about,'$plan_to_start_date',$refer_select,'$referer_name',$refer_alumni,'$streetDetails',$enquiryFor,$created_by)";
+    $query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_member_name,st_phno,st_email,st_course,st_surname,st_suburb,st_state,st_post_code,st_visited,st_heared,st_startplan_date,st_refered,st_refer_name,st_refer_alumni,st_street_details,st_enquiry_for,st_created_by,st_gen_enq_type)VALUES('$studentName','$memberName','$contactName','$emailAddress',$courses,'$surname','$suburb','$stuState',$postCode,$visit_before,$hear_about,'$plan_to_start_date',$refer_select,'$referer_name',$refer_alumni,'$streetDetails',$enquiryFor,$created_by,$form_type)");
 
     $lastId=mysqli_insert_id($connection);
     $uniqueId=sprintf('EQ%05d', $lastId);
@@ -60,13 +66,25 @@ if(@$_POST['formName']=='student_enquiry_common'){
 }
 if(@$_POST['formName']=='student_enquiry'){
 
-$studentName=$_POST['studentName'];
+
+    $enquiryFor=$_POST['enquiryFor'];
+    if($enquiryFor==1){
+        $studentName=$_POST['studentName'];
+        $memberName=$_POST['memberName'];
+    }else{
+        $studentName=$_POST['memberName'];
+        $memberName=$_POST['studentName'];
+    }
+
+
+
 $contactName=$_POST['contactName'];
 $emailAddress=$_POST['emailAddress'];
 $courses=$_POST['courses'];
 $payment=$_POST['payment'];
 $visaStatus=$_POST['visaStatus'];
 $checkId=$_POST['checkId'];
+$enquiryDate=$_POST['enquiryDate'];
 
 $surname=$_POST['surname'];
 $suburb=$_POST['suburb'];
@@ -82,18 +100,23 @@ $comments=$_POST['comments'];
 $appointment_booked=$_POST['appointment_booked'];
 $remarks=$_POST['remarks'];
 $streetDetails=$_POST['streetDetails'];
-$enquiryFor=$_POST['enquiryFor'];
 $courseType=$_POST['courseType'];
 $shore=$_POST['shore'];
 $ethnicity=$_POST['ethnicity'];
 $created_by=$_POST['admin_id'];
+$formId=$_POST['formId'];
+$slot_book_status=$_POST['slot_book_status'];
+$short_grp_status=$_POST['short_grp_status'];
+$rpl_status=$_POST['rpl_status'];
+$now=date('Y-m-d H:i:s');
 
 $rpl_arrays=json_decode($_POST['rpl_arrays']);
 $short_grps=json_decode($_POST['short_grps']);
+$slot_books=json_decode($_POST['slot_books']);
 
 if($checkId==0){
 
-    $query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_phno,st_email,st_course,st_fee,st_visa_status,st_surname,st_suburb,st_state,st_post_code,st_visited,st_heared,st_startplan_date,st_refered,st_refer_name,st_refer_alumni,st_comments,st_appoint_book,st_remarks,st_street_details,st_enquiry_for,st_course_type,st_shore,st_ethnicity,st_created_by)VALUES('$studentName','$contactName','$emailAddress',$courses,'$payment',$visaStatus,'$surname','$suburb','$stuState',$postCode,$visit_before,$hear_about,'$plan_to_start_date',$refer_select,'$referer_name',$refer_alumni,'$comments',$appointment_booked,'$remarks','$streetDetails',$enquiryFor,$courseType,$shore,'$ethnicity',$created_by)");
+    $query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_member_name,st_phno,st_email,st_course,st_fee,st_visa_status,st_surname,st_suburb,st_state,st_post_code,st_visited,st_heared,st_startplan_date,st_refered,st_refer_name,st_refer_alumni,st_comments,st_appoint_book,st_remarks,st_street_details,st_enquiry_for,st_enquiry_date,st_course_type,st_shore,st_ethnicity,st_created_by)VALUES('$studentName','$memberName','$contactName','$emailAddress',$courses,'$payment',$visaStatus,'$surname','$suburb','$stuState',$postCode,$visit_before,$hear_about,'$plan_to_start_date',$refer_select,'$referer_name',$refer_alumni,'$comments',$appointment_booked,'$remarks','$streetDetails',$enquiryFor,'$enquiryDate',$courseType,$shore,'$ethnicity',$created_by)");
     $lastId=mysqli_insert_id($connection);
     $uniqueId=sprintf('EQ%05d', $lastId);
     $querys=mysqli_query($connection,"UPDATE student_enquiry SET st_enquiry_id='$uniqueId' WHERE st_id=$lastId");
@@ -109,7 +132,6 @@ if($checkId==0){
         send_mail($mail_to,$mail_subject,$mail_body);
 
         // insert course Type data
-
         if($courseType==1){
 
             $query=mysqli_query($connection,"INSERT INTO `rpl_enquries` (`enq_form_id`,`rpl_exp_in`,`rpl_exp_role`,`rpl_exp_years`,`rpl_exp_docs`,`rpl_exp_prev_qual`,`rpl_exp_qual_name`,`rpl_exp`) VALUES( $lastId,'".$rpl_arrays->exp_in."','".$rpl_arrays->exp_name."','".$rpl_arrays->exp_years."',".$rpl_arrays->exp_docs.",".$rpl_arrays->exp_prev.",'".$rpl_arrays->exp_prev_name."',".$rpl_arrays->rpl_exp." )");
@@ -117,17 +139,77 @@ if($checkId==0){
         }else if($courseType==5){
          
             
-            $query=mysqli_query($connection,"INSERT INTO `short_group_form` (`enq_form_id`,`sh_org_name`,`sh_grp_org_type`,`sh_grp_campus`,`sh_grp_date`,`sh_grp_num_stds`,`sh_grp_ind_exp`,`sh_grp_train_bef`,`sh_grp_con_us`,`sh_grp_phone`,`sh_grp_name`,`sh_grp_email`) VALUES( $lastId,'".$short_grps->short_grp_org_name."',".$short_grps->short_grp_org_type.",".$short_grps->short_grp_campus.",".$short_grps->short_grp_date.",".$short_grps->short_grp_num_std.",".$short_grps->short_grp_ind_exp.",".$short_grps->short_grp_before.",'".$short_grps->short_grp_con_type."','".$short_grps->short_grp_con_num."','".$short_grps->short_grp_con_name."','".$short_grps->short_grp_con_email."' )");
+            $query=mysqli_query($connection,"INSERT INTO `short_group_form` (`enq_form_id`,`sh_org_name`,`sh_grp_org_type`,`sh_grp_campus`,`sh_grp_date`,`sh_grp_num_stds`,`sh_grp_ind_exp`,`sh_grp_train_bef`,`sh_grp_con_us`,`sh_grp_phone`,`sh_grp_name`,`sh_grp_email`) VALUES( $lastId,'".$short_grps->short_grp_org_name."',".$short_grps->short_grp_org_type.",".$short_grps->short_grp_campus.",'".$short_grps->short_grp_date."',".$short_grps->short_grp_num_std.",".$short_grps->short_grp_ind_exp.",".$short_grps->short_grp_before.",'".$short_grps->short_grp_con_type."','".$short_grps->short_grp_con_num."','".$short_grps->short_grp_con_name."','".$short_grps->short_grp_con_email."' )");
 
 
         }
 
 
+        if($appointment_booked==1){
+
+            $appointment_booked_time=date('Y-m-d H:i:s',strtotime($slot_books->slot_book_time));
+
+            $query=mysqli_query($connection,"INSERT INTO `slot_book` (`enq_form_id`,`slot_bk_datetime`,`slot_bk_purpose`,`slot_bk_on`,`slot_book_by`,`slot_book_email_link`) VALUES( $lastId,'".$appointment_booked_time."','".$slot_books->slot_book_purpose."','".$slot_books->slot_book_date."','".$slot_books->slot_book_by."',".$slot_books->slot_book_link." )");
+        }        
+
     }
 
 }else{
     
-    if(mysqli_query($connection,"UPDATE student_enquiry SET `st_name`='$studentName',`st_phno`='$contactName',`st_email`='$emailAddress',`st_course`=$courses,`st_fee`='$payment',`st_visa_status`=$visaStatus WHERE `st_id`=$checkId")){
+    if(mysqli_query($connection,"UPDATE student_enquiry SET `st_name`='$studentName',`st_member_name`='$memberName' ,`st_phno`='$contactName',`st_email`='$emailAddress',`st_course`=$courses,`st_fee`='$payment',`st_visa_status`=$visaStatus , `st_surname`='$surname' , `st_suburb`= '$suburb' , `st_state`='$stuState',`st_post_code`= $postCode,`st_visited`=$visit_before,`st_heared`=$hear_about,`st_startplan_date`='$plan_to_start_date',`st_refered`=$refer_select,`st_refer_name`='$referer_name',`st_refer_alumni`=$refer_alumni,`st_comments`='$comments',`st_appoint_book`= $appointment_booked,`st_remarks`='$remarks',`st_street_details`= '$streetDetails' , `st_enquiry_for`= $enquiryFor , `st_enquiry_date`='$enquiryDate' ,`st_course_type`=$courseType , `st_shore`=$shore,`st_ethnicity`='$ethnicity',`st_modified_by`= $created_by , `st_modified_date`='$now'  WHERE `st_id`=$checkId")){
+
+        // insert course Type data
+        if($courseType==1){
+
+            if($rpl_status==1){
+
+            $query=mysqli_query($connection,"UPDATE `rpl_enquries` set `rpl_exp_in` ='$rpl_arrays->exp_in' ,`rpl_exp_role` ='$rpl_arrays->exp_name' ,`rpl_exp_years` = '$rpl_arrays->exp_years',`rpl_exp_docs` =$rpl_arrays->exp_docs ,`rpl_exp_prev_qual` =$rpl_arrays->exp_prev ,`rpl_exp_qual_name` ='$rpl_arrays->exp_prev_name' ,`rpl_exp` =$rpl_arrays->rpl_exp WHERE `enq_form_id` = $formId");
+
+        }else{
+
+            $query=mysqli_query($connection,"INSERT INTO `rpl_enquries` (`enq_form_id`,`rpl_exp_in`,`rpl_exp_role`,`rpl_exp_years`,`rpl_exp_docs`,`rpl_exp_prev_qual`,`rpl_exp_qual_name`,`rpl_exp`) VALUES( $formId,'".$rpl_arrays->exp_in."','".$rpl_arrays->exp_name."','".$rpl_arrays->exp_years."',".$rpl_arrays->exp_docs.",".$rpl_arrays->exp_prev.",'".$rpl_arrays->exp_prev_name."',".$rpl_arrays->rpl_exp." )");
+
+
+        }
+
+        }else if($courseType==5){
+
+            if($short_grp_status==1){
+                     
+            $query=mysqli_query($connection,"UPDATE `short_group_form` SET `sh_org_name`='$short_grps->short_grp_org_name',`sh_grp_org_type`=$short_grps->short_grp_org_type,`sh_grp_campus`=$short_grps->short_grp_campus,`sh_grp_date`='$short_grps->short_grp_date',`sh_grp_num_stds`=$short_grps->short_grp_num_std,`sh_grp_ind_exp`=$short_grps->short_grp_ind_exp,`sh_grp_train_bef`=$short_grps->short_grp_before,`sh_grp_con_us`='$short_grps->short_grp_con_type',`sh_grp_phone`='$short_grps->short_grp_con_num',`sh_grp_name`='$short_grps->short_grp_con_name',`sh_grp_email`='$short_grps->short_grp_con_email' WHERE `enq_form_id`=$formId");
+
+            }else{
+
+                $query=mysqli_query($connection,"INSERT INTO `short_group_form` (`enq_form_id`,`sh_org_name`,`sh_grp_org_type`,`sh_grp_campus`,`sh_grp_date`,`sh_grp_num_stds`,`sh_grp_ind_exp`,`sh_grp_train_bef`,`sh_grp_con_us`,`sh_grp_phone`,`sh_grp_name`,`sh_grp_email`) VALUES( $formId,'".$short_grps->short_grp_org_name."',".$short_grps->short_grp_org_type.",".$short_grps->short_grp_campus.",'".$short_grps->short_grp_date."',".$short_grps->short_grp_num_std.",".$short_grps->short_grp_ind_exp.",".$short_grps->short_grp_before.",'".$short_grps->short_grp_con_type."','".$short_grps->short_grp_con_num."','".$short_grps->short_grp_con_name."','".$short_grps->short_grp_con_email."' )");
+
+
+            }
+
+        }
+
+
+        if($appointment_booked==1){
+
+            $appointment_booked_time=date('Y-m-d H:i:s',strtotime($slot_books->slot_book_time));
+
+            if($slot_book_status==1){
+
+
+            $query=mysqli_query($connection,"UPDATE `slot_book` SET `slot_bk_datetime` = '$appointment_booked_time',`slot_bk_purpose` ='$slot_books->slot_book_purpose' ,`slot_bk_on` = '$slot_books->slot_book_date',`slot_book_by` = '$slot_books->slot_book_by',`slot_book_email_link` = $slot_books->slot_book_link WHERE `enq_form_id` = $formId");
+
+            }else{
+
+
+                $query=mysqli_query($connection,"INSERT INTO `slot_book` (`enq_form_id`,`slot_bk_datetime`,`slot_bk_purpose`,`slot_bk_on`,`slot_book_by`,`slot_book_email_link`) VALUES( $formId,'".$appointment_booked_time."','".$slot_books->slot_book_purpose."','".$slot_books->slot_book_date."','".$slot_books->slot_book_by."',".$slot_books->slot_book_link." )");
+
+
+            }
+            
+
+
+        }
+
+
         echo 2;
     }else{
         echo 0;
@@ -139,7 +221,8 @@ if($checkId==0){
 
 if(@$_POST['formName']=='delete_enq'){
     $enq_id=$_POST['eq_id'];
-    $query=mysqli_query($connection,"UPDATE `student_enquiry` SET `st_enquiry_status`=1 WHERE `st_id`=$enq_id");
+    $note=$_POST['note'];
+    $query=mysqli_query($connection,"UPDATE `student_enquiry` SET `st_delete_note`='$note' , `st_enquiry_status`=1 WHERE `st_id`=$enq_id");
 if($query){
     echo 1;
 }else{
@@ -257,15 +340,6 @@ if(@$_REQUEST['name']=='studentEnquiry'){
     $enquiries['data']=[];
     $query=mysqli_query($connection,"SELECT * from student_enquiry where st_enquiry_status!=1");
     while($queryRes=mysqli_fetch_array($query)){
-
-        // if($queryRes['st_course']==1){
-        //     $course='Basic';
-        // }else if($queryRes['st_course']==2){
-        //     $course='Intermediate';
-        // }else{
-        //     $course='Expert';
-        // }
-
         $courses=mysqli_fetch_array(mysqli_query($connection,"SELECT * from courses where course_status!=1 AND course_id=".$queryRes['st_course']));
 
         if($queryRes['st_visa_status']==1){
@@ -276,7 +350,7 @@ if(@$_REQUEST['name']=='studentEnquiry'){
             $visaStatus='<i class="mdi mdi-checkbox-blank-circle text-danger me-1"></i> Declined';
         }
 
-        $view='<button type="button" data="'.$queryRes['st_id'].'" class="btn btn-outline-primary btn-sm edit_enq" style="margin-right:10px;"><a href="student_enquiry.php?eq='.base64_encode($queryRes['st_id']).'">Edit</a></button><button onclick="delete_enq('.$queryRes['st_id'].')" type="button" class="btn btn-outline-danger btn-sm">Delete</button>';
+        $view='<a class="btn btn-outline-primary btn-sm edit_enq" style="margin-right:10px;" href="student_enquiry.php?eq='.base64_encode($queryRes['st_id']).'">Edit</a><button onclick="delete_enq('.$queryRes['st_id'].')" type="button" class="btn btn-outline-danger btn-sm">Delete</button>';
 
         array_push($enquiries['data'],array('st_enquiry_id'=>$queryRes['st_enquiry_id'],'std_name'=>$queryRes['st_name'], 'std_phno'=>$queryRes['st_phno'],'std_email'=>$queryRes['st_email'],'std_course'=>$courses['course_sname'].'-'.$courses['course_name'],'std_fee'=>$queryRes['st_fee'],'std_visa_status'=>$visaStatus,'action'=>$view));
         
@@ -288,14 +362,6 @@ if(@$_REQUEST['name']=='student_invoices'){
     $invoices['data']=[];
     $query=mysqli_query($connection,"SELECT * from invoices");
     while($queryRes=mysqli_fetch_array($query)){
-
-        // if($queryRes['inv_course']==1){
-        //     $course='Basic';
-        // }else if($queryRes['inv_course']==2){
-        //     $course='Intermediate';
-        // }else{
-        //     $course='Expert';
-        // }
 
         $courses=mysqli_fetch_array(mysqli_query($connection,"SELECT * from courses where course_status!=1 AND course_id=".$queryRes['inv_course']));
 

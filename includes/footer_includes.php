@@ -1,8 +1,3 @@
-<style>
-    a[title^='Hosted on']{
-        display:none;
-    }
-</style>
 <!-- JAVASCRIPT -->
 <script src="assets/libs/jquery/jquery.min.js"></script>
 <script src="assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -25,6 +20,12 @@
 <!-- Responsive examples -->
 <script src="assets/libs/datatables.net-responsive/js/dataTables.responsive.min.js"></script>
 <script src="assets/libs/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js"></script>
+<script src="assets/libs/sweetalert2/sweetalert2.min.js"></script>
+
+<script src="assets/libs/pdfmake/build/pdfmake.min.js"></script>
+
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.1.1/js/buttons.html5.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.1.1/js/buttons.print.min.js"></script>
 <!-- materialdesign icon js-->
 <script src="assets/js/pages/materialdesign.init.js"></script>
 

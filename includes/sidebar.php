@@ -9,7 +9,7 @@
                         <!-- Left Menu Start -->
                         <ul class="metismenu list-unstyled" id="side-menu">
                             <li class="menu-title">Forms</li>
-                            <li>
+                            <li class="">
                                 <a href="dashboard.php" class="waves-effect">
                                     <i class="mdi mdi-home-variant-outline"></i>
                                     <span>Dashboard</span>
@@ -28,7 +28,7 @@
                             <?php 
                             if(@$_SESSION['user_type']==1){
                             ?>
-                            <li>
+                            <li class="d-none">
                                 <a href="enrolment.php" class="waves-effect">
                                     <i class="mdi mdi-account-plus"></i>
                                     <span>Enrolment</span>
@@ -38,7 +38,7 @@
                             <?php 
                             if(@$_SESSION['user_type']==0){
                             ?>
-                            <li>
+                            <li class="d-none">
                                 <a href="student_docs.php" class="waves-effect">
                                     <i class="mdi mdi-file-upload"></i>
                                     <span>Documents</span>
@@ -50,7 +50,7 @@
                             <?php 
                             if(@$_SESSION['user_type']==1){
                             ?>
-                            <li>
+                            <li class="d-none">
                                 <a href="javascript: void(0);" class="has-arrow waves-effect">
                                     <i class="mdi mdi-file-excel"></i>
                                     <span>Attendance</span>
@@ -64,7 +64,7 @@
                             <?php 
                             if(@$_SESSION['user_type']==1){
                             ?>
-                            <li>
+                            <li class="d-none">
                                 <a href="invoices.php" class="waves-effect">
                                     <i class="fas fa-file-invoice"></i>
                                     <span>Invoices</span>

@@ -151,7 +151,15 @@
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="stu_state">State</label>
-                                                        <input type="text" class="form-control stu_state" id="stu_state" placeholder="State" value="" >
+                                                        <select name="stu_state" id="stu_state" class="form-control">
+                                                        <?php  
+                                                        $st_states=['--select--','NSW','VIC','ACT','NT','WA','QLD','SA','Tasmania'];
+                                                        for($i=0;$i<count($st_states);$i++){
+                                                            $checked= $i==$queryRes['st_state'] ? 'selected' : '';
+                                                            echo '<option value="'.$i.'" '.$checked.'>'.$st_states[$i].'</option>';
+                                                        }
+                                                        ?>
+                                                        </select>
                                                         <div class="error-feedback">
                                                             Please enter the State
                                                         </div>
@@ -168,22 +176,8 @@
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="visit_before">How did you hear about us?</label>
-                                                        <select name="visit_before" class="form-select" id="visit_before">
-                                                        <option value="0">--select--</option>
-                                                        <option value="1">Word of Mouth</option>
-                                                        <option value="2">Family or Friends</option>
-                                                        <option value="3">Website</option>
-                                                        <option value="4">Gumtree</option>
-                                                    <optgroup label="Social Media">
-                                                        <option value="5">Facebook</option>
-                                                        <option value="6">Instagram</option>
-                                                        <option value="7">Linkedin</option>
-                                                    </optgroup>   
-                                                        <option value="8">Mail outs</option>
-                                                        <option value="9">Migration Agency</option>
-                                                        <option value="10">Other:</option>                                                     
-                                                        </select>  
+                                                        <label class="form-label" for="hear_about">How did you hear about us?</label>
+                                                        <input type="text" class="form-control" id="hear_about">
                                                         <div class="error-feedback">
                                                             Please select atleast one option
                                                         </div>
@@ -191,8 +185,8 @@
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="hear_about">Have you visited us before?*</label>
-                                                        <select name="hear_about" class="form-select" id="hear_about">
+                                                        <label class="form-label" for="visit_before">Have you visited us before?*</label>
+                                                        <select name="visit_before" class="form-select" id="visit_before">
                                                         <option value="0">--select--</option>
                                                         <option value="1">Yes</option>
                                                         <option value="2">No</option>
@@ -205,7 +199,7 @@
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="courses">Which Course are you interested in?*</label>
-                                                        <select name="courses" class="form-select" id="courses">
+                                                        <select name="courses" class="form-select" multiple id="courses">
                                                         <option value="0">--select--</option>
                                                         <?php 
                                                         while($coursesRes=mysqli_fetch_array($courses)){
@@ -260,6 +254,12 @@
                                                         <div class="error-feedback">
                                                             Please select atleast one option
                                                         </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                         <label class="form-label" for="pref_comment">Any preferences or requirements or expectations regarding this course</label>
+                                                        <input type="text" class="form-control" id="pref_comment" value="" placeholder="Requirements">
                                                     </div>
                                                 </div>
                                             </div>
@@ -325,7 +325,7 @@
 
                 var surname=$('#surname').val();
                 var suburb=$('#suburb').val();
-                var stuState=$('#stu_state').val();
+                var stuState=$('#stu_state').val()==0 ? '' : $('#stu_state').val();
                 var postCode=$('#post_code').val();
                 var visit_before=$('#visit_before').val();
                 var hear_about=$('#hear_about').val();
@@ -334,6 +334,7 @@
                 var referer_name=$('#referer_name').val();
                 var memberName=$('#member_name').val().trim();
                 var refer_alumni=$('#refer_alumni').val();
+                var prefComment=$('#pref_comment').val();
                 var streetDetails=$('#street_no').val();
                 var enquiryFor=$('#enquiry_for').val()==0 ? '' : $('#enquiry_for').val();
 
@@ -481,8 +482,10 @@
                     var checkId=$("#check_update").val();
                     $('#jelly_loader').show();
                     $('#student_enquiry_form').css('opacity','0.1');
+
+                    courses=courses.filter(item => item !== '0');
                     
-                    details={formName:'student_enquiry_common',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,checkId:checkId,surname:surname,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,plan_to_start_date:plan_to_start_date,refer_select:refer_select,memberName:memberName,referer_name:referer_name,refer_alumni:refer_alumni,streetDetails:streetDetails,enquiryFor:enquiryFor,admin_id:0,form_type:1};
+                    details={formName:'student_enquiry_common',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,checkId:checkId,surname:surname,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,plan_to_start_date:plan_to_start_date,refer_select:refer_select,prefComment:prefComment,memberName:memberName,referer_name:referer_name,refer_alumni:refer_alumni,streetDetails:streetDetails,enquiryFor:enquiryFor,admin_id:0,form_type:1};
                     $.ajax({
                         type:'post',
                         url:'includes/datacontrol.php',

@@ -228,7 +228,16 @@ if(isset($_SESSION['user_type'])){
                                                 
                                                 $query=mysqli_query($connection,"SELECT * from student_enquiry where st_enquiry_status!=1");
                                                 while($queryRes=mysqli_fetch_array($query)){
-                                                    $courses=mysqli_fetch_array(mysqli_query($connection,"SELECT * from courses where course_status!=1 AND course_id=".$queryRes['st_course']));
+                                                    $coursesNames=json_decode($queryRes['st_course']);
+                                                    $coursesName='<div class="td_scroll_height">';
+                                                    foreach($coursesNames as $value){
+                                                        $courses=mysqli_fetch_array(mysqli_query($connection,"SELECT * from courses where course_status!=1 AND course_id=".$value));
+                                                        $coursesName.= $courses['course_sname'].'-'.$courses['course_name']." , <br>"; 
+                                                    }
+                                                    $coursesNamePos = strrpos($coursesName, ',');
+                                                    $coursesName = substr($coursesName, 0, $coursesNamePos);
+                                                    $coursesName.='</div>';
+
                                             
                                                     if($queryRes['st_visa_status']==1){
                                                         $visaStatus='<i class="mdi mdi-checkbox-blank-circle text-warning me-1"></i> Pending';
@@ -244,7 +253,7 @@ if(isset($_SESSION['user_type'])){
                                                         <td><?php echo $queryRes['st_surname'].' '.$queryRes['st_name']; ?></td>
                                                         <td><?php echo $queryRes['st_phno']; ?></td>
                                                         <td><?php echo $queryRes['st_email']; ?></td>
-                                                        <td><?php echo $courses['course_sname'].'-'.$courses['course_name']; ?></td>
+                                                        <td><?php echo $coursesName; ?></td>
                                                         <td><?php echo $queryRes['st_state']; ?></td>
                                                         <td><?php echo $queryRes['st_post_code']; ?></td>
                                                         <td><?php echo date('d M Y',strtotime($queryRes['st_enquiry_date'])); ?></td>

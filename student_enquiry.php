@@ -204,7 +204,7 @@ if(@$_SESSION['user_type']!=''){
                                                         <label class="form-label" for="course_type">Course Type</label>
                                                         <select name="course_type" class="form-select" id="course_type">
                                                         <?php  
-                                                        $st_course_type=['--select--','Rpl','Regular','Regular - Group','Short course','Short course - Group'];
+                                                        $st_course_type=['--select--','Rpl','Regular','Regular - Group','Short courses','Short course - Group'];
                                                         $selectedCourseType=$queryRes['st_course_type']!='' ? $queryRes['st_course_type'] : 0;
                                                         for($i=0;$i<count($st_course_type);$i++){
                                                             $checked= $i==$queryRes['st_course_type'] ? 'selected' : '';
@@ -225,7 +225,7 @@ if(@$_SESSION['user_type']!=''){
 
                           <!-- Short Course - group Form -->
 
-                                <div class="row" id="short_grp_form" style="display:none">
+                                <div class="row" id="short_grp_form" style="display:<?php $queryRes['st_course_type']==5 || $queryRes['st_course_type']==4 ? 'none' : '' ?>">
                                    <div class="col-xl-12">
                                         <div class="card">
                                             <div class="card-body">
@@ -249,7 +249,7 @@ if(@$_SESSION['user_type']!=''){
                                                     </select>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label class="form-label" for="short_grp_campus">Campus</label>
+                                                    <label class="form-label" for="short_grp_campus">Training to be given</label>
                                                     <select name="short_grp_campus" class="form-control" id="short_grp_campus">
                                                     <?php 
                                                         $short_grp_campus=['--select--','Off Campus','On Campus'];
@@ -316,7 +316,7 @@ if(@$_SESSION['user_type']!=''){
                                     </div>
                                 </div>
 
-                                <div class="row" id="rpl_form" style="display:none">
+                                <div class="row" id="rpl_form" style="display:<?php $queryRes['st_course_type']==1? 'none' : '' ?>">
                                    <div class="col-xl-12">
                                         <div class="card">
                                             <div class="card-body">
@@ -340,7 +340,7 @@ if(@$_SESSION['user_type']!=''){
                                                     <label class="form-label" for="exp_in">Experienced In</label>
                                                     <select name="exp_in" class="form-control" id="exp_in">
                                                     <?php 
-                                                        $rpl_exps_in=['--select--','Aged Care','Disability Care','Mental Health'];
+                                                        $rpl_exps_in=['--select--','Aged Care','Disability Care','Mental Health','Home Care and Hospitals'];
                                                         for($i=0;$i<count($rpl_exps_in);$i++){
                                                             $selected=$i==$rpl_array['exp_in'] ? 'selected' : '';
                                                             echo "<option value='".$i."' ".$selected.">".$rpl_exps_in[$i]."</option>";
@@ -428,7 +428,15 @@ if(@$_SESSION['user_type']!=''){
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="stu_state">State</label>
-                                                        <input type="text" class="form-control stu_state" id="stu_state" placeholder="State" value="<?php echo $queryRes['st_state']; ?>" >
+                                                        <select name="stu_state" id="stu_state" class="form-control">
+                                                        <?php  
+                                                        $st_states=['--select--','NSW','VIC','ACT','NT','WA','QLD','SA','Tasmania'];
+                                                        for($i=0;$i<count($st_states);$i++){
+                                                            $checked= $i==$queryRes['st_state'] ? 'selected' : '';
+                                                            echo '<option value="'.$i.'" '.$checked.'>'.$st_states[$i].'</option>';
+                                                        }
+                                                        ?>
+                                                        </select>
                                                         <div class="error-feedback">
                                                             Please enter the State
                                                         </div>
@@ -445,8 +453,8 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="hear_about">Have you visited us before?*</label>
-                                                        <select name="hear_about" class="form-select" id="hear_about">
+                                                        <label class="form-label" for="visit_before">Have you visited us before?*</label>
+                                                        <select name="visit_before" class="form-select" id="visit_before">
                                                         <?php  
                                                         $st_visited=['--select--','Yes','No'];
                                                         for($i=0;$i<count($st_visited);$i++){
@@ -472,37 +480,43 @@ if(@$_SESSION['user_type']!=''){
                                     <div class="card-body" id="student_enquiry_form_parent">
                                     <!-- <div class="jelly" id="jelly_loader"></div> -->
                                         <div class="row">
-                                            <div class="col-md-6">
+                                                <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="visit_before">How did you hear about us?*</label>
-                                                        <select name="visit_before" class="form-select" id="visit_before">
-                                                        <?php  
-                                                        $st_heared=['--select--','Word of Mouth','Family or Friends','Website','Gumtree','Facebook','Instagram','Linkedin','Mail outs','Migration Agency','Other:'];
-                                                        for($i=0;$i<count($st_heared);$i++){
-                                                            $checked= $i==$queryRes['st_heared'] ? 'selected' : '';
-                                                            echo '<option value="'.$i.'" '.$checked.'>'.$st_heared[$i].'</option>';
-                                                            if($i==4){
-                                                                echo '<optgroup label="Social Media">';
-                                                            }else if($i==7){
-                                                                echo '</optgroup>';
-                                                            }
-                                                        }
-                                                        ?>                                              
-                                                        </select>  
+                                                        <label class="form-label" for="hear_about">How did you hear about us?</label>
+                                                        <input type="text" class="form-control" id="hear_about" value="<?php echo $queryRes['st_heared']; ?>">
                                                         <div class="error-feedback">
                                                             Please select atleast one option
                                                         </div>
                                                     </div>
-                                            </div>
-                                            <div class="col-md-6">
+                                                </div>
+                                                <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="courses">Which Course are you interested in?*</label>
-                                                        <select name="courses" class="form-select" id="courses">
+                                                        <select name="courses" class="form-control" multiple="multiple" multiple id="courses">
                                                         <option value="0">--select--</option>
                                                         <?php 
                                                         while($coursesRes=mysqli_fetch_array($courses)){
+
+                                                            if($queryRes['st_course']!=''){
+                                                                $coursesSel=json_decode($queryRes['st_course']);
+                                                            }else{
+                                                                $coursesSel=[];   
+                                                            }
+
                                                         ?>                                                            
-                                                            <option value="<?php echo $coursesRes['course_id']; ?>" <?php echo $coursesRes['course_id']==$queryRes['st_course'] ? 'selected' : ''; ?>><?php echo $coursesRes['course_sname'].'-'.$coursesRes['course_name']; ?></option>
+                                                            <option value="<?php echo $coursesRes['course_id']; ?>"
+                                                            <?php
+
+                                                            if(@in_array($coursesRes['course_id'],$coursesSel)){
+                                                                $selected='selected';
+                                                            }else{
+                                                                $selected='';
+                                                            }
+                                                            
+                                                            echo $selected;
+                                                            
+                                                            ?>>
+                                                            <?php echo $coursesRes['course_sname'].'-'.$coursesRes['course_name']; ?></option>
                                                             <?php } ?>
                                                         </select>    
                                                         <div class="error-feedback">
@@ -510,6 +524,7 @@ if(@$_SESSION['user_type']!=''){
                                                         </div>
                                                     </div>
                                                 </div>
+                                                
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="plan_to_start_date">When do you plan to start?</label>
@@ -539,7 +554,13 @@ if(@$_SESSION['user_type']!=''){
                                                 <div class="col-md-6 refered_field" style="display:<?php echo $queryRes['st_refered']==1 ? '' : 'none'; ?>">
                                                     <div class="mb-3">
                                                          <label class="form-label" for="referer_name">Please specify his / her name</label>
-                                                        <input type="text" class="form-control" id="referer_name" value="<?php echo $queryRes['st_refer_name']; ?>" placeholder="Name">
+                                                        <input type="text" class="form-control" id="referer_name" value="<?php echo $queryRes['st_refer_name']; ?>" placeholder="name1,name2,name3">
+                                                        <div class="alert alert-primary d-flex align-items-center mt-2" role="alert">
+                                                        <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Info:"><use xlink:href="#info-fill"/></svg>
+                                                        <div>
+                                                        Multiple Names can be written with a Comma(,) in Between
+                                                        </div>
+                                                        </div>
                                                         <div class="error-feedback">
                                                             Please Enter his / her name
                                                         </div>
@@ -564,20 +585,55 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="visa_status">Visa Condition*</label>
+                                                        <label class="form-label" for="visa_status">Visa Condition</label>
                                                         <select name="visa_status" class="form-select" id="visa_status">
-                                                        <option value="0">--select--</option>
                                                         <?php 
                                                         while($visaRes=mysqli_fetch_array($visaStatus)){
-                                                        ?>                                                            
+                                                            if($visaRes['visa_id']==1){
+                                                                echo "<option value='0'>--select--</option><optgroup label='Subclass 500 main applicant'>";
+                                                            }
+                                                        ?>                                                                                                      
                                                             <option value="<?php echo $visaRes['visa_id']; ?>" <?php echo $visaRes['visa_id']==$queryRes['st_visa_status'] ? 'selected' : ''; ?>><?php echo $visaRes['visa_status_name']; ?></option>
-                                                            <?php } ?>
+                                                            <?php
+                                                        if($visaRes['visa_id']==4){
+                                                            echo '</optgroup>';
+                                                        }
+
+                                                        } ?>
                                                         </select> 
                                                         <div class="error-feedback">
                                                             Please select a visa status
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <div class="col-md-6 visa_note" style="display:<?php echo $visaRes['visa_status_name']==7 ? '' : 'none'; ?>">
+                                                    <div class="mb-3">
+                                                         <label class="form-label" for="visa_note">Specify Visa Status</label>
+                                                        <input type="text" class="form-control" id="visa_note" value="<?php echo $queryRes['st_visa_note']; ?>" placeholder="Visa Note">
+                                                        <div class="error-feedback">
+                                                            Please Specify the Visa Condition
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                    <div><label for="visa_condition_label">Visa Status</label></div>
+                                                    <div>
+                                                        <input class="form-check-input visa_condition" type="radio" value="1" name="visa_condition" id="visa_condition1" checked>
+                                                        <label class="form-check-label" for="visa_condition1">
+                                                            Approved
+                                                        </label>
+                                                        <input class="form-check-input visa_condition" type="radio" value="2" name="visa_condition" id="visa_condition2">
+                                                        <label class="form-check-label" for="visa_condition2">
+                                                            Not Approved
+                                                        </label>
+                                                        <div class="error-feedback">
+                                                            Please select a visa status
+                                                        </div>
+                                                    </div>
+                                                    </div>
+                                                </div>
+
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="shore">Are you Offshore or Onshore</label>
@@ -618,7 +674,7 @@ if(@$_SESSION['user_type']!=''){
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="payment_fee">Fees mentioned*</label>
-                                                        <input type="text" class="form-control number-field" maxlength="7" id="payment_fee" placeholder="0.00" value="<?php echo $queryRes['st_fee']; ?>" >
+                                                        <input type="text" class="form-control" maxlength="7" id="payment_fee" placeholder="0.00" value="<?php echo $queryRes['st_fee']; ?>" >
                                                         <div class="error-feedback">
                                                             Please enter the Mentioned Fee
                                                         </div>
@@ -627,7 +683,7 @@ if(@$_SESSION['user_type']!=''){
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="comments">Comments</label>
-                                                        <input type="text" class="form-control" id="comments" placeholder="Comments" <?php echo $queryRes['st_comments']; ?>>
+                                                        <input type="text" class="form-control" id="comments" placeholder="Comments" value="<?php echo $queryRes['st_comments']; ?>">
                                                         <div class="error-feedback">
                                                             Please enter the Comments
                                                         </div>
@@ -654,18 +710,38 @@ if(@$_SESSION['user_type']!=''){
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="remarks">Remarks</label>
-                                                        <select name="remarks" class="form-select" id="remarks">
+                                                        <select name="remarks" class="form-select" id="remarks" multiple>
                                                         <?php  
-                                                        $st_remarks=['--select--','Good','Bad'];
-                                                        for($i=0;$i<count($st_appoint_book);$i++){
-                                                            $checked= $i==$queryRes['st_remarks'] ? 'selected' : '';
+                                                        $st_remarks=['--select--','Seems to be interested to do course and need to contact asap','contacted and followed','Good with communication skills','Sent enrollement form online/ hard copies','Want to do the course asap','not interested much','Looking for government funding','Have done counselling before but wants to get more info','Counseling is done but enrolment is due','Have done the counselling before','Seems like having attitude','Want to book an appointment for counselling','Will callus back again','Planning to relocate to other state','Wants to get COE for visa purpose'];
+
+                                                        if($queryRes['st_remarks']!=''){
+                                                            $remarksSel=json_decode($queryRes['st_remarks']);
+                                                        }else{
+                                                            $remarksSel=[];   
+                                                        }
+
+                                                        for($i=0;$i<count($st_remarks);$i++){                                            
+
+                                                            if(in_array($i,$remarksSel)){
+                                                                $checked='selected';
+                                                            }else{
+                                                                $checked='';
+                                                            }                                                            
+
+                                                            // $checked= $i==$queryRes['st_remarks'] ? 'selected' : '';
                                                             echo '<option value="'.$i.'" '.$checked.'>'.$st_remarks[$i].'</option>';
                                                         }
-                                                        ?>
+                                                            ?>
                                                         </select>                                                          
                                                         <div class="error-feedback">
                                                             Please select atleast one option
                                                         </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                         <label class="form-label" for="pref_comment">Any preferences or requirements or expectations regarding this course</label>
+                                                        <input type="text" class="form-control" id="pref_comment" placeholder="Requirements" value="<?php echo $queryRes['st_pref_comments']; ?>">
                                                     </div>
                                                 </div>
                                             </div>
@@ -677,7 +753,7 @@ if(@$_SESSION['user_type']!=''){
 
                                 <!-- appointment form  -->
 
-                                <div class="row" id="appointment_form" style="display:none"> 
+                                <div class="row" id="appointment_form" style="display:<?php $queryRes['st_appoint_book']==1 ? 'none' : '' ?>"> 
                                    <div class="col-xl-12">
                                         <div class="card">
                                             <div class="card-body">
@@ -770,13 +846,21 @@ if(@$_SESSION['user_type']!=''){
                         $('.rpl_child').show();
                     }                 
                 })
+                $('#visa_status').on("change",function(){
+                    var value=$(this).val();
+                    if( value==7 ){
+                        $('.visa_note').show();
+                    }else{
+                        $('.visa_note').hide();
+                    }                 
+                })
 
                 $('#course_type').on("change",function(){
                     var value=$(this).val();
                     if( value==1 ){
                         $('#rpl_form').show();
                         $('#short_grp_form').hide();
-                    }else if(value==5){       
+                    }else if(value==5 || value==4){       
                         $('#rpl_form').hide();
                         $('#short_grp_form').show(); 
                     }else{
@@ -849,7 +933,7 @@ if(@$_SESSION['user_type']!=''){
 
                 var surname=$('#surname').val();
                 var suburb=$('#suburb').val();
-                var stuState=$('#stu_state').val();
+                var stuState=$('#stu_state').val() == 0 ? '' : $('#stu_state').val();
                 var postCode=$('#post_code').val();
                 var visit_before=$('#visit_before').val()==0 ? '' :$('#visit_before').val();
                 var hear_about=$('#hear_about').val();
@@ -863,6 +947,7 @@ if(@$_SESSION['user_type']!=''){
                 var remarks=$('#remarks').val();
                 var streetDetails=$('#street_no').val();
                 var ethnicity=$('#ethnicity').val();                
+                var prefComment=$('#pref_comment').val();                
                 var enquiryFor=$('#enquiry_for').val()==0 ? '' : $('#enquiry_for').val();
                 var courseType=$('#course_type').val()==0 ? '' : $('#course_type').val();
 
@@ -871,6 +956,14 @@ if(@$_SESSION['user_type']!=''){
                 var payment=$('#payment_fee').val().trim();
                 var memberName=$('#member_name').val().trim();
                 var visaStatus=$('#visa_status').val()==0 ? '' : $('#visa_status').val();
+                var visaNote=$('#visa_note').val();
+                var visaCondition=$('.visa_condition').val();
+
+                if(visaStatus==7 && visaNote=='' ){
+                    visaNoteStatus=1;
+                }else{
+                    visaNoteStatus=0;
+                }
 
                 if(refer_select==0){
                     refer_select_error=0;
@@ -886,7 +979,7 @@ if(@$_SESSION['user_type']!=''){
                     refer_select_error=1;
                 }
 
-                if(studentName==''|| ( contactName=='' || contactName.length!=10 ) ||emailAddress==''|| (emailAddress!='' && !emailAddress.match(emailregexp)==true ) ||courses==''||payment==''||visaStatus=='' || enquiryDate=='' || refer_select_error==0 || surname=='' || enquiryFor==''|| postCode=='' || visit_before=='' || memberName=='' ){
+                if(studentName==''|| ( contactName=='' || contactName.length!=10 ) ||emailAddress==''|| (emailAddress!='' && !emailAddress.match(emailregexp)==true ) ||courses==''||payment=='' || enquiryDate=='' || refer_select_error==0 || surname=='' || enquiryFor==''|| postCode=='' || visit_before=='' || memberName=='' || visaNoteStatus==1 ){
 
                     if(refer_select_error==0){
                         if(refer_select==0){
@@ -956,6 +1049,15 @@ if(@$_SESSION['user_type']!=''){
                         $('#courses').removeClass('invalid-div');
                         $('#courses').closest('div').find('.error-feedback').hide();
                     }
+                    if(visaNoteStatus==1){
+                        $('#visa_note').addClass('invalid-div');
+                        $('#visa_note').removeClass('valid-div');
+                        $('#visa_note').closest('div').find('.error-feedback').show();
+                    }else{
+                        $('#visa_note').addClass('valid-div');
+                        $('#visa_note').removeClass('invalid-div');
+                        $('#visa_note').closest('div').find('.error-feedback').hide();
+                    }
                     if(payment==''){
                         $('#payment_fee').addClass('invalid-div');
                         $('#payment_fee').removeClass('valid-div');
@@ -965,15 +1067,15 @@ if(@$_SESSION['user_type']!=''){
                         $('#payment_fee').removeClass('invalid-div');
                         $('#payment_fee').closest('div').find('.error-feedback').hide();
                     }
-                    if(visaStatus==''){
-                        $('#visa_status').addClass('invalid-div');
-                        $('#visa_status').removeClass('valid-div');
-                        $('#visa_status').closest('div').find('.error-feedback').show();
-                    }else{
-                        $('#visa_status').addClass('valid-div');
-                        $('#visa_status').removeClass('invalid-div');
-                        $('#visa_status').closest('div').find('.error-feedback').hide();
-                    }
+                    // if(visaStatus==''){
+                    //     $('#visa_status').addClass('invalid-div');
+                    //     $('#visa_status').removeClass('valid-div');
+                    //     $('#visa_status').closest('div').find('.error-feedback').show();
+                    // }else{
+                    //     $('#visa_status').addClass('valid-div');
+                    //     $('#visa_status').removeClass('invalid-div');
+                    //     $('#visa_status').closest('div').find('.error-feedback').hide();
+                    // }
 
                     if(enquiryDate==''){
                         $('#enquiry_date').addClass('invalid-div');
@@ -1027,13 +1129,15 @@ if(@$_SESSION['user_type']!=''){
 
                 }else{
                     var checkId=$("#check_update").val();
-                    console.log(courseType);
-                    if( ( (courseType==1 && submitRpl()) || (courseType==5 && submitShortGroup()) || (courseType!=5 || courseType!=1) ) && ( ( appointment_booked==1 && submitSlot() ) || appointment_booked==2 ) ){
+                    if( ( (courseType==1 && submitRpl()) || (courseType==5 && submitShortGroup()) || (courseType==4 && submitShortGroup()) || (courseType!=4 || courseType!=5 || courseType!=1) ) && ( ( appointment_booked==1 && submitSlot() ) || appointment_booked==2 || appointment_booked==0 ) ){
 
                     $('#jelly_loader').show();
                     $('#student_enquiry_form').css('opacity','0.1');
+
+                    courses=courses.filter(item => item !== '0');
+                    remarks=remarks.filter(item => item !== '0');
                     
-                    details={formName:'student_enquiry',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,payment:payment,checkId:checkId,visaStatus:visaStatus,surname:surname,enquiryDate:enquiryDate,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,memberName:memberName,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,comments:comments,appointment_booked:appointment_booked,remarks:remarks,streetDetails:streetDetails,enquiryFor:enquiryFor,courseType:courseType,shore:shore,ethnicity:ethnicity,rpl_arrays:JSON.stringify(rpl_array),short_grps:JSON.stringify(short_grp),slot_books:JSON.stringify(slot_book),admin_id:"<?php echo $_SESSION['user_id']; ?>",formId:<?php echo $form_id; ?>,rpl_status:'<?php echo $rpl_status; ?>',short_grp_status:'<?php echo $short_grp_status; ?>',slot_book_status:'<?php echo $slot_book_status; ?>'};
+                    details={formName:'student_enquiry',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,payment:payment,checkId:checkId,visaStatus:visaStatus,surname:surname,enquiryDate:enquiryDate,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,memberName:memberName,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,visaNote:visaNote,prefComment:prefComment,comments:comments,appointment_booked:appointment_booked,remarks:remarks,streetDetails:streetDetails,enquiryFor:enquiryFor,courseType:courseType,shore:shore,ethnicity:ethnicity,rpl_arrays:JSON.stringify(rpl_array),short_grps:JSON.stringify(short_grp),slot_books:JSON.stringify(slot_book),admin_id:"<?php echo $_SESSION['user_id']; ?>",formId:<?php echo $form_id; ?>,rpl_status:'<?php echo $rpl_status; ?>',short_grp_status:'<?php echo $short_grp_status; ?>',slot_book_status:'<?php echo $slot_book_status; ?>'};
                     $.ajax({
                         type:'post',
                         url:'includes/datacontrol.php',
@@ -1218,97 +1322,97 @@ if(@$_SESSION['user_type']!=''){
                 var short_grp_campus=$('#short_grp_campus').val()==0 ? '' : $('#short_grp_campus').val();
                 var short_grp_before=$('#short_grp_before').val()==0 ? '' : $('#short_grp_before').val();
 
-                if(short_grp_org_name=='' || short_grp_date=='' || short_grp_num_std=='' || short_grp_ind_exp=='' || short_grp_con_type=='' || short_grp_con_num=='' || short_grp_con_name=='' || (short_grp_con_email!='' && !short_grp_con_email.match(emailregexp)==true ) || short_grp_org_type=='' || short_grp_campus=='' || short_grp_before==''){
+                // if(short_grp_org_name=='' || short_grp_date=='' || short_grp_num_std=='' || short_grp_ind_exp=='' || short_grp_con_type=='' || short_grp_con_num=='' || short_grp_con_name=='' || (short_grp_con_email!='' && !short_grp_con_email.match(emailregexp)==true ) || short_grp_org_type=='' || short_grp_campus=='' || short_grp_before==''){
                     
 
-                    if(short_grp_org_name==''){
-                        $('#short_grp_org_name').addClass('invalid-div');
-                        $('#short_grp_org_name').removeClass('valid-div');
-                    }else{
-                        $('#short_grp_org_name').addClass('valid-div');
-                        $('#short_grp_org_name').removeClass('invalid-div');
-                    }
-                    if(short_grp_date==''){
-                        $('#short_grp_date').addClass('invalid-div');
-                        $('#short_grp_date').removeClass('valid-div');
-                    }else{
-                        $('#short_grp_date').addClass('valid-div');
-                        $('#short_grp_date').removeClass('invalid-div');
-                    }
-                    if(short_grp_num_std==''){
-                        $('#short_grp_num_std').addClass('invalid-div');
-                        $('#short_grp_num_std').removeClass('valid-div');
-                    }else{
-                        $('#short_grp_num_std').addClass('valid-div');
-                        $('#short_grp_num_std').removeClass('invalid-div');
-                    }
-                    if(short_grp_ind_exp==''){
-                        $('#short_grp_ind_exp').addClass('invalid-div');
-                        $('#short_grp_ind_exp').removeClass('valid-div');
-                    }else{
-                        $('#short_grp_ind_exp').addClass('valid-div');
-                        $('#short_grp_ind_exp').removeClass('invalid-div');
-                    }
-                    if(short_grp_con_type==''){
-                        $('#short_grp_con_type').addClass('invalid-div');
-                        $('#short_grp_con_type').removeClass('valid-div');
-                    }else{
-                        $('#short_grp_con_type').addClass('valid-div');
-                        $('#short_grp_con_type').removeClass('invalid-div');
-                    }
-                    if(short_grp_con_num==''){
-                        $('#short_grp_con_num').addClass('invalid-div');
-                        $('#short_grp_con_num').removeClass('valid-div');
-                    }else{
-                        $('#short_grp_con_num').addClass('valid-div');
-                        $('#short_grp_con_num').removeClass('invalid-div');
-                    }
-                    if(short_grp_con_name==''){
-                        $('#short_grp_con_name').addClass('invalid-div');
-                        $('#short_grp_con_name').removeClass('valid-div');
-                    }else{
-                        $('#short_grp_con_name').addClass('valid-div');
-                        $('#short_grp_con_name').removeClass('invalid-div');
-                    }
-                    if((short_grp_con_email!='' && !short_grp_con_email.match(emailregexp)==true )){
-                        $('#short_grp_con_email').addClass('invalid-div');
-                        $('#short_grp_con_email').removeClass('valid-div');
-                    }else{
-                        $('#short_grp_con_email').addClass('valid-div');
-                        $('#short_grp_con_email').removeClass('invalid-div');
-                    }
-                    if(short_grp_before==''){
-                        $('#short_grp_before').addClass('invalid-div');
-                        $('#short_grp_before').removeClass('valid-div');
-                    }else{
-                        $('#short_grp_before').addClass('valid-div');
-                        $('#short_grp_before').removeClass('invalid-div');
-                    }
-                    if(short_grp_campus==''){
-                        $('#short_grp_campus').addClass('invalid-div');
-                        $('#short_grp_campus').removeClass('valid-div');
-                    }else{
-                        $('#short_grp_campus').addClass('valid-div');
-                        $('#short_grp_campus').removeClass('invalid-div');
-                    }
-                    if(short_grp_org_type==''){
-                        $('#short_grp_org_type').addClass('invalid-div');
-                        $('#short_grp_org_type').removeClass('valid-div');
-                    }else{
-                        $('#short_grp_org_type').addClass('valid-div');
-                        $('#short_grp_org_type').removeClass('invalid-div');
-                    }
-                    return false;
+                //     if(short_grp_org_name==''){
+                //         $('#short_grp_org_name').addClass('invalid-div');
+                //         $('#short_grp_org_name').removeClass('valid-div');
+                //     }else{
+                //         $('#short_grp_org_name').addClass('valid-div');
+                //         $('#short_grp_org_name').removeClass('invalid-div');
+                //     }
+                //     if(short_grp_date==''){
+                //         $('#short_grp_date').addClass('invalid-div');
+                //         $('#short_grp_date').removeClass('valid-div');
+                //     }else{
+                //         $('#short_grp_date').addClass('valid-div');
+                //         $('#short_grp_date').removeClass('invalid-div');
+                //     }
+                //     if(short_grp_num_std==''){
+                //         $('#short_grp_num_std').addClass('invalid-div');
+                //         $('#short_grp_num_std').removeClass('valid-div');
+                //     }else{
+                //         $('#short_grp_num_std').addClass('valid-div');
+                //         $('#short_grp_num_std').removeClass('invalid-div');
+                //     }
+                //     if(short_grp_ind_exp==''){
+                //         $('#short_grp_ind_exp').addClass('invalid-div');
+                //         $('#short_grp_ind_exp').removeClass('valid-div');
+                //     }else{
+                //         $('#short_grp_ind_exp').addClass('valid-div');
+                //         $('#short_grp_ind_exp').removeClass('invalid-div');
+                //     }
+                //     if(short_grp_con_type==''){
+                //         $('#short_grp_con_type').addClass('invalid-div');
+                //         $('#short_grp_con_type').removeClass('valid-div');
+                //     }else{
+                //         $('#short_grp_con_type').addClass('valid-div');
+                //         $('#short_grp_con_type').removeClass('invalid-div');
+                //     }
+                //     if(short_grp_con_num==''){
+                //         $('#short_grp_con_num').addClass('invalid-div');
+                //         $('#short_grp_con_num').removeClass('valid-div');
+                //     }else{
+                //         $('#short_grp_con_num').addClass('valid-div');
+                //         $('#short_grp_con_num').removeClass('invalid-div');
+                //     }
+                //     if(short_grp_con_name==''){
+                //         $('#short_grp_con_name').addClass('invalid-div');
+                //         $('#short_grp_con_name').removeClass('valid-div');
+                //     }else{
+                //         $('#short_grp_con_name').addClass('valid-div');
+                //         $('#short_grp_con_name').removeClass('invalid-div');
+                //     }
+                //     if((short_grp_con_email!='' && !short_grp_con_email.match(emailregexp)==true )){
+                //         $('#short_grp_con_email').addClass('invalid-div');
+                //         $('#short_grp_con_email').removeClass('valid-div');
+                //     }else{
+                //         $('#short_grp_con_email').addClass('valid-div');
+                //         $('#short_grp_con_email').removeClass('invalid-div');
+                //     }
+                //     if(short_grp_before==''){
+                //         $('#short_grp_before').addClass('invalid-div');
+                //         $('#short_grp_before').removeClass('valid-div');
+                //     }else{
+                //         $('#short_grp_before').addClass('valid-div');
+                //         $('#short_grp_before').removeClass('invalid-div');
+                //     }
+                //     if(short_grp_campus==''){
+                //         $('#short_grp_campus').addClass('invalid-div');
+                //         $('#short_grp_campus').removeClass('valid-div');
+                //     }else{
+                //         $('#short_grp_campus').addClass('valid-div');
+                //         $('#short_grp_campus').removeClass('invalid-div');
+                //     }
+                //     if(short_grp_org_type==''){
+                //         $('#short_grp_org_type').addClass('invalid-div');
+                //         $('#short_grp_org_type').removeClass('valid-div');
+                //     }else{
+                //         $('#short_grp_org_type').addClass('valid-div');
+                //         $('#short_grp_org_type').removeClass('invalid-div');
+                //     }
+                //     return false;
 
 
-                }else{
+                // }else{
 
                     
                     short_grp={"short_grp_org_name":short_grp_org_name,"short_grp_org_type":short_grp_org_type,"short_grp_campus":short_grp_campus,"short_grp_date":short_grp_date,"short_grp_num_std":short_grp_num_std,"short_grp_ind_exp":short_grp_ind_exp,"short_grp_con_type":short_grp_con_type,"short_grp_con_num":short_grp_con_num,"short_grp_con_name":short_grp_con_name, "short_grp_con_email":short_grp_con_email,"short_grp_before":short_grp_before};
                     return true;
 
                 }
-            }
+            // }
 
             function submitSlot(){
                 var slot_book_time=$('#slot_book_time').val(); 

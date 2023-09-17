@@ -30,6 +30,16 @@ if(@$_SESSION['user_type']!=''){
         }
 
         // Short Groups 
+        $queryRes_regGrp=mysqli_query($connection,"SELECT * from regular_group_form where enq_form_id=$form_id");
+        if(mysqli_num_rows($queryRes_regGrp)!=0){
+            $queryRes_regGrps=mysqli_fetch_array($queryRes_regGrp);
+            $reg_grp_status=1;
+            $reg_grp=$queryRes_regGrps['reg_grp_names'];
+        }else{
+            $reg_grp_status=0;
+            $reg_grp='';    
+        }
+
         $queryRes_shortGrp=mysqli_query($connection,"SELECT * from short_group_form where enq_form_id=$form_id");
         if(mysqli_num_rows($queryRes_shortGrp)!=0){
             $queryRes_shortGrps=mysqli_fetch_array($queryRes_shortGrp);
@@ -66,6 +76,7 @@ if(@$_SESSION['user_type']!=''){
         $short_grps=json_encode($short_grp);
         $slot_books=json_encode($slot_book);
         $form_id=0;
+        $reg_grp='';
         $rpl_status=0;
         $short_grp_status=0;
         $slot_book_status=0;
@@ -167,7 +178,7 @@ if(@$_SESSION['user_type']!=''){
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="student_name">First Name*</label>
-                                                        <input type="text" class="form-control" id="student_name" placeholder="Student Name" value="<?php echo $queryRes['st_name']; ?>" >
+                                                        <input type="text" class="form-control" id="student_name" placeholder="Student Name" value="<?php echo $queryRes['st_enquiry_for']==1 ? $queryRes['st_name']: $queryRes['st_member_name'] ; ?>" >
                                                         <div class="error-feedback">
                                                             Please enter the First name
                                                         </div>
@@ -193,7 +204,7 @@ if(@$_SESSION['user_type']!=''){
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="member_name">Name*</label>
-                                                        <input type="text" class="form-control" id="member_name" placeholder="Name" value="<?php echo $queryRes['st_name']; ?>" >
+                                                        <input type="text" class="form-control" id="member_name" placeholder="Name" value="<?php echo $queryRes['st_enquiry_for']==1 ? $queryRes['st_member_name'] : $queryRes['st_name']; ?>" <?php echo $queryRes['st_enquiry_for']==1 ? 'readonly' : ''  ?> >
                                                         <div class="error-feedback">
                                                             Please enter the Name
                                                         </div>
@@ -225,7 +236,7 @@ if(@$_SESSION['user_type']!=''){
 
                           <!-- Short Course - group Form -->
 
-                                <div class="row" id="short_grp_form" style="display:<?php $queryRes['st_course_type']==5 || $queryRes['st_course_type']==4 ? 'none' : '' ?>">
+                                <div class="row" id="short_grp_form" style="display:<?php echo $queryRes['st_course_type']==5 || $queryRes['st_course_type']==4 ? 'block' : 'none' ?>">
                                    <div class="col-xl-12">
                                         <div class="card">
                                             <div class="card-body">
@@ -316,7 +327,7 @@ if(@$_SESSION['user_type']!=''){
                                     </div>
                                 </div>
 
-                                <div class="row" id="rpl_form" style="display:<?php $queryRes['st_course_type']==1? 'none' : '' ?>">
+                                <div class="row" id="rpl_form" style="display:<?php echo $queryRes['st_course_type']==1? : 'none' ?>">
                                    <div class="col-xl-12">
                                         <div class="card">
                                             <div class="card-body">
@@ -386,6 +397,30 @@ if(@$_SESSION['user_type']!=''){
                                                     <label class="form-label" for="exp_prev_name">Previous Qualification Name</label>
                                                     <input type="text" name="exp_prev_name" class="form-control" id="exp_prev_name" placeholder="Name" value="<?php echo $rpl_array['exp_prev_name']; ?>">
                                                 </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row" id="regular_grp_form" style="display:<?php echo $queryRes['st_course_type']==3 ? '' : 'none' ?>">
+                                   <div class="col-xl-12">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <b><p class="card-title">Regular Group Form</p></b>
+                                                <div class="row">
+
+                                                    <div class="col-md-6">
+                                                        <label class="form-label" for="reg_grp_names">Enter the People Names</label>
+                                                        <input type="text" id="reg_grp_names" class="form-control" name="reg_grp_names" value="<?php echo $reg_grp; ?>">
+                                                        <div class="alert alert-primary d-flex align-items-center mt-2" role="alert">
+                                                        <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Info:"><use xlink:href="#info-fill"/></svg>
+                                                        <div>
+                                                        Multiple Names can be written with a Comma(,) in Between
+                                                        </div>
+                                                        </div>
+                                                    </div>
+
                                                 </div>
                                             </div>
                                         </div>
@@ -860,12 +895,19 @@ if(@$_SESSION['user_type']!=''){
                     if( value==1 ){
                         $('#rpl_form').show();
                         $('#short_grp_form').hide();
+                        $('#regular_grp_form').hide();
                     }else if(value==5 || value==4){       
                         $('#rpl_form').hide();
                         $('#short_grp_form').show(); 
+                        $('#regular_grp_form').hide();
+                    }else if(value==3){                        
+                        $('#rpl_form').hide();
+                        $('#short_grp_form').hide();
+                        $('#regular_grp_form').show();
                     }else{
                         $('#rpl_form').hide();
                         $('#short_grp_form').hide();
+                        $('#regular_grp_form').hide();
                     }
                 })
                 $('.rpl_prev_parent').on("change",function(){
@@ -958,6 +1000,8 @@ if(@$_SESSION['user_type']!=''){
                 var visaStatus=$('#visa_status').val()==0 ? '' : $('#visa_status').val();
                 var visaNote=$('#visa_note').val();
                 var visaCondition=$('.visa_condition').val();
+
+                var reg_grp_names=$('#reg_grp_names').val();
 
                 if(visaStatus==7 && visaNote=='' ){
                     visaNoteStatus=1;
@@ -1137,7 +1181,7 @@ if(@$_SESSION['user_type']!=''){
                     courses=courses.filter(item => item !== '0');
                     remarks=remarks.filter(item => item !== '0');
                     
-                    details={formName:'student_enquiry',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,payment:payment,checkId:checkId,visaStatus:visaStatus,surname:surname,enquiryDate:enquiryDate,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,memberName:memberName,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,visaNote:visaNote,prefComment:prefComment,comments:comments,appointment_booked:appointment_booked,remarks:remarks,streetDetails:streetDetails,enquiryFor:enquiryFor,courseType:courseType,shore:shore,ethnicity:ethnicity,rpl_arrays:JSON.stringify(rpl_array),short_grps:JSON.stringify(short_grp),slot_books:JSON.stringify(slot_book),admin_id:"<?php echo $_SESSION['user_id']; ?>",formId:<?php echo $form_id; ?>,rpl_status:'<?php echo $rpl_status; ?>',short_grp_status:'<?php echo $short_grp_status; ?>',slot_book_status:'<?php echo $slot_book_status; ?>'};
+                    details={formName:'student_enquiry',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,payment:payment,checkId:checkId,visaStatus:visaStatus,surname:surname,enquiryDate:enquiryDate,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,memberName:memberName,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,visaNote:visaNote,prefComment:prefComment,comments:comments,appointment_booked:appointment_booked,remarks:remarks,reg_grp_names:reg_grp_names,streetDetails:streetDetails,enquiryFor:enquiryFor,courseType:courseType,shore:shore,ethnicity:ethnicity,rpl_arrays:JSON.stringify(rpl_array),short_grps:JSON.stringify(short_grp),slot_books:JSON.stringify(slot_book),admin_id:"<?php echo $_SESSION['user_id']; ?>",formId:<?php echo $form_id; ?>,rpl_status:'<?php echo $rpl_status; ?>',short_grp_status:'<?php echo $short_grp_status; ?>',reg_grp_status:'<?php echo $reg_grp_status; ?>',slot_book_status:'<?php echo $slot_book_status; ?>'};
                     $.ajax({
                         type:'post',
                         url:'includes/datacontrol.php',

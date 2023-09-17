@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Sep 16, 2023 at 12:34 PM
+-- Generation Time: Sep 17, 2023 at 02:21 AM
 -- Server version: 8.0.31
 -- PHP Version: 8.0.26
 
@@ -97,15 +97,7 @@ CREATE TABLE IF NOT EXISTS `enquiry_forms` (
   `enq_status` tinyint(1) NOT NULL,
   `enq_created_on` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`enq_form_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
--- Dumping data for table `enquiry_forms`
---
-
-INSERT INTO `enquiry_forms` (`enq_form_id`, `enq_admin_id`, `enq_status`, `enq_created_on`) VALUES
-(1, 1, 0, '2023-09-13 10:29:16'),
-(2, 1, 0, '2023-09-13 12:59:53');
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -165,6 +157,29 @@ INSERT INTO `qualifications` (`qualification_id`, `qualification_name`, `qualifi
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `regular_group_form`
+--
+
+DROP TABLE IF EXISTS `regular_group_form`;
+CREATE TABLE IF NOT EXISTS `regular_group_form` (
+  `reg_grp_id` int NOT NULL AUTO_INCREMENT,
+  `reg_grp_names` text,
+  `enq_form_id` int DEFAULT NULL,
+  `reg_grp_status` tinyint NOT NULL DEFAULT '0',
+  `reg_grp_created_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`reg_grp_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `regular_group_form`
+--
+
+INSERT INTO `regular_group_form` (`reg_grp_id`, `reg_grp_names`, `enq_form_id`, `reg_grp_status`, `reg_grp_created_date`) VALUES
+(1, 'name1,aesraser', 1, 0, '2023-09-17 02:05:21');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `rpl_enquries`
 --
 
@@ -207,14 +222,7 @@ CREATE TABLE IF NOT EXISTS `short_group_form` (
   `sh_grp_status` tinyint(1) NOT NULL DEFAULT '0',
   `sh_grp_created_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`sh_grp_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
--- Dumping data for table `short_group_form`
---
-
-INSERT INTO `short_group_form` (`sh_grp_id`, `enq_form_id`, `sh_org_name`, `sh_grp_org_type`, `sh_grp_campus`, `sh_grp_date`, `sh_grp_num_stds`, `sh_grp_ind_exp`, `sh_grp_train_bef`, `sh_grp_con_us`, `sh_grp_phone`, `sh_grp_name`, `sh_grp_email`, `sh_grp_status`, `sh_grp_created_date`) VALUES
-(1, 1, 'name org name', 1, 1, '2023-12-31', 5, 1, 1, 'name test', '08309603262', 'person name', 'saikiran@gmail.com', 0, '2023-09-16 12:00:26');
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -239,7 +247,7 @@ CREATE TABLE IF NOT EXISTS `slot_book` (
 --
 
 INSERT INTO `slot_book` (`slot_bk_id`, `enq_form_id`, `slot_bk_datetime`, `slot_bk_purpose`, `slot_bk_on`, `slot_book_by`, `slot_book_email_link`) VALUES
-(1, 1, '2023-12-31 18:29:00', 'testset', '2023-12-31 00:00:00', 'testse', 1);
+(1, 1, '2023-12-31 17:29:00', 'testset', '2023-12-31 00:00:00', 'testse', 1);
 
 -- --------------------------------------------------------
 
@@ -383,18 +391,14 @@ CREATE TABLE IF NOT EXISTS `student_enquiry` (
   `st_modified_date` datetime DEFAULT NULL,
   `st_gen_enq_type` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`st_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `student_enquiry`
 --
 
 INSERT INTO `student_enquiry` (`st_id`, `st_enquiry_id`, `st_name`, `st_member_name`, `st_surname`, `st_phno`, `st_email`, `st_course`, `st_course_type`, `st_street_details`, `st_suburb`, `st_state`, `st_post_code`, `st_visited`, `st_heared`, `st_refered`, `st_refer_name`, `st_refer_alumni`, `st_fee`, `st_remarks`, `st_shore`, `st_ethnicity`, `st_comments`, `st_pref_comments`, `st_appoint_book`, `st_enquiry_for`, `st_visa_status`, `st_visa_note`, `st_enquiry_status`, `st_delete_note`, `st_startplan_date`, `st_enquiry_date`, `st_created_by`, `created_date`, `st_modified_by`, `st_modified_date`, `st_gen_enq_type`) VALUES
-(1, 'EQ00001', 'name family', 'John Kotln', 'surname test', '8309603262', 'saikiran.m.v.s.s@gmail.com', '[\"1\",\"2\",\"3\",\"4\",\"5\",\"6\"]', 5, 'agraharam street', 'bobbili', 1, '535558', 2, 'name hear', 1, 'st', 1, '98', '[\"1\",\"2\",\"3\",\"4\"]', 1, 'bobbili', 'commentstsfds', 'require', 1, 2, 1, '', 0, NULL, '2023-12-31 00:00:00', '2023-12-31 00:00:00', 1, '2023-09-16 12:00:20', NULL, NULL, NULL),
-(2, 'EQ00002', 'John Kotln', 'John Kotln', 'asurna', '8309603262', 'saikiran.m.v.s.s@gmail.com', '[\"1\",\"2\",\"3\"]', 2, 'agraharam street', 'bobbili', 1, '535558', 1, 'asdgs', 1, 'st', 2, '987', 'null', 1, 'bobbili', '', '', 2, 1, 2, '', 0, NULL, '2023-12-30 00:00:00', '2022-12-31 00:00:00', 1, '2023-09-16 12:02:59', NULL, NULL, NULL),
-(3, 'EQ00003', 'asdfasdf', 'John Kotln', 'asdf', '8309603262', 'saiprakash359@gmail.com', '[\"1\",\"2\",\"3\",\"4\",\"5\"]', 2, 'agraharam street', 'bobbili', 1, '535558', 2, 'asdfs', 2, '', 0, '9879', 'null', 1, 'sdfsfd', '', '', 2, 2, 1, '', 0, NULL, '2023-12-30 00:00:00', '2023-12-31 00:00:00', 1, '2023-09-16 12:10:22', NULL, NULL, NULL),
-(4, 'EQ00004', 'John Kotln', 'John Kotln', 'asadfasd', '8309603262', 'saiprash359@gmail.com', '[\"1\",\"2\"]', 2, 'agraharam street', 'bobbili', 1, '535558', 1, 'sdgffds', 2, '', 0, '654', '', 1, 'bobbili', '', '', 2, 1, 2, '', 0, NULL, '2022-12-31 00:00:00', '2023-12-31 00:00:00', 1, '2023-09-16 12:14:38', NULL, NULL, NULL),
-(5, 'EQ00005', 'John Kotln', 'John Kotln', 'sdgsdf', '8309603262', 'saikiran.m.v.s.s@gmail.com', '[\"1\",\"2\"]', 3, 'agraharam street', 'bobbili', 2, '535558', 2, '', 2, '', 0, '8797', '', 1, 'bobbili', '', '', 2, 1, 1, '', 0, NULL, '2023-12-31 00:00:00', '2023-12-31 00:00:00', 1, '2023-09-16 12:16:23', NULL, NULL, NULL);
+(1, 'EQ00001', 'names', 'nam estet', 'test1', '8309603262', 'saikiran.m.v.s.s@gmail.com', '[\"1\",\"2\",\"3\",\"4\"]', 3, 'agraharam street', 'bobbili', 4, '535558', 1, 'testdfs', 1, 'asd,artsdf,sgdfgs', 1, '897', '[\"1\",\"2\",\"3\",\"4\"]', 1, 'bobbili', 'asdfasdf', 'asdfsd', 1, 2, 1, '', 0, NULL, '2023-12-31 00:00:00', '2023-12-31 00:00:00', 1, '2023-09-17 02:19:17', 1, '2023-09-17 02:19:17', NULL);
 
 -- --------------------------------------------------------
 

@@ -13,6 +13,17 @@ if(@$_POST['formName']=='create_qr'){
 
 }
 
+if(@$_POST['formName']=='phoneNumberCheck'){
+    
+    $number=$_POST['number'];
+    $query=mysqli_query($connection,"SELECT * FROM `student_enquiry` WHERE `st_enquiry_status`=0 AND `st_phno` LIKE '%$number%'");
+    if(mysqli_num_rows($query)!=0){
+        echo 1;
+    }else{
+        echo 0;
+    }
+
+}
 if(@$_POST['formName']=='student_enquiry_common'){
 
 

@@ -365,7 +365,7 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6 rpl_child" style="display:<?php echo $rpl_array['rpl_exp']==1 ? 'block' : 'none' ?>">
                                                     <label class="form-label" for="exp_years">How Many Years & Months</label>
-                                                    <input type="text" name="exp_years" class="form-control number-field" id="exp_years" placeholder="Years" value="<?php echo $rpl_array['exp_years']; ?>">
+                                                    <input type="text" name="exp_years" class="form-control" id="exp_years" placeholder="Years" value="<?php echo $rpl_array['exp_years']; ?>">
                                                 </div>
                                                 <div class="col-md-6 rpl_child" style="display:<?php echo $rpl_array['rpl_exp']==1 ? 'block' : 'none' ?>">
                                                     <label class="form-label" for="exp_docs">Do they have any Documents(payslips and job description / Contract Letter)</label>
@@ -439,6 +439,9 @@ if(@$_SESSION['user_type']!=''){
                                                         <input type="text" class="form-control number-field" maxlength="10" id="contact_num" placeholder="Contact Number" value="<?php echo $queryRes['st_phno']; ?>" >
                                                         <div class="error-feedback">
                                                             Please enter the Contact Number
+                                                        </div>
+                                                        <div class="phone_error">
+                                                            Entered Number Already exist.
                                                         </div>
                                                     </div>
                                                 </div>
@@ -863,6 +866,40 @@ if(@$_SESSION['user_type']!=''){
         <?php include('includes/footer_includes.php'); ?>
         <script>
 
+            var checkPhone=0;
+            function PhoneCheck(number){
+
+                return new Promise(function (resolve, reject) {
+
+                $.ajax({
+                    type:'post',
+                    data:{number:number,formName:'phoneNumberCheck'},
+                    url:'includes/datacontrol.php',
+                    success:function(datas){
+                        resolve(datas);
+                    },
+                    error: function (xhr, status, error) {
+                        reject(new Error(status + ': ' + error));
+                    }
+
+                })
+
+            });
+
+            }
+
+                        // Usage with async/await
+            async function getData(number) {
+            try {
+                const data = await PhoneCheck(number);
+                return data;
+
+                // You can perform further operations with 'data' here
+            } catch (error) {
+                console.error(error);
+            }
+            }
+
             $(document).ready(function(){            
 
                 $('.refered').on("change",function(){
@@ -967,7 +1004,7 @@ if(@$_SESSION['user_type']!=''){
                 })
             })
 
-            $(document).on('click','#enquiry_form',function(){
+            $(document).on('click','#enquiry_form',async() =>{
                 var studentName=$('#student_name').val().trim();
                 var contactName=$('#contact_num').val().trim();
                 var emailAddress=$('#email_address').val().trim();
@@ -1022,8 +1059,16 @@ if(@$_SESSION['user_type']!=''){
                 }else{
                     refer_select_error=1;
                 }
+                
+                // checkPhone=0;            
 
-                if(studentName==''|| ( contactName=='' || contactName.length!=10 ) ||emailAddress==''|| (emailAddress!='' && !emailAddress.match(emailregexp)==true ) ||courses==''||payment=='' || enquiryDate=='' || refer_select_error==0 || surname=='' || enquiryFor==''|| postCode=='' || visit_before=='' || memberName=='' || visaNoteStatus==1 ){
+                if(await getData(contactName)==1 || ( contactName=='' || contactName.length!=10 ) ){
+                    var phoneChecks=1;
+                }else{
+                    var phoneChecks=0;
+                }
+
+                if(studentName==''|| phoneChecks==1 ||emailAddress==''|| (emailAddress!='' && !emailAddress.match(emailregexp)==true ) ||courses==''||payment=='' || enquiryDate=='' || refer_select_error==0 || surname=='' || enquiryFor==''|| postCode=='' || visit_before=='' || memberName=='' || visaNoteStatus==1 ){
 
                     if(refer_select_error==0){
                         if(refer_select==0){
@@ -1057,14 +1102,22 @@ if(@$_SESSION['user_type']!=''){
                         $('#student_name').removeClass('invalid-div');
                         $('#student_name').closest('div').find('.error-feedback').hide();
                     }
+
+                    
                     if(contactName=='' || contactName.length!=10 ){
                         $('#contact_num').addClass('invalid-div');
                         $('#contact_num').removeClass('valid-div');
                         $('#contact_num').closest('div').find('.error-feedback').show();
+                    }else if(await getData(contactName)==1){
+                        $('#contact_num').addClass('invalid-div');
+                        $('#contact_num').removeClass('valid-div');                        
+                        $('#contact_num').closest('div').find('.error-feedback').hide();     
+                        $('#contact_num').closest('div').find('.phone_error').show();
                     }else{
                         $('#contact_num').addClass('valid-div');
                         $('#contact_num').removeClass('invalid-div');
                         $('#contact_num').closest('div').find('.error-feedback').hide();
+                        $('#contact_num').closest('div').find('.phone_error').hide();
                     }
                     if(memberName=='' ){
                         $('#member_name').addClass('invalid-div');

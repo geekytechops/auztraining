@@ -150,7 +150,7 @@ if(@$_SESSION['user_type']!=''){
                             <div class="col-xl-12">
                                 <div class="card">
                                     <div class="card-body" id="student_enquiry_form_parent">
-                                        <div class="card-title">Personal Details</div>
+                                    <!-- <div class="jelly" id="jelly_loader"></div> -->
                                             <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
@@ -435,7 +435,7 @@ if(@$_SESSION['user_type']!=''){
                             <div class="col-xl-12">
                                 <div class="card">
                                     <div class="card-body" id="student_enquiry_form_parent">
-                                    <div class="card-title">Address Details</div>
+                                    <!-- <div class="jelly" id="jelly_loader"></div> -->
                                         <div class="row">
                                             <div class="col-md-6">
                                                     <div class="mb-3">
@@ -519,41 +519,16 @@ if(@$_SESSION['user_type']!=''){
                         <div class="row">
                             <div class="col-xl-12">
                                 <div class="card">
-                                    <div class="card-body" id="student_enquiry_form_parent">      
-                                    <div class="card-title">Training Dependencies</div>
+                                    <div class="card-body" id="student_enquiry_form_parent">
+                                    <!-- <div class="jelly" id="jelly_loader"></div> -->
                                         <div class="row">
                                             <div class="col-sm">
                                                 <div class="col-md-12">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="hear_about">How did you hear about us?*</label>
-                                                        <select name="hear_about" class="form-select" id="hear_about">
-                                                        <?php  
-                                                        $st_heared=['--select--','Word of Mouth','Family or Friends','Website','Gumtree','Facebook','Instagram','Linkedin','Mail outs','Migration Agency','Other:'];
-                                                        for($i=0;$i<count($st_heared);$i++){
-                                                            
-                                                            $checked= $i==$queryRes['st_heared'] ? 'selected' : '';
-
-
-                                                            echo '<option value="'.$i.'" '.$checked.'>'.$st_heared[$i].'</option>';
-                                                            if($i==4){
-                                                                echo '<optgroup label="Social Media">';
-                                                            }else if($i==7){
-                                                                echo '</optgroup>';
-                                                            }
-                                                        }
-                                                        ?>                                              
-                                                        </select>  
+                                                        <label class="form-label" for="hear_about">How did you hear about us?</label>
+                                                        <input type="text" class="form-control" id="hear_about" value="<?php echo $queryRes['st_heared']; ?>">
                                                         <div class="error-feedback">
                                                             Please select atleast one option
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-12 hear_about_child" style="display:<?php echo $queryRes['st_heared']==7 ? 'block' : 'none'; ?>">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="hearedby">Specify How you heared about us</label>
-                                                        <input type="text" class="form-control" id="hearedby" value="<?php echo $queryRes['st_heared']; ?>" >
-                                                        <div class="error-feedback">
-                                                            Please enter the source heared
                                                         </div>
                                                     </div>
                                                 </div>
@@ -652,12 +627,12 @@ if(@$_SESSION['user_type']!=''){
                                                     <div class="mb-3">
                                                     <div><label for="visa_status_label">Visa Status</label></div>
                                                     <div>
-                                                        <input class="form-check-input visa_status" type="radio" value="1" name="visa_status" id="visa_status1" <?php echo $queryRes['st_visa_condition']=='' ? 'checked' :  ( $queryRes['st_visa_condition']==1 ? 'checked' : '' ) ; ?>>
+                                                        <input class="form-check-input visa_status" type="radio" value="1" name="visa_status" id="visa_status1" <?php echo $queryRes['st_visa_note']==1 ? 'checked' : ''; ?>>
                                                         <label class="form-check-label" for="visa_status1">
                                                             Approved
                                                         </label>
-                                                        <input class="form-check-input visa_status" type="radio" value="2" name="visa_status" id="visa_status2" <?php echo $queryRes['st_visa_condition']==2 ? 'checked' : ''; ?>>
-                                                        <label class="form-check-label" for="visa_status2" >
+                                                        <input class="form-check-input visa_status" type="radio" value="2" name="visa_status" id="visa_status2">
+                                                        <label class="form-check-label" for="visa_status2" <?php echo $queryRes['st_visa_note']==2 ? 'checked' : ''; ?> >
                                                             Not Approved
                                                         </label>
                                                         <div class="error-feedback">
@@ -707,8 +682,8 @@ if(@$_SESSION['user_type']!=''){
                                                                 $checked='';
                                                             }                                                            
 
-                                                            echo '<div class="form-check"><input type="checkbox" class="courses_check form-check-input" id="course_check_'.$counts.'" '.$checked.' value="'.$counts.'">';
-                                                            echo '<label for="course_check_'.$counts.'">'.$coursesRes["course_sname"].'-'.$coursesRes["course_name"].'</label></div>';
+                                                            echo '<div class="form-check"><input type="checkbox" class="courses_check form-check-input" id="course_check_"'.$counts.' '.$checked.' value="'.$counts.'">';
+                                                            echo '<label for="course_check_"'.$counts.'>'.$coursesRes["course_sname"].'-'.$coursesRes["course_name"].'</label></div>';
                                                             $counts++;
                                                         }
 
@@ -964,15 +939,6 @@ if(@$_SESSION['user_type']!=''){
                         $('.visa_note').hide();
                     }                 
                 })
-                $('#hear_about').on("change",function(){
-                    var value=$(this).val();
-                    console.log(value);
-                    if( value==10 ){
-                        $('.hear_about_child').show();
-                    }else{
-                        $('.hear_about_child').hide();
-                    }                 
-                })
 
                 $('#course_type').on("change",function(){
                     var value=$(this).val();
@@ -1063,7 +1029,6 @@ if(@$_SESSION['user_type']!=''){
                 var postCode=$('#post_code').val();
                 var visit_before=$('#visit_before').val()==0 ? '' :$('#visit_before').val();
                 var hear_about=$('#hear_about').val();
-                var hearedby=$('#hearedby').val();
                 var plan_to_start_date=$('#plan_to_start_date').val();
                 var refer_select=$('#refer_select').val();
                 var referer_name=$('#referer_name').val();
@@ -1089,6 +1054,7 @@ if(@$_SESSION['user_type']!=''){
                 $('.courses_check:checkbox:checked').each(function() {
                     courses.push(this.value);
                 });
+                console.log(courses);
 
                 var payment=$('#payment_fee').val().trim();
                 var memberName=$('#member_name').val().trim();
@@ -1117,20 +1083,6 @@ if(@$_SESSION['user_type']!=''){
                 }else{
                     refer_select_error=1;
                 }
-
-                if(hear_about==0){
-                    hear_about_error=0;
-                }else if(hear_about==10){
-
-                    if(hearedby==''){
-                        hear_about_error=0;
-                    }else{
-                        hear_about_error=1;
-                    }
-
-                }else{
-                    hear_about_error=1;
-                }
                 
                 // checkPhone=0;            
 
@@ -1140,7 +1092,7 @@ if(@$_SESSION['user_type']!=''){
                     var phoneChecks=0;
                 }
 
-                if(studentName==''|| phoneChecks==1 ||emailAddress==''|| (emailAddress!='' && !emailAddress.match(emailregexp)==true ) ||courses.length==0||payment=='' || enquiryDate=='' || refer_select_error==0 || hear_about_error==0 || surname=='' || enquiryFor==''|| postCode=='' || visit_before=='' || memberName=='' || visaNoteStatus==1 ){
+                if(studentName==''|| phoneChecks==1 ||emailAddress==''|| (emailAddress!='' && !emailAddress.match(emailregexp)==true ) ||courses.length==0||payment=='' || enquiryDate=='' || refer_select_error==0 || surname=='' || enquiryFor==''|| postCode=='' || visit_before=='' || memberName=='' || visaNoteStatus==1 ){
 
                     if(refer_select_error==0){
                         if(refer_select==0){
@@ -1165,32 +1117,6 @@ if(@$_SESSION['user_type']!=''){
                             $('#refer_select').closest('div').find('.error-feedback').hide();
                         }
                     }
-
-                    if(hear_about_error==0){
-                        if(hear_about==0){
-                            $('#hear_about').addClass('invalid-div');
-                            $('#hear_about').removeClass('valid-div');
-                            $('#hear_about').closest('div').find('.error-feedback').show();
-                        }else if(hear_about==10){
-
-                            if(hearedby==''){
-                                $('#hearedby').addClass('invalid-div');
-                                $('#hearedby').removeClass('valid-div');
-                                $('#hearedby').closest('div').find('.error-feedback').show();
-                            }else{
-                                $('#hearedby').addClass('valid-div');
-                                $('#hearedby').removeClass('invalid-div');
-                                $('#hearedby').closest('div').find('.error-feedback').hide();
-                            }
-
-                        }else{
-                            $('#hear_about').addClass('valid-div');
-                            $('#hear_about').removeClass('invalid-div');
-                            $('#hear_about').closest('div').find('.error-feedback').hide();
-                        }   
-                    }                 
-
-
                     if(studentName==''){
                         $('#student_name').addClass('invalid-div');
                         $('#student_name').removeClass('valid-div');
@@ -1262,6 +1188,15 @@ if(@$_SESSION['user_type']!=''){
                         $('#payment_fee').removeClass('invalid-div');
                         $('#payment_fee').closest('div').find('.error-feedback').hide();
                     }
+                    // if(visaStatus==''){
+                    //     $('#visa_status').addClass('invalid-div');
+                    //     $('#visa_status').removeClass('valid-div');
+                    //     $('#visa_status').closest('div').find('.error-feedback').show();
+                    // }else{
+                    //     $('#visa_status').addClass('valid-div');
+                    //     $('#visa_status').removeClass('invalid-div');
+                    //     $('#visa_status').closest('div').find('.error-feedback').hide();
+                    // }
 
                     if(enquiryDate==''){
                         $('#enquiry_date').addClass('invalid-div');
@@ -1323,7 +1258,7 @@ if(@$_SESSION['user_type']!=''){
                     courses=courses.filter(item => item !== '0');
                     remarks=remarks.filter(item => item !== '0');
                     
-                    details={formName:'student_enquiry',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,payment:payment,checkId:checkId,visaStatus:visaStatus,surname:surname,enquiryDate:enquiryDate,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,hearedby:hearedby,memberName:memberName,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,visaNote:visaNote,prefComment:prefComment,comments:comments,appointment_booked:appointment_booked,visaCondition:visaCondition,remarks:remarks,reg_grp_names:reg_grp_names,streetDetails:streetDetails,enquiryFor:enquiryFor,courseType:courseType,shore:shore,ethnicity:ethnicity,rpl_arrays:JSON.stringify(rpl_array),short_grps:JSON.stringify(short_grp),slot_books:JSON.stringify(slot_book),admin_id:"<?php echo $_SESSION['user_id']; ?>",formId:<?php echo $form_id; ?>,rpl_status:'<?php echo $rpl_status; ?>',short_grp_status:'<?php echo $short_grp_status; ?>',reg_grp_status:'<?php echo $reg_grp_status; ?>',slot_book_status:'<?php echo $slot_book_status; ?>'};
+                    details={formName:'student_enquiry',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,payment:payment,checkId:checkId,visaStatus:visaStatus,surname:surname,enquiryDate:enquiryDate,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,memberName:memberName,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,visaNote:visaNote,prefComment:prefComment,comments:comments,appointment_booked:appointment_booked,visaCondition:visaCondition,remarks:remarks,reg_grp_names:reg_grp_names,streetDetails:streetDetails,enquiryFor:enquiryFor,courseType:courseType,shore:shore,ethnicity:ethnicity,rpl_arrays:JSON.stringify(rpl_array),short_grps:JSON.stringify(short_grp),slot_books:JSON.stringify(slot_book),admin_id:"<?php echo $_SESSION['user_id']; ?>",formId:<?php echo $form_id; ?>,rpl_status:'<?php echo $rpl_status; ?>',short_grp_status:'<?php echo $short_grp_status; ?>',reg_grp_status:'<?php echo $reg_grp_status; ?>',slot_book_status:'<?php echo $slot_book_status; ?>'};
                     $.ajax({
                         type:'post',
                         url:'includes/datacontrol.php',
@@ -1340,7 +1275,9 @@ if(@$_SESSION['user_type']!=''){
                                 // $('#jelly_loader').hide();
                                 $('#loader-container').hide();
                                 $('#student_enquiry_form').css('opacity','');
-                                setTimeout(() => {location.reload();}, 400); 
+                                setTimeout(() => {
+                                        location.reload();
+                                    }, 400); 
                                 // window.location.href="dashboard.php";
                             }else{
                                 // $( "#student_enquiry_form_parent" ).load(window.location.href + " #student_enquiry_form" );
@@ -1354,7 +1291,9 @@ if(@$_SESSION['user_type']!=''){
                                 $('#loader-container').hide();
                                 // $('#jelly_loader').hide();
                                 $('#student_enquiry_form').css('opacity','');
-                                setTimeout(() => {location.reload();}, 400); 
+                                setTimeout(() => {
+                                        location.reload();
+                                    }, 400); 
                             }
                         }
                     })

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Sep 17, 2023 at 02:21 AM
+-- Generation Time: Sep 25, 2023 at 02:34 AM
 -- Server version: 8.0.31
 -- PHP Version: 8.0.26
 
@@ -20,6 +20,50 @@ SET time_zone = "+00:00";
 --
 -- Database: `id20935934_auztraining`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `counseling_details`
+--
+
+DROP TABLE IF EXISTS `counseling_details`;
+CREATE TABLE IF NOT EXISTS `counseling_details` (
+  `counsil_id` int NOT NULL AUTO_INCREMENT,
+  `counsil_mem_name` varchar(255) DEFAULT NULL,
+  `counsil_vaccine_status` tinyint(1) DEFAULT NULL,
+  `counsil_job_nature` varchar(255) DEFAULT NULL,
+  `counsil_module_result` varchar(100) DEFAULT NULL,
+  `counsil_timing` timestamp NULL DEFAULT NULL,
+  `counsil_pref_comments` text,
+  `counsil_eng_rate` varchar(10) DEFAULT NULL,
+  `counsil_migration_test` tinyint(1) DEFAULT NULL,
+  `counsil_overall_result` varchar(100) DEFAULT NULL,
+  `counsil_course` varchar(255) DEFAULT NULL,
+  `counsil_university` varchar(255) DEFAULT NULL,
+  `counsil_qualification` varchar(255) DEFAULT NULL,
+  `counsil_type` tinyint(1) DEFAULT NULL,
+  `counsil_aus_stay_time` varchar(255) DEFAULT NULL,
+  `counsil_visa_condition` tinyint(1) DEFAULT NULL,
+  `counsil_education` varchar(255) DEFAULT NULL,
+  `counsil_aus_study_status` tinyint(1) DEFAULT NULL,
+  `counsil_work_status` tinyint(1) DEFAULT NULL,
+  `counsil_remarks` text,
+  `counsil_created_date` datetime DEFAULT CURRENT_TIMESTAMP,
+  `counsil_createdby` int DEFAULT NULL,
+  `counsil_modified_date` date DEFAULT NULL,
+  `counsil_modified_by` int DEFAULT NULL,
+  `counsil_delete_note` varchar(255) DEFAULT NULL,
+  `counsil_enquiry_status` tinyint NOT NULL DEFAULT '0',
+  PRIMARY KEY (`counsil_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `counseling_details`
+--
+
+INSERT INTO `counseling_details` (`counsil_id`, `counsil_mem_name`, `counsil_vaccine_status`, `counsil_job_nature`, `counsil_module_result`, `counsil_timing`, `counsil_pref_comments`, `counsil_eng_rate`, `counsil_migration_test`, `counsil_overall_result`, `counsil_course`, `counsil_university`, `counsil_qualification`, `counsil_type`, `counsil_aus_stay_time`, `counsil_visa_condition`, `counsil_education`, `counsil_aus_study_status`, `counsil_work_status`, `counsil_remarks`, `counsil_created_date`, `counsil_createdby`, `counsil_modified_date`, `counsil_modified_by`, `counsil_delete_note`, `counsil_enquiry_status`) VALUES
+(1, 'testing', 2, '', '', '2023-12-31 18:29:00', 'tasets', '8', 2, '', '', '', 'aetest', 1, '20 years', 1, 'test name', 2, 2, '[\"1\",\"2\"]', '2023-09-23 21:14:25', 1, '2023-09-24', 1, 'test', 0);
 
 -- --------------------------------------------------------
 
@@ -98,6 +142,41 @@ CREATE TABLE IF NOT EXISTS `enquiry_forms` (
   `enq_created_on` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`enq_form_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `followup_calls`
+--
+
+DROP TABLE IF EXISTS `followup_calls`;
+CREATE TABLE IF NOT EXISTS `followup_calls` (
+  `flw_id` int NOT NULL AUTO_INCREMENT,
+  `enquiry_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `flw_name` varchar(255) DEFAULT NULL,
+  `flw_phone` varchar(100) DEFAULT NULL,
+  `flw_contacted_person` varchar(255) DEFAULT NULL,
+  `flw_contacted_time` datetime DEFAULT NULL,
+  `flw_date` date DEFAULT NULL,
+  `flw_remarks` text NOT NULL,
+  `flw_comments` text NOT NULL,
+  `flw_mode_contact` varchar(100) DEFAULT NULL,
+  `flw_created_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `flw_created_by` int DEFAULT NULL,
+  `flw_modified_date` timestamp NULL DEFAULT NULL,
+  `flw_modifiedby` int DEFAULT NULL,
+  `flw_enquiry_status` tinyint NOT NULL DEFAULT '0',
+  `flw_delete_note` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`flw_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `followup_calls`
+--
+
+INSERT INTO `followup_calls` (`flw_id`, `enquiry_id`, `flw_name`, `flw_phone`, `flw_contacted_person`, `flw_contacted_time`, `flw_date`, `flw_remarks`, `flw_comments`, `flw_mode_contact`, `flw_created_date`, `flw_created_by`, `flw_modified_date`, `flw_modifiedby`, `flw_enquiry_status`, `flw_delete_note`) VALUES
+(1, 'EQ00002', 'John Kotln', '8309603267', 'asdfsdf', '2023-12-31 23:58:00', '2023-12-31', '[\"1\"]', 'testest', 'asdfas', '2023-09-24 09:39:39', 1, NULL, NULL, 1, 'setetsste'),
+(2, 'EQ00003', 'John Kotln', '8309603264', 'test', '2023-12-31 23:59:00', '2023-12-30', '[\"2\",\"3\"]', 'test', 'asdasdf', '2023-09-24 09:40:18', 1, '2023-09-23 22:41:00', 1, 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -189,14 +268,21 @@ CREATE TABLE IF NOT EXISTS `rpl_enquries` (
   `enq_form_id` int DEFAULT NULL,
   `rpl_exp_in` varchar(255) DEFAULT NULL,
   `rpl_exp_role` varchar(255) DEFAULT NULL,
-  `rpl_exp_years` varchar(10) DEFAULT NULL,
+  `rpl_exp_years` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `rpl_exp_docs` tinyint(1) DEFAULT NULL,
   `rpl_exp_prev_qual` tinyint(1) DEFAULT NULL,
   `rpl_exp_qual_name` varchar(255) NOT NULL,
   `rpl_exp` tinyint(1) NOT NULL,
   `rpl_exp_created_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`rpl_enq_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `rpl_enquries`
+--
+
+INSERT INTO `rpl_enquries` (`rpl_enq_id`, `enq_form_id`, `rpl_exp_in`, `rpl_exp_role`, `rpl_exp_years`, `rpl_exp_docs`, `rpl_exp_prev_qual`, `rpl_exp_qual_name`, `rpl_exp`, `rpl_exp_created_date`) VALUES
+(1, 6, '4', 'pop', '5 years 12 mnths', 2, 1, 'namess', 1, '2023-09-19 15:05:39');
 
 -- --------------------------------------------------------
 
@@ -240,14 +326,16 @@ CREATE TABLE IF NOT EXISTS `slot_book` (
   `slot_book_by` varchar(150) NOT NULL,
   `slot_book_email_link` tinyint NOT NULL,
   PRIMARY KEY (`slot_bk_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `slot_book`
 --
 
 INSERT INTO `slot_book` (`slot_bk_id`, `enq_form_id`, `slot_bk_datetime`, `slot_bk_purpose`, `slot_bk_on`, `slot_book_by`, `slot_book_email_link`) VALUES
-(1, 1, '2023-12-31 17:29:00', 'testset', '2023-12-31 00:00:00', 'testse', 1);
+(1, 1, '2023-12-31 17:29:00', 'testset', '2023-12-31 00:00:00', 'testse', 1),
+(2, 6, '2023-12-30 18:29:00', 'testset', '2023-12-31 00:00:00', 'testse', 1),
+(3, 7, '2023-12-31 18:29:00', 'testset', '2023-12-31 00:00:00', 'testse', 1);
 
 -- --------------------------------------------------------
 
@@ -367,7 +455,8 @@ CREATE TABLE IF NOT EXISTS `student_enquiry` (
   `st_state` tinyint(1) DEFAULT NULL,
   `st_post_code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `st_visited` tinyint(1) NOT NULL,
-  `st_heared` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `st_heared` text COLLATE utf8mb4_general_ci NOT NULL,
+  `st_hearedby` text COLLATE utf8mb4_general_ci,
   `st_refered` tinyint(1) NOT NULL,
   `st_refer_name` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `st_refer_alumni` tinyint(1) NOT NULL,
@@ -380,6 +469,7 @@ CREATE TABLE IF NOT EXISTS `student_enquiry` (
   `st_appoint_book` tinyint(1) NOT NULL,
   `st_enquiry_for` tinyint(1) NOT NULL DEFAULT '1',
   `st_visa_status` tinyint(1) NOT NULL,
+  `st_visa_condition` tinyint DEFAULT NULL,
   `st_visa_note` text COLLATE utf8mb4_general_ci,
   `st_enquiry_status` tinyint(1) NOT NULL DEFAULT '0',
   `st_delete_note` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
@@ -391,14 +481,21 @@ CREATE TABLE IF NOT EXISTS `student_enquiry` (
   `st_modified_date` datetime DEFAULT NULL,
   `st_gen_enq_type` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`st_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `student_enquiry`
 --
 
-INSERT INTO `student_enquiry` (`st_id`, `st_enquiry_id`, `st_name`, `st_member_name`, `st_surname`, `st_phno`, `st_email`, `st_course`, `st_course_type`, `st_street_details`, `st_suburb`, `st_state`, `st_post_code`, `st_visited`, `st_heared`, `st_refered`, `st_refer_name`, `st_refer_alumni`, `st_fee`, `st_remarks`, `st_shore`, `st_ethnicity`, `st_comments`, `st_pref_comments`, `st_appoint_book`, `st_enquiry_for`, `st_visa_status`, `st_visa_note`, `st_enquiry_status`, `st_delete_note`, `st_startplan_date`, `st_enquiry_date`, `st_created_by`, `created_date`, `st_modified_by`, `st_modified_date`, `st_gen_enq_type`) VALUES
-(1, 'EQ00001', 'names', 'nam estet', 'test1', '8309603262', 'saikiran.m.v.s.s@gmail.com', '[\"1\",\"2\",\"3\",\"4\"]', 3, 'agraharam street', 'bobbili', 4, '535558', 1, 'testdfs', 1, 'asd,artsdf,sgdfgs', 1, '897', '[\"1\",\"2\",\"3\",\"4\"]', 1, 'bobbili', 'asdfasdf', 'asdfsd', 1, 2, 1, '', 0, NULL, '2023-12-31 00:00:00', '2023-12-31 00:00:00', 1, '2023-09-17 02:19:17', 1, '2023-09-17 02:19:17', NULL);
+INSERT INTO `student_enquiry` (`st_id`, `st_enquiry_id`, `st_name`, `st_member_name`, `st_surname`, `st_phno`, `st_email`, `st_course`, `st_course_type`, `st_street_details`, `st_suburb`, `st_state`, `st_post_code`, `st_visited`, `st_heared`, `st_hearedby`, `st_refered`, `st_refer_name`, `st_refer_alumni`, `st_fee`, `st_remarks`, `st_shore`, `st_ethnicity`, `st_comments`, `st_pref_comments`, `st_appoint_book`, `st_enquiry_for`, `st_visa_status`, `st_visa_condition`, `st_visa_note`, `st_enquiry_status`, `st_delete_note`, `st_startplan_date`, `st_enquiry_date`, `st_created_by`, `created_date`, `st_modified_by`, `st_modified_date`, `st_gen_enq_type`) VALUES
+(1, 'EQ00001', 'names', 'John Kotln', 'test12', '8309603267', 'saikiran.m.v.s.s@gmail.com', '[\"1\",\"2\",\"3\",\"4\",\"17\"]', 3, 'agraharam street', 'bobbili', 4, '535558', 1, '3', NULL, 1, 'asd,artsdf,sgdfgs', 1, '897', '[\"1\",\"2\",\"3\",\"4\",\"12\",\"13\",\"14\"]', 1, 'bobbili', 'asdfasdf', 'asdfsd', 1, 2, 1, 1, '', 0, NULL, '2023-12-31 00:00:00', '2023-12-31 00:00:00', 1, '2023-09-24 05:23:19', 1, '2023-09-24 05:23:19', NULL),
+(2, 'EQ00002', 'John Kotln', 'John Kotln', 'surname rest', '8309603267', 'saikiran.m.v.s.s@gmail.com', '[\"2\",\"3\",\"4\"]', 2, 'agraharam street', 'bobbili', 2, '535558', 1, '2', NULL, 2, '', 1, '987', '', 1, 'bobbili', '', '', 2, 1, 1, 1, '', 0, NULL, '2023-12-31 00:00:00', '2023-12-31 00:00:00', 1, '2023-09-24 05:15:02', NULL, NULL, NULL),
+(3, 'EQ00003', 'John Kotln', 'John Kotln', 'asdfa', '8309603264', 'saikiran.m.v.s.s@gmail.com', '[\"1\",\"2\",\"3\",\"6\",\"8\"]', 2, 'agraharam street', 'bobbili', 1, '535558', 2, '2', NULL, 2, '', 0, '987987', '[\"2\",\"3\",\"4\",\"5\",\"6\"]', 2, 'bobbili', 'asdf', 'asdf', 2, 1, 1, 1, '', 0, NULL, '2023-12-31 00:00:00', '2023-12-31 00:00:00', 1, '2023-09-24 05:15:12', NULL, NULL, NULL),
+(4, 'EQ00004', 'asdasdgsdf', 'John Kotln', 'name test', '8309603987', 'saikiran.m.v.s.s@gmail.com', '[\"3\",\"4\",\"5\",\"6\",\"7\",\"9\"]', 0, 'agraharam street', 'bobbili', 1, '535558', 1, '3', NULL, 2, '', 0, '', NULL, 0, NULL, '', 'asdfsdf', 0, 2, 0, 2, NULL, 0, NULL, '2023-12-31 00:00:00', '2023-09-17 18:39:20', 0, '2023-09-24 05:15:05', NULL, NULL, 1),
+(5, 'EQ00005', 'John Kotl', 'John Kotl', 'shane', '8309603298', 'saikiran.m.v.s.s@gmail.com', '[\"2\"]', 0, 'agraharam street', 'bobbili', 4, '535558', 1, '5', NULL, 2, '', 0, '', NULL, 0, NULL, '', 'zvzdv', 0, 1, 0, 2, NULL, 0, NULL, '2023-12-31 00:00:00', '2023-09-17 20:10:57', 0, '2023-09-24 05:15:09', NULL, NULL, 1),
+(6, 'EQ00006', 'Jacob Shane', 'Jacob Shane', 'test surya', '8309609879', 'saikiran.m.v.s.s@gmail.com', '[\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\",\"8\",\"10\"]', 1, 'agraharam street', 'bobbili', 3, '535558', 2, '4', NULL, 2, '', 0, '999', '[\"1\",\"3\",\"4\",\"5\"]', 2, 'test', 'test', 'test ', 1, 1, 1, 1, '', 0, NULL, '2023-12-31 00:00:00', '2023-11-28 00:00:00', 1, '2023-09-24 05:15:08', NULL, NULL, NULL),
+(7, 'EQ00007', 'John Kotln', 'John Kotln', 'test sai', '9879879879', 'testsai@gmail.com', '[\"4\"]', 2, 'agraharam street', 'bobbili', 2, '535558', 2, '10', 'teststese', 1, '', 2, '987', '[\"2\"]', 1, 'bobbili', 'atesddfds', '', 1, 1, 1, 1, '', 0, NULL, '2022-11-30 00:00:00', '2023-12-31 00:00:00', 1, '2023-09-24 05:48:09', NULL, NULL, NULL),
+(8, 'EQ00008', 'John Kotln', 'John Kotln', 'aets', '8997987987', 'testmike@gmail.com', '[\"1\"]', 0, 'agraharam street', 'bobbili', 2, '535558', 2, 'test', NULL, 1, '', 1, '', NULL, 0, NULL, '', '', 0, 1, 0, NULL, NULL, 0, NULL, '2023-12-31 00:00:00', '2023-09-24 12:02:40', 0, '2023-09-24 06:32:40', NULL, NULL, 1);
 
 -- --------------------------------------------------------
 

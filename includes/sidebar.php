@@ -35,6 +35,18 @@
                                 </a>
                             </li>
                             <?php } ?>
+                            <li>
+                                <a href="followup_call.php" class="waves-effect">
+                                    <i class="ri-user-follow-fill"></i>
+                                    <span>Follow Up Call</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="counselling_form.php" class="waves-effect">
+                                    <i class="fas fa-book-reader"></i>
+                                    <span>Counseling</span>
+                                </a>
+                            </li>
                             <?php 
                             if(@$_SESSION['user_type']==0){
                             ?>

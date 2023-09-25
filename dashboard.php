@@ -3,6 +3,10 @@
 session_start();
 // print_r($_SESSION);
 if(isset($_SESSION['user_type'])){
+
+    $filterCols=mysqli_fetch_array(mysqli_query($connection,"SELECT GROUP_CONCAT(column_name SEPARATOR ',') as column_names FROM information_schema.COLUMNS WHERE table_name LIKE 'student_enquiry'"));
+    $filterColsArray=explode(',',$filterCols['column_names']);
+
 ?>
 <!doctype html>
 <html lang="en">
@@ -17,11 +21,19 @@ if(isset($_SESSION['user_type'])){
 
         <?php include('includes/app_includes.php'); ?>
         <style>
+            #filter-dropdowns td{
+                margin:0;
+                padding:0;
+                padding-top:1rem;
+            }
+            #filter-dropdowns .dropdown-toggle{
+                padding: 3px 10px 3px 10px;;
+            }
             tbody tr td:nth-child(5) {
                 white-space: break-spaces;
                 width:20%;
             }
-            #datatable tbody tr td:nth-child(4) {
+            #datatable tbody tr td:nth-child(7) {
                 white-space: break-spaces;
                 width:10%;
             }
@@ -37,8 +49,13 @@ if(isset($_SESSION['user_type'])){
                 overflow-x: auto;
                 white-space: nowrap;
             }
+/* 
+            div.dataTables_wrapper {
+                width: 800px;
+                margin: 0 auto;
+            } */
 
-            #student_filter_table th, #student_filter_table td { min-width: 200px; }
+            #student_filter_table th, #student_filter_table td { min-width: auto; }
 
             #student_filter_table::-webkit-scrollbar-track
             {
@@ -116,17 +133,29 @@ if(isset($_SESSION['user_type'])){
                                                 </h2>
                                                 <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
                                                     <div class="accordion-body">
-                                                        <table id="datatable" class="table table-striped table-bordered nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
+                                                        <table id="datatable" class="table table-striped table-bordered nowrap" style="border-collapse: collapse; border-spacing: 0; width:100%;">
                                                             <thead>
                                                                 <tr>
-                                                                    <th scope="col-3">Enquiry ID</th>
-                                                                    <th scope="col-2">Student Name</th>
-                                                                    <th scope="col-1">Contact Number</th>
-                                                                    <th scope="col-1">Email</th>
-                                                                    <th scope="col-1">Course</th>
-                                                                    <th scope="col-1">Fee</th>
-                                                                    <th scope="col-1">Visa Status</th>
-                                                                    <th scope="col-2">Action</th>
+                                                                    <th>Enquiry ID</th>
+                                                                    <th>Student Name</th>
+                                                                    <th>Contact Number</th>
+                                                                    <th>Email</th>
+                                                                    <th>Street</th>
+                                                                    <th>Sub Urb</th>
+                                                                    <th>Post Code</th>
+                                                                    <th>Course</th>
+                                                                    <th>Plan to Start</th>
+                                                                    <th>Course Type</th>
+                                                                    <th>Visited Before</th>
+                                                                    <th>Refered By</th>
+                                                                    <th>Fee</th>
+                                                                    <th>Appointment</th>
+                                                                    <th>Visa Status</th>
+                                                                    <th>Visa Condiition</th>
+                                                                    <th>Staff Comments</th>
+                                                                    <th>Preferences Or Requirements</th>
+                                                                    <th>Remarks</th>
+                                                                    <th>Action</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
@@ -136,25 +165,26 @@ if(isset($_SESSION['user_type'])){
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="accordion-item d-none">
+                                            <div class="accordion-item">
                                                 <h2 class="accordion-header" id="headingTwo">
                                                     <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                                                    Students Enrolled
+                                                    Follow Up Calls
                                                     </button>
                                                 </h2>
                                                 <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
                                                     <div class="accordion-body">
-                                                            <table id="datatable_enrol" class="table table-striped table-bordered  nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
+                                                            <table id="datatable_followup" class="table table-striped table-bordered  nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
                                                         <thead>
                                                             <tr>
-                                                                <th scope="col">Name</th>
-                                                                <th scope="col">Student ID</th>
                                                                 <th scope="col">Enquiry ID</th>
-                                                                <th scope="col">Given Name</th>
-                                                                <th scope="col">Middle Name</th>
-                                                                <th scope="col">Qualification</th>
-                                                                <th scope="col">Venue</th>
-                                                                <th scope="col">Source</th>
+                                                                <th scope="col">Student Name</th>
+                                                                <th scope="col">Contact Number</th>
+                                                                <th scope="col">Contacted Person</th>
+                                                                <th scope="col">Contacted Time</th>
+                                                                <th scope="col">Date</th>
+                                                                <th scope="col">Mode of Contact</th>
+                                                                <!-- <th scope="col">Remarks</th>
+                                                                <th scope="col">Comments</th> -->
                                                                 <th scope="col">Action</th>
                                                             </tr>
                                                         </thead>
@@ -165,30 +195,31 @@ if(isset($_SESSION['user_type'])){
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="accordion-item d-none">
+                                            <div class="accordion-item">
                                                 <h2 class="accordion-header" id="headingThree">
-                                                    <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                                                    Invoices
+                                                    <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse_counsel" aria-expanded="false" aria-controls="collapse_counsel">
+                                                    Counselings
                                                     </button>
                                                 </h2>
-                                                <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
+                                                <div id="collapse_counsel" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
                                                     <div class="accordion-body">
-                                                                <table id="datatable_invoices" class="table table-striped table-bordered nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100% !important;">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th scope="col">Invoice ID</th>
-                                                                    <th scope="col">Student Name</th>
-                                                                    <th scope="col">Course</th>
-                                                                    <th scope="col">Course Fee</th>
-                                                                    <th scope="col">Paid Amount</th>
-                                                                    <th scope="col">Due Amount</th>
-                                                                    <th scope="col">Payment Date</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
+                                                            <table id="datatable_counseling" class="table table-striped table-bordered  nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
+                                                        <thead>
+                                                            <tr>
+                                                                <th scope="col">Team Member Name</th>
+                                                                <th scope="col">Counseling Type</th>
+                                                                <th scope="col">Currently Working</th>
+                                                                <th scope="col">Visa Condition</th>
+                                                                <th scope="col">Education</th>
+                                                                <th scope="col">Counseling Date</th>
+                                                                <th scope="col">Experience in Age/Health Care</th>
+                                                                <th scope="col">Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
 
-                                                            </tbody>
-                                                        </table>
+                                                        </tbody>
+                                                    </table>
                                                     </div>
                                                 </div>
                                             </div>
@@ -198,37 +229,233 @@ if(isset($_SESSION['user_type'])){
                                 </div>
                             </div>
                         </div>
+
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h4 class="card-title mb-4">Student Details Export</h4>  
+                                        <div class="row mb-3">
+                                            <div class="columns-report">
+                                               <select class="selectpicker boot-select" title="Columns" data-live-search="true" id="column_select" >
+                                                <?php 
+                                                $count=0;                                                                            
+                                                ?>
+                                                <option value="<?php echo $filterColsArray['0']; ?>" id="option_0" data-value="0" data-name="Enquiry ID">Enquiry ID</option>
+                                                <option value="<?php echo $filterColsArray['5']; ?>" id="option_5" data-value="5" data-name="Phone">Phone</option>
+                                                <option value="<?php echo $filterColsArray['8']; ?>" id="option_8" data-value="8" data-name="Couse Type">Couse Type</option>
+                                                <?php  ?>
+                                               </select> 
+                                            </div>
+                                            <div class="columns-report input-div">
+                                                <input type="text" id="column_0" placeholder="value" class="column_value form-control">
+                                                <input type="text" id="column_5" placeholder="value" class="column_value form-control">
+                                                <select name="column_8" class="column_value form-select" title="Course Type" id="column_8" style="width:auto;">
+                                                        <?php  
+                                                        $st_course_type=['Rpl','Regular','Regular - Group','Short courses','Short course - Group'];
+                                                        for($i=0;$i<count($st_course_type);$i++){     
+                                                            $count=$i+1;                                                       
+                                                            echo '<option value="'.$count.'" data="'.$st_course_type[$i].'">'.$st_course_type[$i].'</option>';
+                                                        }
+                                                        ?>
+                                                </select> 
+                                            </div>
+                                            <div class="columns-report">
+                                            <button type="button" class="btn btn-success" id="submit_column_filter">Submit</button>
+                                            </div>
+                                        </div>
+                                        <script>
+                                            $(document).on('click','#submit_column_filter',function(){
+                                                    var columnName=$('#column_select option:selected').attr('data-name');
+                                                    var mainColName=$('#column_select').val();
+                                                    var columnId=$('#column_select option:selected').attr('data-value');
+                                                    var badgeId=$('#badge_'+columnId).val();   
+                                                    var colValue=$('.column_value').val();                                                 
+                                                if(colValue!='' && columnId!=undefined && columnName!=0 && ( badgeId==undefined || badgeId=='' )){
+                                                    $('.badges-div').append('<button type="button" data-col-name="'+mainColName+'" id="badge_'+columnId+'" data-id="'+columnId+'" main-value="'+colValue+'" class="btn btn-secondary btn-rounded badge-button close-badge"><i class="mdi mdi-close-circle"></i> <span>'+columnName+'</span></button>');
+                                                    filterMain();
+                                                }
+                                            })
+                                            
+                                            $(document).on('click','.close-badge',function(){
+                                                $(this).remove();
+                                                var idCol=$(this).attr('data-id');
+                                                var nameCol=$(this).children("span").text();
+                                                var mainCol=$(this).attr('data-col-name');
+                                                $('#column_select').append('<option value="'+mainCol+'" id="option_'+idCol+'" data-value="'+idCol+'" data-name="Enquiry ID">'+nameCol+'</option>')
+                                                $('#column_select').selectpicker('refresh');  
+                                                filterMain();
+                                            })
+
+
+                                            function filterMain(){
+                                                var columnNames=[];
+                                                var columnValues=[];
+                                                $('.badge-button').each(function(){
+                                                    var option=$(this).attr('data-id');
+                                                    $('#option_'+option).remove();
+                                                    $('.column_value').val('');
+                                                    $('#column_select').selectpicker('refresh');     
+                                                    
+                                                    
+                                                    
+                                                })
+                                            }
+
+                                            $(document).on('change','#column_select',function(){                                                
+                                                var inputType=$('#column_select option:selected').attr('data-value');
+                                                    $('.column_value').hide();
+                                                    $('#column_'+inputType).show();
+                                            })
+                                        </script>
+                                        <div class="row badges-div align-items-start">
+                                        </div>        
+                                        <hr class="bg-dark border-2 border-top border-dark">
+                                        <div class="row align-items-end">
+                                            <div class="col-md-12">
+                                            <table id="table-filter" class="table nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
+                                                <thead>
+                                                <tr>
+                                                        <th>Student ID</th>
+                                                        <th>Student Name</th>
+                                                        <th>Contact Number</th>
+                                                        <th>Email</th>
+                                                        <th>States</th>
+                                                        <th>Course</th>
+                                                        <th>Course Type</th>
+                                                        <th>Date</th>
+                                                        <th>Visa Condition</th>
+                                                        <th>Visa Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="student_filter_body">
+                                                </tbody>
+                                            </table>
+                                            </div>
+                                        </div>        
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="row">
                             <div class="col-lg-12">
                                 <div class="card">
                                     <div class="card-body">
                                         <h4 class="card-title mb-4">Student Filter</h4>  
-                                        <div class="d-flex" style="width:100%;">
-                                            <input type="text" class="form-control" style="width:30%;" id="filter_input" placeholder="Enter the Text">
-                                            <button id="student_filter" class="btn btn-dark ms-2" style="width:10%;">Export <i class="align-middle ms-2 mdi mdi-printer" style="font-size:20px;"></i></button>
-                                        </div>
-                                        <ul><li>Search with any of the columns to filter</li></ul>
+                                        <div class="row align-items-end">
+                                            <div class="col-md-8">
+                                                <div class="row mt-2 mb-2 align-items-end">
+                                                    <div class="col-md-4">
+                                                        <label for="from_date">From:</label>
+                                                    <input type="date" class=" form-control" id="from_date">
+                                                    </div>                                            
+                                                    <div class="col-md-4">
+                                                    <label for="to_date">To:</label>
+                                                    <input type="date" class="form-control" id="to_date">
+                                                    </div>                                            
+                                                    <div class="col-md-4">
+                                                    <button id="date_filter" class="btn btn-dark ms-2" >Filter </button>
+                                                    </div>
+                                                </div>
+                                                <span class="error-feedback" id="date_error" style="margin-left: 4px;font-size: 12px;">select the dates to filter</span>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="row">
+                                                <div class="col-md-4">                                            
+                                                <button id="student_filter" class="btn btn-dark ms-2">Export <i class="align-middle ms-2 mdi mdi-printer" ></i></button>
+                                                </div>   
+                                                <div class="col-md-8">
+                                                <input type="search" class="form-control" id="filter_input" placeholder="Search table">
+                                                </div>
+                                                </div>
+                                            </div>
+                                        </div>                                     
                                         <div class="print_header"></div>
                                             <table id="student_filter_table" class="table nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
                                                 <thead>
+                                                <tr id="filter-dropdowns">
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                        <td>
+                                                        <select class="selectpicker boot-select change_select" id="state_select" name="state_select" title="States" data-live-search="false">
+                                                        <?php  
+                                                        $st_states=['NSW - New South Wales','VIC - Victoria','ACT - Australian Capital Territory','NT - Northern Territoy','WA - Western Australia','QLD - Queensland','SA - South Australia','TAS - Tasmania'];
+                                                        for($i=0;$i<count($st_states);$i++){
+                                                            $count=$i+1;
+                                                            echo '<option value="'.$count.'">'.$st_states[$i].'</option>';
+                                                        }
+                                                        ?>
+                                                        </select>
+                                                    </td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td>
+
+                                                    <select name="course_type_select" class="selectpicker change_select" title="Course Type" id="course_type_select" style="width:auto;">
+                                                        <?php  
+                                                        $st_course_type=['Rpl','Regular','Regular - Group','Short courses','Short course - Group'];
+                                                        for($i=0;$i<count($st_course_type);$i++){     
+                                                            $count=$i+1;                                                       
+                                                            echo '<option value="'.$count.'" data="'.$st_course_type[$i].'">'.$st_course_type[$i].'</option>';
+                                                        }
+                                                        ?>
+                                                    </select>  
+
+                                                    </td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td>
+
+                                                    <select name="appointment_select" class="selectpicker change_select" title="Appointments" style="width:auto;" id="appointment_select">
+                                                            <option value="1">Booked</option>
+                                                            <option value="2">Not Booked</option>
+                                                    </select>
+
+                                                    </td>
+                                                    <td></td>
+                                                    <td>
+                                                    <select name="visa_status_select" class="selectpicker change_select" style="width:auto;" id="visa_status_select">
+                                                            <option value="1">Approved</option>
+                                                            <option value="2">Not Approved</option>
+                                                    </select>
+                                                    </td>
+                                                    </tr>
                                                     <tr>
                                                         <th>Student ID</th>
                                                         <th>Student Name</th>
                                                         <th>Contact Number</th>
                                                         <th>Email</th>
-                                                        <th>Course</th>
-                                                        <th>State</th>
+                                                        <th>Street</th>
+                                                        <th>Sub Urb</th>
+                                                        <th>States</th>
                                                         <th>Postal code</th>
-                                                        <th>Enroled Date</th>
+                                                        <th>Course</th>
+                                                        <th>Plan to Start</th>
+                                                        <th>Course Type</th>
+                                                        <th>Visited Before</th>
+                                                        <th>Date</th>
+                                                        <th>Referred By</th>
+                                                        <th>Fee</th>
+                                                        <th>Appointment</th>
+                                                        <th>Visa Condition</th>
+                                                        <th>Visa Status</th>
                                                     </tr>
                                                 </thead>
-                                                <tbody>
+                                                <tbody id="student_filter_body">
 
                                                 <?php
                                                 
-                                                $query=mysqli_query($connection,"SELECT * from student_enquiry where st_enquiry_status!=1");
-                                                while($queryRes=mysqli_fetch_array($query)){
-                                                    $coursesNames=json_decode($queryRes['st_course']);
+                                                $Loadquery=mysqli_query($connection,"SELECT * from student_enquiry where st_enquiry_status!=1");
+                                                while($LoadqueryqueryRes=mysqli_fetch_array($Loadquery)){
+                                                    $coursesNames=json_decode($LoadqueryqueryRes['st_course']);
                                                     $coursesName='<div class="td_scroll_height">';
                                                     foreach($coursesNames as $value){
                                                         $courses=mysqli_fetch_array(mysqli_query($connection,"SELECT * from courses where course_status!=1 AND course_id=".$value));
@@ -236,27 +463,53 @@ if(isset($_SESSION['user_type'])){
                                                     }
                                                     $coursesNamePos = strrpos($coursesName, ',');
                                                     $coursesName = substr($coursesName, 0, $coursesNamePos);
-                                                    $coursesName.='</div>';
+                                                    $coursesName.='</div>';                                    
 
-                                            
-                                                    if($queryRes['st_visa_status']==1){
-                                                        $visaStatus='<i class="mdi mdi-checkbox-blank-circle text-warning me-1"></i> Pending';
-                                                    }else if($queryRes['st_visa_status']==2){
-                                                        $visaStatus='<i class="mdi mdi-checkbox-blank-circle text-success me-1"></i> Approved';
-                                                    }else{
-                                                        $visaStatus='<i class="mdi mdi-checkbox-blank-circle text-danger me-1"></i> Declined';
-                                                    }
+                                                    $appointment=$LoadqueryqueryRes['st_appoint_book']==1 ? 'Booked' : ( $LoadqueryqueryRes['st_appoint_book']==2 ? 'Not Booked' : ' - ' );
                                                 
+
+                                                    $querys2=mysqli_query($connection,"select visa_status_name from `visa_statuses` WHERE visa_id=".$LoadqueryqueryRes['st_visa_status']);
+                                                    if(mysqli_num_rows($querys2)!=0){    
+                                                    $visaStatuse=mysqli_fetch_array($querys2);
+                                                
+                                                        if(@$visaStatuse['visa_status_name'] && $visaStatuse['visa_status_name']!='' ){
+                                                            $visacConds=$visaStatuse['visa_status_name'];
+                                                        }else{
+                                                            $visacConds=' - ';
+                                                        }
+
+                                                    }else{
+                                                        $visacConds=' - ';
+                                                    }
+
+                                                    $visaStatuses=$LoadqueryqueryRes['st_visa_condition']==1 ? 'Approved' : 'Not Approved' ;
                                                 ?>
-                                                    <tr>
-                                                        <td><?php echo $queryRes['st_enquiry_id']; ?></td>
-                                                        <td><?php echo $queryRes['st_surname'].' '.$queryRes['st_name']; ?></td>
-                                                        <td><?php echo $queryRes['st_phno']; ?></td>
-                                                        <td><?php echo $queryRes['st_email']; ?></td>
+                                                                                                        <tr>
+                                                        <td><?php echo $LoadqueryqueryRes['st_enquiry_id']; ?></td>
+                                                        <td><?php echo $LoadqueryqueryRes['st_surname'].' '.$LoadqueryqueryRes['st_name']; ?></td>
+                                                        <td><?php echo $LoadqueryqueryRes['st_phno']; ?></td>
+                                                        <td><?php echo $LoadqueryqueryRes['st_email']; ?></td>
+                                                        <td><?php echo $LoadqueryqueryRes['st_street_details']; ?></td>
+                                                        <td><?php echo $LoadqueryqueryRes['st_suburb']; ?></td>
+                                                        <td><?php
+                                                         $st_states=['--select--','NSW - New South Wales','VIC - Victoria','ACT - Australian Capital Territory','NT - Northern Territoy','WA - Western Australia','QLD - Queensland','SA - South Australia','TAS - Tasmania'];
+                                                         echo $st_states[$LoadqueryqueryRes['st_state']];
+                                                          ?></td>
+                                                        <td><?php echo $LoadqueryqueryRes['st_post_code']; ?></td>
                                                         <td><?php echo $coursesName; ?></td>
-                                                        <td><?php echo $queryRes['st_state']; ?></td>
-                                                        <td><?php echo $queryRes['st_post_code']; ?></td>
-                                                        <td><?php echo date('d M Y',strtotime($queryRes['st_enquiry_date'])); ?></td>
+                                                        <td><?php echo $startPlanDate=date('d M Y',strtotime($LoadqueryqueryRes['st_startplan_date'])); ?></td>
+                                                        <td><?php 
+                                                            $st_course_type=['-','Rpl','Regular','Regular - Group','Short courses','Short course - Group'];
+                                                            $courseTypeId=$LoadqueryqueryRes['st_course_type'];
+                                                            echo $st_course_type[$courseTypeId];
+                                                        ?></td>
+                                                        <td><?php echo $LoadqueryqueryRes['st_visited']==1 ? 'Visited' : ( $LoadqueryqueryRes['st_visited']==2 ? 'Not Visited' : ' - ' ) ; ?></td>
+                                                        <td><?php echo date('d M Y',strtotime($LoadqueryqueryRes['st_enquiry_date'])); ?></td>
+                                                        <td><?php echo $LoadqueryqueryRes['st_refer_name']; ?></td>
+                                                        <td><?php echo $LoadqueryqueryRes['st_fee']; ?></td>
+                                                        <td><?php echo $appointment; ?></td>
+                                                        <td><?php echo $visacConds; ?></td>
+                                                        <td><?php echo $visaStatuses; ?></td>
                                                     </tr>
 
                                                 <?php } ?>    
@@ -265,104 +518,7 @@ if(isset($_SESSION['user_type'])){
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <!-- <div class="row">
-                            <div class="col-lg-12">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h4 class="card-title mb-4">All Students</h4>  
-                                            <table id="datatable-all" class="table nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
-                                                <thead>
-                                                    <tr>
-                                                        <th scope="col">Student ID</th>
-                                                        <th scope="col">Student Name</th>
-                                                        <th scope="col">Contact Number</th>
-                                                        <th scope="col">Email</th>
-                                                        <th scope="col">Course</th>
-                                                        <th scope="col">Enroled Date</th>
-                                                        <th scope="col">Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-
-                                                </tbody>
-                                            </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div> -->
-
-                        <!-- <div class="row">
-                            <div class="col-lg-12">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h4 class="card-title mb-4">Student Enquiries</h4>  
-                                            <table id="datatable" class="table table-striped table-bordered nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
-                                                <thead>
-                                                    <tr>
-                                                        <th scope="col">Enquiry ID</th>
-                                                        <th scope="col">Student Name</th>
-                                                        <th scope="col">Contact Number</th>
-                                                        <th scope="col">Email</th>
-                                                        <th scope="col">Course</th>
-                                                        <th scope="col">Fee</th>
-                                                        <th scope="col">Visa Status</th>
-                                                        <th scope="col">Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-
-                                                </tbody>
-                                            </table>
-                                    </div>
-                                </div>
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h4 class="card-title mb-4">Students Enrolled</h4>  
-                                            <table id="datatable_enrol" class="table table-striped table-bordered  nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
-                                                <thead>
-                                                    <tr>
-                                                        <th scope="col">Name</th>
-                                                        <th scope="col">Given Name</th>
-                                                        <th scope="col">Middle Name</th>
-                                                        <th scope="col">Qualification</th>
-                                                        <th scope="col">Venue</th>
-                                                        <th scope="col">Source</th>
-                                                        <th scope="col">Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-
-                                                </tbody>
-                                            </table>
-                                    </div>
-                                </div>
-
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h4 class="card-title mb-4">Invoices</h4>  
-                                            <table id="datatable_invoices" class="table table-striped table-bordered nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
-                                                <thead>
-                                                    <tr>
-                                                        <th scope="col">Student Name</th>
-                                                        <th scope="col">Course</th>
-                                                        <th scope="col">Course Fee</th>
-                                                        <th scope="col">Paid Amount</th>
-                                                        <th scope="col">Due Amount</th>
-                                                        <th scope="col">Payment Date</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-
-                                                </tbody>
-                                            </table>
-                                    </div>
-                                </div>
-                                
-                            </div>
-                            
-                        </div> -->
-                    
+                        </div>                
             <?php }else{ 
                             
                 $enrolId=$_SESSION['user_log_id'];
@@ -470,7 +626,60 @@ if(isset($_SESSION['user_type'])){
         ?>
         <script>
 
-            async function delete_enq(eq_id){
+            $(document).on('click','#date_filter',function(){
+                var from_date=$('#from_date').val();
+                var to_date=$('#to_date').val();
+
+                if(from_date=='' && to_date==''){
+                    $('#date_error').show();
+                    return false;
+                }else{
+                    $('#date_error').hide();                    
+                }
+
+                if(from_date==''){
+
+                    from_date='1900-01-01';                    
+
+                }
+
+                if(to_date==''){
+
+                    var currentDate = new Date();
+
+                    to_date = currentDate.getFullYear() + '-' + 
+                    ('0' + (currentDate.getMonth() + 1)).slice(-2) + '-' + 
+                    ('0' + currentDate.getDate()).slice(-2);           
+
+                }
+
+
+                $.ajax({
+                    type:'post',
+                    url:"includes/datacontrol.php",
+                    data:{formName:"date_filter",from_date:from_date,to_date:to_date},
+                    success:function(data){
+                        $('#student_filter_body').html(data);
+                    }
+                })
+            })
+
+            $(document).on('change','.change_select',function(){
+                var visa_status= $('#visa_status_select').val()=='' ? 0 : $('#visa_status_select').val();
+                var appointment_status= $('#appointment_select').val()=='' ? 0 : $('#appointment_select').val();
+                var course_type_status= $('#course_type_select').val()=='' ? 0 : $('#course_type_select').val();
+                var state_status= $('#state_select').val()=='' ? 0 : $('#state_select').val();
+                $.ajax({
+                    type:'post',
+                    url:'includes/datacontrol.php',
+                    data:{visa_status:visa_status,state_status:state_status,course_type_status:course_type_status,appointment_status:appointment_status,formName:'student_filter'},
+                    success:function(data){
+                        $('#student_filter_body').html(data);
+                    }
+                })
+            })
+
+            async function delete_enq(tableName,colPrefix,eq_id){
 
                 Swal.fire({
                     icon: 'warning',
@@ -488,20 +697,24 @@ if(isset($_SESSION['user_type'])){
                     }
                     }).then(function(t){
                         if(t.isConfirmed){
-                            deleteFun(eq_id,t.value);
+                            deleteFun(tableName,colPrefix,eq_id,t.value);
                         }
                     })
                 }
 
-                function deleteFun(eq_id,note){
+                function deleteFun(tableName,colPrefix,eq_id,note){
 
                 $.ajax({
                     type:'post',
-                    data:{eq_id:eq_id,note:note,formName:'delete_enq'},
+                    data:{eq_id:eq_id,tableName:tableName,colPrefix:colPrefix,note:note,formName:'delete_enq'},
                     url:'includes/datacontrol.php',
                     success:function(data){
                         if(data==1){
                         var table = $('#datatable').DataTable();
+                            table.ajax.reload();
+                        var table = $('#datatable_followup').DataTable();
+                            table.ajax.reload();
+                        var table = $('#datatable_counseling').DataTable();
                             table.ajax.reload();
                         }else{
                             alert('Something went wrong. Please try again');
@@ -536,16 +749,29 @@ if(isset($_SESSION['user_type'])){
                             previous:"<i class='mdi mdi-chevron-left'>",
                             next:"<i class='mdi mdi-chevron-right'>"}},
                             drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},
-                    // scrollX: true,
+                    sScrollX: true,
+                    responsive:false,
                     ajax: 'includes/datacontrol.php?name=studentEnquiry',
                         columns: [
                         { data: 'st_enquiry_id' },                                    
                         { data: 'std_name' },                                    
                         { data: 'std_phno' },
                         { data: 'std_email' },
+                        { data: 'street' },
+                        { data: 'suburb' },
+                        { data: 'post_code' },
                         { data: 'std_course' },
+                        { data: 'startplan_date' },
+                        { data: 'st_coursetype' },
+                        { data: 'visited' },
+                        { data: 'referedby' },
                         { data: 'std_fee' },
+                        { data: 'appointment' },
+                        { data: 'Visa_condition' },
                         { data: 'std_visa_status' },
+                        { data: 'staffComments' },
+                        { data: 'preferences' },
+                        { data: 'remarksNotes' },
                         { data: 'action' },
                     ],
                     // "dom": 'Blfrtip',
@@ -570,56 +796,51 @@ if(isset($_SESSION['user_type'])){
     //   }
     // ]
                 });
-            //    $('#datatable-all').DataTable({
-            //     lengthMenu: [5, 10, 20],
-            //     language:{
-            //         paginate:{
-            //             previous:"<i class='mdi mdi-chevron-left'>",
-            //             next:"<i class='mdi mdi-chevron-right'>"}},
-            //    drawCallback:function(){
-            //     $(".dataTables_paginate > .pagination").addClass("pagination-rounded")
-            //     },
-            //     scrollX: true,
-            //         ajax: 'includes/datacontrol.php?name=all_students',
-            //             columns: [
-            //             { data: 'st_unique_id' },                                    
-            //             { data: 'st_enrol_name' },                                    
-            //             { data: 'std_phno' },
-            //             { data: 'std_email' },
-            //             { data: 'course' },
-            //             { data: 'std_date' },
-            //             { data: 'action' },
-            //         ]
-            //     });
-                // $('#datatable_enrol').DataTable({lengthMenu: [5, 10, 20],language:{paginate:{previous:"<i class='mdi mdi-chevron-left'>",next:"<i class='mdi mdi-chevron-right'>"}},drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},
-                // scrollX: true,
-                //     ajax: 'includes/datacontrol.php?name=student_enrol',
-                //         columns: [
-                //         { data: 'st_enrol_name' },                                    
-                //         { data: 'st_enrol_id' },                                    
-                //         { data: 'st_enq_id' },                                    
-                //         { data: 'st_enrol_givenname' },
-                //         { data: 'st_enrol_middlename' },
-                //         { data: 'st_enrol_qual' },
-                //         { data: 'st_enrol_venue' },
-                //         { data: 'st_enrol_source' },
-                //         { data: 'action' },
-                //     ],
-                // });
-                
-                // $('#datatable_invoices').DataTable({lengthMenu: [5, 10, 20],language:{paginate:{previous:"<i class='mdi mdi-chevron-left'>",next:"<i class='mdi mdi-chevron-right'>"}},drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},
-                // scrollX: true,
-                //     ajax: 'includes/datacontrol.php?name=student_invoices',
-                //         columns: [
-                //         { data: 'inv_id' },                                    
-                //         { data: 'inv_std_name' },                                    
-                //         { data: 'inv_course' },
-                //         { data: 'inv_fee' },
-                //         { data: 'inv_paid' },
-                //         { data: 'inv_due' },
-                //         { data: 'inv_payment_date' },
-                //     ],
-                // });
+
+                $('#datatable_followup').DataTable({
+                    scrollX: true,
+                    lengthMenu: [5, 10, 20],
+                    language:{
+                        paginate:{
+                            previous:"<i class='mdi mdi-chevron-left'>",
+                            next:"<i class='mdi mdi-chevron-right'>"}},
+                            drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},                    
+                    responsive:false,
+                    ajax: 'includes/datacontrol.php?name=followup_calls',
+                        columns: [
+                        { data: 'enquiry_id' },                                    
+                        { data: 'name' },                                    
+                        { data: 'phone' },
+                        { data: 'contacted_person' },
+                        { data: 'contacted_time' },
+                        { data: 'date' },
+                        { data: 'mode_contact' },
+                        // { data: 'remarks' },
+                        // { data: 'comments' },
+                        { data: 'action' }
+                    ]
+                });
+                $('#datatable_counseling').DataTable({
+                    scrollX: true,
+                    lengthMenu: [5, 10, 20],
+                    language:{
+                        paginate:{
+                            previous:"<i class='mdi mdi-chevron-left'>",
+                            next:"<i class='mdi mdi-chevron-right'>"}},
+                            drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},                    
+                    responsive:false,
+                    ajax: 'includes/datacontrol.php?name=counselings',
+                        columns: [
+                        { data: 'member_name' },                                    
+                        { data: 'counsil_type' },                                    
+                        { data: 'work_status' },
+                        { data: 'visa' },
+                        { data: 'education' },
+                        { data: 'counsil_timing' },
+                        { data: 'qualification' },
+                        { data: 'action' }
+                    ]
+                });
 
                 $('#accordionExample').on('show.bs.collapse', function(e){
                 setTimeout(function () {
@@ -628,22 +849,86 @@ if(isset($_SESSION['user_type'])){
                 });
             })
 
-            $("#filter_input").on("keyup", function() {
+            $("#filter_input").on("input", function() {
+                mark(this);
                 var value = $(this).val().toLowerCase();
                 $("#student_filter_table tbody tr").filter(function() {
                 $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
                 });
             });
 
+            function mark(element) {
+                var keyword = $(element).val();
+
+                var options = {};
+                $("#student_filter_table tbody").unmark({
+                    done: function() {
+                    $("#student_filter_table tbody").mark(keyword, options);
+                    }
+                });
+                };
+
             $('#student_filter').click(function(){
 
-                var divToPrint=document.getElementById("student_filter_table");
+                var divToPrint=$("#student_filter_table");
+                console.log(tablethCount);
+                console.log(tableArray.length);
+                if(tableArray.length!=tablethCount){
+                var thfinder='';
+                var tdfinder='';
+                console.log(tableArray);
+                for(var i=0;i<tableArray.length;i++){
+                    // var number=0;
+                var number=tableArray[i];
+
+                 thfinder+='thead tr th:eq("'+number+'"),';
+                 tdfinder+='td:eq("'+number+'"),';
+
+                }
+
+                thfinder=thfinder.slice(0, -1);
+                tdfinder=tdfinder.slice(0, -1);
+
+                $(divToPrint).find(thfinder).remove();
+
+                $(divToPrint).find("tbody tr").each(function() {
+                $(this).find(tdfinder).remove();
+                });
+                $(divToPrint).find('#filter-dropdowns').remove();
+                }else{
+                $(divToPrint).find('#filter-dropdowns').remove();
+                }
+
+
                 newWin=  window.open('', '_top', '','');       
-                newWin.document.write('<!DOCTYPE html PUBLIC \'-//W3C//DTD XHTML 1.0 Transitional//EN\' \'http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\'><html xmlns=\'http://www.w3.org/1999/xhtml\'><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><meta http-equiv=\'Content-Type\' content=\'text/html; charset=iso-8859-1\' /><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"><title>Patient Feed</title><style>@page { size:Legal landscape; } table, th, td { border: 1px solid;border-collapse: collapse;text-align: left;padding: 5px 10px;}  body { background: #FFF;color: #000;font-size: 12pt;padding: 0;} .print_div{ display:flex;justify-content:center; } .print_logo{ height: 85px;width: 10%;margin: 0;padding: 0;}  </style></head><body><div class="print_div"><img class="print_logo" src="assets/images/logo-dark.png"></div>'+divToPrint.outerHTML+'</body></html>');
+                newWin.document.write('<!DOCTYPE html PUBLIC \'-//W3C//DTD XHTML 1.0 Transitional//EN\' \'http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\'><html xmlns=\'http://www.w3.org/1999/xhtml\'><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><meta http-equiv=\'Content-Type\' content=\'text/html; charset=iso-8859-1\' /><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"><title>Patient Feed</title><style>#student_filter_body th , #student_filter_body td { white-space: pre; }  .td_scroll_height { width:max-content; }@page { size:Legal landscape; } table, th, td { border: 1px solid;border-collapse: collapse;text-align: left;padding: 5px 10px;}  body { background: #FFF;color: #000;font-size: 12pt;padding: 0;} .print_div{ display:flex;justify-content:center; } .print_logo{ height: 85px;width: 10%;margin: 0;padding: 0;}  </style></head><body><div class="print_div"><img class="print_logo" src="assets/images/logo-dark.png"></div><table>'+$(divToPrint).html()+'</table></body></html>');
                 newWin.print();
                 newWin.close();
 
             })
+
+            var tableColorIndex=[];
+            var tablethCount=$('#student_filter_table').find('thead tr th').length;
+            var tableArray = Array(tablethCount).fill(0).map((n, i) => n + i);               
+            $(document).on('click','#student_filter_table th',function(){
+                var index=$(this)[0].cellIndex+1;
+                $('#student_filter_table tbody tr td:nth-child('+index+')').toggleClass('table-bg');
+                $(this).toggleClass('table-bg');
+                console.log(index);
+                console.log(tableArray);
+                if(tableArray.includes(index)){
+                    // console.log(index);console.log(tableArray);
+                    tableArray = tableArray.filter(item => item !== index-1);
+                }else{
+                    tableArray.push(index);
+                }
+            })
+
+            $(document).on('click',"#student_filter_body td",function(){
+                var index=$(this)[0].cellIndex+1;
+                $('#student_filter_table thead tr th:nth-child('+index+')').trigger('click');
+            })
+
         </script>
         <?php }else{ ?>
             <script>

@@ -16,11 +16,79 @@ if(@$_POST['formName']=='create_qr'){
 if(@$_POST['formName']=='phoneNumberCheck'){
     
     $number=$_POST['number'];
-    $query=mysqli_query($connection,"SELECT * FROM `student_enquiry` WHERE `st_enquiry_status`=0 AND `st_phno` LIKE '%$number%'");
-    if(mysqli_num_rows($query)!=0){
-        echo 1;
+    $memberName=$_POST['memberName'];
+    $enquiryFor=$_POST['enquiryFor'];    
+    $check_update=$_POST['check_update'];    
+    $oldenquiryFor=$_POST['oldenquiryFor'];    
+    $oldNumber=$_POST['oldNumber'];   
+    $updateCheck=0; 
+
+    if($check_update==1){
+
+        if($oldenquiryFor!=$enquiryFor || $oldNumber!=$number){
+
+            $checkPh=1;
+
+            $updateCheck=1;
+
+        }else{
+
+            $checkPh=0;
+
+        }
+
     }else{
+
+        $checkPh=1;
+
+    }
+
+
+    if($checkPh==1){
+
+
+        if($enquiryFor==1){
+
+
+            if($updateCheck==1){
+
+
+                $query2=mysqli_query($connection,"SELECT * FROM `student_enquiry` WHERE `st_enquiry_status`=0 AND `st_phno` LIKE '%$number%' and st_enquiry_for=1");
+
+                // echo "SELECT * FROM `student_enquiry` WHERE `st_enquiry_status`=0 AND `st_phno` LIKE '%$number%' and st_enquiry_for=1";
+                if(mysqli_num_rows($query2)==0){
+                     echo 0;
+                }else{
+                     echo 1;
+                }
+
+            }else{
+
+                $query2=mysqli_query($connection,"SELECT * FROM `student_enquiry` WHERE `st_enquiry_status`=0 AND `st_phno` LIKE '%$number%' and st_member_name='$memberName' and st_enquiry_for=1");
+                if(mysqli_num_rows($query2)==0){
+                     echo 0;
+                }else{
+                     echo 1;
+                }
+
+            }
+
+        }else{
+    
+            $query=mysqli_query($connection,"SELECT * FROM `student_enquiry` WHERE `st_enquiry_status`=0 AND `st_phno` LIKE '%$number%' and st_member_name='$memberName' and st_enquiry_for!=1");
+    
+            if(mysqli_num_rows($query)!=0){
+                echo 1;
+            }else{
+                echo 0;
+            }
+    
+        }
+
+    }else{
+
         echo 0;
+
     }
 
 }
@@ -38,7 +106,7 @@ if(@$_POST['formName']=='student_enquiry_common'){
 
     $contactName=$_POST['contactName'];
     $emailAddress=$_POST['emailAddress'];
-    $courses=$_POST['courses'];
+    $courses=json_encode($_POST['courses']);
     $checkId=$_POST['checkId'];
 
     $surname=$_POST['surname'];
@@ -48,6 +116,7 @@ if(@$_POST['formName']=='student_enquiry_common'){
     $postCode=$_POST['postCode'];
     $visit_before=$_POST['visit_before'];
     $hear_about=$_POST['hear_about'];
+    $hearedby=$_POST['hearedby'];
     $plan_to_start_date=$_POST['plan_to_start_date'];
     $refer_select=$_POST['refer_select'];
     $referer_name=$_POST['referer_name'];
@@ -56,7 +125,7 @@ if(@$_POST['formName']=='student_enquiry_common'){
     $created_by=$_POST['admin_id'];
     $form_type=$_POST['form_type'];
 
-    $query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_member_name,st_phno,st_email,st_course,st_surname,st_suburb,st_state,st_post_code,st_visited,st_heared,st_startplan_date,st_refered,st_refer_name,st_refer_alumni,st_street_details,st_enquiry_for,st_pref_comments,st_created_by,st_gen_enq_type)VALUES('$studentName','$memberName','$contactName','$emailAddress',$courses,'$surname','$suburb',$stuState,$postCode,$visit_before,'$hear_about','$plan_to_start_date',$refer_select,'$referer_name',$refer_alumni,'$streetDetails',$enquiryFor,'$prefComment',$created_by,$form_type)");
+    $query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_member_name,st_phno,st_email,st_course,st_surname,st_suburb,st_state,st_post_code,st_visited,st_heared,st_hearedby,st_startplan_date,st_refered,st_refer_name,st_refer_alumni,st_street_details,st_enquiry_for,st_pref_comments,st_created_by,st_gen_enq_type)VALUES('$studentName','$memberName','$contactName','$emailAddress','$courses','$surname','$suburb',$stuState,$postCode,$visit_before,'$hear_about','$hearedby','$plan_to_start_date',$refer_select,'$referer_name',$refer_alumni,'$streetDetails',$enquiryFor,'$prefComment',$created_by,$form_type)");
 
     $lastId=mysqli_insert_id($connection);
     $uniqueId=sprintf('EQ%05d', $lastId);
@@ -104,15 +173,18 @@ $stuState=$_POST['stuState'];
 $postCode=$_POST['postCode'];
 $visit_before=$_POST['visit_before'];
 $hear_about=$_POST['hear_about'];
+$hearedby=$_POST['hearedby'];
 $plan_to_start_date=$_POST['plan_to_start_date'];
 $refer_select=$_POST['refer_select'];
 $referer_name=$_POST['referer_name'];
 $refer_alumni=$_POST['refer_alumni'];
+$visaCondition=$_POST['visaCondition'];
 $comments=$_POST['comments'];
 $prefComment=$_POST['prefComment'];
 $appointment_booked=$_POST['appointment_booked'];
 if(@$_POST['remarks'] && $_POST['remarks']!=''){
     $remarks=json_encode($_POST['remarks']);
+    // echo $remarks;
 }else{
     $remarks='';
 }
@@ -136,7 +208,7 @@ $slot_books=json_decode($_POST['slot_books']);
 
 if($checkId==0){
 
-    $query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_member_name,st_phno,st_email,st_course,st_fee,st_visa_status,st_visa_note,st_surname,st_suburb,st_state,st_post_code,st_visited,st_heared,st_startplan_date,st_refered,st_refer_name,st_refer_alumni,st_comments,st_pref_comments,st_appoint_book,st_remarks,st_street_details,st_enquiry_for,st_enquiry_date,st_course_type,st_shore,st_ethnicity,st_created_by)VALUES('$studentName','$memberName','$contactName','$emailAddress','$courses','$payment',$visaStatus,'$visaNote','$surname','$suburb',$stuState,$postCode,$visit_before,'$hear_about','$plan_to_start_date',$refer_select,'$referer_name',$refer_alumni,'$comments','$prefComment',$appointment_booked,'$remarks','$streetDetails',$enquiryFor,'$enquiryDate',$courseType,$shore,'$ethnicity',$created_by)");
+    $query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_member_name,st_phno,st_email,st_course,st_fee,st_visa_status,st_visa_condition,st_visa_note,st_surname,st_suburb,st_state,st_post_code,st_visited,st_heared,st_hearedby,st_startplan_date,st_refered,st_refer_name,st_refer_alumni,st_comments,st_pref_comments,st_appoint_book,st_remarks,st_street_details,st_enquiry_for,st_enquiry_date,st_course_type,st_shore,st_ethnicity,st_created_by)VALUES('$studentName','$memberName','$contactName','$emailAddress','$courses','$payment',$visaStatus,$visaCondition,'$visaNote','$surname','$suburb',$stuState,$postCode,$visit_before,'$hear_about','$hearedby','$plan_to_start_date',$refer_select,'$referer_name',$refer_alumni,'$comments','$prefComment',$appointment_booked,'$remarks','$streetDetails',$enquiryFor,'$enquiryDate',$courseType,$shore,'$ethnicity',$created_by)");
     echo mysqli_error($connection);
     $lastId=mysqli_insert_id($connection);
     $uniqueId=sprintf('EQ%05d', $lastId);
@@ -180,10 +252,8 @@ if($checkId==0){
     }
 
 }else{
-
-    // echo "UPDATE student_enquiry SET `st_name`='$studentName',`st_member_name`='$memberName' ,`st_phno`='$contactName',`st_email`='$emailAddress',`st_course`=$courses,`st_fee`='$payment',`st_visa_status`=$visaStatus ,`st_visa_note`='$visaNote', `st_surname`='$surname' , `st_suburb`= '$suburb' , `st_state`=$stuState,`st_post_code`= $postCode,`st_visited`=$visit_before,`st_heared`='$hear_about',`st_startplan_date`='$plan_to_start_date',`st_refered`=$refer_select,`st_refer_name`='$referer_name',`st_refer_alumni`=$refer_alumni,`st_comments`='$comments',`st_pref_comments`='$prefComment',`st_appoint_book`= $appointment_booked,`st_remarks`='$remarks',`st_street_details`= '$streetDetails' , `st_enquiry_for`= $enquiryFor , `st_enquiry_date`='$enquiryDate' ,`st_course_type`=$courseType , `st_shore`=$shore,`st_ethnicity`='$ethnicity',`st_modified_by`= $created_by , `st_modified_date`='$now'  WHERE `st_id`=$checkId";
     
-    if(mysqli_query($connection,"UPDATE student_enquiry SET `st_name`='$studentName',`st_member_name`='$memberName' ,`st_phno`='$contactName',`st_email`='$emailAddress',`st_course`='$courses',`st_fee`='$payment',`st_visa_status`=$visaStatus ,`st_visa_note`='$visaNote', `st_surname`='$surname' , `st_suburb`= '$suburb' , `st_state`=$stuState,`st_post_code`= $postCode,`st_visited`=$visit_before,`st_heared`='$hear_about',`st_startplan_date`='$plan_to_start_date',`st_refered`=$refer_select,`st_refer_name`='$referer_name',`st_refer_alumni`=$refer_alumni,`st_comments`='$comments',`st_pref_comments`='$prefComment',`st_appoint_book`= $appointment_booked,`st_remarks`='$remarks',`st_street_details`= '$streetDetails' , `st_enquiry_for`= $enquiryFor , `st_enquiry_date`='$enquiryDate' ,`st_course_type`=$courseType , `st_shore`=$shore,`st_ethnicity`='$ethnicity',`st_modified_by`= $created_by , `st_modified_date`='$now'  WHERE `st_id`=$checkId")){
+    if(mysqli_query($connection,"UPDATE student_enquiry SET `st_name`='$studentName',`st_member_name`='$memberName' ,`st_phno`='$contactName',`st_email`='$emailAddress',`st_course`='$courses',`st_fee`='$payment',`st_visa_status`=$visaStatus,`st_visa_condition`=$visaCondition ,`st_visa_note`='$visaNote', `st_surname`='$surname' , `st_suburb`= '$suburb' , `st_state`=$stuState,`st_post_code`= $postCode,`st_visited`=$visit_before,`st_heared`='$hear_about',`st_hearedby`='$hearedby',`st_startplan_date`='$plan_to_start_date',`st_refered`=$refer_select,`st_refer_name`='$referer_name',`st_refer_alumni`=$refer_alumni,`st_comments`='$comments',`st_pref_comments`='$prefComment',`st_appoint_book`= $appointment_booked,`st_remarks`='$remarks',`st_street_details`= '$streetDetails' , `st_enquiry_for`= $enquiryFor , `st_enquiry_date`='$enquiryDate' ,`st_course_type`=$courseType , `st_shore`=$shore,`st_ethnicity`='$ethnicity',`st_modified_by`= $created_by , `st_modified_date`='$now'  WHERE `st_id`=$checkId")){
 
         // insert course Type data
         if($courseType==1){
@@ -263,7 +333,13 @@ if($checkId==0){
 if(@$_POST['formName']=='delete_enq'){
     $enq_id=$_POST['eq_id'];
     $note=$_POST['note'];
-    $query=mysqli_query($connection,"UPDATE `student_enquiry` SET `st_delete_note`='$note' , `st_enquiry_status`=1 WHERE `st_id`=$enq_id");
+    $tableName=$_POST['tableName'];
+    $primId=$_POST['colPrefix'].'_id';
+    $delColName=$_POST['colPrefix'].'_delete_note';
+    $colPrefix=$_POST['colPrefix'].'_enquiry_status';
+
+    $query=mysqli_query($connection,"UPDATE $tableName SET `$delColName`='$note' , `$colPrefix`=1 WHERE `$primId`=$enq_id");
+    // echo "UPDATE $tableName SET `$delColName`='$note' , `$colPrefix`=1 WHERE `$primId`=$enq_id";
 if($query){
     echo 1;
 }else{
@@ -281,7 +357,385 @@ if($query){
 }
 }
 
-if(@$_POST['formName']=='student_enrol'){
+if(@$_POST['formName']=='student_filter'){
+
+    $visa_status=$_POST['visa_status'];
+    $appointment_status=$_POST['appointment_status'];
+    $course_type_status=$_POST['course_type_status'];
+    $state_status=$_POST['state_status'];
+    $WHERE='';    
+
+    if($visa_status!=0){
+        $WHERE.=" AND st_visa_condition=$visa_status";
+    }
+
+    if($appointment_status!=0){
+        $WHERE.=" AND st_appoint_book=$appointment_status";
+    }
+    
+    if($course_type_status!=0){
+        $WHERE.=" AND st_course_type=$course_type_status";
+    }
+
+    if($state_status!=0){
+        $WHERE.=" AND st_state=$state_status";
+    }
+
+
+
+    $filterQuery="SELECT * FROM `student_enquiry` WHERE st_enquiry_status=0 $WHERE";
+
+    $filterQueryget=mysqli_query($connection,$filterQuery);
+    $tbody='';
+
+
+
+if(mysqli_num_rows($filterQueryget)!=0){
+
+    while($filterQueryRes=mysqli_fetch_array($filterQueryget)){
+
+        $tbody.='<tr>';
+
+        $coursesNames=json_decode($filterQueryRes['st_course']);
+        $coursesName='<div class="td_scroll_height">';
+        foreach($coursesNames as $value){
+            $courses=mysqli_fetch_array(mysqli_query($connection,"SELECT * from courses where course_status!=1 AND course_id=".$value));
+            $coursesName.= $courses['course_sname'].'-'.$courses['course_name']." , <br>"; 
+        }
+
+        $st_states=['--select--','NSW - New South Wales','VIC - Victoria','ACT - Australian Capital Territory','NT - Northern Territoy','WA - Western Australia','QLD - Queensland','SA - South Australia','TAS - Tasmania'];
+        $state_name= $st_states[$filterQueryRes['st_state']];
+        
+        $st_course_type=['-','Rpl','Regular','Regular - Group','Short courses','Short course - Group'];
+        $courseTypeId=$filterQueryRes['st_course_type'];
+    
+        $coursesNamePos = strrpos($coursesName, ',');
+        $coursesName = substr($coursesName, 0, $coursesNamePos);
+        $coursesName.='</div>';
+    
+        $visited=$filterQueryRes['st_visited']==1 ? 'Visited' : ( $filterQueryRes['st_visited']==2 ? 'Not Visited' : ' - ' ) ;
+        
+        $visastatus=$filterQueryRes['st_visa_condition']==1 ? 'Approved' : 'Not Approved' ;
+    
+        $refered_names = $filterQueryRes['st_refer_name'];
+    
+        $startPlanDate=date('d M Y',strtotime($filterQueryRes['st_startplan_date']));
+    
+        $staff_comments=$filterQueryRes['st_comments'];
+        $preference=$filterQueryRes['st_pref_comments'];
+    
+        $st_remarks=['--select--','Seems to be interested to do course and need to contact asap','contacted and followed','Good with communication skills','Sent enrollement form online/ hard copies','Want to do the course asap','not interested much','Looking for government funding','Have done counselling before but wants to get more info','Counseling is done but enrolment is due','Have done the counselling before','Seems like having attitude','Want to book an appointment for counselling','Will callus back again','Planning to relocate to other state','Wants to get COE for visa purpose'];    
+    
+        if($filterQueryRes['st_remarks']!=''){
+            $remarksNotes='<div class="td_scroll_height">';
+    
+        foreach(json_decode($filterQueryRes['st_remarks']) as $remark  ){                   
+            
+            $remarksNotes.=$st_remarks[$remark].' , <br>';
+    
+        }
+        $remarksNotes.='</div>';
+        }else{
+            $remarksNotes=' - ';
+            
+        }
+    
+        $street=$filterQueryRes['st_street_details'];
+        $suburb=$filterQueryRes['st_suburb'];
+        $post_code=$filterQueryRes['st_post_code'];
+        $appointment=$filterQueryRes['st_appoint_book']==1 ? 'Booked' : ( $filterQueryRes['st_appoint_book']==2 ? 'Not Booked' : ' - ' );
+        
+        $querys2=mysqli_query($connection,"select visa_status_name from `visa_statuses` WHERE visa_id=".$filterQueryRes['st_visa_status']);
+        if(mysqli_num_rows($querys2)!=0){
+        $visaCondition=mysqli_fetch_array($querys2);
+    
+        if(@$visaCondition['visa_status_name'] && $visaCondition['visa_status_name']!=''){
+            $visacCond=$visaCondition['visa_status_name'];
+        }else{
+            $visacCond=' - ';
+        }
+        }else{
+            $visacCond=' - ';
+        }
+
+        $appointment=$filterQueryRes['st_appoint_book']==1 ? 'Booked' : ( $filterQueryRes['st_appoint_book']==2 ? 'Not Booked' : ' - ' );
+
+        $dateCreated=date('d M Y',strtotime($filterQueryRes['st_enquiry_date']));
+        
+    
+            $view='<a class="btn btn-outline-primary btn-sm edit_enq" style="margin-right:10px;" href="student_enquiry.php?eq='.base64_encode($filterQueryRes['st_id']).'">Edit</a><button onclick="delete_enq(\'student_enquiry\',\'st\','.$filterQueryRes['st_id'].')" type="button" class="btn btn-outline-danger btn-sm">Delete</button>';
+
+
+            $tbody.='<td>'.$filterQueryRes['st_enquiry_id'].'</td>
+                    <td>'.$filterQueryRes['st_name'].'</td>
+                    <td>'.$filterQueryRes['st_phno'].'</td>
+                    <td>'.$filterQueryRes['st_email'].'</td>
+                    <td>'.$street.'</td>
+                    <td>'.$suburb.'</td>
+                    <td>'.$state_name.'</td>
+                    <td>'.$post_code.'</td>
+                    <td>'.$coursesName.'</td>
+                    <td>'.$startPlanDate.'</td>
+                    <td>'.$st_course_type[$courseTypeId].'</td>
+                    <td>'.$visited.'</td>
+                    <td>'.$dateCreated.'</td>
+                    <td>'.$refered_names.'</td>
+                    <td>'.$filterQueryRes['st_fee'].'</td>
+                    <td>'.$appointment.'</td>
+                    <td>'.$visacCond.'</td>
+                    <td>'.$visastatus.'</td></tr>';
+    
+            // array_push($enquiries['data'],array('st_enquiry_id'=>$filterQueryRes['st_enquiry_id'],'std_name'=>$filterQueryRes['st_name'], 'std_phno'=>$filterQueryRes['st_phno'],'std_email'=>$filterQueryRes['st_email'],'street'=>$street,'suburb'=>$suburb,'post_code'=>$post_code,'std_course'=>$coursesName,'startplan_date'=>$startPlanDate,'referedby'=>$refered_names,'visited'=>$visited,'st_coursetype'=>$st_course_type[$courseTypeId],'std_fee'=>$filterQueryRes['st_fee'],'appointment'=>$appointment,'Visa_condition'=>$visacCond,'std_visa_status'=>$visastatus));
+            
+        }
+
+        echo $tbody;
+    }else{
+        echo "<tr><td>No Records</td></tr>";
+    }
+
+
+    
+}
+if(@$_POST['formName']=='followup_call'){
+  
+        $student_name=$_POST['student_name'];
+        $date=$_POST['date'];
+        $contacted_person=$_POST['contacted_person'];
+        $contacted_time=date('Y-m-d H:i:s',strtotime($_POST['contacted_time']));
+        $contactMode=$_POST['contactMode'];
+        $contact_num=$_POST['contact_num'];
+        $enquiry_id=$_POST['enquiry_id'];
+        $checkId=$_POST['checkId'];
+        if(@$_POST['remarks'] && $_POST['remarks']!=''){
+        $remarks=json_encode($_POST['remarks']);
+        }else{
+            $remarks='';
+        }
+        $comments=mysqli_real_escape_string($connection,$_POST['comments']);
+        $admin_id=$_POST['admin_id'];
+
+
+        if($checkId==0){
+
+            $query=mysqli_query($connection,"INSERT INTO followup_calls(`enquiry_id`,`flw_name`,`flw_phone`,`flw_contacted_person`,`flw_contacted_time`,`flw_date`,`flw_remarks`,`flw_comments`,`flw_mode_contact`,`flw_created_by`)VALUES('$enquiry_id','$student_name','$contact_num','$contacted_person','$contacted_time','$date','$remarks','$comments','$contactMode',$admin_id)");
+            $lastId=mysqli_insert_id($connection);
+    
+            if($lastId!=''){
+                echo "1";
+            }else{
+                echo "0";
+            }
+
+        }else{
+
+            $dates=date('Y-m-d H:i:s');
+
+            $query=mysqli_query($connection,"UPDATE followup_calls SET `enquiry_id`='$enquiry_id',`flw_name`='$student_name',`flw_phone`='$contact_num',`flw_contacted_person`='$contacted_person',`flw_contacted_time`='$contacted_time',`flw_date`='$date',`flw_remarks`='$remarks',`flw_comments`='$comments',`flw_mode_contact`='$contactMode',`flw_modified_date`='$dates',`flw_modifiedby`=$admin_id WHERE `flw_id`=$checkId");
+
+            if($query){
+                echo "1";
+            }else{
+                echo "0";
+            }
+
+        }
+
+
+
+}
+if(@$_POST['formName']=='counseling_form'){
+  
+        $vaccine_status=$_POST['vaccine_status'];
+        $job_nature=$_POST['job_nature'];
+        $module_result=$_POST['module_result'];
+        $counseling_timing=date('Y-m-d H:i:s',strtotime($_POST['counseling_timing']));
+        $pref_comment=$_POST['pref_comment'];
+        $eng_rate=$_POST['eng_rate'];
+        $mig_test=$_POST['mig_test'];
+        $overall_result=$_POST['overall_result'];
+        $course=$_POST['course'];
+        $university_name=$_POST['university_name'];
+        $qualification=$_POST['qualification'];
+        $counseling_type=$_POST['counseling_type'];
+        $member_name=$_POST['member_name'];
+        $aus_duration=$_POST['aus_duration'];
+        $visa_condition=$_POST['visa_condition'];
+        $education=$_POST['education'];
+        $aus_study=$_POST['aus_study'];
+        $work_status=$_POST['work_status'];
+        $checkId=$_POST['checkId'];       
+
+
+        if(@$_POST['remarks'] && $_POST['remarks']!=''){
+        $remarks=json_encode($_POST['remarks']);
+        }else{
+            $remarks='';
+        }
+
+        $admin_id=$_POST['admin_id'];
+
+
+    if($checkId==0){
+
+        $query=mysqli_query($connection,"INSERT INTO counseling_details(`counsil_mem_name`,`counsil_vaccine_status`,`counsil_job_nature`,`counsil_module_result`,`counsil_timing`,`counsil_pref_comments`,`counsil_eng_rate`,`counsil_migration_test`,`counsil_overall_result`,`counsil_course`,`counsil_university`,`counsil_qualification`,`counsil_type`,`counsil_aus_stay_time`,`counsil_visa_condition`,`counsil_education`,`counsil_aus_study_status`,`counsil_work_status`,`counsil_remarks`,`counsil_createdby`)VALUES('$member_name',$vaccine_status,'$job_nature','$module_result','$counseling_timing','$pref_comment','$eng_rate',$mig_test,'$overall_result','$course','$university_name','$qualification',$counseling_type,'$aus_duration',$visa_condition,'$education',$aus_study,$work_status,'$remarks',$admin_id)");
+        $lastId=mysqli_insert_id($connection);
+
+        if($lastId!=''){
+            echo "1";
+        }else{
+            echo "0";
+        }
+
+
+    }else{
+
+
+        $mod_date=date('Y-m-d');
+
+        $query=mysqli_query($connection,"UPDATE counseling_details SET `counsil_mem_name`='$member_name' , `counsil_vaccine_status` = $vaccine_status,`counsil_job_nature`= '$job_nature',`counsil_module_result`= '$module_result',`counsil_timing`='$counseling_timing',`counsil_pref_comments`='$pref_comment',`counsil_eng_rate`='$eng_rate',`counsil_migration_test`=$mig_test,`counsil_overall_result`='$overall_result',`counsil_course`='$course',`counsil_university`='$university_name',`counsil_qualification`='$qualification',`counsil_type`=$counseling_type,`counsil_aus_stay_time`='$aus_duration',`counsil_visa_condition`=$visa_condition,`counsil_education`='$education',`counsil_aus_study_status`=$aus_study,`counsil_work_status`=$work_status,`counsil_remarks`='$remarks',`counsil_modified_date`='$mod_date',`counsil_modified_by`=$admin_id");
+
+        if($query){
+            echo "1";
+        }else{
+            echo "0";
+        }
+
+    }
+
+
+
+
+}
+
+
+if(@$_POST['formName']=='date_filter'){
+
+    if($_POST['from_date']>$_POST['to_date']){
+        $from_date=$_POST['to_date'];
+        $to_date=$_POST['from_date'];
+    }else{
+        $from_date=$_POST['from_date'];
+        $to_date=$_POST['to_date'];
+    }
+
+    $WHERE='';        
+    $WHERE.=" AND created_date between '$from_date' AND '$to_date'";
+    
+    $filterQuery="SELECT * FROM `student_enquiry` WHERE st_enquiry_status=0 $WHERE";
+
+    // echo $filterQuery;
+
+    $filterQueryget=mysqli_query($connection,$filterQuery);
+    $tbody='';
+
+
+
+if(mysqli_num_rows($filterQueryget)!=0){
+
+    while($filterQueryRes=mysqli_fetch_array($filterQueryget)){
+
+        $tbody.='<tr>';
+
+        $coursesNames=json_decode($filterQueryRes['st_course']);
+        $coursesName='<div class="td_scroll_height">';
+        foreach($coursesNames as $value){
+            $courses=mysqli_fetch_array(mysqli_query($connection,"SELECT * from courses where course_status!=1 AND course_id=".$value));
+            $coursesName.= $courses['course_sname'].'-'.$courses['course_name']." , <br>"; 
+        }
+
+        $st_states=['--select--','NSW - New South Wales','VIC - Victoria','ACT - Australian Capital Territory','NT - Northern Territoy','WA - Western Australia','QLD - Queensland','SA - South Australia','TAS - Tasmania'];
+        $state_name= $st_states[$filterQueryRes['st_state']];
+        
+        $st_course_type=['-','Rpl','Regular','Regular - Group','Short courses','Short course - Group'];
+        $courseTypeId=$filterQueryRes['st_course_type'];
+    
+        $coursesNamePos = strrpos($coursesName, ',');
+        $coursesName = substr($coursesName, 0, $coursesNamePos);
+        $coursesName.='</div>';
+    
+        $visited=$filterQueryRes['st_visited']==1 ? 'Visited' : ( $filterQueryRes['st_visited']==2 ? 'Not Visited' : ' - ' ) ;
+        
+        $visastatus=$filterQueryRes['st_visa_condition']==1 ? 'Approved' : 'Not Approved' ;
+    
+        $refered_names = $filterQueryRes['st_refer_name'];
+    
+        $startPlanDate=date('d M Y',strtotime($filterQueryRes['st_startplan_date']));
+    
+        $staff_comments=$filterQueryRes['st_comments'];
+        $preference=$filterQueryRes['st_pref_comments'];
+    
+        $st_remarks=['--select--','Seems to be interested to do course and need to contact asap','contacted and followed','Good with communication skills','Sent enrollement form online/ hard copies','Want to do the course asap','not interested much','Looking for government funding','Have done counselling before but wants to get more info','Counseling is done but enrolment is due','Have done the counselling before','Seems like having attitude','Want to book an appointment for counselling','Will callus back again','Planning to relocate to other state','Wants to get COE for visa purpose'];    
+    
+        if($filterQueryRes['st_remarks']!=''){
+            $remarksNotes='<div class="td_scroll_height">';
+    
+        foreach(json_decode($filterQueryRes['st_remarks']) as $remark  ){                   
+            
+            $remarksNotes.=$st_remarks[$remark].' , <br>';
+    
+        }
+        $remarksNotes.='</div>';
+        }else{
+            $remarksNotes=' - ';
+            
+        }
+    
+        $street=$filterQueryRes['st_street_details'];
+        $suburb=$filterQueryRes['st_suburb'];
+        $post_code=$filterQueryRes['st_post_code'];
+        $appointment=$filterQueryRes['st_appoint_book']==1 ? 'Booked' : ( $filterQueryRes['st_appoint_book']==2 ? 'Not Booked' : ' - ' );
+        
+        $querys2=mysqli_query($connection,"select visa_status_name from `visa_statuses` WHERE visa_id=".$filterQueryRes['st_visa_status']);
+        if(mysqli_num_rows($querys2)!=0){
+        $visaCondition=mysqli_fetch_array($querys2);
+    
+        if(@$visaCondition['visa_status_name'] && $visaCondition['visa_status_name']!=''){
+            $visacCond=$visaCondition['visa_status_name'];
+        }else{
+            $visacCond=' - ';
+        }
+        }else{
+            $visacCond=' - ';
+        }
+
+        $appointment=$filterQueryRes['st_appoint_book']==1 ? 'Booked' : ( $filterQueryRes['st_appoint_book']==2 ? 'Not Booked' : ' - ' );
+
+        $dateCreated=date('d M Y',strtotime($filterQueryRes['st_enquiry_date']));
+        
+    
+            $view='<a class="btn btn-outline-primary btn-sm edit_enq" style="margin-right:10px;" href="student_enquiry.php?eq='.base64_encode($filterQueryRes['st_id']).'">Edit</a><button onclick="delete_enq(\'student_enquiry\',\'st\','.$filterQueryRes['st_id'].')" type="button" class="btn btn-outline-danger btn-sm">Delete</button>';
+
+
+            $tbody.='<td>'.$filterQueryRes['st_enquiry_id'].'</td>
+                    <td>'.$filterQueryRes['st_name'].'</td>
+                    <td>'.$filterQueryRes['st_phno'].'</td>
+                    <td>'.$filterQueryRes['st_email'].'</td>
+                    <td>'.$street.'</td>
+                    <td>'.$suburb.'</td>
+                    <td>'.$state_name.'</td>
+                    <td>'.$post_code.'</td>
+                    <td>'.$coursesName.'</td>
+                    <td>'.$startPlanDate.'</td>
+                    <td>'.$st_course_type[$courseTypeId].'</td>
+                    <td>'.$visited.'</td>
+                    <td>'.$dateCreated.'</td>
+                    <td>'.$refered_names.'</td>
+                    <td>'.$filterQueryRes['st_fee'].'</td>
+                    <td>'.$appointment.'</td>
+                    <td>'.$visacCond.'</td>
+                    <td>'.$visastatus.'</td></tr>';
+            
+        }
+
+        echo $tbody;
+    }else{
+        echo "<tr><td>No Records</td></tr>";
+    }
+
+
+}
+    if(@$_POST['formName']=='student_enrol'){
 $qualifications=$_POST['qualifications'];
 $venue=$_POST['venues'];
 $middle_name=$_POST['middle_name'];
@@ -388,25 +842,181 @@ if(@$_REQUEST['name']=='studentEnquiry'){
         $courses=mysqli_fetch_array(mysqli_query($connection,"SELECT * from courses where course_status!=1 AND course_id=".$value));
         $coursesName.= $courses['course_sname'].'-'.$courses['course_name']." , <br>"; 
     }
+    
+    $st_course_type=['-','Rpl','Regular','Regular - Group','Short courses','Short course - Group'];
+    $courseTypeId=$queryRes['st_course_type'];
+
     $coursesNamePos = strrpos($coursesName, ',');
     $coursesName = substr($coursesName, 0, $coursesNamePos);
     $coursesName.='</div>';
-        if($queryRes['st_visa_status']==1){
-            $visaStatus='<i class="mdi mdi-checkbox-blank-circle text-warning me-1"></i> Pending';
-        }else if($queryRes['st_visa_status']==2){
-            $visaStatus='<i class="mdi mdi-checkbox-blank-circle text-success me-1"></i> Approved';
-        }else{
-            $visaStatus='<i class="mdi mdi-checkbox-blank-circle text-danger me-1"></i> Declined';
-        }
 
-        $view='<a class="btn btn-outline-primary btn-sm edit_enq" style="margin-right:10px;" href="student_enquiry.php?eq='.base64_encode($queryRes['st_id']).'">Edit</a><button onclick="delete_enq('.$queryRes['st_id'].')" type="button" class="btn btn-outline-danger btn-sm">Delete</button>';
+    $visited=$queryRes['st_visited']==1 ? 'Visited' : ( $queryRes['st_visited']==2 ? 'Not Visited' : ' - ' ) ;
+    
+    $visastatus=$queryRes['st_visa_condition']==1 ? 'Approved' : 'Not Approved' ;
 
-        array_push($enquiries['data'],array('st_enquiry_id'=>$queryRes['st_enquiry_id'],'std_name'=>$queryRes['st_name'], 'std_phno'=>$queryRes['st_phno'],'std_email'=>$queryRes['st_email'],'std_course'=>$coursesName,'std_fee'=>$queryRes['st_fee'],'std_visa_status'=>$visaStatus,'action'=>$view));
+    $refered_names = $queryRes['st_refer_name'];
+
+    $startPlanDate=date('d M Y',strtotime($queryRes['st_startplan_date']));
+
+    $staff_comments=$queryRes['st_comments'];
+    $preference=$queryRes['st_pref_comments'];
+
+    $st_remarks=['--select--','Seems to be interested to do course and need to contact asap','contacted and followed','Good with communication skills','Sent enrollement form online/ hard copies','Want to do the course asap','not interested much','Looking for government funding','Have done counselling before but wants to get more info','Counseling is done but enrolment is due','Have done the counselling before','Seems like having attitude','Want to book an appointment for counselling','Will callus back again','Planning to relocate to other state','Wants to get COE for visa purpose'];    
+
+    if($queryRes['st_remarks']!=''){
+        $remarksNotes='<div class="td_scroll_height">';
+
+    foreach(json_decode($queryRes['st_remarks']) as $remark  ){                   
+        
+        $remarksNotes.=$st_remarks[$remark].' , <br>';
+
+    }
+    $remarksNotes.='</div>';
+    }else{
+        $remarksNotes=' - ';
+        
+    }
+
+    $street=$queryRes['st_street_details'];
+    $suburb=$queryRes['st_suburb'];
+    $post_code=$queryRes['st_post_code'];
+    $appointment=$queryRes['st_appoint_book']==1 ? 'Booked' : ( $queryRes['st_appoint_book']==2 ? 'Not Booked' : ' - ' );
+    
+    $querys2=mysqli_query($connection,"select visa_status_name from `visa_statuses` WHERE visa_id=".$queryRes['st_visa_status']);
+    if(mysqli_num_rows($querys2)!=0){
+    $visaCondition=mysqli_fetch_array($querys2);
+
+    if(@$visaCondition['visa_status_name'] && $visaCondition['visa_status_name']!=''){
+        $visacCond=$visaCondition['visa_status_name'];
+    }else{
+        $visacCond=' - ';
+    }
+    }else{
+        $visacCond=' - ';
+    }
+    
+
+        $view='<a class="btn btn-outline-primary btn-sm edit_enq" style="margin-right:10px;" href="student_enquiry.php?eq='.base64_encode($queryRes['st_id']).'">Edit</a><button onclick="delete_enq(\'student_enquiry\',\'st\','.$queryRes['st_id'].')" type="button" class="btn btn-outline-danger btn-sm">Delete</button>';
+
+        array_push($enquiries['data'],array('st_enquiry_id'=>$queryRes['st_enquiry_id'],'std_name'=>$queryRes['st_name'], 'std_phno'=>$queryRes['st_phno'],'std_email'=>$queryRes['st_email'],'street'=>$street,'suburb'=>$suburb,'post_code'=>$post_code,'std_course'=>$coursesName,'startplan_date'=>$startPlanDate,'referedby'=>$refered_names,'visited'=>$visited,'st_coursetype'=>$st_course_type[$courseTypeId],'std_fee'=>$queryRes['st_fee'],'appointment'=>$appointment,'Visa_condition'=>$visacCond,'std_visa_status'=>$visastatus,'staffComments'=>$staff_comments,'preferences'=>$preference,'remarksNotes'=>$remarksNotes,'action'=>$view));
         
     }
     header("Content-Type: application/json");
     echo json_encode($enquiries);
 }
+
+if(@$_REQUEST['name']=='followup_calls'){
+
+    $followups['data']=[];
+
+    $checkQry=mysqli_query($connection,"SELECT * FROM `followup_calls` WHERE `flw_enquiry_status`=0");
+    if(mysqli_num_rows($checkQry)!=0){
+
+        while($checkQryRes=mysqli_fetch_array($checkQry)){
+
+            $st_remarks=['--select--','Seems to be interested to do course and need to contact asap','contacted and followed','Good with communication skills','Sent enrollement form online/ hard copies','Want to do the course asap','not interested much','Looking for government funding','Have done counselling before but wants to get more info','Counseling is done but enrolment is due','Have done the counselling before','Seems like having attitude','Want to book an appointment for counselling','Will callus back again','Planning to relocate to other state','Wants to get COE for visa purpose'];    
+
+            if($checkQryRes['flw_remarks']!=''){
+                $remarksNotes='<div class="td_scroll_height">';
+        
+            foreach(json_decode($checkQryRes['flw_remarks']) as $remark  ){                   
+                
+                $remarksNotes.=$st_remarks[$remark].' , <br>';
+        
+            }
+            $remarksNotes.='</div>';
+            }else{
+                $remarksNotes=' - ';
+                
+            }
+
+            
+        $view='<button type="button" data="'.$checkQryRes['flw_id'].'" class="btn btn-outline-primary btn-sm edit_enrol" style="margin-right:10px;"><a href="followup_call.php?flw_id='.base64_encode($checkQryRes['flw_id']).'">Edit</a></button><button onclick="delete_enq(\'followup_calls\',\'flw\','.$checkQryRes['flw_id'].')" type="button" class="btn btn-outline-danger btn-sm">Delete</button>';
+
+
+            array_push($followups['data'],array('enquiry_id'=>$checkQryRes['enquiry_id'],'name'=>$checkQryRes['flw_name'],'phone'=>$checkQryRes['flw_phone'],'contacted_person'=>$checkQryRes['flw_contacted_person'],'contacted_time'=>date('d M y H:i',strtotime($checkQryRes['flw_contacted_time'])),'date'=>$checkQryRes['flw_date'],'mode_contact'=>$checkQryRes['flw_mode_contact'],'action'=>$view));
+
+        }
+                
+
+    }
+
+    header("Content-Type: application/json");
+    echo json_encode($followups);
+
+
+
+}
+if(@$_REQUEST['name']=='counselings'){
+
+    $counselings['data']=[];
+
+    $checkQry=mysqli_query($connection,"SELECT * FROM `counseling_details` WHERE `counsil_enquiry_status`=0");
+    if(mysqli_num_rows($checkQry)!=0){
+
+        while($checkQryRes=mysqli_fetch_array($checkQry)){
+
+            $st_remarks=['--select--','Seems to be interested to do course and need to contact asap','contacted and followed','Good with communication skills','Sent enrollement form online/ hard copies','Want to do the course asap','not interested much','Looking for government funding','Have done counselling before but wants to get more info','Counseling is done but enrolment is due','Have done the counselling before','Seems like having attitude','Want to book an appointment for counselling','Will callus back again','Planning to relocate to other state','Wants to get COE for visa purpose'];    
+
+            if($checkQryRes['counsil_remarks']!=''){
+                $remarksNotes='<div class="td_scroll_height">';
+        
+            foreach(json_decode($checkQryRes['counsil_remarks']) as $remark  ){                   
+                
+                $remarksNotes.=$st_remarks[$remark].' , <br>';
+        
+            }
+            $remarksNotes.='</div>';
+            }else{
+                $remarksNotes=' - ';
+                
+            }
+
+            if($checkQryRes['counsil_type']==1){
+                $type="Face to Face";
+            }else{
+                $type="Video";
+            }
+            
+            if($checkQryRes['counsil_work_status']==1){
+                $work_status="Yes";
+            }else{
+                $work_status="No";
+            }
+
+            $querys2=mysqli_query($connection,"select visa_status_name from `visa_statuses` WHERE visa_id=".$checkQryRes['counsil_visa_condition']);
+            if(mysqli_num_rows($querys2)!=0){
+            $visaCondition=mysqli_fetch_array($querys2);
+        
+            if(@$visaCondition['visa_status_name'] && $visaCondition['visa_status_name']!=''){
+                $visacCond=$visaCondition['visa_status_name'];
+            }else{
+                $visacCond=' - ';
+            }
+            }else{
+                $visacCond=' - ';
+            }
+
+            
+        $view='<button type="button" data="'.$checkQryRes['counsil_id'].'" class="btn btn-outline-primary btn-sm edit_enrol" style="margin-right:10px;"><a href="counselling_form.php?eq='.base64_encode($checkQryRes['counsil_id']).'">Edit</a></button><button onclick="delete_enq(\'counseling_details\',\'counsil\','.$checkQryRes['counsil_id'].')" type="button" class="btn btn-outline-danger btn-sm">Delete</button>';
+
+
+            array_push($counselings['data'],array('member_name'=>$checkQryRes['counsil_mem_name'],'counsil_type'=>$type,'work_status'=>$work_status,'visa'=>$visacCond,'education'=>$checkQryRes['counsil_education'],'counsil_timing'=>date('d M y H:i',strtotime($checkQryRes['counsil_timing'])),'qualification'=>$checkQryRes['counsil_qualification'],'action'=>$view));
+
+        }
+                
+
+    }
+
+    header("Content-Type: application/json");
+    echo json_encode($counselings);
+
+
+
+}
+
+
+
 if(@$_REQUEST['name']=='student_invoices'){
     $invoices['data']=[];
     $query=mysqli_query($connection,"SELECT * from invoices");

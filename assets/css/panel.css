@@ -277,11 +277,11 @@ border-radius: unset !important;
   overflow-y: auto;
 }
 
-.column_value{
+.column_value , .appoint_column_value{
   display:none;
 }
 
-.badge-button{
+.badge-button,.appoint-badge-button{
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -294,10 +294,41 @@ border-radius: unset !important;
   width: auto;
 }
 
-.badge-button i{
+.badge-button i , .appoint-badge-button i{
   font-size: 20px;
   padding-right: 2px;
   line-height: 1;
 }
 
+.filter-options{
+  display: flex;
+  justify-content: flex-end;
+}
+
+.filter-options i{
+  cursor: pointer;
+  margin-right: 1rem;
+  font-size: 18px;
+  border: 1px solid #686868;
+  padding: 6px;
+  color: #efefef;
+  background-color: #686868;
+}
+
+/* #table-filter thead th:not(:nth-child(-n+5)) , #table-filter tbody tr td:not(:nth-child(-n+5)) {
+  display: none;
+} */
+
+.imp-block{
+  display: table-cell !important;
+}
+.imp-none{
+  display: none !important;
+}
 /* Jelly loader CSS end here */
+.asterisk{
+  color:red;
+}
+/* .appoint_input{
+  display:none;
+} */

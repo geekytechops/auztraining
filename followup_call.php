@@ -76,26 +76,29 @@ if(@$_SESSION['user_type']!=''){
                                         <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="given_name">Enquiry ID*</label><br>
-                                                        <?php if($eqId==0){ ?>
+                                                        <label class="form-label" for="enquiry_id">Enquiry ID</label><br>
                                                         <select class="selectpicker" title="--select--" data-live-search="true" name="enquiry_id" id="enquiry_id">
 
                                                         <?php
                                                         if(mysqli_num_rows($enquiryIds)!=0){
                                                         while($enquiryIdsRes=mysqli_fetch_array($enquiryIds)){
                                                             
-                                                            $checkQry=mysqli_query($connection,"SELECT * FROM `followup_calls` where enquiry_id='".$enquiryIdsRes['st_enquiry_id']."' AND flw_enquiry_status=0");
+                                                            $checkQry=mysqli_query($connection,"SELECT * FROM `followup_calls` where flw_id='".$eqId."' AND flw_enquiry_status=0");                                                            
 
+                                                            if(mysqli_num_rows($checkQry)!=0){
 
-                                                            if(mysqli_num_rows($checkQry)==0){
+                                                                $checkQryData=mysqli_fetch_array($checkQry);
 
-                                                                echo "<option data='".$row_count."'  value='".$enquiryIdsRes['st_enquiry_id']."' data-name='".$enquiryIdsRes['st_name']."' data-mobile='".$enquiryIdsRes['st_phno']."'>".$enquiryIdsRes['st_enquiry_id']."</option>";
-
-                                                            }else{
-
-                                                                echo "<option value='".$enquiryIdsRes['st_enquiry_id']."' data-name='".$enquiryIdsRes['st_name']."' data-mobile='".$enquiryIdsRes['st_phno']."' disabled>".$enquiryIdsRes['st_enquiry_id']."</option>";
+                                                                if($checkQryData['enquiry_id']==$enquiryIdsRes['st_enquiry_id']){
+                                                                    $checked="selected";
+                                                                }else{
+                                                                    $checked="";
+                                                                }                                                        
 
                                                             }
+
+                                                            echo "<option value='".$enquiryIdsRes['st_enquiry_id']."' data-name='".$enquiryIdsRes['st_name']."' data-mobile='".$enquiryIdsRes['st_phno']."' ".$checked.">".$enquiryIdsRes['st_enquiry_id']."</option>";
+
 
                                                         }
                                                         }else{
@@ -105,11 +108,6 @@ if(@$_SESSION['user_type']!=''){
                                                         ?>
 
                                                         </select>
-                                                        <?php }else{ ?>
-
-                                                        <input type="text" readonly class="form-control" style="width:20%" value="<?php echo $followup_Query['enquiry_id']; ?>"  name="enquiry_id" id="enquiry_id">
-
-                                                        <?php }?>
                                                         <div class="error-feedback">
                                                             Please Select the Enquiry ID
                                                         </div>
@@ -117,8 +115,8 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="name_main">Student Name*</label>
-                                                        <input type="text" class="form-control" placeholder="Student Name" id="student_name" value="<?php echo $followup_Query['flw_name']; ?>" readonly>
+                                                        <label class="form-label" for="name_main">Student Name<span class="asterisk">*</span></label>
+                                                        <input type="text" class="form-control" placeholder="Student Name" id="student_name" value="<?php echo $followup_Query['flw_name']; ?>">
                                                         <div class="error-feedback">
                                                             Please enter the Student Name
                                                         </div>
@@ -126,8 +124,8 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="mobile_num">Contact Number*</label>
-                                                        <input type="text" class="form-control number-field" id="mobile_num" placeholder="Contact Number" value="<?php echo $followup_Query['flw_phone']; ?>" readonly>
+                                                        <label class="form-label" for="mobile_num">Contact Number<span class="asterisk">*</span></label>
+                                                        <input type="text" class="form-control number-field" id="mobile_num" placeholder="Contact Number" value="<?php echo $followup_Query['flw_phone']; ?>" maxlength="10">
                                                         <div class="error-feedback">
                                                             Please enter the Contact Number
                                                         </div>
@@ -135,7 +133,7 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="contacted_person">Contacted Person*</label>
+                                                        <label class="form-label" for="contacted_person">Contacted Person<span class="asterisk">*</span></label>
                                                         <input type="text" class="form-control" id="contacted_person" placeholder="Contacted Person Name" value="<?php echo $followup_Query['flw_contacted_person']; ?>">
                                                         <div class="error-feedback">
                                                             Please enter the Contacted Person Name
@@ -144,7 +142,7 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="contacted_time">Contacted Time*</label>
+                                                        <label class="form-label" for="contacted_time">Contacted Time<span class="asterisk">*</span></label>
                                                         <input type="datetime-local" class="form-control" id="contacted_time" value="<?php echo $followup_Query['flw_contacted_time']=='' ? '' : date('Y-m-d H:i',strtotime($followup_Query['flw_contacted_time'])); ?>">
                                                         <div class="error-feedback">
                                                             Please select the time when you contacted
@@ -153,7 +151,7 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="date">Date*</label>
+                                                        <label class="form-label" for="date">Date<span class="asterisk">*</span></label>
                                                         <input type="date" class="form-control" id="date" value="<?php echo $followup_Query['flw_date']=='' ? '' : date('Y-m-d',strtotime($followup_Query['flw_date'])); ?>">
                                                         <div class="error-feedback">
                                                             Please select the date
@@ -162,10 +160,28 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="mode_contacted">Mode of Contact*</label>
+                                                        <label class="form-label" for="mode_contacted">Mode of Contact<span class="asterisk">*</span></label>
                                                         <input type="text" class="form-control" id="mode_contacted" value="<?php echo $followup_Query['flw_mode_contact']; ?>">
                                                         <div class="error-feedback">
                                                             Please enter the Mode of Contact
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="comments">Staff Notes</label>
+                                                        <input type="text" class="form-control" id="comments" value="<?php echo $followup_Query['flw_comments']; ?>">
+                                                        <div class="error-feedback">
+                                                            Please Enter the  Comments
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6" style="display:<?php echo $eqId!=0 ? 'block' : 'none' ?>">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="progress_status">Status or Progress</label>
+                                                        <input type="text" class="form-control" id="progress_status" value="<?php echo $followup_Query['flw_progress_state']; ?>" maxlength="255">
+                                                        <div class="error-feedback">
+                                                            Please Enter the Progress of Followup
                                                         </div>
                                                     </div>
                                                 </div>
@@ -198,20 +214,11 @@ if(@$_SESSION['user_type']!=''){
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="comments">Comments</label>
-                                                        <input type="text" class="form-control" id="comments" value="<?php echo $followup_Query['flw_comments']; ?>">
-                                                        <div class="error-feedback">
-                                                            Please Enter the  Comments
-                                                        </div>
-                                                    </div>
-                                                </div>
                                             </div>
                                                 <?php if($eqId==0){ ?>
                                                 <button class="btn btn-primary" type="button" id="followup_check">Submit Enquiry</button>
                                                 <?php }else{ ?>
-                                                <button class="btn btn-primary" type="button" id="followup_check">Update Enquiry</button>
+                                                <button class="btn btn-primary" type="button" id="followup_check">Update Followup</button>
                                                 <?php } ?>
                                                 <input type="hidden" value="<?php echo $eqId; ?>" id="check_update">
                                         </form>
@@ -246,6 +253,8 @@ $(document).on('change','#enquiry_id' , function(){
 
     $('#mobile_num').val($('#enquiry_id option:selected').data('mobile'));  
     $('#student_name').val($('#enquiry_id option:selected').data('name'));  
+    $('#mobile_num').attr('readonly','readonly');
+    $('#student_name').attr('readonly','readonly');
     
 })
 
@@ -258,6 +267,7 @@ $(document).on('change','#enquiry_id' , function(){
                 var date=$('#date').val().trim();
                 var enquiry_id=$('#enquiry_id').val();
                 var contact_num=$('#mobile_num').val();
+                var progress_status=$('#progress_status').val();
 
                 var remarks=[]; 
 
@@ -265,16 +275,16 @@ $(document).on('change','#enquiry_id' , function(){
                     remarks.push(this.value);
                 });  
 
-                if(enquiry_id==''|| date=='' || contactMode==''  ||contacted_person==''||student_name==''||contacted_time==''||  ( contact_num=='' || contact_num.length!=10 ) ){
-                    if(enquiry_id==''){
-                        $('button[data-id="enquiry_id"]').addClass('invalid-div');
-                        $('button[data-id="enquiry_id"]').removeClass('valid-div');
-                        $('button[data-id="enquiry_id"]').closest('div').find('.error-feedback').show();
-                    }else{
-                        $('button[data-id="enquiry_id"]').addClass('valid-div');
-                        $('button[data-id="enquiry_id"]').removeClass('invalid-div');                        
-                        $('button[data-id="enquiry_id"]').closest('div').find('.error-feedback').hide();
-                    }
+                if(date=='' || contactMode==''  ||contacted_person==''||student_name==''||contacted_time==''||  ( contact_num=='' || contact_num.length!=10 ) ){
+                    // if(enquiry_id==''){
+                    //     $('button[data-id="enquiry_id"]').addClass('invalid-div');
+                    //     $('button[data-id="enquiry_id"]').removeClass('valid-div');
+                    //     $('button[data-id="enquiry_id"]').closest('div').find('.error-feedback').show();
+                    // }else{
+                    //     $('button[data-id="enquiry_id"]').addClass('valid-div');
+                    //     $('button[data-id="enquiry_id"]').removeClass('invalid-div');                        
+                    //     $('button[data-id="enquiry_id"]').closest('div').find('.error-feedback').hide();
+                    // }
                     if(( contact_num=='' || contact_num.length!=10 )){
                         $('#mobile_num').addClass('invalid-div');
                         $('#mobile_num').removeClass('valid-div');
@@ -331,7 +341,7 @@ $(document).on('change','#enquiry_id' , function(){
                     }
                 }else{
                     var checkId=$("#check_update").val();
-                    details={formName:'followup_call',student_name:student_name,date:date,contacted_person:contacted_person,contacted_time:contacted_time,contactMode:contactMode,contact_num:contact_num,enquiry_id:enquiry_id,remarks:remarks,comments:comments,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
+                    details={formName:'followup_call',student_name:student_name,date:date,contacted_person:contacted_person,contacted_time:contacted_time,contactMode:contactMode,progress_status:progress_status,contact_num:contact_num,enquiry_id:enquiry_id,remarks:remarks,comments:comments,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
                     $.ajax({
                         type:'post',
                         url:'includes/datacontrol.php',

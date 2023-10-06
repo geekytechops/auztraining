@@ -5,6 +5,7 @@ if(@$_SESSION['user_type']!=''){
     
         $enquiryIds=mysqli_query($connection,"SELECT st_enquiry_id,st_name,st_phno from student_enquiry where st_enquiry_status!=1");
         $visaStatus=mysqli_query($connection,"SELECT * from visa_statuses where visa_state_status!=1");
+        
 
         if(isset($_GET['eq'])){
             $eqId=base64_decode($_GET['eq']);            
@@ -71,18 +72,68 @@ if(@$_SESSION['user_type']!=''){
                                     <div class="card-body" id="followup_form_div">
                                         <form class="followup_form" id="followup_form">
                                         <div class="row">        
+                                        <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="given_name">Enquiry ID<span class="asterisk">*</span></label><br>
+                                                        <?php if($eqId==0){ ?>
+                                                        <select class="selectpicker" title="--select--" data-live-search="true" name="enquiry_id" id="enquiry_id">
+
+                                                        <?php
+                                                        if(mysqli_num_rows($enquiryIds)!=0){
+                                                        while($enquiryIdsRes=mysqli_fetch_array($enquiryIds)){
+                                                            
+                                                            $checkQry=mysqli_query($connection,"SELECT * FROM `counseling_details` where st_enquiry_id='".$enquiryIdsRes['st_enquiry_id']."' AND counsil_enquiry_status=0");
+
+
+                                                            if(mysqli_num_rows($checkQry)==0){
+
+                                                                echo "<option data='".$row_count."'  value='".$enquiryIdsRes['st_enquiry_id']."' data-name='".$enquiryIdsRes['st_name']."' data-mobile='".$enquiryIdsRes['st_phno']."'>".$enquiryIdsRes['st_enquiry_id']."</option>";
+
+                                                            }else{
+
+                                                                echo "<option value='".$enquiryIdsRes['st_enquiry_id']."' data-name='".$enquiryIdsRes['st_name']."' data-mobile='".$enquiryIdsRes['st_phno']."' disabled>".$enquiryIdsRes['st_enquiry_id']."</option>";
+
+                                                            }
+
+                                                        }
+                                                        }else{
+                                                            echo "<option value='0'>No Enquiries Found</option>";
+                                                        }
+
+                                                        ?>
+
+                                                        </select>
+                                                        <?php }else{ ?>
+
+                                                        <input type="text" readonly class="form-control" style="width:20%" value="<?php echo $counsil_Query['st_enquiry_id']; ?>"  name="enquiry_id" id="enquiry_id">
+
+                                                        <?php }?>
+                                                        <div class="error-feedback">
+                                                            Please Select the Enquiry ID
+                                                        </div>
+                                                    </div>
+                                                </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="counseling_timing">Date & Time*</label>
+                                                        <label class="form-label" for="counseling_timing">Started Date & Time<span class="asterisk">*</span></label>
                                                         <input type="datetime-local" class="form-control" id="counseling_timing" value="<?php echo $counsil_Query['counsil_timing']=='' ? '' : date('Y-m-d H:i:s',strtotime($counsil_Query['counsil_timing'])) ?>">
                                                         <div class="error-feedback">
                                                             Please select the Date and Time
                                                         </div>
                                                     </div>
-                                                </div>                                        
+                                                </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" >Counseling Type*</label><br>
+                                                        <label class="form-label" for="counseling_end_timing">Ended Date & Time</label>
+                                                        <input type="datetime-local" class="form-control" id="counseling_end_timing" value="<?php echo $counsil_Query['counsil_end_time']=='' ? '' : date('Y-m-d H:i:s',strtotime($counsil_Query['counsil_end_time'])) ?>">
+                                                        <div class="error-feedback">
+                                                            Please select the Ending Date and Time
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" >Counseling Type<span class="asterisk">*</span></label><br>
                                                         <input type="radio" id="counseling_type1" name="counseling_type" class="form-check-input counseling_type"  value="1" <?php echo $counsil_Query['counsil_type']=='' ? "checked" : ( $counsil_Query['counsil_type']==1 ? 'checked' : '' ); ?>>
                                                         <label for="counseling_type1" >Face to Face</label>                                                        
                                                         <input type="radio" id="counseling_type2" name="counseling_type" class="form-check-input counseling_type" value="2" <?php echo $counsil_Query['counsil_type']==2 ? 'checked' : '' ; ?>>
@@ -91,7 +142,7 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="member_name">Name of the member doing the couseling*</label>
+                                                        <label class="form-label" for="member_name">Name of the member doing the couseling<span class="asterisk">*</span></label>
                                                         <input type="text" class="form-control" id="member_name" placeholder="Team Member Name" value="<?php echo $counsil_Query['counsil_mem_name']; ?>">
                                                         <div class="error-feedback">
                                                             Please enter the Member Name
@@ -100,7 +151,7 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="aus_duration">How long the student has been to Aus*</label>
+                                                        <label class="form-label" for="aus_duration">How long the student has been to Aus<span class="asterisk">*</span></label>
                                                         <input type="text" class="form-control" id="aus_duration" placeholder="Duration" value="<?php echo $counsil_Query['counsil_aus_stay_time']; ?>">
                                                         <div class="error-feedback">
                                                             Please enter the Duration
@@ -109,7 +160,7 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label">Currently Working*</label><br>
+                                                        <label class="form-label">Currently Working<span class="asterisk">*</span></label><br>
                                                         <input type="radio" id="work_status1" name="work_status" class="form-check-input work_status" value="1" <?php echo $counsil_Query['counsil_work_status']=='' ? "checked" : ( $counsil_Query['counsil_work_status']==1 ? 'checked' : '' ); ?>>
                                                         <label for="counseling_type1" >Yes</label>                                                        
                                                         <input type="radio" id="work_status2" name="work_status" class="form-check-input work_status" value="2" <?php echo $counsil_Query['counsil_work_status']==2 ? 'checked' : '' ; ?>>
@@ -118,7 +169,7 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>                                            
                                                 <div class="col-md-6">
                                                 <div class="mb-3">
-                                                        <label class="form-label" for="visa_condition">Visa Condition</label>
+                                                        <label class="form-label" for="visa_condition">Visa Condition<span class="asterisk">*</span></label>
                                                         <select name="visa_condition" class="form-select" id="visa_condition">
                                                         <?php 
                                                         while($visaRes=mysqli_fetch_array($visaStatus)){
@@ -150,14 +201,14 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                 <div class="mb-3">
-                                                        <label class="form-label">Is the Student Studying in Australia*</label><br>
+                                                        <label class="form-label">Is the Student Studying in Australia<span class="asterisk">*</span></label><br>
                                                         <input type="radio" id="aus_study1" name="aus_study" class="form-check-input aus_study" value="1" <?php echo $counsil_Query['counsil_aus_study_status']=='' ? "checked" : ( $counsil_Query['counsil_aus_study_status']==1 ? 'checked' : '' ); ?>>
                                                         <label for="aus_study1" >Yes</label>                                                        
                                                         <input type="radio" id="aus_study2" name="aus_study" class="form-check-input aus_study" value="2" <?php echo $counsil_Query['counsil_aus_study_status']==2 ? 'checked' : '' ; ?>>
                                                         <label for="aus_study2" >No</label>   
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6 aus_study_child" style="display:<?php echo $counsil_Query['counsil_eng_rate']==1 ? 'block' : 'none' ?>">
+                                                <div class="col-md-6 aus_study_child" style="display:<?php echo $counsil_Query['counsil_eng_rate']=='' ? 'block' : ($counsil_Query['counsil_eng_rate']==1 ? 'block' : 'none') ?>">
                                                 <div class="mb-3">
                                                         <label class="form-label" for="course">What Course</label>
                                                         <input type="text" class="form-control" id="course" value="<?php echo $counsil_Query['counsil_course']; ?>">
@@ -166,7 +217,7 @@ if(@$_SESSION['user_type']!=''){
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6 aus_study_child" style="display:<?php echo $counsil_Query['counsil_eng_rate']==1 ? 'block' : 'none' ?>">
+                                                <div class="col-md-6 aus_study_child" style="display:<?php echo $counsil_Query['counsil_eng_rate']=='' ? 'block' : ($counsil_Query['counsil_eng_rate']==1 ? 'block' : 'none') ?>">
                                                 <div class="mb-3">
                                                         <label class="form-label" for="university_name">University Name</label>
                                                         <input type="text" class="form-control" id="university_name" value="<?php echo $counsil_Query['counsil_university']; ?>">
@@ -195,14 +246,14 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label">IELTS or PTE given *</label><br>
+                                                        <label class="form-label">IELTS or PTE given <span class="asterisk">*</span></label><br>
                                                         <input type="radio" id="mig_test1" name="mig_test" class="form-check-input mig_test" <?php echo $counsil_Query['counsil_migration_test']=='' ? "checked" : ( $counsil_Query['counsil_migration_test']==1 ? 'checked' : '' ); ?> value="1">
                                                         <label for="mig_test1" >Yes</label>                                                        
                                                         <input type="radio" id="mig_test2" name="mig_test" class="form-check-input mig_test" value="2" <?php echo $counsil_Query['counsil_migration_test']==2 ? 'checked' : '' ; ?>>
                                                         <label for="mig_test2" >No</label>   
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6 mig_test_child" style="display:<?php echo $counsil_Query['counsil_migration_test']==1 ? 'block' : 'none' ?>">
+                                                <div class="col-md-6 mig_test_child" style="display:<?php echo $counsil_Query['counsil_migration_test']=='' ? 'block' : ($counsil_Query['counsil_migration_test']==1 ? 'block' : 'none') ?>">
                                                 <div class="mb-3">
                                                         <label class="form-label" for="overall_result">Overall Result</label>
                                                         <input type="text" class="form-control nummber-field" id="overall_result" value="<?php echo $counsil_Query['counsil_overall_result']; ?>">
@@ -211,7 +262,7 @@ if(@$_SESSION['user_type']!=''){
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6 mig_test_child" style="display:<?php echo $counsil_Query['counsil_migration_test']==1 ? 'block' : 'none' ?>">
+                                                <div class="col-md-6 mig_test_child" style="display:<?php echo $counsil_Query['counsil_migration_test']=='' ? 'block' : ($counsil_Query['counsil_migration_test']==1 ? 'block' : 'none') ?>">
                                                 <div class="mb-3">
                                                         <label class="form-label" for="module_result">Each Module Result</label>
                                                         <input type="text" class="form-control" id="module_result" value="<?php echo $counsil_Query['counsil_module_result']; ?>">
@@ -220,7 +271,7 @@ if(@$_SESSION['user_type']!=''){
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6 mig_test_child" style="display:<?php echo $counsil_Query['counsil_migration_test']==1 ? 'block' : 'none' ?>">
+                                                <div class="col-md-6 mig_test_child" style="display:<?php echo $counsil_Query['counsil_migration_test']=='' ? 'block' : ($counsil_Query['counsil_migration_test']==1 ? 'block' : 'none') ?>">
                                                 <div class="mb-3">
                                                         <label class="form-label" for="job_nature">Nature of the Job explained</label>
                                                         <input type="text" class="form-control" id="job_nature" value="<?php echo $counsil_Query['counsil_job_nature']; ?>">
@@ -231,7 +282,7 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label">Vaccination Taken*</label><br>
+                                                        <label class="form-label">Vaccination Taken<span class="asterisk">*</span></label><br>
                                                         <input type="radio" id="vaccine_status1" name="vaccine_status" class="form-check-input vaccine_status" checked value="1" <?php echo $counsil_Query['counsil_vaccine_status']=='' ? "checked" : ( $counsil_Query['counsil_vaccine_status']==1 ? 'checked' : '' ); ?>>
                                                         <label for="vaccine_status2" >Yes</label>                                                        
                                                         <input type="radio" id="vaccine_status2" name="vaccine_status" class="form-check-input vaccine_status" <?php echo $counsil_Query['counsil_vaccine_status']==2 ? 'checked' : '' ; ?> value="2">
@@ -277,7 +328,7 @@ if(@$_SESSION['user_type']!=''){
                                                 <?php if($eqId==0){ ?>
                                                         <button class="btn btn-primary" type="button" id="counseling_submit">Submit Enquiry</button>
                                                         <?php }else{ ?>
-                                                        <button class="btn btn-primary" type="button" id="counseling_submit">Update Enquiry</button>
+                                                        <button class="btn btn-primary" type="button" id="counseling_submit">Update Counseling</button>
                                                         <?php } ?>
                                                         <input type="hidden" value="<?php echo $eqId; ?>" id="check_update">
                                         </form>
@@ -322,6 +373,7 @@ if(@$_SESSION['user_type']!=''){
 
             $(document).on('click','#counseling_submit',function(){                
                 var counseling_timing=$('#counseling_timing').val().trim();
+                var counseling_end_timing=$('#counseling_end_timing').val().trim();
                 var counseling_type=$('.counseling_type').val();
                 var member_name=$('#member_name').val().trim();
                 var aus_duration=$('#aus_duration').val().trim();
@@ -337,6 +389,7 @@ if(@$_SESSION['user_type']!=''){
                 var overall_result=$('#overall_result').val();
                 var module_result=$('#module_result').val();
                 var pref_comment=$('#pref_comment').val();
+                var enquiry_id=$('#enquiry_id').val();
                 var job_nature=$('#job_nature').val();
                 var vaccine_status=$('.vaccine_status:checked').val();
 
@@ -374,8 +427,17 @@ if(@$_SESSION['user_type']!=''){
                 }
                             
 
-                if(counseling_timing==''|| counseling_type=='' || member_name==''  ||aus_duration==''||work_status==''||visa_condition==''|| education=='' || eng_rate=='' || vaccine_status == '' || qualification=='' || aus_study_error==0 || mig_test_error==0 ){
+                if(enquiry_id=='' || counseling_timing=='' || counseling_type=='' || member_name==''  ||aus_duration==''||work_status==''||visa_condition==''|| education=='' || eng_rate=='' || vaccine_status == '' || qualification=='' || aus_study_error==0 || mig_test_error==0 ){
 
+                    if(enquiry_id==''){
+                        $('button[data-id="enquiry_id"]').addClass('invalid-div');
+                        $('button[data-id="enquiry_id"]').removeClass('valid-div');
+                        $('button[data-id="enquiry_id"]').closest('div').find('.error-feedback').show();
+                    }else{
+                        $('button[data-id="enquiry_id"]').addClass('valid-div');
+                        $('button[data-id="enquiry_id"]').removeClass('invalid-div');                        
+                        $('button[data-id="enquiry_id"]').closest('div').find('.error-feedback').hide();
+                    }
 
                     if(aus_study_error==0){
                         if(aus_study==1){
@@ -446,6 +508,15 @@ if(@$_SESSION['user_type']!=''){
                         $('#counseling_timing').removeClass('invalid-div');                        
                         $('#counseling_timing').closest('div').find('.error-feedback').hide();
                     }
+                    // if(counseling_end_timing==''){
+                    //     $('#counseling_end_timing').addClass('invalid-div');
+                    //     $('#counseling_end_timing').removeClass('valid-div');
+                    //     $('#counseling_end_timing').closest('div').find('.error-feedback').show();
+                    // }else{
+                    //     $('#counseling_end_timing').addClass('valid-div');
+                    //     $('#counseling_end_timing').removeClass('invalid-div');                        
+                    //     $('#counseling_end_timing').closest('div').find('.error-feedback').hide();
+                    // }
                     if(qualification==''){
                         $('#qualification').addClass('invalid-div');
                         $('#qualification').removeClass('valid-div');
@@ -545,7 +616,7 @@ if(@$_SESSION['user_type']!=''){
                 }else{
                     var checkId=$("#check_update").val();                
 
-                    details={formName:'counseling_form',vaccine_status:vaccine_status,job_nature:job_nature,module_result:module_result,pref_comment:pref_comment,eng_rate:eng_rate,mig_test:mig_test,overall_result:overall_result,course:course,university_name:university_name,qualification:qualification,counseling_timing:counseling_timing,counseling_type:counseling_type,member_name:member_name,aus_duration:aus_duration,work_status:work_status,visa_condition:visa_condition,education:education,remarks:remarks,aus_study:aus_study,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
+                    details={formName:'counseling_form',vaccine_status:vaccine_status,job_nature:job_nature,module_result:module_result,pref_comment:pref_comment,eng_rate:eng_rate,mig_test:mig_test,overall_result:overall_result,course:course,university_name:university_name,qualification:qualification,counseling_timing:counseling_timing,counseling_end_timing:counseling_end_timing,enquiry_id:enquiry_id,counseling_type:counseling_type,member_name:member_name,aus_duration:aus_duration,work_status:work_status,visa_condition:visa_condition,education:education,remarks:remarks,aus_study:aus_study,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
                     $.ajax({
                         type:'post',
                         url:'includes/datacontrol.php',

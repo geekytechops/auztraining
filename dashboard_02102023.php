@@ -13,7 +13,7 @@ if(isset($_SESSION['user_type'])){
     $filterCols2=mysqli_fetch_array(mysqli_query($connection,"SELECT GROUP_CONCAT(column_name SEPARATOR ',') as column_names FROM information_schema.COLUMNS WHERE table_name LIKE 'slot_book'"));
     $filterCols2Array=explode(',',$filterCols2['column_names']);
 
-    $filterDropDown2=['Student Name','Enquiry ID','Phone','Email','Purpose','Booked by','Sent Link','Appointment Time','Attended'];
+    $filterDropDown2=['ID','Purpose','Booked by','Sent Link','Appointment Time','Attended'];
 
     $enquriesConvQry=mysqli_query($connection,"SELECT (SELECT COUNT(*) FROM student_enquiry WHERE st_enquiry_id NOT IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '')) AS not_converted, (SELECT COUNT(*) FROM student_enquiry WHERE st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '')) AS converted");
 
@@ -41,14 +41,12 @@ if(isset($_SESSION['user_type'])){
 
 
 
-    $totalTimeCounsil=mysqli_query($connection,"SELECT FLOOR(TIMESTAMPDIFF(SECOND, counsil_timing, counsil_end_time) / (24 * 60 * 60)) AS days,FLOOR((TIMESTAMPDIFF(SECOND, counsil_timing, counsil_end_time) % (24 * 60 * 60)) / (60 * 60)) AS hours FROM `counseling_details` WHERE `counsil_enquiry_status` = 0;");
+    $totalTimeCounsil=mysqli_query($connection,"SELECT sum(DATEDIFF(counsil_end_time, counsil_timing)) AS date_difference FROM `counseling_details` WHERE `counsil_enquiry_status`=0;");
     $timeSpent=mysqli_fetch_array($totalTimeCounsil);
-    if($timeSpent['days']!=0 || $timeSpent['days']!=''){        
-        $timeSpentRes=$timeSpent['days'];
-        $timeSpentHrsRes=$timeSpent['hours'];
+    if($timeSpent['date_difference']!=0 || $timeSpent['date_difference']!=''){        
+        $timeSpentRes=$timeSpent['date_difference'];
     }else{
         $timeSpentRes=0;
-        $timeSpentHrsRes=0;
     }
 
 ?>
@@ -64,7 +62,7 @@ if(isset($_SESSION['user_type'])){
         <meta content="Themesdesign" name="author" /> 
 
         <?php 
-        include('includes/app_includes.php');
+        // include('includes/app_includes.php');
          ?>
         <style>
             #filter-dropdowns td{
@@ -252,7 +250,7 @@ if(isset($_SESSION['user_type'])){
                                             </div>
                                             <div class="flex-grow-1 overflow-hidden">
                                                 <p class="mb-1">Total Counselings Time</p>
-                                                <h5 class="mb-3"><?php echo $timeSpentRes.' Days '. $timeSpentHrsRes.' Hours' ?></h5>
+                                                <h5 class="mb-3"><?php echo $timeSpentRes.' Days' ?></h5>
                                             </div>
                                         </div>
                                     </div>
@@ -385,14 +383,12 @@ if(isset($_SESSION['user_type'])){
                                                </select> 
                                             </div>
                                             <div class="columns-report appoint_input">
-                                                <input type="text" id="appoint_column_5" placeholder="value" class="appoint_column_value form-control">
+                                                <input type="text" id="team_members" class="form-control">
                                             </div>
                                             <div class="columns-report">
                                             <button type="button" class="btn btn-success" id="submit_column2_filter">Submit</button>
                                             </div>
                                         </div>
-                                        <div class="row appoint-badges-div mb-3 align-items-start">
-                                        </div>  
 
                                         <table id="appointments_table">
                                             <thead>
@@ -401,8 +397,7 @@ if(isset($_SESSION['user_type'])){
                                                 
                                                 foreach($filterDropDown2 as $key=>$value){
                                                     if($key>=5){
-                                                        $class="";
-                                                        // $class="imp-none";
+                                                        $class="imp-none";
                                                     }else{
                                                         $class="";
                                                     }
@@ -423,103 +418,37 @@ if(isset($_SESSION['user_type'])){
 
                         <script>
 
+                            $(document).on('change','#appoint_select',function(){
+                                $('.appoint_input').show();
+                            })
 
-            $(document).on('click','#submit_column2_filter',function(){
-                    var columnName=$('#appoint_select option:selected').attr('data-name');                    
-                    var mainColName=$('#appoint_select').val();
-                    var columnId=$('#appoint_select option:selected').attr('data-value');
-                    var badgeId=$('#appoint_badge_'+columnId).val();   
-                    var colValue=$('#appoint_column_'+columnId).val();                                              
-                if(colValue!='' && columnId!=undefined && columnName!=0 && ( badgeId==undefined || badgeId=='' )){
-                    $('.appoint-badges-div').append('<button type="button" data-col-name="'+mainColName+'" id="appoint_badge_'+columnId+'" data-id="'+columnId+'" main-value="'+colValue+'" class="btn btn-secondary btn-rounded appoint-badge-button appoint_close-badge"><i class="mdi mdi-close-circle"></i> <span>'+columnName+'</span></button>');
-                    appoint_filterMain();
-                }
-            })
-            
-            $(document).on('click','.appoint_close-badge',function(){
-                $(this).remove();
-                var idCol=$(this).attr('data-id');
-                var nameCol=$(this).children("span").text();
-                var mainCol=$(this).attr('data-col-name');
-                $('#appoint_select').append('<option value="'+mainCol+'" id="option_'+idCol+'" data-value="'+idCol+'" data-name="'+nameCol+'">'+nameCol+'</option>');
-                $('#appoint_select').val(0).change();
-                $('#appoint_select').selectpicker('refresh');  
-                appoint_filterMain();
-            })
+                        function appoint_fetch(datas){
+                            $.ajax({
+                                type:'post',
+                                url:'includes/datacontrol.php',
+                                data:{formName:'appointments_table',filter:datas},
+                                success:function(data){
+                                    $('#appointments_table tbody').html(data);
+                                }
+                            })
+                        }
+                        appoint_fetch('');
 
+                        $(document).on('click','#submit_column2_filter',function(){
+                            var team_mems=$('#team_members').val();
+                            var team_select=$('#appoint_select').val()==0 ? '' : $('#appoint_select').val();
+                            if(team_select=='' || team_mems==''){
+                                if(team_select==''){
+                                    return false;
+                                }
+                                if(team_mems==''){
+                                    return false;
+                                }
+                            }else{
+                                appoint_fetch(team_mems);
+                            }
 
-            function appoint_filterMain(){
-                var columnData={};
-                $('.appoint-badge-button').each(function(){
-                    var option=$(this).attr('data-id');
-                    $('#option_'+option).remove();
-                    $('.appoint_column_value').val('');
-                    $('.appoint_column_value').hide();
-                    $('#appoint_select').selectpicker('refresh');     
-                    $('#appoint_select').val(0).change();
-                    
-                    var columnName=$(this).attr('data-col-name');
-                    var columnValue=$(this).attr('main-value');
-                    columnData[columnName]=columnValue;
-                    
-                })    
-                
-                appoint_fetch(columnData);
-
-            }
-
-            function appoint_fetch(objFilter){
-                $.ajax({
-                    type:'post',
-                    url:'includes/datacontrol.php',
-                    data:{objFilter,formName:'fetchAppoints'},
-                    success:function(data){
-                        $('#student_filter_body').html(data);
-                        $('#total_filter_records').html($('#student_filter_body tr').length);                        
-                    }
-                })
-            }
-
-            $(document).on('change','#appoint_select',function(){                                                
-                var inputType=$('#appoint_select option:selected').attr('data-value');
-                    $('.appoint_column_value').hide();
-                    console.log(inputType);
-                    $('#appoint_column_'+inputType).show();
-            })
-
-            appoint_fetch('');
-
-                        //     $(document).on('change','#appoint_select',function(){
-                        //         $('.appoint_input').show();
-                        //     })
-
-                        // function appoint_fetch(datas){
-                        //     $.ajax({
-                        //         type:'post',
-                        //         url:'includes/datacontrol.php',
-                        //         data:{formName:'appointments_table',filter:datas},
-                        //         success:function(data){
-                        //             $('#appointments_table tbody').html(data);
-                        //         }
-                        //     })
-                        // }
-                        // appoint_fetch('');
-
-                        // $(document).on('click','#submit_column2_filter',function(){
-                        //     var team_mems=$('#team_members').val();
-                        //     var team_select=$('#appoint_select').val()==0 ? '' : $('#appoint_select').val();
-                        //     if(team_select=='' || team_mems==''){
-                        //         if(team_select==''){
-                        //             return false;
-                        //         }
-                        //         if(team_mems==''){
-                        //             return false;
-                        //         }
-                        //     }else{
-                        //         appoint_fetch(team_mems);
-                        //     }
-
-                        // })
+                        })
 
                         </script>
                                         
@@ -630,6 +559,7 @@ if(isset($_SESSION['user_type'])){
                                                 </div>    
                                         <div class="container">                                                
                                             <table id="table-filter" class="table nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
+                                            <!-- <table id="table-filter" class="table nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;"> -->
                                                 <thead>
                                                 <tr>
                                                     <?php
@@ -690,7 +620,150 @@ if(isset($_SESSION['user_type'])){
                                                 </div>
                                             </div>
                                         </div>                                     
-                                        <div class="print_header"></div>                                           
+                                        <div class="print_header"></div>
+                                            <table id="student_filter_table" class="table nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
+                                                <thead>
+                                                <tr id="filter-dropdowns">
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                        <td>
+                                                        <select class="selectpicker boot-select change_select" id="state_select" name="state_select" title="States" data-live-search="false">
+                                                        <?php  
+                                                        $st_states=['NSW - New South Wales','VIC - Victoria','ACT - Australian Capital Territory','NT - Northern Territoy','WA - Western Australia','QLD - Queensland','SA - South Australia','TAS - Tasmania'];
+                                                        for($i=0;$i<count($st_states);$i++){
+                                                            $count=$i+1;
+                                                            echo '<option value="'.$count.'">'.$st_states[$i].'</option>';
+                                                        }
+                                                        ?>
+                                                        </select>
+                                                    </td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td>
+
+                                                    <select name="course_type_select" class="selectpicker change_select" title="Course Type" id="course_type_select" style="width:auto;">
+                                                        <?php  
+                                                        $st_course_type=['Rpl','Regular','Regular - Group','Short courses','Short course - Group'];
+                                                        for($i=0;$i<count($st_course_type);$i++){     
+                                                            $count=$i+1;                                                       
+                                                            echo '<option value="'.$count.'" data="'.$st_course_type[$i].'">'.$st_course_type[$i].'</option>';
+                                                        }
+                                                        ?>
+                                                    </select>  
+
+                                                    </td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td>
+
+                                                    <select name="appointment_select" class="selectpicker change_select" title="Appointments" style="width:auto;" id="appointment_select">
+                                                            <option value="1">Booked</option>
+                                                            <option value="2">Not Booked</option>
+                                                    </select>
+
+                                                    </td>
+                                                    <td></td>
+                                                    <td>
+                                                    <select name="visa_status_select" class="selectpicker change_select" style="width:auto;" id="visa_status_select">
+                                                            <option value="1">Approved</option>
+                                                            <option value="2">Not Approved</option>
+                                                    </select>
+                                                    </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Student ID</th>
+                                                        <th>Student Name</th>
+                                                        <th>Contact Number</th>
+                                                        <th>Email</th>
+                                                        <th>Street</th>
+                                                        <th>Sub Urb</th>
+                                                        <th>States</th>
+                                                        <th>Postal code</th>
+                                                        <th>Course</th>
+                                                        <th>Plan to Start</th>
+                                                        <th>Course Type</th>
+                                                        <th>Visited Before</th>
+                                                        <th>Date</th>
+                                                        <th>Referred By</th>
+                                                        <th>Fee</th>
+                                                        <th>Appointment</th>
+                                                        <th>Visa Condition</th>
+                                                        <th>Visa Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="">
+
+                                                <?php
+                                                
+                                                $Loadquery=mysqli_query($connection,"SELECT * from student_enquiry where st_enquiry_status!=1");
+                                                while($LoadqueryqueryRes=mysqli_fetch_array($Loadquery)){
+                                                    $coursesNames=json_decode($LoadqueryqueryRes['st_course']);
+                                                    $coursesName='<div class="td_scroll_height">';
+                                                    foreach($coursesNames as $value){
+                                                        $courses=mysqli_fetch_array(mysqli_query($connection,"SELECT * from courses where course_status!=1 AND course_id=".$value));
+                                                        $coursesName.= $courses['course_sname'].'-'.$courses['course_name']." , <br>"; 
+                                                    }
+                                                    $coursesNamePos = strrpos($coursesName, ',');
+                                                    $coursesName = substr($coursesName, 0, $coursesNamePos);
+                                                    $coursesName.='</div>';                                    
+
+                                                    $appointment=$LoadqueryqueryRes['st_appoint_book']==1 ? 'Booked' : ( $LoadqueryqueryRes['st_appoint_book']==2 ? 'Not Booked' : ' - ' );
+                                                
+
+                                                    $querys2=mysqli_query($connection,"select visa_status_name from `visa_statuses` WHERE visa_id=".$LoadqueryqueryRes['st_visa_status']);
+                                                    if(mysqli_num_rows($querys2)!=0){    
+                                                    $visaStatuse=mysqli_fetch_array($querys2);
+                                                
+                                                        if(@$visaStatuse['visa_status_name'] && $visaStatuse['visa_status_name']!='' ){
+                                                            $visacConds=$visaStatuse['visa_status_name'];
+                                                        }else{
+                                                            $visacConds=' - ';
+                                                        }
+
+                                                    }else{
+                                                        $visacConds=' - ';
+                                                    }
+
+                                                    $visaStatuses=$LoadqueryqueryRes['st_visa_condition']==1 ? 'Approved' : 'Not Approved' ;
+                                                ?>
+                                                                                                        <tr>
+                                                        <td><?php echo $LoadqueryqueryRes['st_enquiry_id']; ?></td>
+                                                        <td><?php echo $LoadqueryqueryRes['st_surname'].' '.$LoadqueryqueryRes['st_name']; ?></td>
+                                                        <td><?php echo $LoadqueryqueryRes['st_phno']; ?></td>
+                                                        <td><?php echo $LoadqueryqueryRes['st_email']; ?></td>
+                                                        <td><?php echo $LoadqueryqueryRes['st_street_details']; ?></td>
+                                                        <td><?php echo $LoadqueryqueryRes['st_suburb']; ?></td>
+                                                        <td><?php
+                                                         $st_states=['--select--','NSW - New South Wales','VIC - Victoria','ACT - Australian Capital Territory','NT - Northern Territoy','WA - Western Australia','QLD - Queensland','SA - South Australia','TAS - Tasmania'];
+                                                         echo $st_states[$LoadqueryqueryRes['st_state']];
+                                                          ?></td>
+                                                        <td><?php echo $LoadqueryqueryRes['st_post_code']; ?></td>
+                                                        <td><?php echo $coursesName; ?></td>
+                                                        <td><?php echo $startPlanDate=date('d M Y',strtotime($LoadqueryqueryRes['st_startplan_date'])); ?></td>
+                                                        <td><?php 
+                                                            $st_course_type=['-','Rpl','Regular','Regular - Group','Short courses','Short course - Group'];
+                                                            $courseTypeId=$LoadqueryqueryRes['st_course_type'];
+                                                            echo $st_course_type[$courseTypeId];
+                                                        ?></td>
+                                                        <td><?php echo $LoadqueryqueryRes['st_visited']==1 ? 'Visited' : ( $LoadqueryqueryRes['st_visited']==2 ? 'Not Visited' : ' - ' ) ; ?></td>
+                                                        <td><?php echo date('d M Y',strtotime($LoadqueryqueryRes['st_enquiry_date'])); ?></td>
+                                                        <td><?php echo $LoadqueryqueryRes['st_refer_name']; ?></td>
+                                                        <td><?php echo $LoadqueryqueryRes['st_fee']; ?></td>
+                                                        <td><?php echo $appointment; ?></td>
+                                                        <td><?php echo $visacConds; ?></td>
+                                                        <td><?php echo $visaStatuses; ?></td>
+                                                    </tr>
+
+                                                <?php } ?>    
+                                                </tbody>
+                                            </table>
                                     </div>
                                 </div>
                             </div>

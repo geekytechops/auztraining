@@ -70,7 +70,7 @@
                                                 <div class="col-sm">
                                                 <div class="col-md-12">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="email_address">Email*</label>
+                                                        <label class="form-label" for="email_address">Email<span class="asterisk">*</span></label>
                                                         <input type="text" class="form-control" id="email_address" placeholder="Email Address" >
                                                         <div class="error-feedback">
                                                             Please enter the Email Address
@@ -79,7 +79,7 @@
                                                 </div>
                                                 <div class="col-md-12">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="enquiry_date">Date*</label>
+                                                        <label class="form-label" for="enquiry_date">Date<span class="asterisk">*</span></label>
                                                         <input type="date" class="form-control" id="enquiry_date" >
                                                         <div class="error-feedback">
                                                             Please select the Date
@@ -88,7 +88,7 @@
                                                 </div>
                                                 <div class="col-md-12">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="surname">Surname*</label>
+                                                        <label class="form-label" for="surname">Surname<span class="asterisk">*</span></label>
                                                         <input type="text" class="form-control" id="surname" placeholder="Surname" value="" >
                                                         <div class="error-feedback">
                                                             Please enter the Surname
@@ -97,7 +97,7 @@
                                                 </div>
                                                 <div class="col-md-12">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="student_name">First Name*</label>
+                                                        <label class="form-label" for="student_name">First Name<span class="asterisk">*</span></label>
                                                         <input type="text" class="form-control" id="student_name" placeholder="Student Name">
                                                         <div class="error-feedback">
                                                             Please enter the First name
@@ -106,7 +106,7 @@
                                                 </div>
                                                 <div class="col-md-12">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="enquiry_for">Enquiring For*</label>
+                                                        <label class="form-label" for="enquiry_for">Enquiring For<span class="asterisk">*</span></label>
                                                         <select name="enquiry_for" class="form-select" id="enquiry_for">
                                                         <option value="0">--select--</option>
                                                         <option value="1">Self</option>
@@ -119,7 +119,7 @@
                                                 </div>
                                                 <div class="col-md-12">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="member_name">Name*</label>
+                                                        <label class="form-label" for="member_name">Name<span class="asterisk">*</span></label>
                                                         <input type="text" class="form-control" id="member_name" placeholder="Name" value="<?php echo $queryRes['st_name']; ?>" >
                                                         <div class="error-feedback">
                                                             Please enter the Name
@@ -128,7 +128,7 @@
                                                 </div>
                                                 <div class="col-md-12">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="contact_num">Mobile*</label>
+                                                        <label class="form-label" for="contact_num">Mobile<span class="asterisk">*</span></label>
                                                         <input type="text" class="form-control number-field" maxlength="10" id="contact_num" placeholder="Contact Number" >
                                                         <div class="error-feedback">
                                                             Please enter the Contact Number
@@ -161,7 +161,7 @@
                                                         <label class="form-label" for="stu_state">State</label>
                                                         <select name="stu_state" id="stu_state" class="form-control">
                                                         <?php  
-                                                        $st_states=['--select--','NSW','VIC','ACT','NT','WA','QLD','SA','Tasmania'];
+                                                        $st_states=['--select--','NSW - New South Wales','VIC - Victoria','ACT - Australian Capital Territory','NT - Northern Territoy','WA - Western Australia','QLD - Queensland','SA - South Australia','TAS - Tasmania'];
                                                         for($i=0;$i<count($st_states);$i++){
                                                             $checked= $i==$queryRes['st_state'] ? 'selected' : '';
                                                             echo '<option value="'.$i.'" '.$checked.'>'.$st_states[$i].'</option>';
@@ -175,7 +175,7 @@
                                                 </div>
                                                 <div class="col-md-12">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="post_code">Post Code*</label>
+                                                        <label class="form-label" for="post_code">Post Code<span class="asterisk">*</span></label>
                                                         <input type="tel" class="form-control number-field" maxlength="6" id="post_code" placeholder="Post Code" value="" >
                                                         <div class="error-feedback">
                                                             Please enter the Post Code
@@ -188,7 +188,7 @@
 
                                                     <div class="col-md-12">
                                                             <div class="mb-3">
-                                                                <label class="form-label" for="courses">Which Course are you interested in?*</label>
+                                                                <label class="form-label" for="courses">Which Course are you interested in?<span class="asterisk">*</span></label>
                                                                 <?php 
                                                                 $counts=1;
                                                                 while($coursesRes=mysqli_fetch_array($courses)){
@@ -221,43 +221,52 @@
                                                             </div>
                                                         </div>
 
+                                                        <div class="col-md-12">
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label" for="hear_about">How did you hear about us?<span class="asterisk">*</span></label><br>
+                                                                        <select name="hear_about" class="selectpicker hear_about" data-selected-text-format="count" multiple id="hear_about" title="Heared From">
+                                                                        <?php  
+                                                                            $st_heared=['Word of Mouth','Family or Friends','Website','Gumtree','Facebook','Instagram','Linkedin','Mail outs','Migration Agency','Other:'];
+                                                                            $hear_select_opt='';                                                            
+                                                                            $heared_about=$queryRes['st_heared']=='' ? array() : json_decode($queryRes['st_heared']);
+                                                                            for($i=0;$i<count($st_heared);$i++){
+
+                                                                                if(in_array($i,$heared_about) && count($heared_about)!=0){
+                                                                                    $checked="selected";
+                                                                                }else{
+                                                                                    $checked= "";
+                                                                                }                                                            
+
+                                                                                $hear_select_opt.= '<option value="'.$i.'" '.$checked.'>'.$st_heared[$i].'</option>';
+                                                                                if($i==4){
+                                                                                    $hear_select_opt.='<optgroup Label="Social Media">';
+                                                                                }else if($i==7){
+                                                                                    $hear_select_opt.='</optgroup>';
+                                                                                }
+                                                                            }
+                                                                            echo $hear_select_opt;
+                                                                        ?>
+                                                                        <!-- <optgroup label="Social Media"> -->
+                                                                            <!-- <option value="2">test</option> -->
+                                                                        <!-- </optgroup> -->
+                                                                            </select>
+                                                                        <div class="error-feedback">
+                                                                            Please select atleast one option
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-12 hear_about_child" style="display:<?php echo $queryRes['st_heared']=='' ? 'none' : (in_array(9,json_decode($queryRes['st_heared'])) ? 'block' : 'none' ); ?>">
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label" for="hearedby">Specify How you heared about us</label>
+                                                                        <input type="text" class="form-control" id="hearedby" value="<?php echo $queryRes['st_hearedby']; ?>" >
+                                                                        <div class="error-feedback">
+                                                                            Please enter the source heared
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
                                                 <div class="col-md-12">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="hear_about">How did you hear about us?*</label>
-                                                        <select name="hear_about" class="form-select" id="hear_about">
-                                                        <?php  
-                                                        $st_heared=['--select--','Word of Mouth','Family or Friends','Website','Gumtree','Facebook','Instagram','Linkedin','Mail outs','Migration Agency','Other:'];
-                                                        for($i=0;$i<count($st_heared);$i++){
-                                                            
-                                                            $checked= $i==$queryRes['st_heared'] ? 'selected' : '';
-
-
-                                                            echo '<option value="'.$i.'" '.$checked.'>'.$st_heared[$i].'</option>';
-                                                            if($i==4){
-                                                                echo '<optgroup label="Social Media">';
-                                                            }else if($i==7){
-                                                                echo '</optgroup>';
-                                                            }
-                                                        }
-                                                        ?>                                              
-                                                        </select>  
-                                                        <div class="error-feedback">
-                                                            Please select atleast one option
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-12 hear_about_child" style="display:<?php echo $queryRes['st_heared']==7 ? 'block' : 'none'; ?>">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="hearedby">Specify How you heared about us</label>
-                                                        <input type="text" class="form-control" id="hearedby" value="<?php echo $queryRes['st_heared']; ?>" >
-                                                        <div class="error-feedback">
-                                                            Please enter the source heared
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-12">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="visit_before">Have you visited us before?*</label>
+                                                        <label class="form-label" for="visit_before">Have you visited us before?<span class="asterisk">*</span></label>
                                                         <select name="visit_before" class="form-select" id="visit_before">
                                                         <option value="0">--select--</option>
                                                         <option value="1">Yes</option>
@@ -270,7 +279,7 @@
                                                 </div>
                                                 <!-- <div class="col-md-12">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="courses">Which Course are you interested in?*</label>
+                                                        <label class="form-label" for="courses">Which Course are you interested in?<span class="asterisk">*</span></label>
                                                         <select name="courses" class="form-select" multiple id="courses">
                                                         <option value="0">--select--</option>
 
@@ -291,7 +300,7 @@
                                                 </div>
                                                 <div class="col-md-12">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="refer_select">Have you been referred by someone?*</label>
+                                                        <label class="form-label" for="refer_select">Have you been referred by someone?<span class="asterisk">*</span></label>
                                                         <select name="refer_select" class="form-select refered" id="refer_select">
                                                         <option value="0">--select--</option>
                                                         <option value="1">Yes</option>
@@ -313,7 +322,7 @@
                                                 </div>
                                                 <div class="col-md-12 refered_field" style="display:none">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="refer_alumni">Is he / she an alumni*</label>
+                                                        <label class="form-label" for="refer_alumni">Is he / she an alumni<span class="asterisk">*</span></label>
                                                         <select name="refer_alumni" class="form-select" id="refer_alumni">
                                                         <option value="0">--select--</option>
                                                         <option value="1">Yes</option>
@@ -364,9 +373,16 @@
 
                 return new Promise(function (resolve, reject) {
 
+                    var check_update=$('#check_update').val();
+                    var oldenquiryFor='<?php echo $queryRes['st_enquiry_for']; ?>';
+                    var oldNumber='<?php echo $queryRes['st_phno']; ?>';
+
+                    var memberName=$('#member_name').val();     
+                    var enquiryFor=$('#enquiry_for').val();   
+
                 $.ajax({
                     type:'post',
-                    data:{number:number,formName:'phoneNumberCheck'},
+                    data:{number:number,formName:'phoneNumberCheck',oldNumber:oldNumber,memberName:memberName,enquiryFor:enquiryFor,check_update:check_update,oldenquiryFor:oldenquiryFor},
                     url:'includes/datacontrol.php',
                     success:function(datas){
                         resolve(datas);
@@ -404,9 +420,8 @@
                 })
 
                 $('#hear_about').on("change",function(){
-                    var value=$(this).val();
-                    console.log(value);
-                    if( value==10 ){
+                    var value=$(this).val();                    
+                    if( value.includes('9') ){
                         $('.hear_about_child').show();
                     }else{
                         $('.hear_about_child').hide();
@@ -440,7 +455,7 @@
 
                 var surname=$('#surname').val();
                 var suburb=$('#suburb').val();
-                var stuState=$('#stu_state').val()==0 ? '' : $('#stu_state').val();
+                var stuState=$('#stu_state').val();
                 var postCode=$('#post_code').val();
                 var visit_before=$('#visit_before').val()==0 ? '' : $('#visit_before').val();
                 var hear_about=$('#hear_about').val();
@@ -477,16 +492,18 @@
                     refer_select_error=1;
                 }
 
-                if(await getData(contactName)==1 || ( contactName=='' || contactName.length!=10 ) ){
+
+                var enquiryIdRec=await getData(contactName); 
+                if(enquiryIdRec.split('||')[0]==1 || ( contactName=='' || contactName.length!=10 ) ){
                     var phoneChecks=1;
                 }else{
                     var phoneChecks=0;
                 }
 
                 
-                if(hear_about==0){
+                if(hear_about.length==0){
                     hear_about_error=0;
-                }else if(hear_about==10){
+                }else if(hear_about.includes('9')){
 
                     if(hearedby==''){
                         hear_about_error=0;
@@ -525,11 +542,11 @@
                     }
 
                     if(hear_about_error==0){
-                        if(hear_about==0){
+                        if(hear_about.length==0){
                             $('#hear_about').addClass('invalid-div');
                             $('#hear_about').removeClass('valid-div');
                             $('#hear_about').closest('div').find('.error-feedback').show();
-                        }else if(hear_about==10){
+                        }else if(hear_about.includes('9')){
 
                             if(hearedby==''){
                                 $('#hearedby').addClass('invalid-div');
@@ -546,7 +563,7 @@
                             $('#hear_about').removeClass('invalid-div');
                             $('#hear_about').closest('div').find('.error-feedback').hide();
                         }   
-                    } 
+                    }
 
                     if(studentName==''){
                         $('#student_name').addClass('invalid-div');
@@ -561,7 +578,7 @@
                         $('#contact_num').addClass('invalid-div');
                         $('#contact_num').removeClass('valid-div');
                         $('#contact_num').closest('div').find('.error-feedback').show();
-                    }else if(await getData(contactName)==1){
+                    }else if(enquiryIdRec.split('||')[0]==1){
                         $('#contact_num').addClass('invalid-div');
                         $('#contact_num').removeClass('valid-div');                        
                         $('#contact_num').closest('div').find('.error-feedback').hide();     
@@ -660,7 +677,7 @@
 
                     courses=courses.filter(item => item !== '0');
                     
-                    details={formName:'student_enquiry_common',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,checkId:checkId,surname:surname,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,hearedby:hearedby,plan_to_start_date:plan_to_start_date,refer_select:refer_select,prefComment:prefComment,memberName:memberName,referer_name:referer_name,refer_alumni:refer_alumni,streetDetails:streetDetails,enquiryFor:enquiryFor,admin_id:0,form_type:1};
+                    details={formName:'student_enquiry_common',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,checkId:checkId,surname:surname,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:JSON.stringify(hear_about),hearedby:hearedby,plan_to_start_date:plan_to_start_date,refer_select:refer_select,prefComment:prefComment,memberName:memberName,referer_name:referer_name,refer_alumni:refer_alumni,streetDetails:streetDetails,enquiryFor:enquiryFor,admin_id:0,form_type:1};
                     $.ajax({
                         type:'post',
                         url:'includes/datacontrol.php',
@@ -677,6 +694,7 @@
                                 // $('#jelly_loader').hide();
                                 $('#loader-container').hide();
                                 $('#student_enquiry_form').css('opacity','');          
+                                setTimeout(() => {location.reload();}, 700); 
                                 // var UpdateStatus='<?php echo $Updatestatus; ?>';
                                 // if(UpdateStatus==1){
                                 //     location.reload();
@@ -691,6 +709,7 @@
                                 $('#model_trigger').trigger('click');
                                 // $('#jelly_loader').hide();
                                 $('#loader-container').hide();
+                                setTimeout(() => {location.reload();}, 700); 
                                 $('#student_enquiry_form').css('opacity','');
                                 // var UpdateStatus='<?php echo $Updatestatus; ?>';
                                 // if(UpdateStatus==1){

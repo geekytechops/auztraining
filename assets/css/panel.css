@@ -277,11 +277,11 @@ border-radius: unset !important;
   overflow-y: auto;
 }
 
-.column_value , .appoint_column_value{
+.column_value , .appoint_column_value , .counsel_column_value{
   display:none;
 }
 
-.badge-button,.appoint-badge-button{
+.badge-button ,.appoint-badge-button ,.counsel-badge-button {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -294,7 +294,7 @@ border-radius: unset !important;
   width: auto;
 }
 
-.badge-button i , .appoint-badge-button i{
+.badge-button i , .appoint-badge-button i , .counsel-badge-button i{
   font-size: 20px;
   padding-right: 2px;
   line-height: 1;

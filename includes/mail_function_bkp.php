@@ -9,20 +9,20 @@ require 'vendor/PHPMailer/src/autoloader.php';
 function send_mail($to,$subject,$body){
 
 
-    $adminemail = "apikey"; 
+    $adminemail = "saisatya51@zoho.in"; 
 
     $mail = new PHPMailer\PHPMailer\PHPMailer();
     $mail->isSMTP();
     
-    $mail->Host = "smtp.sendgrid.net";
+    $mail->Host = "smtp.zoho.in";
     $mail->Port = "587";
     $mail->SMTPSecure = 'tls';
     // $mail->Port = "465";
     // $mail->SMTPSecure = 'ssl';
     $mail->SMTPAuth   = true;
     $mail->Username = $adminemail;
-    $mail->Password = "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";
-    $mail->setFrom('saisatya51@gmail.com','Dev');
+    $mail->Password = "Saikiran@1998";
+    $mail->setFrom('saisatya51@zohomail.in','Dev');
     
 
     $mail->addAddress($to);

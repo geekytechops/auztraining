@@ -13,7 +13,12 @@ if(isset($_SESSION['user_type'])){
     $filterCols2=mysqli_fetch_array(mysqli_query($connection,"SELECT GROUP_CONCAT(column_name SEPARATOR ',') as column_names FROM information_schema.COLUMNS WHERE table_name LIKE 'slot_book'"));
     $filterCols2Array=explode(',',$filterCols2['column_names']);
 
-    $filterDropDown2=['Student Name','Enquiry ID','Phone','Email','Purpose','Booked by','Sent Link','Appointment Time','Attended'];
+    $filterDropDown2=['Student Name','Enquiry ID','Phone','Email','Purpose','Booked by','Sent Link','Appointment Time'];
+    
+    $filterCols3=mysqli_fetch_array(mysqli_query($connection,"SELECT GROUP_CONCAT(column_name SEPARATOR ',') as column_names FROM information_schema.COLUMNS WHERE table_name LIKE 'counseling_details'"));
+    $filterCols3Array=explode(',',$filterCols3['column_names']);
+
+    $filterDropDown3=['Student Name','Enquiry ID','Phone','Email','Type','Team Member','Start Date','End Date'];
 
     $enquriesConvQry=mysqli_query($connection,"SELECT (SELECT COUNT(*) FROM student_enquiry WHERE st_enquiry_id NOT IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '')) AS not_converted, (SELECT COUNT(*) FROM student_enquiry WHERE st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '')) AS converted");
 
@@ -39,16 +44,16 @@ if(isset($_SESSION['user_type'])){
 
     }
 
-
-
-    $totalTimeCounsil=mysqli_query($connection,"SELECT FLOOR(TIMESTAMPDIFF(SECOND, counsil_timing, counsil_end_time) / (24 * 60 * 60)) AS days,FLOOR((TIMESTAMPDIFF(SECOND, counsil_timing, counsil_end_time) % (24 * 60 * 60)) / (60 * 60)) AS hours FROM `counseling_details` WHERE `counsil_enquiry_status` = 0;");
+    $totalTimeCounsil=mysqli_query($connection,"SELECT SUM(TIMESTAMPDIFF(DAY, counsil_timing, counsil_end_time)) AS days, SUM(TIMESTAMPDIFF(HOUR, counsil_timing, counsil_end_time)) % 24 AS hours, SUM(TIMESTAMPDIFF(MINUTE, counsil_timing, counsil_end_time)) % 60 AS mins FROM `counseling_details` WHERE `counsil_enquiry_status` = 0;");
     $timeSpent=mysqli_fetch_array($totalTimeCounsil);
     if($timeSpent['days']!=0 || $timeSpent['days']!=''){        
         $timeSpentRes=$timeSpent['days'];
         $timeSpentHrsRes=$timeSpent['hours'];
+        $timeSpentMnsRes=$timeSpent['mins'];
     }else{
         $timeSpentRes=0;
         $timeSpentHrsRes=0;
+        $timeSpentMnsRes=0;
     }
 
 ?>
@@ -87,23 +92,6 @@ if(isset($_SESSION['user_type'])){
                 white-space: break-spaces;
                 width:10%;
             }
-            
-            /* #table-filter {
-                display: block;
-                max-width: -moz-fit-content;
-                max-width: fit-content;
-                margin: 0 auto;
-                overflow-x: auto;
-                white-space: nowrap;
-            }
-            #appointments_table{
-                display: block;
-                margin: 0 auto;
-                overflow-x: auto;
-                white-space: nowrap;
-            }
-
-            #table-filter th, #table-filter td { min-width: auto; } */
 
 
 .container {
@@ -113,12 +101,12 @@ if(isset($_SESSION['user_type'])){
   /* width: 300px; */
 }
 
-#appointments_table,#table-filter {
+#appointments_table , #counsel_table,#table-filter {
   border-collapse: collapse;
 }
 
 #table-filter th,
-#table-filter td, #appointments_table th , #appointments_table td {
+#table-filter td, #appointments_table th , #appointments_table td, #counsel_table th , #counsel_table td {
   max-width: 300px;
   padding: 8px 16px;
   border: 1px solid #ddd;
@@ -127,7 +115,7 @@ if(isset($_SESSION['user_type'])){
   white-space: nowrap;
 }
 
-#table-filter thead ,#appointments_table thead {
+#table-filter thead ,#appointments_table thead ,#counsel_table thead {
   position: sticky;
   inset-block-start: 0;
   background-color: #ddd;
@@ -252,7 +240,7 @@ if(isset($_SESSION['user_type'])){
                                             </div>
                                             <div class="flex-grow-1 overflow-hidden">
                                                 <p class="mb-1">Total Counselings Time</p>
-                                                <h5 class="mb-3"><?php echo $timeSpentRes.' Days '. $timeSpentHrsRes.' Hours' ?></h5>
+                                                <h5 class="mb-3"><?php echo $timeSpentRes.' Days '. $timeSpentHrsRes.' Hours '.$timeSpentMnsRes.' Minutes';  ?></h5>
                                             </div>
                                         </div>
                                     </div>
@@ -376,24 +364,91 @@ if(isset($_SESSION['user_type'])){
                             <div class="col-lg-12">
                                 <div class="card">
                                     <div class="card-body">
-                                        <h4 class="card-title mb-4">Appointments</h4>
+                                        <h4 class="card-title mb-4">Counseling</h4>
 
-                                        <div class="row mb-3">
-                                            <div class="columns-report">
-                                               <select class="selectpicker boot-select" title="Columns" data-live-search="true" id="appoint_select" >
-                                                <option value="<?php echo $filterCols2Array['5']; ?>" id="option_5" data-value="5" data-name="Team Member">Team Member</option>
+                                        <div class="row mb-3 d-flex">
+                                        <div class="col-lg-10 d-flex">
+
+                                            <div class="columns-report" style="margin-right:1rem">
+                                               <select class="selectpicker boot-select" title="Columns" data-live-search="true" id="counsel_select" >
+                                                <option value="<?php echo $filterCols3Array['2']; ?>" id="option_2" data-value="2" data-name="Team Member">Team Member</option>
+                                                <option value="<?php echo $filterCols3Array['15']; ?>" id="option_15" data-value="15" data-name="Counseling Type">Counseling Type</option>
+                                                <option value="<?php echo $filterCols3Array['22']; ?>" id="option_22" data-value="22" data-name="Date">Date</option>
                                                </select> 
                                             </div>
-                                            <div class="columns-report appoint_input">
-                                                <input type="text" id="appoint_column_5" placeholder="value" class="appoint_column_value form-control">
+                                            <div class="columns-report counsel_input" style="margin-right:1rem">
+                                                <input type="text" id="counsel_column_2" placeholder="value" class="counsel_column_value form-control">
+                                                <input type="text" id="counsel_column_22" placeholder="value" class="counsel_column_value form-control">
+                                                <select name="counsel_column_15" class="counsel_column_value form-select" title="Counsel Type" id="counsel_column_15" style="width:auto;">
+                                                <option value="1" data="1">Face to Face</option>
+                                                <option value="2" data="2">Video</option>
+                                                </select> 
+                                                <!-- <input type="text" id="counsel_column_15" placeholder="value" class="counsel_column_value form-control"> -->
                                             </div>
-                                            <div class="columns-report">
+                                            <div class="columns-report" style="margin-right:1rem">
+                                            <button type="button" class="btn btn-success" id="submit_column3_filter">Submit</button>
+                                            </div>
+                                            </div>
+                                            <div class="col-lg-2"><button type="button" class="btn btn-secondary" id="counsel_export">Export <i class="fas fa-file-export export-filter"></i></button></div>
+
+                                        </div>
+                                        <div class="row counsel-badges-div mb-3 align-items-start">
+                                        </div>  
+                                    <div class="container" style="height:30vh">
+                                        <table id="counsel_table" >
+                                            <thead>
+                                                <tr>
+                                                <?php
+                                                
+                                                foreach($filterDropDown3 as $key=>$value){
+                                                    if($key>=5){
+                                                        $class="";
+                                                    }else{
+                                                        $class="";
+                                                    }
+                                                    echo "<th class='$class'>$value</th>";
+                                                }
+
+                                                ?>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>  
+
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h4 class="card-title mb-4">Appointments</h4>
+
+                                        <div class="row mb-3 d-flex">
+                                        <div class="col-lg-10 d-flex">
+                                            <div class="columns-report" style="margin-right:1rem">
+                                               <select class="selectpicker boot-select" title="Columns" data-live-search="true" id="appoint_select" >
+                                                <option value="<?php echo $filterCols2Array['5']; ?>" id="option_5" data-value="5" data-name="Team Member">Team Member</option>
+                                                <option value="<?php echo $filterCols2Array['2']; ?>" id="option_2" data-value="2" data-name="Booking Date">Booking Date</option>
+                                               </select> 
+                                            </div>
+                                            <div class="columns-report appoint_input" style="margin-right:1rem">
+                                                <input type="text" id="appoint_column_5" placeholder="value" class="appoint_column_value form-control">
+                                                <input type="text" id="appoint_column_2" placeholder="value" class="appoint_column_value form-control">
+                                            </div>
+                                            <div class="columns-report" style="margin-right:1rem">
                                             <button type="button" class="btn btn-success" id="submit_column2_filter">Submit</button>
                                             </div>
+                                            </div>
+                                            <div class="col-lg-2"><button type="button"  class="btn btn-secondary" id="appoint_export">Export <i class="fas fa-file-export export-filter"></i></button></div>
                                         </div>
                                         <div class="row appoint-badges-div mb-3 align-items-start">
                                         </div>  
-
+                                        <div class="container" style="height:30vh">
                                         <table id="appointments_table">
                                             <thead>
                                                 <tr>
@@ -417,112 +472,10 @@ if(isset($_SESSION['user_type'])){
                                             </tbody>
                                         </table>
                                     </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-
-                        <script>
-
-
-            $(document).on('click','#submit_column2_filter',function(){
-                    var columnName=$('#appoint_select option:selected').attr('data-name');                    
-                    var mainColName=$('#appoint_select').val();
-                    var columnId=$('#appoint_select option:selected').attr('data-value');
-                    var badgeId=$('#appoint_badge_'+columnId).val();   
-                    var colValue=$('#appoint_column_'+columnId).val();                                              
-                if(colValue!='' && columnId!=undefined && columnName!=0 && ( badgeId==undefined || badgeId=='' )){
-                    $('.appoint-badges-div').append('<button type="button" data-col-name="'+mainColName+'" id="appoint_badge_'+columnId+'" data-id="'+columnId+'" main-value="'+colValue+'" class="btn btn-secondary btn-rounded appoint-badge-button appoint_close-badge"><i class="mdi mdi-close-circle"></i> <span>'+columnName+'</span></button>');
-                    appoint_filterMain();
-                }
-            })
-            
-            $(document).on('click','.appoint_close-badge',function(){
-                $(this).remove();
-                var idCol=$(this).attr('data-id');
-                var nameCol=$(this).children("span").text();
-                var mainCol=$(this).attr('data-col-name');
-                $('#appoint_select').append('<option value="'+mainCol+'" id="option_'+idCol+'" data-value="'+idCol+'" data-name="'+nameCol+'">'+nameCol+'</option>');
-                $('#appoint_select').val(0).change();
-                $('#appoint_select').selectpicker('refresh');  
-                appoint_filterMain();
-            })
-
-
-            function appoint_filterMain(){
-                var columnData={};
-                $('.appoint-badge-button').each(function(){
-                    var option=$(this).attr('data-id');
-                    $('#option_'+option).remove();
-                    $('.appoint_column_value').val('');
-                    $('.appoint_column_value').hide();
-                    $('#appoint_select').selectpicker('refresh');     
-                    $('#appoint_select').val(0).change();
-                    
-                    var columnName=$(this).attr('data-col-name');
-                    var columnValue=$(this).attr('main-value');
-                    columnData[columnName]=columnValue;
-                    
-                })    
-                
-                appoint_fetch(columnData);
-
-            }
-
-            function appoint_fetch(objFilter){
-                $.ajax({
-                    type:'post',
-                    url:'includes/datacontrol.php',
-                    data:{objFilter,formName:'fetchAppoints'},
-                    success:function(data){
-                        $('#student_filter_body').html(data);
-                        $('#total_filter_records').html($('#student_filter_body tr').length);                        
-                    }
-                })
-            }
-
-            $(document).on('change','#appoint_select',function(){                                                
-                var inputType=$('#appoint_select option:selected').attr('data-value');
-                    $('.appoint_column_value').hide();
-                    console.log(inputType);
-                    $('#appoint_column_'+inputType).show();
-            })
-
-            appoint_fetch('');
-
-                        //     $(document).on('change','#appoint_select',function(){
-                        //         $('.appoint_input').show();
-                        //     })
-
-                        // function appoint_fetch(datas){
-                        //     $.ajax({
-                        //         type:'post',
-                        //         url:'includes/datacontrol.php',
-                        //         data:{formName:'appointments_table',filter:datas},
-                        //         success:function(data){
-                        //             $('#appointments_table tbody').html(data);
-                        //         }
-                        //     })
-                        // }
-                        // appoint_fetch('');
-
-                        // $(document).on('click','#submit_column2_filter',function(){
-                        //     var team_mems=$('#team_members').val();
-                        //     var team_select=$('#appoint_select').val()==0 ? '' : $('#appoint_select').val();
-                        //     if(team_select=='' || team_mems==''){
-                        //         if(team_select==''){
-                        //             return false;
-                        //         }
-                        //         if(team_mems==''){
-                        //             return false;
-                        //         }
-                        //     }else{
-                        //         appoint_fetch(team_mems);
-                        //     }
-
-                        // })
-
-                        </script>
-                                        
+                        </div>             
 
                         <div class="row">
                             <div class="col-lg-12">
@@ -812,7 +765,7 @@ $(function() {
               'This Month': [moment().startOf('month'), moment().endOf('month')],
               'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
             };
-    $('#column_35').daterangepicker(options);
+    $('#column_35 , #appoint_column_2, #counsel_column_22').daterangepicker(options);
 });
     </script>
 
@@ -1076,6 +1029,32 @@ $(function() {
 
             })
 
+            $('#appoint_export').click(function(){
+
+                var divToPrint=$("#appointments_table");
+                // $(divToPrint).find('.imp-none').remove();
+                newWin=  window.open('', '_top', '','');       
+                newWin.document.write('<!DOCTYPE html PUBLIC \'-//W3C//DTD XHTML 1.0 Transitional//EN\' \'http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\'><html xmlns=\'http://www.w3.org/1999/xhtml\'><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><meta http-equiv=\'Content-Type\' content=\'text/html; charset=iso-8859-1\' /><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"><title>Patient Feed</title><style>#student_filter_body th , #student_filter_body td { white-space: pre; }  .td_scroll_height { width:max-content; }@page { size:Legal landscape; } table, th, td { border: 1px solid;border-collapse: collapse;text-align: left;padding: 5px 10px;}  body { background: #FFF;color: #000;font-size: 12pt;padding: 0;} .print_div{ display:flex;justify-content:center; } .print_logo{ height: 85px;width: 10%;margin: 0;padding: 0;}  </style></head><body><div class="print_div"><img class="print_logo" src="assets/images/logo-dark.png"></div><table>'+$(divToPrint).html()+'</table></body></html>');
+                newWin.print();
+                newWin.close();
+
+
+
+            })
+
+            $('#counsel_export').click(function(){
+
+                var divToPrint=$("#counsel_table");
+                // $(divToPrint).find('.imp-none').remove();
+                newWin=  window.open('', '_top', '','');       
+                newWin.document.write('<!DOCTYPE html PUBLIC \'-//W3C//DTD XHTML 1.0 Transitional//EN\' \'http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\'><html xmlns=\'http://www.w3.org/1999/xhtml\'><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><meta http-equiv=\'Content-Type\' content=\'text/html; charset=iso-8859-1\' /><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"><title>Patient Feed</title><style>#student_filter_body th , #student_filter_body td { white-space: pre; }  .td_scroll_height { width:max-content; }@page { size:Legal landscape; } table, th, td { border: 1px solid;border-collapse: collapse;text-align: left;padding: 5px 10px;}  body { background: #FFF;color: #000;font-size: 12pt;padding: 0;} .print_div{ display:flex;justify-content:center; } .print_logo{ height: 85px;width: 10%;margin: 0;padding: 0;}  </style></head><body><div class="print_div"><img class="print_logo" src="assets/images/logo-dark.png"></div><table>'+$(divToPrint).html()+'</table></body></html>');
+                newWin.print();
+                newWin.close();
+
+
+
+            })
+
             // $('#student_filter').click(function(){
 
             //     var divToPrint=$("#student_filter_table");
@@ -1214,6 +1193,136 @@ $(function() {
 
 
 
+            $(document).on('click','#submit_column2_filter',function(){
+                    var columnName=$('#appoint_select option:selected').attr('data-name');                    
+                    var mainColName=$('#appoint_select').val();
+                    var columnId=$('#appoint_select option:selected').attr('data-value');
+                    var badgeId=$('#appoint_badge_'+columnId).val();   
+                    var colValue=$('#appoint_column_'+columnId).val();                                              
+                if(colValue!='' && columnId!=undefined && columnName!=0 && ( badgeId==undefined || badgeId=='' )){
+                    $('.appoint-badges-div').append('<button type="button" data-col-name="'+mainColName+'" id="appoint_badge_'+columnId+'" data-id="'+columnId+'" main-value="'+colValue+'" class="btn btn-secondary btn-rounded appoint-badge-button appoint_close-badge"><i class="mdi mdi-close-circle"></i> <span>'+columnName+'</span></button>');
+                    appoint_filterMain();
+                }
+            })
+            
+            $(document).on('click','.appoint_close-badge',function(){
+                $(this).remove();
+                var idCol=$(this).attr('data-id');
+                var nameCol=$(this).children("span").text();
+                var mainCol=$(this).attr('data-col-name');
+                $('#appoint_select').append('<option value="'+mainCol+'" id="option_'+idCol+'" data-value="'+idCol+'" data-name="'+nameCol+'">'+nameCol+'</option>');
+                $('#appoint_select').val(0).change();
+                $('#appoint_select').selectpicker('refresh');  
+                appoint_filterMain();
+            })
+
+
+            function appoint_filterMain(){
+                var columnData={};
+                $('.appoint-badge-button').each(function(){
+                    var option=$(this).attr('data-id');
+                    $('#option_'+option).remove();
+                    $('.appoint_column_value').val('');
+                    $('.appoint_column_value').hide();
+                    $('#appoint_select').selectpicker('refresh');     
+                    $('#appoint_select').val(0).change();
+                    
+                    var columnName=$(this).attr('data-col-name');
+                    var columnValue=$(this).attr('main-value');
+                    columnData[columnName]=columnValue;
+                    
+                })    
+                
+                appoint_fetch(columnData);
+
+            }
+
+            function appoint_fetch(objFilter){
+                $.ajax({
+                    type:'post',
+                    url:'includes/datacontrol.php',
+                    data:{objFilter,formName:'fetchAppoints'},
+                    success:function(data){
+                        $('#appointments_table tbody').html(data);
+                        // $('#total_filter_records').html($('#student_filter_body tr').length);                        
+                    }
+                })
+            }
+
+            $(document).on('change','#appoint_select',function(){                                                
+                var inputType=$('#appoint_select option:selected').attr('data-value');
+                    $('.appoint_column_value').hide();
+                    console.log(inputType);
+                    $('#appoint_column_'+inputType).show();
+            })
+
+            appoint_fetch('');
+
+
+            $(document).on('click','#submit_column3_filter',function(){
+                    var columnName=$('#counsel_select option:selected').attr('data-name');                    
+                    var mainColName=$('#counsel_select').val();
+                    var columnId=$('#counsel_select option:selected').attr('data-value');
+                    var badgeId=$('#counsel_badge_'+columnId).val();   
+                    var colValue=$('#counsel_column_'+columnId).val();                                              
+                if(colValue!='' && columnId!=undefined && columnName!=0 && ( badgeId==undefined || badgeId=='' )){
+                    $('.counsel-badges-div').append('<button type="button" data-col-name="'+mainColName+'" id="counsel_badge_'+columnId+'" data-id="'+columnId+'" main-value="'+colValue+'" class="btn btn-secondary btn-rounded counsel-badge-button counsel_close-badge"><i class="mdi mdi-close-circle"></i> <span>'+columnName+'</span></button>');
+                    counsel_filterMain();
+                }
+            })
+            
+            $(document).on('click','.counsel_close-badge',function(){
+                $(this).remove();
+                var idCol=$(this).attr('data-id');
+                var nameCol=$(this).children("span").text();
+                var mainCol=$(this).attr('data-col-name');
+                $('#counsel_select').append('<option value="'+mainCol+'" id="option_'+idCol+'" data-value="'+idCol+'" data-name="'+nameCol+'">'+nameCol+'</option>');
+                $('#counsel_select').val(0).change();
+                $('#counsel_select').selectpicker('refresh');  
+                counsel_filterMain();
+            })
+
+
+            function counsel_filterMain(){
+                var columnData={};
+                $('.counsel-badge-button').each(function(){
+                    var option=$(this).attr('data-id');
+                    $('#option_'+option).remove();
+                    $('.counsel_column_value').val('');
+                    $('.counsel_column_value').hide();
+                    $('#counsel_select').selectpicker('refresh');     
+                    $('#counsel_select').val(0).change();
+                    
+                    var columnName=$(this).attr('data-col-name');
+                    var columnValue=$(this).attr('main-value');
+                    columnData[columnName]=columnValue;
+                    
+                })    
+                
+                counsel_fetch(columnData);
+
+            }
+
+            function counsel_fetch(objFilter){
+                $.ajax({
+                    type:'post',
+                    url:'includes/datacontrol.php',
+                    data:{objFilter,formName:'fetchCounsel'},
+                    success:function(data){
+                        $('#counsel_table tbody').html(data);
+                        // $('#total_filter_records').html($('#student_filter_body tr').length);                        
+                    }
+                })
+            }
+
+            $(document).on('change','#counsel_select',function(){                                                
+                var inputType=$('#counsel_select option:selected').attr('data-value');
+                    $('.counsel_column_value').hide();
+                    console.log(inputType);
+                    $('#counsel_column_'+inputType).show();
+            })
+
+            counsel_fetch('');
         </script>
         <?php }else{ ?>
             <script>

@@ -115,7 +115,7 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="counseling_timing">Started Date & Time<span class="asterisk">*</span></label>
+                                                        <label class="form-label" for="counseling_timing">Start Date & Time<span class="asterisk">*</span></label>
                                                         <input type="datetime-local" class="form-control" id="counseling_timing" value="<?php echo $counsil_Query['counsil_timing']=='' ? '' : date('Y-m-d H:i:s',strtotime($counsil_Query['counsil_timing'])) ?>">
                                                         <div class="error-feedback">
                                                             Please select the Date and Time
@@ -124,7 +124,7 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="counseling_end_timing">Ended Date & Time</label>
+                                                        <label class="form-label" for="counseling_end_timing">End Date & Time</label>
                                                         <input type="datetime-local" class="form-control" id="counseling_end_timing" value="<?php echo $counsil_Query['counsil_end_time']=='' ? '' : date('Y-m-d H:i:s',strtotime($counsil_Query['counsil_end_time'])) ?>">
                                                         <div class="error-feedback">
                                                             Please select the Ending Date and Time

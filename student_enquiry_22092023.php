@@ -25,7 +25,7 @@ if(@$_SESSION['user_type']!=''){
             $rpl_status=1;
             $rpl_array=["rpl_exp" => $queryRes_rpls['rpl_exp'] , "exp_in"=>$queryRes_rpls['rpl_exp_in'] , "exp_docs"=>$queryRes_rpls['rpl_exp_docs'] , "exp_prev"=>$queryRes_rpls['rpl_exp_prev_qual'] , "exp_name"=>$queryRes_rpls['rpl_exp_role']  , "exp_years"=>$queryRes_rpls['rpl_exp_years']  , "exp_prev_name"=>$queryRes_rpls['rpl_exp_qual_name']];        
         }else{
-            $rpl_status=0;  
+            $rpl_status=0;
             $rpl_array=["rpl_exp" => '' , "exp_in"=>'' , "exp_docs"=>'' , "exp_prev"=>'' , "exp_name"=>''  , "exp_years"=>''  , "exp_prev_name"=>'']; 
         }
 
@@ -95,9 +95,7 @@ if(@$_SESSION['user_type']!=''){
         <meta content="Themesdesign" name="author" />
         <!-- App favicon -->
         <link rel="shortcut icon" href="assets/images/favicon.ico">
-        <?php 
-        include('includes/app_includes.php'); 
-        ?>
+        <?php include('includes/app_includes.php'); ?>
     </head>
 
     <body data-topbar="colored">
@@ -146,24 +144,17 @@ if(@$_SESSION['user_type']!=''){
                         </div>
                         <!-- end page title -->
 
-        <form class="student_enquiry_form" id="student_enquiry_form">
-        <div class="row">
-            <div class="col-xl-12">
-                <div class="card">
-                    <div class="card-body" id="student_enquiry_form_parent">
-                        <div class="accordion" id="accordionExample">
-                            <div class="accordion-item">
-                                    <h2 class="accordion-header" id="headingOne">
-                                        <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                        Personal Details
-                                        </button>
-                                    </h2>
-                                <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
-                                    <div class="accordion-body">
+                    <form class="student_enquiry_form" id="student_enquiry_form">
+
+                        <div class="row">
+                            <div class="col-xl-12">
+                                <div class="card">
+                                    <div class="card-body" id="student_enquiry_form_parent">
+                                    <!-- <div class="jelly" id="jelly_loader"></div> -->
                                             <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="email_address">Email<span class="asterisk">*</span></label>
+                                                        <label class="form-label" for="email_address">Email*</label>
                                                         <input type="text" class="form-control" id="email_address" placeholder="Email Address" value="<?php echo $queryRes['st_email']; ?>" >
                                                         <div class="error-feedback">
                                                             Please enter the Email Address
@@ -172,7 +163,7 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="enquiry_date">Date<span class="asterisk">*</span></label>
+                                                        <label class="form-label" for="enquiry_date">Date*</label>
                                                         <input type="date" class="form-control" id="enquiry_date" value="<?php echo  $queryRes['st_enquiry_date']!='' ? date('Y-m-d',strtotime($queryRes['st_enquiry_date'])) : ''; ?>">
                                                         <div class="error-feedback">
                                                             Please select the Date
@@ -181,7 +172,7 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="surname">Surname<span class="asterisk">*</span></label>
+                                                        <label class="form-label" for="surname">Surname*</label>
                                                         <input type="text" class="form-control" id="surname" placeholder="Surname" value="<?php echo  $queryRes['st_surname']; ?>" >
                                                         <div class="error-feedback">
                                                             Please enter the Surname
@@ -190,7 +181,7 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="student_name">First Name<span class="asterisk">*</span></label>
+                                                        <label class="form-label" for="student_name">First Name*</label>
                                                         <input type="text" class="form-control" id="student_name" placeholder="Student Name" value="<?php echo $queryRes['st_enquiry_for']==1 ? $queryRes['st_name']: $queryRes['st_member_name'] ; ?>" >
                                                         <div class="error-feedback">
                                                             Please enter the First name
@@ -199,7 +190,7 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="enquiry_for">Enquiring For<span class="asterisk">*</span></label>
+                                                        <label class="form-label" for="enquiry_for">Enquiring For*</label>
                                                         <select name="enquiry_for" class="form-select" id="enquiry_for">
                                                         <?php  
                                                         $st_enquiry=['--select--','Self','Family Member'];
@@ -216,7 +207,7 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="member_name">Name<span class="asterisk">*</span></label>
+                                                        <label class="form-label" for="member_name">Name*</label>
                                                         <input type="text" class="form-control" id="member_name" placeholder="Name" value="<?php echo $queryRes['st_enquiry_for']==1 ? $queryRes['st_member_name'] : $queryRes['st_name']; ?>" <?php echo $queryRes['st_enquiry_for']==1 ? 'readonly' : ''  ?> >
                                                         <div class="error-feedback">
                                                             Please enter the Name
@@ -246,103 +237,99 @@ if(@$_SESSION['user_type']!=''){
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>                        
-        </div>                        
 
                           <!-- Short Course - group Form -->
 
-                <div class="row" id="short_grp_form" style="display:<?php echo $queryRes['st_course_type']==5 || $queryRes['st_course_type']==4 ? 'block' : 'none' ?>">
-                    <div class="col-xl-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <b><p class="card-title">Short Course Group Form</p></b>
-                                <div class="row">
-                                <div class="col-md-6">
-                                    <label class="form-label" for="short_grp_org_name">Organisation Name</label>
-                                    <input type="text" name="short_grp_org_name" class="form-control" id="short_grp_org_name" placeholder="Organisation Name"  value="<?php echo $short_grp['short_grp_org_name']; ?>">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label" for="short_grp_org_type">Type of Organisation</label>
-                                    <select name="short_grp_org_type" class="form-control" id="short_grp_org_type">
-                                    <?php 
-                                        $short_grp_org_type=['--select--','Job Agency','Employer','College'];
-                                        for($i=0;$i<count($short_grp_org_type);$i++){
-                                            $selected=$i==$short_grp['short_grp_org_type'] ? 'selected' : '';
-                                            echo "<option value='".$i."' ".$selected.">".$short_grp_org_type[$i]."</option>";
-                                        }
+                                <div class="row" id="short_grp_form" style="display:<?php echo $queryRes['st_course_type']==5 || $queryRes['st_course_type']==4 ? 'block' : 'none' ?>">
+                                   <div class="col-xl-12">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <b><p class="card-title">Short Course Group Form</p></b>
+                                                <div class="row">
+                                                <div class="col-md-6">
+                                                    <label class="form-label" for="short_grp_org_name">Organisation Name</label>
+                                                    <input type="text" name="short_grp_org_name" class="form-control" id="short_grp_org_name" placeholder="Organisation Name"  value="<?php echo $short_grp['short_grp_org_name']; ?>">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label" for="short_grp_org_type">Type of Organisation</label>
+                                                    <select name="short_grp_org_type" class="form-control" id="short_grp_org_type">
+                                                    <?php 
+                                                        $short_grp_org_type=['--select--','Job Agency','Employer','College'];
+                                                        for($i=0;$i<count($short_grp_org_type);$i++){
+                                                            $selected=$i==$short_grp['short_grp_org_type'] ? 'selected' : '';
+                                                            echo "<option value='".$i."' ".$selected.">".$short_grp_org_type[$i]."</option>";
+                                                        }
 
-                                        ?>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label" for="short_grp_campus">Training to be given</label>
-                                    <select name="short_grp_campus" class="form-control" id="short_grp_campus">
-                                    <?php 
-                                        $short_grp_campus=['--select--','Off Campus','On Campus'];
-                                        for($i=0;$i<count($short_grp_campus);$i++){
-                                            $selected=$i==$short_grp['short_grp_campus'] ? 'selected' : '';
-                                            echo "<option value='".$i."' ".$selected.">".$short_grp_campus[$i]."</option>";
-                                        }
+                                                        ?>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label" for="short_grp_campus">Training to be given</label>
+                                                    <select name="short_grp_campus" class="form-control" id="short_grp_campus">
+                                                    <?php 
+                                                        $short_grp_campus=['--select--','Off Campus','On Campus'];
+                                                        for($i=0;$i<count($short_grp_campus);$i++){
+                                                            $selected=$i==$short_grp['short_grp_campus'] ? 'selected' : '';
+                                                            echo "<option value='".$i."' ".$selected.">".$short_grp_campus[$i]."</option>";
+                                                        }
 
-                                        ?>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label" for="short_grp_date">Date Required</label>
-                                    <input type="date" name="short_grp_date" class="form-control" id="short_grp_date" value="<?php echo $short_grp['short_grp_date']!='' ? date('Y-m-d',strtotime($short_grp['short_grp_date'])) : ''; ?>">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label" for="short_grp_num_std">Number of Students</label>
-                                    <input type="tel" name="short_grp_num_std" class="form-control number-field" id="short_grp_num_std" value="<?php echo $short_grp['short_grp_num_std']; ?>">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label" for="short_grp_ind_exp">Have they got Industry Experience ?</label>
-                                    <select name="short_grp_ind_exp" class="form-control" id="short_grp_ind_exp">
-                                    <?php 
-                                        $short_grps_ind_exp=['--select--','Yes','No'];
-                                        for($i=0;$i<count($short_grps_ind_exp);$i++){
-                                            $selected=$i==$short_grp['short_grp_ind_exp'] ? 'selected' : '';
-                                            echo "<option value='".$i."' ".$selected.">".$short_grps_ind_exp[$i]."</option>";
-                                        }
-                                        ?>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label" for="short_grp_before">Have they done this Training Before ?</label>
-                                    <select name="short_grp_before" class="form-control" id="short_grp_before">
-                                    <?php 
-                                        $short_grp_train_bef=['--select--','Yes','No'];
-                                        for($i=0;$i<count($short_grp_train_bef);$i++){
-                                            $selected=$i==$short_grp['short_grp_before'] ? 'selected' : '';
-                                            echo "<option value='".$i."' ".$selected.">".$short_grp_train_bef[$i]."</option>";
-                                        }
+                                                        ?>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label" for="short_grp_date">Date Required</label>
+                                                    <input type="date" name="short_grp_date" class="form-control" id="short_grp_date" value="<?php echo $short_grp['short_grp_date']!='' ? date('Y-m-d',strtotime($short_grp['short_grp_date'])) : ''; ?>">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label" for="short_grp_num_std">Number of Students</label>
+                                                    <input type="tel" name="short_grp_num_std" class="form-control number-field" id="short_grp_num_std" value="<?php echo $short_grp['short_grp_num_std']; ?>">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label" for="short_grp_ind_exp">Have they got Industry Experience ?</label>
+                                                    <select name="short_grp_ind_exp" class="form-control" id="short_grp_ind_exp">
+                                                    <?php 
+                                                        $short_grps_ind_exp=['--select--','Yes','No'];
+                                                        for($i=0;$i<count($short_grps_ind_exp);$i++){
+                                                            $selected=$i==$short_grp['short_grp_ind_exp'] ? 'selected' : '';
+                                                            echo "<option value='".$i."' ".$selected.">".$short_grps_ind_exp[$i]."</option>";
+                                                        }
+                                                        ?>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label" for="short_grp_before">Have they done this Training Before ?</label>
+                                                    <select name="short_grp_before" class="form-control" id="short_grp_before">
+                                                    <?php 
+                                                        $short_grp_train_bef=['--select--','Yes','No'];
+                                                        for($i=0;$i<count($short_grp_train_bef);$i++){
+                                                            $selected=$i==$short_grp['short_grp_before'] ? 'selected' : '';
+                                                            echo "<option value='".$i."' ".$selected.">".$short_grp_train_bef[$i]."</option>";
+                                                        }
 
-                                        ?>
-                                    </select>
+                                                        ?>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label" for="short_grp_con_type">How did they Contact us</label>
+                                                    <input type="text" name="short_grp_con_type" class="form-control" id="short_grp_con_type" value="<?php echo $short_grp['short_grp_con_type']; ?>">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label" for="short_grp_con_num">Contact Number</label>
+                                                    <input type="tel" name="short_grp_con_num" class="form-control number-field" id="short_grp_con_num" placeholder="Contact Number" value="<?php echo $short_grp['short_grp_con_num']; ?>">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label" for="short_grp_con_name">Contact Person Name</label>
+                                                    <input type="text" name="short_grp_con_name" class="form-control" id="short_grp_con_name" placeholder="Name" value="<?php echo $short_grp['short_grp_con_name']; ?>">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label" for="short_grp_con_email">Contact Person Email</label>
+                                                    <input type="email" name="short_grp_con_email" class="form-control" id="short_grp_con_email" placeholder="Email" value="<?php echo $short_grp['short_grp_con_email']; ?>">
+                                                </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label" for="short_grp_con_type">How did they Contact us</label>
-                                    <input type="text" name="short_grp_con_type" class="form-control" id="short_grp_con_type" value="<?php echo $short_grp['short_grp_con_type']; ?>">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label" for="short_grp_con_num">Contact Number</label>
-                                    <input type="tel" name="short_grp_con_num" class="form-control number-field" id="short_grp_con_num" placeholder="Contact Number" value="<?php echo $short_grp['short_grp_con_num']; ?>">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label" for="short_grp_con_name">Contact Person Name</label>
-                                    <input type="text" name="short_grp_con_name" class="form-control" id="short_grp_con_name" placeholder="Name" value="<?php echo $short_grp['short_grp_con_name']; ?>">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label" for="short_grp_con_email">Contact Person Email</label>
-                                    <input type="email" name="short_grp_con_email" class="form-control" id="short_grp_con_email" placeholder="Email" value="<?php echo $short_grp['short_grp_con_email']; ?>">
-                                </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                                 <div class="row" id="rpl_form" style="display:<?php echo $queryRes['st_course_type']==1? : 'none' ?>">
                                    <div class="col-xl-12">
@@ -410,7 +397,7 @@ if(@$_SESSION['user_type']!=''){
                                                         ?>
                                                     </select>
                                                 </div>
-                                                <div class="col-md-6 rpl_prev_child" style="display:<?php echo $rpl_array['exp_prev']==1 ? 'block' : 'none' ?>">
+                                                <div class="col-md-6 rpl_prev_child">
                                                     <label class="form-label" for="exp_prev_name">Previous Qualification Name</label>
                                                     <input type="text" name="exp_prev_name" class="form-control" id="exp_prev_name" placeholder="Name" value="<?php echo $rpl_array['exp_prev_name']; ?>">
                                                 </div>
@@ -443,346 +430,288 @@ if(@$_SESSION['user_type']!=''){
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
-                                    <div class="col-xl-12">
-                                        <div class="card">
-                                            <div class="card-body" id="student_enquiry_form_parent">
-                                            <div class="accordion" id="accordionExample">
-                                                <div class="accordion-item">
-                                                            <h2 class="accordion-header" id="headingTwo">
-                                                                <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
-                                                                Address Details
-                                                                </button>
-                                                            </h2>
-                                                    <div id="collapseTwo" class="accordion-collapse collapse show" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
-                                                        <div class="accordion-body">
-                                                            <div class="row">
-                                                                <div class="col-md-6">
-                                                                        <div class="mb-3">
-                                                                            <label class="form-label" for="contact_num">Mobile<span class="asterisk">*</span></label>
-                                                                            <input type="text" class="form-control number-field" maxlength="10" id="contact_num" placeholder="Contact Number" value="<?php echo $queryRes['st_phno']; ?>" >
-                                                                            <div class="error-feedback">
-                                                                                Please enter the Contact Number
-                                                                            </div>
-                                                                            <div class="phone_error">
-                                                                                Entered Number Already exist with Enquiry ID: <span id="phone_err_id"></span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-md-6">
-                                                                        <div class="mb-3">
-                                                                            <label class="form-label" for="street_no">Street No / Name</label>
-                                                                            <input type="text" class="form-control street_no" id="street_no" placeholder="Street No / Name" value="<?php echo $queryRes['st_street_details']; ?>" >
-                                                                            <div class="error-feedback">
-                                                                                Please enter the Street Details
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-md-6">
-                                                                        <div class="mb-3">
-                                                                            <label class="form-label" for="suburb">Suburb</label>
-                                                                            <input type="text" class="form-control suburb" id="suburb" placeholder="Sub Urb" value="<?php echo $queryRes['st_suburb']; ?>" >
-                                                                            <div class="error-feedback">
-                                                                                Please enter the Suburb
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-md-6">
-                                                                        <div class="mb-3">
-                                                                            <label class="form-label" for="stu_state">State</label>
-                                                                            <select name="stu_state" id="stu_state" class="form-control">
-                                                                            <?php  
-                                                                            $st_states=['--select--','NSW - New South Wales','VIC - Victoria','ACT - Australian Capital Territory','NT - Northern Territoy','WA - Western Australia','QLD - Queensland','SA - South Australia','TAS - Tasmania'];
-                                                                            for($i=0;$i<count($st_states);$i++){
-                                                                                $checked= $i==$queryRes['st_state'] ? 'selected' : '';
-                                                                                echo '<option value="'.$i.'" '.$checked.'>'.$st_states[$i].'</option>';
-                                                                            }
-                                                                            ?>
-                                                                            </select>
-                                                                            <div class="error-feedback">
-                                                                                Please enter the State
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-md-6">
-                                                                        <div class="mb-3">
-                                                                            <label class="form-label" for="post_code">Post Code<span class="asterisk">*</span></label>
-                                                                            <input type="tel" class="form-control number-field" maxlength="6" id="post_code" placeholder="Post Code" value="<?php echo $queryRes['st_post_code']; ?>" >
-                                                                            <div class="error-feedback">
-                                                                                Please enter the Post Code
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-md-6">
-                                                                        <div class="mb-3">
-                                                                            <label class="form-label" for="visit_before">Have you visited us before?<span class="asterisk">*</span></label>
-                                                                            <select name="visit_before" class="form-select" id="visit_before">
-                                                                            <?php  
-                                                                            $st_visited=['--select--','Yes','No'];
-                                                                            for($i=0;$i<count($st_visited);$i++){
-                                                                                $checked= $i==$queryRes['st_visited'] ? 'selected' : '';
-                                                                                echo '<option value="'.$i.'" '.$checked.'>'.$st_visited[$i].'</option>';
-                                                                            }
-                                                                            ?>
-                                                                            </select>  
-                                                                            <div class="error-feedback">
-                                                                                Please select atleast one option
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-xl-12">
-                                        <div class="card">
-                                            <div class="card-body" id="student_enquiry_form_parent">      
-                                                <div class="accordion" id="accordionExample">
-                                                    <div class="accordion-item">
-                                                                <h2 class="accordion-header" id="headingThree">
-                                                                    <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse_counsel" aria-expanded="true" aria-controls="collapse_counsel">
-                                                                    Training Dependencies
-                                                                    </button>
-                                                                </h2>
-                                                                <div id="collapse_counsel" class="accordion-collapse collapse show" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
-                                                                    <div class="accordion-body">
-                                                                    <div class="row">
-                                                            <div class="col-sm">
-                                                                <div class="col-md-12">
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label" for="hear_about">How did you hear about us?<span class="asterisk">*</span></label><br>
-                                                                        <select name="hear_about" class="selectpicker hear_about" data-selected-text-format="count" multiple id="hear_about" title="Heared From">
-                                                                        <?php  
-                                                                            $st_heared=['Word of Mouth','Family or Friends','Website','Gumtree','Facebook','Instagram','Linkedin','Mail outs','Migration Agency','Other:'];
-                                                                            $hear_select_opt='';                                                            
-                                                                            $heared_about=$queryRes['st_heared']=='' ? array() : json_decode($queryRes['st_heared']);
-                                                                            for($i=0;$i<count($st_heared);$i++){
-
-                                                                                if(in_array($i,$heared_about) && count($heared_about)!=0){
-                                                                                    $checked="selected";
-                                                                                }else{
-                                                                                    $checked= "";
-                                                                                }                                                            
-
-                                                                                $hear_select_opt.= '<option value="'.$i.'" '.$checked.'>'.$st_heared[$i].'</option>';
-                                                                                if($i==4){
-                                                                                    $hear_select_opt.='<optgroup Label="Social Media">';
-                                                                                }else if($i==7){
-                                                                                    $hear_select_opt.='</optgroup>';
-                                                                                }
-                                                                            }
-                                                                            echo $hear_select_opt;
-                                                                        ?>
-                                                                        <!-- <optgroup label="Social Media"> -->
-                                                                            <!-- <option value="2">test</option> -->
-                                                                        <!-- </optgroup> -->
-                                                                            </select>
-                                                                        <div class="error-feedback">
-                                                                            Please select atleast one option
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-md-12 hear_about_child" style="display:<?php echo $queryRes['st_heared']=='' ? 'none' : (in_array(9,json_decode($queryRes['st_heared'])) ? 'block' : 'none' ); ?>">
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label" for="hearedby">Specify How you heared about us</label>
-                                                                        <input type="text" class="form-control" id="hearedby" value="<?php echo $queryRes['st_hearedby']; ?>" >
-                                                                        <div class="error-feedback">
-                                                                            Please enter the source heared
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                
-                                                                <div class="col-md-12">
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label" for="plan_to_start_date">When do you plan to start?</label>
-                                                                        <input type="date" class="form-control" id="plan_to_start_date" value="<?php echo $queryRes['st_startplan_date']!='' ? date('Y-m-d',strtotime($queryRes['st_startplan_date'])) : '' ?>" >
-                                                                        <div class="error-feedback">
-                                                                            Please select the Plan to Start Date
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-md-12">
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label" for="refer_select">Have you been referred by someone?<span class="asterisk">*</span></label>
-                                                                        <select name="refer_select" class="form-select refered" id="refer_select">
-                                                                        <?php  
-                                                                        $st_refered=['--select--','Yes','No'];
-                                                                        for($i=0;$i<count($st_refered);$i++){
-                                                                            $checked= $i==$queryRes['st_refered'] ? 'selected' : '';
-                                                                            echo '<option value="'.$i.'" '.$checked.'>'.$st_refered[$i].'</option>';
-                                                                        }
-                                                                        ?>
-                                                                        </select>                                                          
-                                                                        <div class="error-feedback">
-                                                                            Please select atleast one option
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-md-12 refered_field" style="display:<?php echo $queryRes['st_refered']==1 ? '' : 'none'; ?>">
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label" for="referer_name">Please specify his / her name</label>
-                                                                        <input type="text" class="form-control" id="referer_name" value="<?php echo $queryRes['st_refer_name']; ?>" placeholder="name1,name2,name3">
-                                                                        <div class="alert alert-primary d-flex align-items-center mt-2" role="alert">
-                                                                        <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Info:"><use xlink:href="#info-fill"/></svg>
-                                                                        <div>
-                                                                        Multiple Names can be written with a Comma(,) in Between
-                                                                        </div>
-                                                                        </div>
-                                                                        <div class="error-feedback">
-                                                                            Please Enter his / her name
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-md-12 refered_field" style="display:<?php echo $queryRes['st_refered']==1 ? '' : 'none'; ?>">
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label" for="refer_alumni">Is he / she an alumni<span class="asterisk">*</span></label>
-                                                                        <select name="refer_alumni" class="form-select" id="refer_alumni">
-                                                                        <?php  
-                                                                        $st_refer_alumni=['--select--','Yes','No'];
-                                                                        for($i=0;$i<count($st_refer_alumni);$i++){
-                                                                            $checked= $i==$queryRes['st_refered'] ? 'selected' : '';
-                                                                            echo '<option value="'.$i.'" '.$checked.'>'.$st_refer_alumni[$i].'</option>';
-                                                                        }
-                                                                        ?>
-                                                                        </select>                                                          
-                                                                        <div class="error-feedback">
-                                                                            Please select atleast one option
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-md-12">
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label" for="visa_condition">Visa Condition</label>
-                                                                        <select name="visa_condition" class="form-select" id="visa_condition">
-                                                                        <?php 
-                                                                        while($visaRes=mysqli_fetch_array($visaStatus)){
-                                                                            if($visaRes['visa_id']==1){
-                                                                                echo "<option value='0'>--select--</option><optgroup label='Subclass 500 main applicant'>";
-                                                                            }
-                                                                        ?>                                                                                                      
-                                                                            <option value="<?php echo $visaRes['visa_id']; ?>" <?php echo $visaRes['visa_id']==$queryRes['st_visa_status'] ? 'selected' : ''; ?>><?php echo $visaRes['visa_status_name']; ?></option>
-                                                                            <?php
-                                                                        if($visaRes['visa_id']==4){
-                                                                            echo '</optgroup>';
-                                                                        }
-
-                                                                        } ?>
-                                                                        </select> 
-                                                                        <div class="error-feedback">
-                                                                            Please select a visa status
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-md-12 visa_note" style="display:<?php echo $visaRes['visa_status_name']==7 ? '' : 'none'; ?>">
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label" for="visa_note">Specify Visa Status</label>
-                                                                        <input type="text" class="form-control" id="visa_note" value="<?php echo $queryRes['st_visa_note']; ?>" placeholder="Visa Note">
-                                                                        <div class="error-feedback">
-                                                                            Please Specify the Visa Condition
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-md-12">
-                                                                    <div class="mb-3">
-                                                                    <div><label for="visa_status_label">Visa Status</label></div>
-                                                                    <div>
-                                                                        <input class="form-check-input visa_status" type="radio" value="1" name="visa_status" id="visa_status1" <?php echo $queryRes['st_visa_condition']=='' ? 'checked' :  ( $queryRes['st_visa_condition']==1 ? 'checked' : '' ) ; ?>>
-                                                                        <label class="form-check-label" for="visa_status1">
-                                                                            Approved
-                                                                        </label>
-                                                                        <input class="form-check-input visa_status" type="radio" value="2" name="visa_status" id="visa_status2" <?php echo $queryRes['st_visa_condition']==2 ? 'checked' : ''; ?>>
-                                                                        <label class="form-check-label" for="visa_status2" >
-                                                                            Not Approved
-                                                                        </label>
-                                                                        <div class="error-feedback">
-                                                                            Please select a visa status
-                                                                        </div>
-                                                                    </div>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div class="col-md-12">
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label" for="shore">Are you Offshore or Onshore</label>
-                                                                        <select name="shore" class="form-select" id="shore">
-                                                                        <?php  
-                                                                        $st_shore=['--select--','OffShore','OnShore'];
-                                                                        for($i=0;$i<count($st_shore);$i++){
-                                                                            $checked= $i==$queryRes['st_shore'] ? 'selected' : '';
-                                                                            echo '<option value="'.$i.'" '.$checked.'>'.$st_shore[$i].'</option>';
-                                                                        }
-                                                                        ?>
-                                                                        </select>                                                          
-                                                                        <div class="error-feedback">
-                                                                            Please select atleast one option
-                                                                        </div>
-                                                                </div>
-                                                            </div>
-                                                            </div> <!-- col-sm-close div -->
-
-                                                                <div class="col-sm">
-
-                                                                    <div class="col-md-12">
-                                                                            <div class="mb-3">
-                                                                                <label class="form-label" for="courses">Which Course are you interested in?<span class="asterisk">*</span></label>
-                                                                                <?php 
-                                                                                $counts=1;
-                                                                                while($coursesRes=mysqli_fetch_array($courses)){
-
-                                                                                    if($queryRes['st_course']!=''){
-                                                                                        $coursesSel=json_decode($queryRes['st_course']);
-                                                                                    }else{
-                                                                                        $coursesSel=[];   
-                                                                                    }
-                                                                                                                                        
-                                                                                    if(in_array($counts,$coursesSel)){
-                                                                                        $checked='checked';
-                                                                                    }else{
-                                                                                        $checked='';
-                                                                                    }                                                            
-
-                                                                                    echo '<div class="form-check"><input type="checkbox" class="courses_check form-check-input" id="course_check_'.$counts.'" '.$checked.' value="'.$counts.'">';
-                                                                                    echo '<label for="course_check_'.$counts.'">'.$coursesRes["course_sname"].'-'.$coursesRes["course_name"].'</label></div>';
-                                                                                    $counts++;
-                                                                                }
-
-                                                                                ?>
-                                                                                <div class="courses_error">
-                                                                                    Please select the Courses
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
 
                         <div class="row">
                             <div class="col-xl-12">
                                 <div class="card">
                                     <div class="card-body" id="student_enquiry_form_parent">
-                                            <div class="accordion" id="accordionExample">
-                                            <div class="accordion-item">
-                                                <h2 class="accordion-header" id="headingfour">
-                                                    <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsefour" aria-expanded="true" aria-controls="collapsefour">
-                                                    Additional Information
-                                                    </button>
-                                                </h2>
-                                                <div id="collapsefour" class="accordion-collapse collapse show" aria-labelledby="headingfour" data-bs-parent="#accordionExample">
-                                                    <div class="accordion-body">
-                                                    <div class="row">
+                                    <!-- <div class="jelly" id="jelly_loader"></div> -->
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="contact_num">Mobile*</label>
+                                                        <input type="text" class="form-control number-field" maxlength="10" id="contact_num" placeholder="Contact Number" value="<?php echo $queryRes['st_phno']; ?>" >
+                                                        <div class="error-feedback">
+                                                            Please enter the Contact Number
+                                                        </div>
+                                                        <div class="phone_error">
+                                                            Entered Number Already exist.
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="street_no">Street No / Name</label>
+                                                        <input type="text" class="form-control street_no" id="street_no" placeholder="Street No / Name" value="<?php echo $queryRes['st_street_details']; ?>" >
+                                                        <div class="error-feedback">
+                                                            Please enter the Street Details
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="suburb">Suburb</label>
+                                                        <input type="text" class="form-control suburb" id="suburb" placeholder="Sub Urb" value="<?php echo $queryRes['st_suburb']; ?>" >
+                                                        <div class="error-feedback">
+                                                            Please enter the Suburb
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="stu_state">State</label>
+                                                        <select name="stu_state" id="stu_state" class="form-control">
+                                                        <?php  
+                                                        $st_states=['--select--','NSW','VIC','ACT','NT','WA','QLD','SA','Tasmania'];
+                                                        for($i=0;$i<count($st_states);$i++){
+                                                            $checked= $i==$queryRes['st_state'] ? 'selected' : '';
+                                                            echo '<option value="'.$i.'" '.$checked.'>'.$st_states[$i].'</option>';
+                                                        }
+                                                        ?>
+                                                        </select>
+                                                        <div class="error-feedback">
+                                                            Please enter the State
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="post_code">Post Code*</label>
+                                                        <input type="tel" class="form-control number-field" maxlength="6" id="post_code" placeholder="Post Code" value="<?php echo $queryRes['st_post_code']; ?>" >
+                                                        <div class="error-feedback">
+                                                            Please enter the Post Code
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="visit_before">Have you visited us before?*</label>
+                                                        <select name="visit_before" class="form-select" id="visit_before">
+                                                        <?php  
+                                                        $st_visited=['--select--','Yes','No'];
+                                                        for($i=0;$i<count($st_visited);$i++){
+                                                            $checked= $i==$queryRes['st_visited'] ? 'selected' : '';
+                                                            echo '<option value="'.$i.'" '.$checked.'>'.$st_visited[$i].'</option>';
+                                                        }
+                                                        ?>
+                                                        </select>  
+                                                        <div class="error-feedback">
+                                                            Please select atleast one option
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xl-12">
+                                <div class="card">
+                                    <div class="card-body" id="student_enquiry_form_parent">
+                                    <!-- <div class="jelly" id="jelly_loader"></div> -->
+                                        <div class="row">
+                                            <div class="col-sm">
+                                                <div class="col-md-12">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="hear_about">How did you hear about us?</label>
+                                                        <input type="text" class="form-control" id="hear_about" value="<?php echo $queryRes['st_heared']; ?>">
+                                                        <div class="error-feedback">
+                                                            Please select atleast one option
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-md-12">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="plan_to_start_date">When do you plan to start?</label>
+                                                        <input type="date" class="form-control" id="plan_to_start_date" value="<?php echo $queryRes['st_startplan_date']!='' ? date('Y-m-d',strtotime($queryRes['st_startplan_date'])) : '' ?>" >
+                                                        <div class="error-feedback">
+                                                            Please select the Plan to Start Date
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-12">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="refer_select">Have you been referred by someone?*</label>
+                                                        <select name="refer_select" class="form-select refered" id="refer_select">
+                                                        <?php  
+                                                        $st_refered=['--select--','Yes','No'];
+                                                        for($i=0;$i<count($st_refered);$i++){
+                                                            $checked= $i==$queryRes['st_refered'] ? 'selected' : '';
+                                                            echo '<option value="'.$i.'" '.$checked.'>'.$st_refered[$i].'</option>';
+                                                        }
+                                                        ?>
+                                                        </select>                                                          
+                                                        <div class="error-feedback">
+                                                            Please select atleast one option
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-12 refered_field" style="display:<?php echo $queryRes['st_refered']==1 ? '' : 'none'; ?>">
+                                                    <div class="mb-3">
+                                                         <label class="form-label" for="referer_name">Please specify his / her name</label>
+                                                        <input type="text" class="form-control" id="referer_name" value="<?php echo $queryRes['st_refer_name']; ?>" placeholder="name1,name2,name3">
+                                                        <div class="alert alert-primary d-flex align-items-center mt-2" role="alert">
+                                                        <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Info:"><use xlink:href="#info-fill"/></svg>
+                                                        <div>
+                                                        Multiple Names can be written with a Comma(,) in Between
+                                                        </div>
+                                                        </div>
+                                                        <div class="error-feedback">
+                                                            Please Enter his / her name
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-12 refered_field" style="display:<?php echo $queryRes['st_refered']==1 ? '' : 'none'; ?>">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="refer_alumni">Is he / she an alumni*</label>
+                                                        <select name="refer_alumni" class="form-select" id="refer_alumni">
+                                                        <?php  
+                                                        $st_refer_alumni=['--select--','Yes','No'];
+                                                        for($i=0;$i<count($st_refer_alumni);$i++){
+                                                            $checked= $i==$queryRes['st_refered'] ? 'selected' : '';
+                                                            echo '<option value="'.$i.'" '.$checked.'>'.$st_refer_alumni[$i].'</option>';
+                                                        }
+                                                        ?>
+                                                        </select>                                                          
+                                                        <div class="error-feedback">
+                                                            Please select atleast one option
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-12">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="visa_condition">Visa Condition</label>
+                                                        <select name="visa_condition" class="form-select" id="visa_condition">
+                                                        <?php 
+                                                        while($visaRes=mysqli_fetch_array($visaStatus)){
+                                                            if($visaRes['visa_id']==1){
+                                                                echo "<option value='0'>--select--</option><optgroup label='Subclass 500 main applicant'>";
+                                                            }
+                                                        ?>                                                                                                      
+                                                            <option value="<?php echo $visaRes['visa_id']; ?>" <?php echo $visaRes['visa_id']==$queryRes['st_visa_status'] ? 'selected' : ''; ?>><?php echo $visaRes['visa_status_name']; ?></option>
+                                                            <?php
+                                                        if($visaRes['visa_id']==4){
+                                                            echo '</optgroup>';
+                                                        }
+
+                                                        } ?>
+                                                        </select> 
+                                                        <div class="error-feedback">
+                                                            Please select a visa status
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-12 visa_note" style="display:<?php echo $visaRes['visa_status_name']==7 ? '' : 'none'; ?>">
+                                                    <div class="mb-3">
+                                                         <label class="form-label" for="visa_note">Specify Visa Status</label>
+                                                        <input type="text" class="form-control" id="visa_note" value="<?php echo $queryRes['st_visa_note']; ?>" placeholder="Visa Note">
+                                                        <div class="error-feedback">
+                                                            Please Specify the Visa Condition
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-12">
+                                                    <div class="mb-3">
+                                                    <div><label for="visa_status_label">Visa Status</label></div>
+                                                    <div>
+                                                        <input class="form-check-input visa_status" type="radio" value="1" name="visa_status" id="visa_status1" <?php echo $queryRes['st_visa_note']==1 ? 'checked' : ''; ?>>
+                                                        <label class="form-check-label" for="visa_status1">
+                                                            Approved
+                                                        </label>
+                                                        <input class="form-check-input visa_status" type="radio" value="2" name="visa_status" id="visa_status2">
+                                                        <label class="form-check-label" for="visa_status2" <?php echo $queryRes['st_visa_note']==2 ? 'checked' : ''; ?> >
+                                                            Not Approved
+                                                        </label>
+                                                        <div class="error-feedback">
+                                                            Please select a visa status
+                                                        </div>
+                                                    </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-12">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="shore">Are you Offshore or Onshore</label>
+                                                        <select name="shore" class="form-select" id="shore">
+                                                        <?php  
+                                                        $st_shore=['--select--','OffShore','OnShore'];
+                                                        for($i=0;$i<count($st_shore);$i++){
+                                                            $checked= $i==$queryRes['st_refered'] ? 'selected' : '';
+                                                            echo '<option value="'.$i.'" '.$checked.'>'.$st_shore[$i].'</option>';
+                                                        }
+                                                        ?>
+                                                        </select>                                                          
+                                                        <div class="error-feedback">
+                                                            Please select atleast one option
+                                                        </div>
+                                                </div>
+                                            </div>
+                                            </div> <!-- col-sm-close div -->
+
+                                        <div class="col-sm">
+
+                                            <div class="col-md-12">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="courses">Which Course are you interested in?*</label>
+                                                        <?php 
+                                                        $counts=1;
+                                                        while($coursesRes=mysqli_fetch_array($courses)){
+
+                                                            if($queryRes['st_course']!=''){
+                                                                $coursesSel=json_decode($queryRes['st_course']);
+                                                            }else{
+                                                                $coursesSel=[];   
+                                                            }
+
+
+                                                            
+                                                        // for($i=1;$i<count($st_remarks);$i++){                                            
+
+                                                            if(in_array($i,$coursesSel)){
+                                                                $checked='checked';
+                                                            }else{
+                                                                $checked='';
+                                                            }                                                            
+
+                                                            echo '<div class="form-check"><input type="checkbox" class="courses_check form-check-input" id="course_check_"'.$counts.' '.$checked.' value="'.$counts.'">';
+                                                            echo '<label for="course_check_"'.$counts.'>'.$coursesRes["course_sname"].'-'.$coursesRes["course_name"].'</label></div>';
+                                                            $counts++;
+                                                        }
+
+                                                        ?>
+                                                        <div class="courses_error">
+                                                            Please select the Courses
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                        </div>
+
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                              <div class="row">
+                                   <div class="col-xl-12">
+                                        <div class="card">
+                                            <div class="card-body" id="student_enquiry_form_parent">
+                                                <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="ethnicity">Ethnicity</label>
@@ -794,7 +723,7 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="payment_fee">Fees mentioned<span class="asterisk">*</span></label>
+                                                        <label class="form-label" for="payment_fee">Fees mentioned*</label>
                                                         <input type="text" class="form-control" maxlength="255" id="payment_fee" placeholder="0.00" value="<?php echo $queryRes['st_fee']; ?>" >
                                                         <div class="error-feedback">
                                                             Please enter the Mentioned Fee
@@ -865,13 +794,9 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                             </div>
                                         </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
 
                                 <!-- appointment form  -->
@@ -956,16 +881,9 @@ if(@$_SESSION['user_type']!=''){
 
                 return new Promise(function (resolve, reject) {
 
-                    var check_update=$('#check_update').val();
-                    var oldenquiryFor='<?php echo $queryRes['st_enquiry_for']; ?>';
-                    var oldNumber='<?php echo $queryRes['st_phno']; ?>';
-
-                    var memberName=$('#member_name').val();     
-                    var enquiryFor=$('#enquiry_for').val();                
-
                 $.ajax({
                     type:'post',
-                    data:{number:number,formName:'phoneNumberCheck',oldNumber:oldNumber,memberName:memberName,enquiryFor:enquiryFor,check_update:check_update,oldenquiryFor:oldenquiryFor},
+                    data:{number:number,formName:'phoneNumberCheck'},
                     url:'includes/datacontrol.php',
                     success:function(datas){
                         resolve(datas);
@@ -1016,14 +934,6 @@ if(@$_SESSION['user_type']!=''){
                         $('.visa_note').show();
                     }else{
                         $('.visa_note').hide();
-                    }                 
-                })
-                $('#hear_about').on("change",function(){
-                    var value=$(this).val();                    
-                    if( value.includes('9') ){
-                        $('.hear_about_child').show();
-                    }else{
-                        $('.hear_about_child').hide();
                     }                 
                 })
 
@@ -1080,6 +990,28 @@ if(@$_SESSION['user_type']!=''){
                         $('#member_name').val($('#student_name').val());
                     }
                 })
+
+                $('.rpl_close').click(function(){
+                    document.getElementById('rpl_form').reset();
+                    document.getElementById('short_group_form').reset();
+                    // document.getElementById('model_slot_popup').reset();
+                    // localStorage.getItem("rpl_array");
+                    $('#course_type').val(<?php echo $selectedCourseType; ?>).change();
+                 })
+                $('.short_group_close').click(function(){
+                    document.getElementById('rpl_form').reset();
+                    document.getElementById('short_group_form').reset();
+                    // document.getElementById('model_slot_popup').reset();
+                    // localStorage.getItem("short_grp");
+                    $('#course_type').val(<?php echo $selectedCourseType; ?>).change();
+                })
+                $('.model_slot_close').click(function(){
+                    document.getElementById('rpl_form').reset();
+                    document.getElementById('short_group_form').reset();
+                    document.getElementById('slot_book_form').reset();
+                    // localStorage.getItem("slot_book");
+                    $('#appointment_booked').val(<?php echo $selectedAppoint; ?>).change();
+                })
             })
 
             $(document).on('click','#enquiry_form',async() =>{
@@ -1090,11 +1022,10 @@ if(@$_SESSION['user_type']!=''){
 
                 var surname=$('#surname').val();
                 var suburb=$('#suburb').val();
-                var stuState=$('#stu_state').val();
+                var stuState=$('#stu_state').val() == 0 ? '' : $('#stu_state').val();
                 var postCode=$('#post_code').val();
                 var visit_before=$('#visit_before').val()==0 ? '' :$('#visit_before').val();
                 var hear_about=$('#hear_about').val();
-                var hearedby=$('#hearedby').val();
                 var plan_to_start_date=$('#plan_to_start_date').val();
                 var refer_select=$('#refer_select').val();
                 var referer_name=$('#referer_name').val();
@@ -1106,13 +1037,12 @@ if(@$_SESSION['user_type']!=''){
 
                 $('.remarks_check:checkbox:checked').each(function() {
                     remarks.push(this.value);
-                });           
-                     
+                });                
                 var streetDetails=$('#street_no').val();
                 var ethnicity=$('#ethnicity').val();                
                 var prefComment=$('#pref_comment').val();                
                 var enquiryFor=$('#enquiry_for').val()==0 ? '' : $('#enquiry_for').val();
-                var courseType=$('#course_type').val();
+                var courseType=$('#course_type').val()==0 ? '' : $('#course_type').val();
 
                 var emailregexp = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
                 // var courses=$('#courses').val()==0 ? '' : $('#courses').val();
@@ -1121,10 +1051,11 @@ if(@$_SESSION['user_type']!=''){
                 $('.courses_check:checkbox:checked').each(function() {
                     courses.push(this.value);
                 });
+                console.log(courses);
 
                 var payment=$('#payment_fee').val().trim();
                 var memberName=$('#member_name').val().trim();
-                var visaStatus=$('#visa_condition').val();
+                var visaStatus=$('#visa_condition').val()==0 ? '' : $('#visa_condition').val();
                 var visaNote=$('#visa_note').val();
                 var visaCondition=$('.visa_status').val();
 
@@ -1149,31 +1080,16 @@ if(@$_SESSION['user_type']!=''){
                 }else{
                     refer_select_error=1;
                 }
-
-                if(hear_about.length==0){
-                    hear_about_error=0;
-                }else if(hear_about.includes('9')){
-
-                    if(hearedby==''){
-                        hear_about_error=0;
-                    }else{
-                        hear_about_error=1;
-                    }
-
-                }else{
-                    hear_about_error=1;
-                }
                 
                 // checkPhone=0;            
-                // var error_ph=await getData(contactName).split('||')[0];
-                var enquiryIdRec=await getData(contactName);                
-                if(enquiryIdRec.split('||')[0]==1 || ( contactName=='' || contactName.length!=10 ) ){
+
+                if(await getData(contactName)==1 || ( contactName=='' || contactName.length!=10 ) ){
                     var phoneChecks=1;
                 }else{
                     var phoneChecks=0;
                 }
 
-                if(studentName==''|| phoneChecks==1 ||emailAddress==''|| (emailAddress!='' && !emailAddress.match(emailregexp)==true ) ||courses.length==0||payment=='' || enquiryDate=='' || refer_select_error==0 || hear_about_error==0 || surname=='' || enquiryFor==''|| postCode=='' || visit_before=='' || memberName=='' || visaNoteStatus==1 ){
+                if(studentName==''|| phoneChecks==1 ||emailAddress==''|| (emailAddress!='' && !emailAddress.match(emailregexp)==true ) ||courses.length==0||payment=='' || enquiryDate=='' || refer_select_error==0 || surname=='' || enquiryFor==''|| postCode=='' || visit_before=='' || memberName=='' || visaNoteStatus==1 ){
 
                     if(refer_select_error==0){
                         if(refer_select==0){
@@ -1198,32 +1114,6 @@ if(@$_SESSION['user_type']!=''){
                             $('#refer_select').closest('div').find('.error-feedback').hide();
                         }
                     }
-
-                    if(hear_about_error==0){
-                        if(hear_about.length==0){
-                            $('#hear_about').addClass('invalid-div');
-                            $('#hear_about').removeClass('valid-div');
-                            $('#hear_about').closest('div').find('.error-feedback').show();
-                        }else if(hear_about.includes('9')){
-
-                            if(hearedby==''){
-                                $('#hearedby').addClass('invalid-div');
-                                $('#hearedby').removeClass('valid-div');
-                                $('#hearedby').closest('div').find('.error-feedback').show();
-                            }else{
-                                $('#hearedby').addClass('valid-div');
-                                $('#hearedby').removeClass('invalid-div');
-                                $('#hearedby').closest('div').find('.error-feedback').hide();
-                            }
-
-                        }else{
-                            $('#hear_about').addClass('valid-div');
-                            $('#hear_about').removeClass('invalid-div');
-                            $('#hear_about').closest('div').find('.error-feedback').hide();
-                        }   
-                    }                 
-
-
                     if(studentName==''){
                         $('#student_name').addClass('invalid-div');
                         $('#student_name').removeClass('valid-div');
@@ -1239,12 +1129,11 @@ if(@$_SESSION['user_type']!=''){
                         $('#contact_num').addClass('invalid-div');
                         $('#contact_num').removeClass('valid-div');
                         $('#contact_num').closest('div').find('.error-feedback').show();
-                    }else if(enquiryIdRec.split('||')[0]==1){
+                    }else if(await getData(contactName)==1){
                         $('#contact_num').addClass('invalid-div');
                         $('#contact_num').removeClass('valid-div');                        
                         $('#contact_num').closest('div').find('.error-feedback').hide();     
                         $('#contact_num').closest('div').find('.phone_error').show();
-                        $('#contact_num').closest('div').find('#phone_err_id').html(enquiryIdRec.split('||')[1]);
                     }else{
                         $('#contact_num').addClass('valid-div');
                         $('#contact_num').removeClass('invalid-div');
@@ -1296,6 +1185,15 @@ if(@$_SESSION['user_type']!=''){
                         $('#payment_fee').removeClass('invalid-div');
                         $('#payment_fee').closest('div').find('.error-feedback').hide();
                     }
+                    // if(visaStatus==''){
+                    //     $('#visa_status').addClass('invalid-div');
+                    //     $('#visa_status').removeClass('valid-div');
+                    //     $('#visa_status').closest('div').find('.error-feedback').show();
+                    // }else{
+                    //     $('#visa_status').addClass('valid-div');
+                    //     $('#visa_status').removeClass('invalid-div');
+                    //     $('#visa_status').closest('div').find('.error-feedback').hide();
+                    // }
 
                     if(enquiryDate==''){
                         $('#enquiry_date').addClass('invalid-div');
@@ -1347,39 +1245,9 @@ if(@$_SESSION['user_type']!=''){
                         $('#visit_before').closest('div').find('.error-feedback').hide();
                     }
 
-                    // console.log($('.error-feedback:visible'));
-                    // $('.collapse').collapse();
-
-                    $('.error-feedback:visible').parent('.accordion-button').trigger('click');
-                    // if($('.error-feedback:visible').css('display')!='none'){
-
-                    // }
-
                 }else{
                     var checkId=$("#check_update").val();
-                    var forms=true;
-                    var appointForm=true;
-
-                    if(courseType==1){
-                        forms= submitRpl();
-                    }else if(courseType==5 || courseType==4){
-                        forms= submitShortGroup();
-                    }else if(courseType==3){
-                        if(reg_grp_names==''){
-                            $('#reg_grp_names').addClass('invalid-div');
-                             $('#reg_grp_names').removeClass('valid-div');
-                            return false;
-                        }else{
-                            $('#reg_grp_names').addClass('valid-div');
-                             $('#reg_grp_names').removeClass('invalid-div');
-                        }
-                    }
-
-                    if(appointment_booked==1){
-                        appointForm= submitSlot();
-                    }
-
-                    if(forms && appointForm ){
+                    if( ( (courseType==1 && submitRpl()) || (courseType==5 && submitShortGroup()) || (courseType==4 && submitShortGroup()) || (courseType!=4 || courseType!=5 || courseType!=1) ) && ( ( appointment_booked==1 && submitSlot() ) || appointment_booked==2 || appointment_booked==0 ) ){
 
                     $('#loader-container').css('display','flex');
                     $('#student_enquiry_form').css('opacity','0.1');
@@ -1387,7 +1255,7 @@ if(@$_SESSION['user_type']!=''){
                     courses=courses.filter(item => item !== '0');
                     remarks=remarks.filter(item => item !== '0');
                     
-                    details={formName:'student_enquiry',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,payment:payment,checkId:checkId,visaStatus:visaStatus,surname:surname,enquiryDate:enquiryDate,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:JSON.stringify(hear_about),hearedby:hearedby,memberName:memberName,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,visaNote:visaNote,prefComment:prefComment,comments:comments,appointment_booked:appointment_booked,visaCondition:visaCondition,remarks:remarks,reg_grp_names:reg_grp_names,streetDetails:streetDetails,enquiryFor:enquiryFor,courseType:courseType,shore:shore,ethnicity:ethnicity,rpl_arrays:JSON.stringify(rpl_array),short_grps:JSON.stringify(short_grp),slot_books:JSON.stringify(slot_book),admin_id:"<?php echo $_SESSION['user_id']; ?>",formId:<?php echo $form_id; ?>,rpl_status:'<?php echo $rpl_status; ?>',short_grp_status:'<?php echo $short_grp_status; ?>',reg_grp_status:'<?php echo $reg_grp_status; ?>',slot_book_status:'<?php echo $slot_book_status; ?>'};
+                    details={formName:'student_enquiry',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,payment:payment,checkId:checkId,visaStatus:visaStatus,surname:surname,enquiryDate:enquiryDate,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,memberName:memberName,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,visaNote:visaNote,prefComment:prefComment,comments:comments,appointment_booked:appointment_booked,visaCondition:visaCondition,remarks:remarks,reg_grp_names:reg_grp_names,streetDetails:streetDetails,enquiryFor:enquiryFor,courseType:courseType,shore:shore,ethnicity:ethnicity,rpl_arrays:JSON.stringify(rpl_array),short_grps:JSON.stringify(short_grp),slot_books:JSON.stringify(slot_book),admin_id:"<?php echo $_SESSION['user_id']; ?>",formId:<?php echo $form_id; ?>,rpl_status:'<?php echo $rpl_status; ?>',short_grp_status:'<?php echo $short_grp_status; ?>',reg_grp_status:'<?php echo $reg_grp_status; ?>',slot_book_status:'<?php echo $slot_book_status; ?>'};
                     $.ajax({
                         type:'post',
                         url:'includes/datacontrol.php',
@@ -1397,17 +1265,16 @@ if(@$_SESSION['user_type']!=''){
                                 $('.toast-text2').html('Cannot add record. Please try again later');
                                 $('#borderedToast2Btn').trigger('click');
                             }else if(data==2){
-                                // $( "#student_enquiry_form_parent" ).load(window.location.href + " #student_enquiry_form" );
+                                $( "#student_enquiry_form_parent" ).load(window.location.href + " #student_enquiry_form" );
                                 document.getElementById('student_enquiry_form').reset();
                                 $('#toast-text').html('Record Updated Successfully');
                                 $('#borderedToast1Btn').trigger('click');
                                 // $('#jelly_loader').hide();
                                 $('#loader-container').hide();
                                 $('#student_enquiry_form').css('opacity','');
-                                setTimeout(() => {location.reload();}, 700); 
-                                window.location.href="dashboard.php";
+                                // window.location.href="dashboard.php";
                             }else{
-                                // $( "#student_enquiry_form_parent" ).load(window.location.href + " #student_enquiry_form" );
+                                $( "#student_enquiry_form_parent" ).load(window.location.href + " #student_enquiry_form" );
                                 document.getElementById('student_enquiry_form').reset();
                                 $('#toast-text').html('New Enquiry Added');
                                 $('#borderedToast1Btn').trigger('click');
@@ -1418,11 +1285,10 @@ if(@$_SESSION['user_type']!=''){
                                 $('#loader-container').hide();
                                 // $('#jelly_loader').hide();
                                 $('#student_enquiry_form').css('opacity','');
-                                setTimeout(() => {location.reload();}, 700); 
                             }
                         }
                     })
-                    }
+                }
                 }
 
             })

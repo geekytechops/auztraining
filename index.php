@@ -133,7 +133,7 @@ if(@$_SESSION['user_id']!=''){
                             if(data==0){
                             document.getElementById('login_form').reset();
                                 $('#login_error').hide();
-                                window.location.href="dashboard.php";
+                                window.location.href="student_enquiry.php";
                             }else{
                                 $('#login_error').show();
                             }

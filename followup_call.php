@@ -218,7 +218,7 @@ if(@$_SESSION['user_type']!=''){
                                                 <?php if($eqId==0){ ?>
                                                 <button class="btn btn-primary" type="button" id="followup_check">Submit Enquiry</button>
                                                 <?php }else{ ?>
-                                                <button class="btn btn-primary" type="button" id="followup_check">Update Followup</button>
+                                                <button class="btn btn-primary" type="button" id="followup_check">Update Enquiry</button>
                                                 <?php } ?>
                                                 <input type="hidden" value="<?php echo $eqId; ?>" id="check_update">
                                         </form>

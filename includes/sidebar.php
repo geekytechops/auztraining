@@ -28,7 +28,7 @@
                             <?php 
                             if(@$_SESSION['user_type']==1){
                             ?>
-                            <li class="d-none">
+                            <li>
                                 <a href="enrolment.php" class="waves-effect">
                                     <i class="mdi mdi-account-plus"></i>
                                     <span>Enrolment</span>

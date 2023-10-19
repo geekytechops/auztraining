@@ -77,6 +77,15 @@ if(@$_SESSION['user_type']!=''){
                                         <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
+                                                        <label class="form-label" for="enquiry_id">Enquiry ID</label>
+                                                            <input type="text" placeholder="Enquiry ID" name="enquiry_id" class="form-control" id="enquiry_id">
+                                                        <div class="error-feedback">
+                                                            Please enter the RTO Name
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
                                                         <label class="form-label" for="rto_name">RTO Name</label>
                                                             <input type="text" placeholder="RTO Name" name="rto_name" class="form-control" id="rto_name">
                                                         <div class="error-feedback">
@@ -472,7 +481,7 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="study_reason">What is your highest COMPLETED school level?</label>
+                                                        <label class="form-label" for="study_reason">Reason for study</label>
                                                         <select name="study_reason" id="study_reason" class="form-control">
                                                         <?php  
                                                         $st_study_reason=['--select--','To get a job','To develop my existing business','To start my own business','To try for a dierent career','To get a better job / promotion','It was a requirement of my job','I wanted extra skills for my job','To get into another course or study','For personal interest or self-development','Other Reason'];
@@ -489,8 +498,8 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6 study_reason_child" style="display:<?php echo $queryRes['st_study_reason']=='' ? 'none' : (in_array(9,json_decode($queryRes['st_study_reason'])) ? 'block' : 'none' ); ?>">
                                                     <div class="mb-3">
-                                                    <label class="form-label" for="disability_type_other">Specify the Reason</label>
-                                                        <input type="text" class="form-control" placeholder="Specify" id="disability_type_other" value="<?php echo $queryRes['st_study_reason_other']; ?>" >
+                                                    <label class="form-label" for="study_reason_other">Specify the Reason</label>
+                                                        <input type="text" class="form-control" placeholder="Specify" id="study_reason_other" value="<?php echo $queryRes['st_study_reason_other']; ?>" >
                                                         <div class="error-feedback">
                                                             please Specify the Reason
                                                         </div>
@@ -786,6 +795,7 @@ $(document).on('click','#lookedup',function(){
 })
 
             $(document).on('click','#enrolment_check',function(){
+                var enquiry_id=$('#enquiry_id').val().trim();
                 var rto_name=$('#rto_name').val().trim();
                 var courses=$('#courses').val();
                 var branch_name=$('#branch_name').val().trim();
@@ -804,8 +814,7 @@ $(document).on('click','#lookedup',function(){
 
                 var em_full_name=$('#em_full_name').val().trim();
                 var em_relation=$('#em_relation').val().trim();
-                var em_mobile_num=$('#em_mobile_num').val().trim();
-                var em_agree_check=$('#em_agree_check:checked').val();
+                var em_mobile_num=$('#em_mobile_num').val().trim();                
                 var usi_id=$('#usi_id').val();
                 var emp_status=$('#emp_status').val()==0 ? '' : $('#emp_status').val();
                 var self_status=$('#self_status').val()==0 ? '' : $('#self_status').val();
@@ -813,6 +822,7 @@ $(document).on('click','#lookedup',function(){
                 var highest_school=$('#highest_school').val()==0 ? '' : $('#highest_school').val();
                 var study_reason=$('#study_reason').val()==0 ? '' : $('#study_reason').val();
 
+                var em_agree_check=$('.em_agree_check:checked').val();
                 var gender_check=$('.gender_check:checked').val();
                 var cred_tansf=$('.cred_tansf:checked').val();
                 var sec_school=$('.sec_school:checked').val();
@@ -832,8 +842,17 @@ $(document).on('click','#lookedup',function(){
                 var qual_9=$('.qual_9:checked').val();
                 var qual_10=$('.qual_10:checked').val();
 
-                if(born_country==2){
-                    var st_born_country=$('#st_born_country').val().trim();
+                var st_born_country=$('#st_born_country').val().trim();
+                var qual_name_8_other=$('#qual_name_8_other').val().trim();
+                var qual_name_10_other=$('#qual_name_10_other').val().trim();
+                var qual_name_9_other=$('#qual_name_9_other').val().trim();
+                var lan_spoken_other=$('#lan_spoken_other').val().trim();
+                var st_disability_type=$('#st_disability_type').val();
+                var disability_type_other=$('#disability_type_other').val();
+                var study_reason_other=$('#study_reason_other').val();
+                var emailregexp = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
+
+                if(born_country==2){                    
                     if(st_born_country==''){
                         var born_error=1;
                     }else{
@@ -844,7 +863,6 @@ $(document).on('click','#lookedup',function(){
                 }
                 
                 if(qual_8==1){
-                    var qual_name_8_other=$('#qual_name_8_other').val().trim();
                     if(qual_name_8_other==''){
                         var qual_8_error=1;
                     }else{
@@ -854,7 +872,6 @@ $(document).on('click','#lookedup',function(){
                     var qual_8_error=0;
                 }
                 if(qual_10==1){
-                    var qual_name_10_other=$('#qual_name_10_other').val().trim();
                     if(qual_name_10_other==''){
                         var qual_10_error=1;
                     }else{
@@ -864,7 +881,6 @@ $(document).on('click','#lookedup',function(){
                     var qual_10_error=0;
                 }
                 if(qual_9==1){
-                    var qual_name_9_other=$('#qual_name_9_other').val().trim();
                     if(qual_name_9_other==''){
                         var qual_9_error=1;
                     }else{
@@ -875,7 +891,6 @@ $(document).on('click','#lookedup',function(){
                 }
 
                 if(lan_spoken==1){
-                    var lan_spoken_other=$('#lan_spoken_other').val().trim();
                     if(lan_spoken_other==''){
                         var lan_error=1;
                     }else{
@@ -886,8 +901,6 @@ $(document).on('click','#lookedup',function(){
                 }
 
                 if(disability==1){
-                    var st_disability_type=$('#st_disability_type').val();
-                    var disability_type_other=$('#disability_type_other').val();
                     if(st_disability_type.length==0){
                         var disability_level_1=1;
                     }else{
@@ -911,7 +924,17 @@ $(document).on('click','#lookedup',function(){
                     var disability_level_1=0;
                 }
 
-                if( rto_name=='' || courses.length==0 || branch_name=='' || photo_upload=='' || given_name=='' || surname=='' || dob=='' || birth_country=='' || street_details=='' || sub_urb=='' || stu_state=='' || post_code=='' || tel_num=='' || emailAddress==''|| (emailAddress!='' && !emailAddress.match(emailregexp)==true ) || mobile_num=='' || em_full_name=='' || em_relation=='' || em_mobile_num=='' || usi_id=='' || emp_status=='' || self_status=='' || st_citizen=='' || highest_school=='' || born_error==1 || lan_error==1 ||  disability_level_1==1 || ( disability_level_1!=1 && disability_level_2==1 ) ||  study_reason=='' || qual_8_error==1 || qual_9_error==1 || qual_10_error==1 ){
+                if(study_reason==10){                    
+                    if(study_reason_other==''){
+                        var study_error=1;
+                    }else{
+                        var study_error=0;
+                    }
+                }else{
+                    var study_error=0;
+                }
+
+                if( rto_name=='' || courses.length==0 || branch_name=='' || photo_upload=='' || given_name=='' || surname=='' || dob=='' || birth_country=='' || street_details=='' || sub_urb=='' || stu_state=='' || post_code=='' || tel_num=='' || emailAddress==''|| (emailAddress!='' && !emailAddress.match(emailregexp)==true ) || mobile_num=='' || em_full_name=='' || em_relation=='' || em_mobile_num=='' || usi_id=='' || emp_status=='' || self_status=='' || st_citizen=='' || highest_school=='' || born_error==1|| lan_error==1 ||  disability_level_1==1 || ( disability_level_1!=1 && disability_level_2==1 ) ||  ( study_reason=='' || ( study_reason!='' && study_error==1 ))|| qual_8_error==1 || qual_9_error==1 || qual_10_error==1 ){
                     if(rto_name==''){
                         $('#rto_name').addClass('invalid-div');
                         $('#rto_name').removeClass('valid-div');
@@ -961,10 +984,22 @@ $(document).on('click','#lookedup',function(){
                         $('#study_reason').addClass('invalid-div');
                         $('#study_reason').removeClass('valid-div');
                         $('#study_reason').closest('div').find('.error-feedback').show();
+
+                        $('#study_reason_other').addClass('valid-div');
+                        $('#study_reason_other').removeClass('invalid-div');                        
+                        $('#study_reason_other').closest('div').find('.error-feedback').hide();
+                    }else if( study_reason!='' && study_error==1 ){
+                        $('#study_reason_other').addClass('invalid-div');
+                        $('#study_reason_other').removeClass('valid-div');                        
+                        $('#study_reason_other').closest('div').find('.error-feedback').show();
                     }else{
                         $('#study_reason').addClass('valid-div');
                         $('#study_reason').removeClass('invalid-div');                        
                         $('#study_reason').closest('div').find('.error-feedback').hide();
+
+                        $('#study_reason_other').addClass('valid-div');
+                        $('#study_reason_other').removeClass('invalid-div');                        
+                        $('#study_reason_other').closest('div').find('.error-feedback').hide();
                     }
                     if(disability_level_1==1){
                         $('button[data-id="st_disability_type"]').addClass('invalid-div');
@@ -1196,31 +1231,42 @@ $(document).on('click','#lookedup',function(){
                     }
                 }else{
                     var checkId=$("#check_update").val();
-                    details={formName:'student_enrol',qualifications:qualifications,contactName:contactName,emailAddress:emailAddress,venues:venue,middle_name:middle_name,source:source,name_main:name_main,checkId:checkId,courseName:courseName,courses:courses,enquiry_id:enquiry_id,given_name:given_name};
+
+                    var formData=new FormData();
+
+                    details={rto_name:rto_name,courses:courses,branch_name:branch_name,photo_upload:photo_upload,given_name:given_name,surname:surname,dob:dob,birth_country:birth_country,street_details:street_details,sub_urb:sub_urb,post_code:post_code,tel_num:tel_num,mobile_num:mobile_num,emailAddress:emailAddress,stu_state:stu_state,em_full_name:em_full_name,em_relation:em_relation,em_mobile_num:em_mobile_num,em_agree_check:em_agree_check,usi_id:usi_id,emp_status:emp_status,self_status:self_status,st_citizen:st_citizen,highest_school:highest_school,study_reason:study_reason,study_reason_other:study_reason_other,gender_check:gender_check,cred_tansf:cred_tansf,sec_school:sec_school,born_country:born_country,origin:origin,lan_spoken:lan_spoken,disability:disability,qual_1:qual_1,qual_2:qual_2,qual_3:qual_3,qual_4:qual_4,qual_5:qual_5,qual_6:qual_6,qual_7:qual_7,qual_8:qual_8,qual_9:qual_9,qual_10:qual_10,st_born_country:st_born_country,qual_name_8_other:qual_name_8_other,qual_name_10_other:qual_name_10_other,qual_name_9_other:qual_name_9_other,lan_spoken_other:lan_spoken_other,st_disability_type:st_disability_type,disability_type_other:disability_type_other,enquiry_id:enquiry_id};
+
+                    formData.append('details',JSON.stringify(details));
+                    formData.append('formName','student_enrols');
+                    formData.append('image',$('#photo_upload')[0].files[0]);
                     $.ajax({
                         type:'post',
                         url:'includes/datacontrol.php',
-                        data:details,
+                        data:formData,
+                        contentType: false,
+                        processData: false,
                         success:function(data){
-                            if(data==1 || data==0){
-                                $('.toast-text2').html('Cannot add record. Please try again later');
-                                $('#borderedToast2Btn').trigger('click');
-                            }else if(data==2){
-                                document.getElementById('student_enrol_form').reset();
-                                $('#enquiry_id').val('');
-                                $('#toast-text').html('Record Updated Successfully');
-                                $('#borderedToast1Btn').trigger('click');
-                                window.location.href="dashboard.php";
-                            }else{
-                                document.getElementById('student_enrol_form').reset();
-                                $('#enquiry_id').val('');
-                                $('#toast-text').html('New Record added Successfully');
-                                $('#borderedToast1Btn').trigger('click');
+                            console.log('length-'+details.length);
+                            console.log(data);
+                            // if(data==1 || data==0){
+                            //     $('.toast-text2').html('Cannot add record. Please try again later');
+                            //     $('#borderedToast2Btn').trigger('click');
+                            // }else if(data==2){
+                            //     document.getElementById('student_enrol_form').reset();
+                            //     $('#enquiry_id').val('');
+                            //     $('#toast-text').html('Record Updated Successfully');
+                            //     $('#borderedToast1Btn').trigger('click');
+                            //     window.location.href="dashboard.php";
+                            // }else{
+                            //     document.getElementById('student_enrol_form').reset();
+                            //     $('#enquiry_id').val('');
+                            //     $('#toast-text').html('New Record added Successfully');
+                            //     $('#borderedToast1Btn').trigger('click');
 
-                                $('#myModalLabel').html('Student ID Created:');
-                                $('.modal-body').html(data);
-                                $('#model_trigger').trigger('click');
-                            }
+                            //     $('#myModalLabel').html('Student ID Created:');
+                            //     $('.modal-body').html(data);
+                            //     $('#model_trigger').trigger('click');
+                            // }
                         }
                     })
                 }

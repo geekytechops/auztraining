@@ -870,20 +870,25 @@ if(@$_POST['formName']=='student_enrols'){
     $admin_id=$_SESSION['user_id'];
 
 
-    $query="INSERT INTO `student_enrolments`(`st_unique_id`, `st_enquiry_id`, `st_rto_name`, `st_courses`, `st_branch`, `st_photo`, `st_given_name`, `st_surname`, `st_dob`, `st_country_birth`, `st_street`, `st_suburb`, `st_state`, `st_post_code`, `st_tel_num`, `st_email`, `st_mobile`, `st_emerg_name`, `st_emerg_relation`, `st_emerg_mobile`, `st_emerg_agree`, `st_usi`, `st_emp_status`, `st_self_status`, `st_citizenship`, `st_gender`, `st_credit_transfer`, `st_highest_school`, `st_secondary_school`, `st_born_country`, `st_born_country_other`, `st_origin`, `st_lan_spoken`, `st_lan_spoken_other`, `st_disability`, `st_disability_type`, `st_disability_type_other`, `st_study_reason`, `st_study_reason_other`, `st_qual_1`, `st_qual_2`, `st_qual_3`, `st_qual_4`, `st_qual_5`, `st_qual_6`, `st_qual_7`, `st_qual_8`, `st_qual_9`, `st_qual_10`, `st_qual_8_other`, `st_qual_9_other`, `st_qual_10_other`, `st_created_by`) VALUES ('1','$enquiry_id','$rto_name','$courses','$branch_name','$photo','$given_name','$surname','$dob','$birth_country','$street_details','$sub_urb','$stu_state','$post_code','$tel_num','$emailAddress','$mobile_num','$em_full_name','$em_relation','$em_mobile_num','$em_agree_check','$usi_id','$emp_status','$self_status','$st_citizen','$gender_check','$cred_tansf','$highest_school','$sec_school','$born_country','$st_born_country','$origin','$lan_spoken','$lan_spoken_other','$disability','$st_disability_type','$disability_type_other','$study_reason','$study_reason_other','$qual_1','$qual_2','$qual_3','$qual_4','$qual_5','$qual_6','$qual_7','$qual_8','$qual_9','$qual_10','$qual_name_8_other','$qual_name_9_other','$qual_name_10_other',$admin_id);";
-
-    echo $query;
+    $query="INSERT INTO `student_enrolment`(`st_unique_id`, `st_enquiry_id`, `st_rto_name`, `st_courses`, `st_branch`, `st_photo`, `st_given_name`, `st_surname`, `st_dob`, `st_country_birth`, `st_street`, `st_suburb`, `st_state`, `st_post_code`, `st_tel_num`, `st_email`, `st_mobile`, `st_emerg_name`, `st_emerg_relation`, `st_emerg_mobile`, `st_emerg_agree`, `st_usi`, `st_emp_status`, `st_self_status`, `st_citizenship`, `st_gender`, `st_credit_transfer`, `st_highest_school`, `st_secondary_school`, `st_born_country`, `st_born_country_other`, `st_origin`, `st_lan_spoken`, `st_lan_spoken_other`, `st_disability`, `st_disability_type`, `st_disability_type_other`, `st_study_reason`, `st_study_reason_other`, `st_qual_1`, `st_qual_2`, `st_qual_3`, `st_qual_4`, `st_qual_5`, `st_qual_6`, `st_qual_7`, `st_qual_8`, `st_qual_9`, `st_qual_10`, `st_qual_8_other`, `st_qual_9_other`, `st_qual_10_other`, `st_created_by`) VALUES ('1','$enquiry_id','$rto_name','$courses','$branch_name','$photo','$given_name','$surname','$dob','$birth_country','$street_details','$sub_urb','$stu_state','$post_code','$tel_num','$emailAddress','$mobile_num','$em_full_name','$em_relation','$em_mobile_num','$em_agree_check','$usi_id','$emp_status','$self_status','$st_citizen','$gender_check','$cred_tansf','$highest_school','$sec_school','$born_country','$st_born_country','$origin','$lan_spoken','$lan_spoken_other','$disability','$st_disability_type','$disability_type_other','$study_reason','$study_reason_other','$qual_1','$qual_2','$qual_3','$qual_4','$qual_5','$qual_6','$qual_7','$qual_8','$qual_9','$qual_10','$qual_name_8_other','$qual_name_9_other','$qual_name_10_other',$admin_id);";
     $queryExec=mysqli_query($connection,$query);
     $lastId=mysqli_insert_id($connection);
 
-    echo $lastId;
+    $courseId=json_decode($courses)[0];
+    $courseID=mysqli_fetch_array(mysqli_query($connection,"SELECT * FROM courses WHERE course_id=$courseId"));
 
-    // $courseID=mysqli_fetch_array(mysqli_query($connection,"SELECT * FROM courses WHERE course_id=$courseId"));
+    $dateYear=date('Y');
+    $uniqueId=sprintf($dateYear.$courseID['course_name'].'%04d', $lastId);
 
-    // $uniqueId=sprintf($dateYear.$courseID['course_sname'].'%04d', $lastId);
+    $querys=mysqli_query($connection,"UPDATE student_enrolment SET st_unique_id='$uniqueId' WHERE st_enrol_id=$lastId");
+    $error=mysqli_error($connection);
 
-    // $querys=mysqli_query($connection,"UPDATE student_enrolment SET st_unique_id='$uniqueId' WHERE st_enrol_id=$lastId");
-    // $error=mysqli_error($connection);
+    if($error!=''){
+        echo 1;
+    }else{
+        echo $uniqueId;
+    }
+
 }
 
 if(@$_POST['formName']=='invoice_submit'){

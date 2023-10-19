@@ -7,6 +7,7 @@ if(@$_SESSION['user_type']!=''){
         $venue=mysqli_query($connection,"SELECT * from venue where venue_status!=1");
         $source=mysqli_query($connection,"SELECT * from source where source_status!=1");
         $courses=mysqli_query($connection,"SELECT * from courses where course_status!=1");
+        $Enquiries=mysqli_query($connection,"SELECT st_enquiry_id from student_enquiry where st_enquiry_id NOT IN (SELECT st_enquiry_id FROM `student_enrolment` ) AND st_enquiry_status!=1");
 
     if(isset($_GET['enrol'])){
         $Updatestatus=1;
@@ -77,8 +78,21 @@ if(@$_SESSION['user_type']!=''){
                                         <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="enquiry_id">Enquiry ID</label>
-                                                            <input type="text" placeholder="Enquiry ID" name="enquiry_id" class="form-control" id="enquiry_id">
+                                                        <label class="form-label" for="enquiry_id">Enquiry ID</label><br>
+                                                        <select name="enquiry_id" class="selectpicker enquiry_id" id="enquiry_id" title="Enquiry ID">
+                                                            <?php 
+                                                            
+                                                            if(mysqli_num_rows($Enquiries)!=0){                                                                
+                                                                while($EnquiriesRes=mysqli_fetch_array($Enquiries)){
+                                                                    echo "<option value='".$EnquiriesRes['st_enquiry_id']."'>".$EnquiriesRes['st_enquiry_id']."</option>";
+                                                                }
+                                                            }else{
+                                                                // echo "<option value='".$EnquiriesRes['st_enquiry_id']."'>".$EnquiriesRes['st_enquiry_id']."</option>";
+                                                            }
+
+                                                            ?>
+                                                        </select>
+                                                            <!-- <input type="text" placeholder="Enquiry ID" name="enquiry_id" class="form-control" id="enquiry_id"> -->
                                                         <div class="error-feedback">
                                                             Please enter the RTO Name
                                                         </div>

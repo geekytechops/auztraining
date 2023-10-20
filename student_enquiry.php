@@ -579,9 +579,6 @@ if(@$_SESSION['user_type']!=''){
                                                                             }
                                                                             echo $hear_select_opt;
                                                                         ?>
-                                                                        <!-- <optgroup label="Social Media"> -->
-                                                                            <!-- <option value="2">test</option> -->
-                                                                        <!-- </optgroup> -->
                                                                             </select>
                                                                         <div class="error-feedback">
                                                                             Please select atleast one option

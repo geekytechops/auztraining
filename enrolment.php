@@ -7,6 +7,7 @@ if(@$_SESSION['user_type']!=''){
         $venue=mysqli_query($connection,"SELECT * from venue where venue_status!=1");
         $source=mysqli_query($connection,"SELECT * from source where source_status!=1");
         $courses=mysqli_query($connection,"SELECT * from courses where course_status!=1");
+        // print_r($courses);
         $Enquiries=mysqli_query($connection,"SELECT st_enquiry_id from student_enquiry where st_enquiry_id NOT IN (SELECT st_enquiry_id FROM `student_enrolment` ) AND st_enquiry_status!=1");
 
     if(isset($_GET['enrol'])){
@@ -79,7 +80,8 @@ if(@$_SESSION['user_type']!=''){
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="enquiry_id">Enquiry ID</label><br>
-                                                        <select name="enquiry_id" class="selectpicker enquiry_id" id="enquiry_id" title="Enquiry ID">
+                                                        <?php if($queryRes['st_enquiry_id']=='' || $enrolId==0){ ?>
+                                                        <select name="enquiry_id" class="selectpicker enquiry_id" id="enquiry_id" title="--select--">
                                                             <?php 
                                                             
                                                             if(mysqli_num_rows($Enquiries)!=0){                                                                
@@ -92,6 +94,9 @@ if(@$_SESSION['user_type']!=''){
 
                                                             ?>
                                                         </select>
+                                                        <?php }else{ ?> 
+                                                        <input type="text" value="<?=$queryRes['st_enquiry_id']?>" id="enquiry_id" class="enquiry_id form-control" disabled>    
+                                                        <?php } ?>
                                                             <!-- <input type="text" placeholder="Enquiry ID" name="enquiry_id" class="form-control" id="enquiry_id"> -->
                                                         <div class="error-feedback">
                                                             Please enter the RTO Name
@@ -101,7 +106,7 @@ if(@$_SESSION['user_type']!=''){
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="rto_name">RTO Name</label>
-                                                            <input type="text" placeholder="RTO Name" name="rto_name" class="form-control" id="rto_name">
+                                                            <input type="text" placeholder="RTO Name" name="rto_name" class="form-control" id="rto_name" value="<?=$queryRes['st_rto_name']?>">
                                                         <div class="error-feedback">
                                                             Please enter the RTO Name
                                                         </div>
@@ -110,14 +115,31 @@ if(@$_SESSION['user_type']!=''){
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="courses">Course Name</label><br>
-                                                        <select  name="courses" class="selectpicker courses" data-selected-text-format="count" multiple id="courses" title="Courses">
-                                                        <!-- <option value="0">--select--</option> -->
-                                                        <?php 
+                                                        <?php
+                                                        $fetchOpts='';
+                                                         $fetchOpts.='<select  name="courses" class="selectpicker courses" data-selected-text-format="count" multiple id="courses" title="--select--">';
+
+                                                        $counts=1;
                                                         while($coursesRes=mysqli_fetch_array($courses)){
-                                                        ?>                                                            
-                                                            <option value="<?php echo $coursesRes['course_id']; ?>" <?php echo $queryRes['st_enrol_course']==$coursesRes['course_id'] ? 'selected' : ''; ?>><?php echo $coursesRes['course_sname'].'-'.$coursesRes['course_name']; ?></option>
-                                                            <?php } ?>
-                                                        </select>    
+                                                            if($queryRes['st_courses']!=''){
+                                                                $coursesSel=json_decode($queryRes['st_courses']);
+                                                            }else{
+                                                                $coursesSel=[];   
+                                                            }
+                                                                                                                
+                                                            if(in_array($counts,$coursesSel)){
+                                                                $selected='selected';
+                                                            }else{
+                                                                $selected='';
+                                                            }
+
+                                                            $fetchOpts.="<option value=".$coursesRes['course_id']." ".$selected.">".$coursesRes['course_sname']."-".$coursesRes['course_name']."</option>";
+                                                        $counts++;
+                                                        }
+                                                        $fetchOpts.='</select>';
+                                                        echo $fetchOpts;
+                                                        ?>
+                                                           
                                                         <div class="error-feedback">
                                                             Please select the Courses
                                                         </div>
@@ -126,7 +148,7 @@ if(@$_SESSION['user_type']!=''){
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="branch_name">Branch Name</label>
-                                                            <input type="text" name="branch_name" placeholder="Branch Name" class="form-control" id="branch_name">
+                                                            <input type="text" name="branch_name" placeholder="Branch Name" class="form-control" id="branch_name" value="<?=$queryRes['st_branch']?>">
                                                         <div class="error-feedback">
                                                             Please enter the Branch Name
                                                         </div>
@@ -1285,6 +1307,10 @@ $(document).on('click','#lookedup',function(){
                     })
                 }
 
+            })
+            $(document).ready(function(){
+
+                $(select).selectpicker('refresh');
             })
         </script>
     </body>

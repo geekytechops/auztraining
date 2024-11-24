@@ -59,8 +59,7 @@ if(@$_SESSION['user_type']==1){
                         <!-- end page title -->
                         <?php 
                         
-                        $query=mysqli_query($connection,"SELECT DISTINCT(st_unique_id) FROM `student_attendance`");
-
+                        $query=mysqli_query($connection,"SELECT DISTINCT(st_unique_id) FROM `student_attendance`");                        
                         ?>
                         <div class="row">
                             <div class="col-12">
@@ -96,7 +95,10 @@ if(@$_SESSION['user_type']==1){
                                                     $dateAttended='';
                                                     $id=$queryRes['st_unique_id'];
                                                     $stdUnit[$id]=array();
+                                                    echo "SELECT * FROM `student_enrolment` WHERE st_unique_id='$id'";
                                                     $selectName=mysqli_fetch_array(mysqli_query($connection,"SELECT * FROM `student_enrolment` WHERE st_unique_id='$id'"));
+                                                    print_r($selectName);
+                                                    // exit;
                                                         if($selectName['st_unique_id']!=''){
                                                     ?>
 
@@ -106,6 +108,7 @@ if(@$_SESSION['user_type']==1){
                                                         echo "<td>".$selectName['st_given_name'].' '.$selectName['st_middle_name']."</td>";
                                                         foreach($queryCrs as $value){
                                                         $coursedunit=$value['st_course_unit'];
+                                                        // echo "SELECT GROUP_CONCAT(st_unit_date SEPARATOR ', ') AS st_unit_dates from student_attendance where st_course_unit='$coursedunit' AND st_unique_id='$id'";
                                                         $checkUnitDate=mysqli_fetch_array(mysqli_query($connection,"SELECT GROUP_CONCAT(st_unit_date SEPARATOR ', ') AS st_unit_dates from student_attendance where st_course_unit='$coursedunit' AND st_unique_id='$id'"));
                                                         
 

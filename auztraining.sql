@@ -576,7 +576,7 @@ CREATE TABLE `student_enrolments` (
   `st_qual_9_other` date DEFAULT NULL,
   `st_qual_10_other` varchar(255) DEFAULT NULL,
   `st_status` tinyint(1) DEFAULT 0,
-  `st_created_date` date NOT NULL DEFAULT current_timestamp(),
+  `st_created_date` timestamp NOT NULL DEFAULT current_timestamp(),
   `st_created_by` int(11) DEFAULT NULL,
   `st_modified_date` date DEFAULT NULL,
   `st_modified_by` int(11) DEFAULT NULL

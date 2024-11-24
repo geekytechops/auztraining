@@ -832,7 +832,7 @@ if(@$_SESSION['user_type']!=''){
                                                     <div class="mb-3">
                                                         <label class="form-label" for="remarks">Remarks</label>
                                                         <?php  
-                                                        $st_remarks=['Seems to be interested to do course and need to contact asap','contacted and followed','Good with communication skills','Sent enrollement form online/ hard copies','Want to do the course asap','not interested much','Looking for government funding','Have done counselling before but wants to get more info','Counseling is done but enrolment is due','Have done the counselling before','Seems like having attitude','Want to book an appointment for counselling','Will callus back again','Planning to relocate to other state','Wants to get COE for visa purpose'];
+                                                        $st_remarks=['Seems to be interested to do course and need to contact asap','contacted and followed','Selected - Good with communication skills','Sent enrollement form online/ hard copies','Want to do the course asap','not interested much','Looking for government funding','Have done counselling before but wants to get more info','Counseling is done but enrolment is due','Have done the counselling before','Seems like having attitude','Want to book an appointment for counselling','Will callus back again','Planning to relocate to other state','Wants to get COE for visa purpose'];
 
                                                         if($queryRes['st_remarks']!=''){
                                                             $remarksSel=json_decode($queryRes['st_remarks']);

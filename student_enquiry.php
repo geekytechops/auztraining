@@ -557,12 +557,12 @@ if(@$_SESSION['user_type']!=''){
                                                                 <div class="col-md-12">
                                                                     <div class="mb-3">
                                                                         <label class="form-label" for="hear_about">How did you hear about us?<span class="asterisk">*</span></label><br>
-                                                                        <input type="text" name="hear_about" id="hear_about" class="form-control">
+                                                                        <input type="text" name="hear_about" id="hear_about" class="form-control" value="<?= $heared_about=$queryRes['st_heared']=='' ? '' : $queryRes['st_heared'];?>">
                                                                         <!-- <select name="hear_about" class="selectpicker hear_about" data-selected-text-format="count" multiple id="hear_about" title="Heared From"> -->
                                                                         <?php  
                                                                             // $st_heared=['Word of Mouth','Family or Friends','Website','Gumtree','Facebook','Instagram','Linkedin','Mail outs','Migration Agency','Other:'];
                                                                             // $hear_select_opt='';                                                            
-                                                                            echo $heared_about=$queryRes['st_heared']=='' ? '' : $queryRes['st_heared'];
+                                                                            // echo $heared_about=$queryRes['st_heared']=='' ? '' : $queryRes['st_heared'];
                                                                             // $heared_about=$queryRes['st_heared']=='' ? array() : json_decode($queryRes['st_heared']);
                                                                             // for($i=0;$i<count($st_heared);$i++){
 
@@ -590,10 +590,10 @@ if(@$_SESSION['user_type']!=''){
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                <!-- <div class="col-md-12 hear_about_child" style="display:<?php echo $queryRes['st_heared']=='' ? 'none' : (in_array(9,json_decode($queryRes['st_heared'])) ? 'block' : 'none' ); ?>">
+                                                                <!-- <div class="col-md-12 hear_about_child" style="display:">
                                                                     <div class="mb-3">
                                                                         <label class="form-label" for="hearedby">Specify How you heared about us</label>
-                                                                        <input type="text" class="form-control" id="hearedby" value="<?php echo $queryRes['st_hearedby']; ?>" >
+                                                                        <input type="text" class="form-control" id="hearedby" value="" >
                                                                         <div class="error-feedback">
                                                                             Please enter the source heared
                                                                         </div>

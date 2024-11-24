@@ -25,7 +25,7 @@ if(@$_SESSION['user_type']!=''){
             $rpl_status=1;
             $rpl_array=["rpl_exp" => $queryRes_rpls['rpl_exp'] , "exp_in"=>$queryRes_rpls['rpl_exp_in'] , "exp_docs"=>$queryRes_rpls['rpl_exp_docs'] , "exp_prev"=>$queryRes_rpls['rpl_exp_prev_qual'] , "exp_name"=>$queryRes_rpls['rpl_exp_role']  , "exp_years"=>$queryRes_rpls['rpl_exp_years']  , "exp_prev_name"=>$queryRes_rpls['rpl_exp_qual_name']];        
         }else{
-            $rpl_status=0;
+            $rpl_status=0;  
             $rpl_array=["rpl_exp" => '' , "exp_in"=>'' , "exp_docs"=>'' , "exp_prev"=>'' , "exp_name"=>''  , "exp_years"=>''  , "exp_prev_name"=>'']; 
         }
 
@@ -410,7 +410,7 @@ if(@$_SESSION['user_type']!=''){
                                                         ?>
                                                     </select>
                                                 </div>
-                                                <div class="col-md-6 rpl_prev_child">
+                                                <div class="col-md-6 rpl_prev_child" style="display:<?php echo $rpl_array['exp_prev']==1 ? 'block' : 'none' ?>">
                                                     <label class="form-label" for="exp_prev_name">Previous Qualification Name</label>
                                                     <input type="text" name="exp_prev_name" class="form-control" id="exp_prev_name" placeholder="Name" value="<?php echo $rpl_array['exp_prev_name']; ?>">
                                                 </div>
@@ -579,9 +579,6 @@ if(@$_SESSION['user_type']!=''){
                                                                             }
                                                                             echo $hear_select_opt;
                                                                         ?>
-                                                                        <!-- <optgroup label="Social Media"> -->
-                                                                            <!-- <option value="2">test</option> -->
-                                                                        <!-- </optgroup> -->
                                                                             </select>
                                                                         <div class="error-feedback">
                                                                             Please select atleast one option
@@ -714,7 +711,7 @@ if(@$_SESSION['user_type']!=''){
                                                                         <?php  
                                                                         $st_shore=['--select--','OffShore','OnShore'];
                                                                         for($i=0;$i<count($st_shore);$i++){
-                                                                            $checked= $i==$queryRes['st_refered'] ? 'selected' : '';
+                                                                            $checked= $i==$queryRes['st_shore'] ? 'selected' : '';
                                                                             echo '<option value="'.$i.'" '.$checked.'>'.$st_shore[$i].'</option>';
                                                                         }
                                                                         ?>
@@ -832,7 +829,7 @@ if(@$_SESSION['user_type']!=''){
                                                     <div class="mb-3">
                                                         <label class="form-label" for="remarks">Remarks</label>
                                                         <?php  
-                                                        $st_remarks=['Seems to be interested to do course and need to contact asap','contacted and followed','Selected - Good with communication skills','Sent enrollement form online/ hard copies','Want to do the course asap','not interested much','Looking for government funding','Have done counselling before but wants to get more info','Counseling is done but enrolment is due','Have done the counselling before','Seems like having attitude','Want to book an appointment for counselling','Will callus back again','Planning to relocate to other state','Wants to get COE for visa purpose'];
+                                                        $st_remarks=['Seems to be interested to do course and need to contact asap','contacted and followed','Good with communication skills','Sent enrollement form online/ hard copies','Want to do the course asap','not interested much','Looking for government funding','Have done counselling before but wants to get more info','Counseling is done but enrolment is due','Have done the counselling before','Seems like having attitude','Want to book an appointment for counselling','Will callus back again','Planning to relocate to other state','Wants to get COE for visa purpose'];
 
                                                         if($queryRes['st_remarks']!=''){
                                                             $remarksSel=json_decode($queryRes['st_remarks']);
@@ -1090,7 +1087,7 @@ if(@$_SESSION['user_type']!=''){
 
                 var surname=$('#surname').val();
                 var suburb=$('#suburb').val();
-                var stuState=$('#stu_state').val() == 0 ? '' : $('#stu_state').val();
+                var stuState=$('#stu_state').val();
                 var postCode=$('#post_code').val();
                 var visit_before=$('#visit_before').val()==0 ? '' :$('#visit_before').val();
                 var hear_about=$('#hear_about').val();
@@ -1404,8 +1401,8 @@ if(@$_SESSION['user_type']!=''){
                                 // $('#jelly_loader').hide();
                                 $('#loader-container').hide();
                                 $('#student_enquiry_form').css('opacity','');
-                                setTimeout(() => {location.reload();}, 500); 
-                                // window.location.href="dashboard.php";
+                                setTimeout(() => {location.reload();}, 700); 
+                                window.location.href="dashboard.php";
                             }else{
                                 // $( "#student_enquiry_form_parent" ).load(window.location.href + " #student_enquiry_form" );
                                 document.getElementById('student_enquiry_form').reset();
@@ -1418,7 +1415,7 @@ if(@$_SESSION['user_type']!=''){
                                 $('#loader-container').hide();
                                 // $('#jelly_loader').hide();
                                 $('#student_enquiry_form').css('opacity','');
-                                setTimeout(() => {location.reload();}, 500); 
+                                setTimeout(() => {location.reload();}, 700); 
                             }
                         }
                     })

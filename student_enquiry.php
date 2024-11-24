@@ -25,7 +25,7 @@ if(@$_SESSION['user_type']!=''){
             $rpl_status=1;
             $rpl_array=["rpl_exp" => $queryRes_rpls['rpl_exp'] , "exp_in"=>$queryRes_rpls['rpl_exp_in'] , "exp_docs"=>$queryRes_rpls['rpl_exp_docs'] , "exp_prev"=>$queryRes_rpls['rpl_exp_prev_qual'] , "exp_name"=>$queryRes_rpls['rpl_exp_role']  , "exp_years"=>$queryRes_rpls['rpl_exp_years']  , "exp_prev_name"=>$queryRes_rpls['rpl_exp_qual_name']];        
         }else{
-            $rpl_status=0;  
+            $rpl_status=0;
             $rpl_array=["rpl_exp" => '' , "exp_in"=>'' , "exp_docs"=>'' , "exp_prev"=>'' , "exp_name"=>''  , "exp_years"=>''  , "exp_prev_name"=>'']; 
         }
 
@@ -410,7 +410,7 @@ if(@$_SESSION['user_type']!=''){
                                                         ?>
                                                     </select>
                                                 </div>
-                                                <div class="col-md-6 rpl_prev_child" style="display:<?php echo $rpl_array['exp_prev']==1 ? 'block' : 'none' ?>">
+                                                <div class="col-md-6 rpl_prev_child">
                                                     <label class="form-label" for="exp_prev_name">Previous Qualification Name</label>
                                                     <input type="text" name="exp_prev_name" class="form-control" id="exp_prev_name" placeholder="Name" value="<?php echo $rpl_array['exp_prev_name']; ?>">
                                                 </div>
@@ -557,43 +557,48 @@ if(@$_SESSION['user_type']!=''){
                                                                 <div class="col-md-12">
                                                                     <div class="mb-3">
                                                                         <label class="form-label" for="hear_about">How did you hear about us?<span class="asterisk">*</span></label><br>
-                                                                        <select name="hear_about" class="selectpicker hear_about" data-selected-text-format="count" multiple id="hear_about" title="Heared From">
+                                                                        <input type="text" name="hear_about" id="hear_about" class="form-control" value="<?= $heared_about=$queryRes['st_heared']=='' ? '' : $queryRes['st_heared'];?>">
+                                                                        <!-- <select name="hear_about" class="selectpicker hear_about" data-selected-text-format="count" multiple id="hear_about" title="Heared From"> -->
                                                                         <?php  
-                                                                            $st_heared=['Word of Mouth','Family or Friends','Website','Gumtree','Facebook','Instagram','Linkedin','Mail outs','Migration Agency','Other:'];
-                                                                            $hear_select_opt='';                                                            
-                                                                            $heared_about=$queryRes['st_heared']=='' ? array() : json_decode($queryRes['st_heared']);
-                                                                            for($i=0;$i<count($st_heared);$i++){
+                                                                            // $st_heared=['Word of Mouth','Family or Friends','Website','Gumtree','Facebook','Instagram','Linkedin','Mail outs','Migration Agency','Other:'];
+                                                                            // $hear_select_opt='';                                                            
+                                                                            // echo $heared_about=$queryRes['st_heared']=='' ? '' : $queryRes['st_heared'];
+                                                                            // $heared_about=$queryRes['st_heared']=='' ? array() : json_decode($queryRes['st_heared']);
+                                                                            // for($i=0;$i<count($st_heared);$i++){
 
-                                                                                if(in_array($i,$heared_about) && count($heared_about)!=0){
-                                                                                    $checked="selected";
-                                                                                }else{
-                                                                                    $checked= "";
-                                                                                }                                                            
+                                                                            //     if(in_array($i,$heared_about) && count($heared_about)!=0){
+                                                                            //         $checked="selected";
+                                                                            //     }else{
+                                                                            //         $checked= "";
+                                                                            //     }                                                            
 
-                                                                                $hear_select_opt.= '<option value="'.$i.'" '.$checked.'>'.$st_heared[$i].'</option>';
-                                                                                if($i==4){
-                                                                                    $hear_select_opt.='<optgroup Label="Social Media">';
-                                                                                }else if($i==7){
-                                                                                    $hear_select_opt.='</optgroup>';
-                                                                                }
-                                                                            }
-                                                                            echo $hear_select_opt;
+                                                                            //     $hear_select_opt.= '<option value="'.$i.'" '.$checked.'>'.$st_heared[$i].'</option>';
+                                                                            //     if($i==4){
+                                                                            //         $hear_select_opt.='<optgroup Label="Social Media">';
+                                                                            //     }else if($i==7){
+                                                                            //         $hear_select_opt.='</optgroup>';
+                                                                            //     }
+                                                                            // }
+                                                                            // echo $hear_select_opt;
                                                                         ?>
-                                                                            </select>
+                                                                        <!-- <optgroup label="Social Media"> -->
+                                                                            <!-- <option value="2">test</option> -->
+                                                                        <!-- </optgroup> -->
+                                                                            <!-- </select> -->
                                                                         <div class="error-feedback">
                                                                             Please select atleast one option
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                <div class="col-md-12 hear_about_child" style="display:<?php echo $queryRes['st_heared']=='' ? 'none' : (in_array(9,json_decode($queryRes['st_heared'])) ? 'block' : 'none' ); ?>">
+                                                                <!-- <div class="col-md-12 hear_about_child" style="display:">
                                                                     <div class="mb-3">
                                                                         <label class="form-label" for="hearedby">Specify How you heared about us</label>
-                                                                        <input type="text" class="form-control" id="hearedby" value="<?php echo $queryRes['st_hearedby']; ?>" >
+                                                                        <input type="text" class="form-control" id="hearedby" value="" >
                                                                         <div class="error-feedback">
                                                                             Please enter the source heared
                                                                         </div>
                                                                     </div>
-                                                                </div>
+                                                                </div> -->
                                                                 
                                                                 <div class="col-md-12">
                                                                     <div class="mb-3">
@@ -711,7 +716,7 @@ if(@$_SESSION['user_type']!=''){
                                                                         <?php  
                                                                         $st_shore=['--select--','OffShore','OnShore'];
                                                                         for($i=0;$i<count($st_shore);$i++){
-                                                                            $checked= $i==$queryRes['st_shore'] ? 'selected' : '';
+                                                                            $checked= $i==$queryRes['st_refered'] ? 'selected' : '';
                                                                             echo '<option value="'.$i.'" '.$checked.'>'.$st_shore[$i].'</option>';
                                                                         }
                                                                         ?>
@@ -829,7 +834,7 @@ if(@$_SESSION['user_type']!=''){
                                                     <div class="mb-3">
                                                         <label class="form-label" for="remarks">Remarks</label>
                                                         <?php  
-                                                        $st_remarks=['Seems to be interested to do course and need to contact asap','contacted and followed','Good with communication skills','Sent enrollement form online/ hard copies','Want to do the course asap','not interested much','Looking for government funding','Have done counselling before but wants to get more info','Counseling is done but enrolment is due','Have done the counselling before','Seems like having attitude','Want to book an appointment for counselling','Will callus back again','Planning to relocate to other state','Wants to get COE for visa purpose'];
+                                                        $st_remarks=['Seems to be interested to do course and need to contact asap','contacted and followed','Selected - Good with communication skills','Sent enrollement form online/ hard copies','Want to do the course asap','not interested much','Looking for government funding','Have done counselling before but wants to get more info','Counseling is done but enrolment is due','Have done the counselling before','Seems like having attitude','Want to book an appointment for counselling','Will callus back again','Planning to relocate to other state','Wants to get COE for visa purpose'];
 
                                                         if($queryRes['st_remarks']!=''){
                                                             $remarksSel=json_decode($queryRes['st_remarks']);
@@ -1015,14 +1020,14 @@ if(@$_SESSION['user_type']!=''){
                         $('.visa_note').hide();
                     }                 
                 })
-                $('#hear_about').on("change",function(){
+              /*  $('#hear_about').on("change",function(){
                     var value=$(this).val();                    
                     if( value.includes('9') ){
                         $('.hear_about_child').show();
                     }else{
                         $('.hear_about_child').hide();
                     }                 
-                })
+                }) */
 
                 $('#course_type').on("change",function(){
                     var value=$(this).val();
@@ -1087,7 +1092,7 @@ if(@$_SESSION['user_type']!=''){
 
                 var surname=$('#surname').val();
                 var suburb=$('#suburb').val();
-                var stuState=$('#stu_state').val();
+                var stuState=$('#stu_state').val() == 0 ? '' : $('#stu_state').val();
                 var postCode=$('#post_code').val();
                 var visit_before=$('#visit_before').val()==0 ? '' :$('#visit_before').val();
                 var hear_about=$('#hear_about').val();
@@ -1147,16 +1152,22 @@ if(@$_SESSION['user_type']!=''){
                     refer_select_error=1;
                 }
 
-                if(hear_about.length==0){
+                // if(hear_about.length==0){
+                //     hear_about_error=0;
+                // }else if(hear_about.includes('9')){
+
+                //     if(hearedby==''){
+                //         hear_about_error=0;
+                //     }else{
+                //         hear_about_error=1;
+                //     }
+
+                // }else{
+                //     hear_about_error=1;
+                // }
+
+                if(hear_about==''){
                     hear_about_error=0;
-                }else if(hear_about.includes('9')){
-
-                    if(hearedby==''){
-                        hear_about_error=0;
-                    }else{
-                        hear_about_error=1;
-                    }
-
                 }else{
                     hear_about_error=1;
                 }
@@ -1384,7 +1395,7 @@ if(@$_SESSION['user_type']!=''){
                     courses=courses.filter(item => item !== '0');
                     remarks=remarks.filter(item => item !== '0');
                     
-                    details={formName:'student_enquiry',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,payment:payment,checkId:checkId,visaStatus:visaStatus,surname:surname,enquiryDate:enquiryDate,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:JSON.stringify(hear_about),hearedby:hearedby,memberName:memberName,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,visaNote:visaNote,prefComment:prefComment,comments:comments,appointment_booked:appointment_booked,visaCondition:visaCondition,remarks:remarks,reg_grp_names:reg_grp_names,streetDetails:streetDetails,enquiryFor:enquiryFor,courseType:courseType,shore:shore,ethnicity:ethnicity,rpl_arrays:JSON.stringify(rpl_array),short_grps:JSON.stringify(short_grp),slot_books:JSON.stringify(slot_book),admin_id:"<?php echo $_SESSION['user_id']; ?>",formId:<?php echo $form_id; ?>,rpl_status:'<?php echo $rpl_status; ?>',short_grp_status:'<?php echo $short_grp_status; ?>',reg_grp_status:'<?php echo $reg_grp_status; ?>',slot_book_status:'<?php echo $slot_book_status; ?>'};
+                    details={formName:'student_enquiry',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,payment:payment,checkId:checkId,visaStatus:visaStatus,surname:surname,enquiryDate:enquiryDate,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,hearedby:hearedby,memberName:memberName,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,visaNote:visaNote,prefComment:prefComment,comments:comments,appointment_booked:appointment_booked,visaCondition:visaCondition,remarks:remarks,reg_grp_names:reg_grp_names,streetDetails:streetDetails,enquiryFor:enquiryFor,courseType:courseType,shore:shore,ethnicity:ethnicity,rpl_arrays:JSON.stringify(rpl_array),short_grps:JSON.stringify(short_grp),slot_books:JSON.stringify(slot_book),admin_id:"<?php echo $_SESSION['user_id']; ?>",formId:<?php echo $form_id; ?>,rpl_status:'<?php echo $rpl_status; ?>',short_grp_status:'<?php echo $short_grp_status; ?>',reg_grp_status:'<?php echo $reg_grp_status; ?>',slot_book_status:'<?php echo $slot_book_status; ?>'};
                     $.ajax({
                         type:'post',
                         url:'includes/datacontrol.php',
@@ -1401,8 +1412,8 @@ if(@$_SESSION['user_type']!=''){
                                 // $('#jelly_loader').hide();
                                 $('#loader-container').hide();
                                 $('#student_enquiry_form').css('opacity','');
-                                setTimeout(() => {location.reload();}, 700); 
-                                window.location.href="dashboard.php";
+                                setTimeout(() => {location.reload();}, 500); 
+                                // window.location.href="dashboard.php";
                             }else{
                                 // $( "#student_enquiry_form_parent" ).load(window.location.href + " #student_enquiry_form" );
                                 document.getElementById('student_enquiry_form').reset();
@@ -1415,7 +1426,7 @@ if(@$_SESSION['user_type']!=''){
                                 $('#loader-container').hide();
                                 // $('#jelly_loader').hide();
                                 $('#student_enquiry_form').css('opacity','');
-                                setTimeout(() => {location.reload();}, 700); 
+                                setTimeout(() => {location.reload();}, 500); 
                             }
                         }
                     })

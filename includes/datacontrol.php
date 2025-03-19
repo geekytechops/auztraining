@@ -1,5 +1,9 @@
 <?php 
 require('dbconnect.php');
+require_once __DIR__ . '/../vendor/tecnickcom/tcpdf/tcpdf.php';
+
+// use TCPDF;
+
 session_start();
 if(@$_POST['formName']=='logout'){
     session_destroy();
@@ -891,29 +895,315 @@ if(@$_POST['formName']=='student_enrols'){
 
 }
 
+if (@$_POST['formName'] == 'invoice_submit_company') {
+
+     // Sanitize input
+     
+    $invoiceNumber = uniqid('INV_');
+     $address = mysqli_real_escape_string($connection, $_POST['address']);
+     $phone = mysqli_real_escape_string($connection, $_POST['phone']);
+     
+     $contact_number = mysqli_real_escape_string($connection, $_POST['contact_number']);
+     $contact_name = mysqli_real_escape_string($connection, $_POST['contact_name']);
+     $contact_email = mysqli_real_escape_string($connection, $_POST['contact_email']);
+     $contact_role = mysqli_real_escape_string($connection, $_POST['contact_role']);
+     
+     $num_students = (int) $_POST['num_students'];
+     $students_names = explode("\n", trim($_POST['students_names'])); // Convert to array
+     $students_names_json = json_encode($students_names);
+     
+     $course_name = mysqli_real_escape_string($connection, $_POST['course_name']);
+     $total_amount = (float) $_POST['total_amount'];
+     $paid_amount = (float) $_POST['paid_amount'];
+     $date_time = mysqli_real_escape_string($connection, $_POST['date_time']);
+     $payment_mode = mysqli_real_escape_string($connection, $_POST['payment_mode']);
+     $balance_amount = (float) $_POST['balance_amount'];
+     
+     $date = date('Y');
+ 
+     // Contact Person Data as JSON
+     $contact_person = json_encode([
+         "name" => $contact_name,
+         "email" => $contact_email,
+         "role" => $contact_role,
+         "phone" => $contact_number
+     ]);
+ 
+     // Insert data into database with invoice_type = 2
+     $query = "INSERT INTO payment_records 
+         (address, phone, contact_person, num_students, students_names, course, total_amount, paid_amount, dateTime, paymentMode, balance_amount, invoice_number, invoice_type)
+         VALUES 
+         ( '$address', '$phone', '$contact_person', '$num_students', '$students_names_json', '$course_name', '$total_amount', '$paid_amount', '$date_time', '$payment_mode', '$balance_amount', '$invoiceNumber', '2')";
+ 
+     $insert = mysqli_query($connection, $query);
+ 
+     if ($insert) {
+         $lastId = mysqli_insert_id($connection);
+         $uniqueId = sprintf('INV%s%05d', $date, $lastId);
+ 
+         // Update with unique invoice ID
+         mysqli_query($connection, "UPDATE payment_records SET invoice_number='$uniqueId' WHERE id=$lastId");
+ 
+         // Generate PDF invoice
+         $pdf = new TCPDF();
+         $pdf->SetCreator(PDF_CREATOR);
+         $pdf->SetAuthor('Auz Training College Pty Ltd');
+         $pdf->SetTitle('Invoice');
+ 
+         $pdf->AddPage();
+ 
+         // Company Information
+         $company_title = "Auz Training College Pty Ltd";
+         $company_bsb = "BSB: 065 000";
+         $company_account = "A/c Number: 1255 8010";
+ 
+         // Add Logo
+         $pdf->Image('../assets/images/logo-dark.png', 15, 10, 40, 20, '', '', '', false, 300);
+ 
+         // Set Title
+         $pdf->SetFont('helvetica', 'B', 16);
+         $pdf->Cell(0, 40, "Invoice", 0, 1, 'C');
+ 
+         // Company Details
+         $pdf->SetFont('helvetica', '', 10);
+         $pdf->Cell(0, 5, $company_title, 0, 1, 'R');
+         $pdf->Cell(0, 5, $company_bsb, 0, 1, 'R');
+         $pdf->Cell(0, 5, $company_account, 0, 1, 'R');
+         $pdf->Cell(0, 5, "Invoice Number: " . $uniqueId, 0, 1, 'R');
+         $pdf->Ln(10); // Line break
+ 
+         // Invoice Content
+         $html = "
+         <style>
+             table { border-collapse: collapse; width: 100%; }
+             th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+             th { background-color: #f2f2f2; }
+         </style>
+         <table>
+             <tr><th>Field</th><th>Details</th></tr>
+             <tr><td><strong>Company Name:</strong></td><td>test company</td></tr>
+             <tr><td><strong>Address:</strong></td><td>$address</td></tr>
+             <tr><td><strong>Phone No:</strong></td><td>$phone</td></tr>
+             <tr><td><strong>Contact Person's Name:</strong></td><td>$contact_name</td></tr>
+             <tr><td><strong>Contact Person's Email:</strong></td><td>$contact_email</td></tr>
+             <tr><td><strong>Contact Person's Role:</strong></td><td>$contact_role</td></tr>
+             <tr><td><strong>Contact Person's Phone:</strong></td><td>$contact_number</td></tr>
+             <tr><td><strong>Number of Students:</strong></td><td>$num_students</td></tr>
+             <tr><td><strong>Students Names:</strong></td><td>$students_names_json</td></tr>
+             <tr><td><strong>Course Name:</strong></td><td>$course_name</td></tr>
+             <tr><td><strong>Total Amount:</strong></td><td>$$total_amount</td></tr>
+             <tr><td><strong>Paid Amount:</strong></td><td>$$paid_amount</td></tr>
+             <tr><td><strong>Date & Time:</strong></td><td>$date_time</td></tr>
+             <tr><td><strong>Payment Mode:</strong></td><td>$payment_mode</td></tr>
+             <tr><td><strong>Balance Amount:</strong></td><td>$$balance_amount</td></tr>
+         </table>
+         <br><br>
+         <strong>Terms & Conditions:</strong><br>
+         Please do the payment using the below Bank account details.<br>
+         <br>
+         <strong>A/c Name:</strong> Auz Training College Pty Ltd<br>
+         <strong>BSB:</strong> 065 000<br>
+         <strong>A/c Number:</strong> 1255 8010<br>
+         <br>
+         Invoices we paid – Raise training, placement invoices.
+         ";
+ 
+         $pdf->writeHTML($html, true, false, true, false, '');
+
+         $invoicePdfPath = __DIR__ . "/invoices/$uniqueId.pdf";
+         $pdf->Output($invoicePdfPath, 'F'); // Save to file
+ 
+         echo json_encode(["status" => "success", "invoice_number" => $uniqueId, "pdf_path" => $invoicePdfPath]);
+     } else {
+         echo json_encode(["status" => "error", "message" => mysqli_error($connection)]);
+     }
+}
+
+
 if(@$_POST['formName']=='invoice_submit'){
-$payment_date=$_POST['payment_date'];
-$amount_due=$_POST['amount_due'];
-$amount_paid=$_POST['amount_paid'];
-$course_fee=$_POST['course_fee'];
-$course_name=$_POST['course_name'];
-$enrol_id=$_POST['enrol_id'];
-$student_name=$_POST['student_name'];
-$date=date('Y');
 
-$query=mysqli_query($connection,"INSERT INTO invoices(inv_std_name,st_unique_id,inv_course,inv_fee,inv_paid,inv_due,inv_payment_date)VALUES('$student_name','$enrol_id','$course_name','$course_fee','$amount_paid',$amount_due,'$payment_date')");
-$lastId=mysqli_insert_id($connection);
-$uniqueId=sprintf('INV'.$date.'%05d', $lastId);
+    $invoice_number = uniqid('INV_');
+    $given_name = $_POST['given_name'];
+    $surname = $_POST['surname'];
+    $address = $_POST['address'];
+    $phone = $_POST['phone'];
+    $email = $_POST['email'];
+    $course = $_POST['course'];
+    $totalFees = $_POST['totalFees'];
+    $paymentDone = $_POST['paymentDone'];
+    $datePaid = $_POST['datePaid'];
+    $remainingDue = $_POST['remainingDue'];
+    $comments = $_POST['comments'];
+    $instalmentPaid = $_POST['instalmentPaid'];
+    $dateTime = $_POST['dateTime'];
+    $whoTookPayment = $_POST['whoTookPayment'];
+    $paymentMode = $_POST['paymentMode'];
+    $fundsReceived = $_POST['fundsReceived'];
+    $whoChecked = $_POST['whoChecked'];
+    $receiptEmailed = $_POST['receiptEmailed'];
 
-$querys=mysqli_query($connection,"UPDATE invoices SET inv_auto_id='$uniqueId' WHERE inv_id=$lastId");
 
-$error=mysqli_error($connection);
-if($error!=''){
-    echo 1;
-}else{
-    echo $uniqueId;
+    $date = date('Y');
+
+    // Insert data into database
+    $query = mysqli_query($connection, "INSERT INTO payment_records 
+        (given_name, surname, address, phone, email, course, totalFees, paymentDone, datePaid, remainingDue, comments, instalmentPaid, dateTime, whoTookPayment, paymentMode, fundsReceived, whoChecked, receiptEmailed , invoice_number)
+        VALUES 
+        ('$given_name', '$surname', '$address', '$phone', '$email', '$course', '$totalFees', '$paymentDone', '$datePaid', '$remainingDue', '$comments', '$instalmentPaid', '$dateTime', '$whoTookPayment', '$paymentMode', '$fundsReceived', '$whoChecked', '$receiptEmailed' , '$invoice_number')");
+
+    $lastId = mysqli_insert_id($connection);
+    $uniqueId = sprintf('INV%s%05d', $date, $lastId);
+    $updateQuery = mysqli_query($connection, "UPDATE payment_records SET invoice_number='$uniqueId' WHERE id=$lastId");
+
+    if ($updateQuery) {
+        // Generate PDF invoice
+       
+
+    // Create PDF instance
+    $pdf = new TCPDF();
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('Auz Training');
+    $pdf->SetTitle('Payment Invoice');
+    $pdf->AddPage();
+    
+    // Company Information
+    $company_name = "Auz Training";
+    $company_abn = "ABN: 74 615 207 237";
+    $company_address = "Level 1/118 King William Street, Adelaide 5000";
+    $company_phone = "0468 449 468";
+    $date_time = date('Y-M-d H:m:s');
+    
+    // Customer Information
+    $customer_name = $surname . $given_name;
+    $customer_email = $email;
+    $customer_phone = $phone;
+    $course_name = $course;
+    
+    // Payment Details
+    $course_fees = $totalFees;
+    $amount_paid = $paymentDone;
+    $amount_due = $remainingDue;
+    $payment_plan = "The remaining instalments need to be paid as follows:\n\n"
+        . "$400 by 27th March 2025\n"
+        . "$400 by 10th April 2025\n"
+        . "$349 by 24th April 2025.";
+    $orientation_details = "14th March 2025 (Friday) from 3 PM to 5 PM.";
+    
+    // Company Logo
+    $pdf->Image('../assets/images/logo-dark.png', 160, 10, 40, 20, '', '', '', false, 300);
+    $pdf->Ln(30);
+    
+    // Title
+    $pdf->SetFont('helvetica', 'B', 16);
+    $pdf->Cell(0, 10, "INVOICE", 0, 1, 'C');
+    $pdf->Ln(5);
+    
+    // Company Details
+    $pdf->SetFont('helvetica', '', 10);
+    $pdf->Cell(0, 5, $company_name, 0, 1, 'L');
+    $pdf->Cell(0, 5, $company_abn, 0, 1, 'L');
+    $pdf->Cell(0, 5, $company_address, 0, 1, 'L');
+    $pdf->Cell(0, 5, "M: " . $company_phone, 0, 1, 'L');
+    $pdf->Ln(5);
+    
+    // Customer Details
+    $pdf->SetFont('helvetica', 'B', 12);
+    $pdf->Cell(0, 5, "To: " . $customer_name, 0, 1, 'L');
+    $pdf->SetFont('helvetica', '', 10);
+    $pdf->Cell(0, 5, "Email: " . $customer_email, 0, 1, 'L');
+    $pdf->Cell(0, 5, "M: " . $customer_phone, 0, 1, 'L');
+    $pdf->Ln(5);
+
+        
+    // Invoice Details
+    $pdf->Cell(0, 5, "Invoice No: " . $invoice_number, 0, 1, 'R');
+    $pdf->Cell(0, 5, "Date: " . $date_time, 0, 1, 'R');
+    $pdf->Ln(10); 
+    
+    // Course Details
+    $pdf->SetFont('helvetica', 'B', 12);
+    $pdf->Cell(0, 5, "Course Name: " . $course_name, 0, 1, 'L');
+    $pdf->Ln(5);
+    
+    // Payment Details Table
+    $html = '<table border="1" cellspacing="0" cellpadding="5">
+    <tr>
+    <th><strong>Item Description</strong></th>
+    <th><strong>Amount</strong></th>
+    </tr>
+    <tr>
+    <td>Course Fees</td>
+    <td>$' . $course_fees . '</td>
+    </tr>
+    <tr>
+    <td>Pending Amount</td>
+    <td>$' . $course_fees . '</td>
+    </tr>
+    <tr>
+    <td>Amount Paid</td>
+    <td>$' . $amount_paid . '</td>
+    </tr>
+    <tr>
+    <td>Amount Due</td>
+    <td>$' . $amount_due . '</td>
+    </tr>
+    </table>';
+    $pdf->writeHTML($html, true, false, true, false, '');
+    $pdf->Ln(5);
+    
+    // Additional Notes
+    $pdf->SetFont('helvetica', 'I', 10);
+    $pdf->MultiCell(0, 5, "Additional Notes: \nThe down payment of $700 has been paid during enrolment on 13th March 2025.\n\n$payment_plan", 0, 'L');
+    $pdf->Ln(5);
+    
+    // Orientation Details
+    $pdf->SetFont('helvetica', '', 10);
+    $pdf->MultiCell(0, 5, "Total amount has to be paid within the duration of Theoretical part. 
+If not paid by the due date, additional charges will be applicable. 
+A mandatory online Orientation session has been booked for you. \n\n You can attend the Orientation session on the date mentioned 
+below: \n\n\n\n\n\n\n\n The Zoom link for Online Orientation has been emailed to you and you are expected to come 
+online on Friday by 3 PM and be there for 2 hours with the video on. \n\n $orientation_details", 0, 'L');
+    $pdf->Ln(5);
+    
+    // Payment Instructions
+    $pdf->SetFont('helvetica', 'B', 10);
+    $pdf->MultiCell(0, 5, "In case Payment is not done, please find the below details to make payment:\nAccount Name: Auz Training College Pty Ltd\nBSB: 065000\nAcc. No. 1255 8010", 0, 'L');
+    $pdf->Ln(10);
+    
+    // Save PDF
+    $pdfFilePath = __DIR__ . "/invoices/$invoice_number.pdf";
+    $pdf->Output($pdfFilePath, 'F');
+
+        echo json_encode(["status" => "success", "invoice_number" => $invoice_number, "pdf_path" => $pdfFilePath]);
+    } else {
+        echo json_encode(["status" => "error", "message" => mysqli_error($connection)]);
+    }
+
 }
-}
+// if(@$_POST['formName']=='invoice_submit'){
+//     $payment_date=$_POST['payment_date'];
+//     $amount_due=$_POST['amount_due'];
+//     $amount_paid=$_POST['amount_paid'];
+//     $course_fee=$_POST['course_fee'];
+//     $course_name=$_POST['course_name'];
+//     $enrol_id=$_POST['enrol_id'];
+//     $student_name=$_POST['student_name'];
+//     $date=date('Y');
+
+//     $query=mysqli_query($connection,"INSERT INTO invoices(inv_std_name,st_unique_id,inv_course,inv_fee,inv_paid,inv_due,inv_payment_date)VALUES('$student_name','$enrol_id','$course_name','$course_fee','$amount_paid',$amount_due,'$payment_date')");
+//     $lastId=mysqli_insert_id($connection);
+//     $uniqueId=sprintf('INV'.$date.'%05d', $lastId);
+
+//     $querys=mysqli_query($connection,"UPDATE invoices SET inv_auto_id='$uniqueId' WHERE inv_id=$lastId");
+
+//     $error=mysqli_error($connection);
+//     if($error!=''){
+//         echo 1;
+//     }else{
+//         echo $uniqueId;
+//     }
+// }
+
 if(@$_POST['formName']=='login'){
 $email=$_POST['email'];
 $password=$_POST['password'];

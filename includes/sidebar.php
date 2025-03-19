@@ -76,8 +76,8 @@
                             <?php 
                             if(@$_SESSION['user_type']==1){
                             ?>
-                            <li class="d-none">
-                                <a href="invoices.php" class="waves-effect">
+                            <li class="">
+                                <a href="invoices1.php" class="waves-effect">
                                     <i class="fas fa-file-invoice"></i>
                                     <span>Invoices</span>
                                 </a>    

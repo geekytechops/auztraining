@@ -130,10 +130,16 @@ if(@$_SESSION['user_id']!=''){
                         url:'includes/datacontrol.php',
                         data:details,
                         success:function(data){
-                            if(data==0){
-                            document.getElementById('login_form').reset();
-                                $('#login_error').hide();
-                                window.location.href="student_enquiry.php";
+                            if(data.split('|')[0]==0){
+                                if(data.split('|')[0]==0 && data.split('|')[1]==1){
+                                    window.location.href="dashboard.php";
+                                    document.getElementById('login_form').reset();
+                                    $('#login_error').hide();
+                                }else{
+                                    window.location.href="student_docs.php";
+                                    document.getElementById('login_form').reset();
+                                    $('#login_error').hide();
+                                }
                             }else{
                                 $('#login_error').show();
                             }

@@ -58,14 +58,50 @@ if(@$_SESSION['user_type']!=''){
                             <div class="col-12">
                                 <div class="page-title-box d-sm-flex align-items-center justify-content-between">
                                     <h4 class="mb-sm-0">Student's Enrolment Form</h4>
-
-                                    <div class="page-title-right">
+    
+                                    <div class="page-title-right d-flex align-items-center gap-2">
                                         <ol class="breadcrumb m-0">
                                             <li class="breadcrumb-item"><a href="javascript: void(0);">Forms</a></li>
                                             <li class="breadcrumb-item active">Student's Enquiry</li>
                                         </ol>
                                     </div>
 
+                                </div>
+                            </div>
+                            <div>
+                                <div class="row justify-content-start">
+                                    <div class="col-lg-10 col-md-12"> <form id="excelUploadForm" enctype="multipart/form-data" class="d-flex align-items-stretch gap-2" style="min-height: 60px;">
+                                            
+                                            <label for="fileUpload" class="d-flex align-items-center justify-content-center p-3 border border-dashed rounded" style="height:35px;border-style: dashed; cursor: pointer; transition: all 0.2s ease-in-out; overflow: hidden;" >
+                                                
+                                                <svg id="upload-icon" class="me-2 text-muted flex-shrink-0" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v4h16v-4M4 12l8-8 8 8M12 4v12" />
+                                                </svg>
+
+                                                <span id="file-upload-text" class="text-muted text-nowrap" style="overflow: hidden; text-overflow: ellipsis;">
+                                                    Click or drag file to upload
+                                                </span>
+
+                                                <input type="file" name="fileUpload" id="fileUpload" accept=".xls,.xlsx,.csv" class="d-none" required>
+                                            </label>
+
+                                            <input type="hidden" name="formName" value="uploadExcel">
+
+                                            <button type="submit" class="btn btn-primary d-flex align-items-center justify-content-center px-4" style="height:35px;">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-upload flex-shrink-0" viewBox="0 0 16 16">
+                                                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
+                                                    <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z" />
+                                                </svg>
+                                                <span class="d-none d-md-inline ms-2">Upload</span>
+                                            </button>
+
+                                            
+                                            <a href="https://docs.google.com/spreadsheets/d/1OgkdtuAYHJlwdT1qgYedhaQ4YuTuwjUj-bW9CohnwqE/edit?usp=sharing" class="btn btn-outline-success d-flex align-items-center justify-content-center px-3" title="Download Sample CSV" style="height:35px;" target="_blank">
+                                                <span class="d-none d-md-inline ms-2 text-nowrap">Sample CSV</span>
+                                            </a>
+                                        </form>
+
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -157,7 +193,7 @@ if(@$_SESSION['user_type']!=''){
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="photo_upload">Photo Upload</label>
-                                                            <input type="file" name="photo_upload" class="form-control" id="photo_upload">
+                                                            <input type="file" name="photo_upload[]" class="form-control" id="photo_upload" multiple>
                                                         <div class="error-feedback">
                                                             Please Upload Photo
                                                         </div>
@@ -1274,7 +1310,12 @@ $(document).on('click','#lookedup',function(){
 
                     formData.append('details',JSON.stringify(details));
                     formData.append('formName','student_enrols');
-                    formData.append('image',$('#photo_upload')[0].files[0]);
+                    var files = $('#photo_upload')[0].files;
+                    if (files.length > 0) {
+                        for (var i = 0; i < files.length; i++) {
+                            formData.append('image[]', files[i]);
+                        }
+                    }
                     $.ajax({
                         type:'post',
                         url:'includes/datacontrol.php',
@@ -1312,6 +1353,33 @@ $(document).on('click','#lookedup',function(){
 
                 $(select).selectpicker('refresh');
             })
+
+            $(document).ready(function(){
+                $("#excelUploadForm").on("submit", function(e){
+                    e.preventDefault();
+                    
+                    var formData = new FormData(this);
+                    formData.append('formName', 'uploadEnrolmentExcel');
+
+                    $.ajax({
+                        url: "includes/datacontrol.php", // Backend file
+                        type: "POST",
+                        data: formData,
+                        contentType: false,
+                        processData: false,
+                        beforeSend: function(){
+                            $("#result").html("<p>Uploading and processing...</p>");
+                        },
+                        success: function(response){
+                                $('#toast-text').html('New Records added Successfully');
+                                $('#borderedToast1Btn').trigger('click');
+                        },
+                        error: function(xhr){
+                            $("#result").html("<p style='color:red;'>Error: " + xhr.responseText + "</p>");
+                        }
+                    });
+                });
+            });
         </script>
     </body>
 </html>

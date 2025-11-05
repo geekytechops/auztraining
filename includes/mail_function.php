@@ -16,10 +16,10 @@ use Symfony\Component\Mime\Email;
 // Create an email message
 $email='';
 function send_mail($to,$subject,$body){
-    $transport = Transport::fromDsn('smtp://saisatya51@gmail.com:ghhqvnmackjofijg@smtp.gmail.com?encryption=tls');
+    $transport = Transport::fromDsn('smtp://auztraining@nationalcollege.edu.au:2025@Nationalcollege.edu.au@smtp.hostinger.com?encryption=ssl');
     $mailer = new Mailer($transport);   
     $email = (new Email())
-    ->from('saisatya51@gmail.com')
+    ->from('auztraining@nationalcollege.edu.au')
     ->to($to)
     ->subject($subject)
     // ->text('This is the plain text message.')

@@ -1096,7 +1096,8 @@ if(@$_SESSION['user_type']!=''){
                 var postCode=$('#post_code').val();
                 var visit_before=$('#visit_before').val()==0 ? '' :$('#visit_before').val();
                 var hear_about=$('#hear_about').val();
-                var hearedby=$('#hearedby').val();
+                // var hearedby=$('#hearedby').val();
+                var hearedby=0;
                 var plan_to_start_date=$('#plan_to_start_date').val();
                 var refer_select=$('#refer_select').val();
                 var referer_name=$('#referer_name').val();

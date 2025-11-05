@@ -810,30 +810,43 @@ if($error!=''){
 }
 
 }
-if(@$_POST['formName']=='student_enrols'){
-    $formData=json_decode($_POST['details']);
 
-    $img = $_FILES['image']['name'];
-    $tmp = $_FILES['image']['tmp_name'];
-    $final_image = rand(1000, 1000000) . $img;
-    $path = 'uploads/';
-    $path = $path . strtolower($final_image);
-    move_uploaded_file($tmp, $path);
+if (@$_POST['formName'] == 'student_enrols') {
+    $formData = json_decode($_POST['details']);
+    $uploadDir = 'uploads/';
+    $uploadedFiles = [];
 
-    $enquiry_id=$formData->enquiry_id;
-    $rto_name=$formData->rto_name;
-    $courses=json_encode($formData->courses);
-    $branch_name=$formData->branch_name;
-    $photo=$final_image;
-    $given_name=$formData->given_name;
-    $surname=$formData->surname;
-    $dob=$formData->dob;
-    $birth_country=$formData->birth_country;
-    $street_details=$formData->street_details;
-    $sub_urb=$formData->sub_urb;
-    $post_code=$formData->post_code;
-    $tel_num=$formData->tel_num;
-    $mobile_num=$formData->mobile_num;
+    // Handle multiple file uploads
+    if (!empty($_FILES['image']['name'][0])) {
+        foreach ($_FILES['image']['name'] as $key => $fileName) {
+            $tmpName = $_FILES['image']['tmp_name'][$key];
+            $fileExt = pathinfo($fileName, PATHINFO_EXTENSION);
+            $uniqueName = rand(1000, 1000000) . '_' . time() . '.' . strtolower($fileExt);
+            $targetPath = $uploadDir . $uniqueName;
+
+            if (move_uploaded_file($tmpName, $targetPath)) {
+                $uploadedFiles[] = $uniqueName;
+            }
+        }
+    }
+
+    // Store uploaded filenames as JSON
+    $photo = json_encode($uploadedFiles);
+
+    // --- Other field assignments ---
+    $enquiry_id = $formData->enquiry_id;
+    $rto_name = $formData->rto_name;
+    $courses = json_encode($formData->courses);
+    $branch_name = $formData->branch_name;
+    $given_name = $formData->given_name;
+    $surname = $formData->surname;
+    $dob = $formData->dob;
+    $birth_country = $formData->birth_country;
+    $street_details = $formData->street_details;
+    $sub_urb = $formData->sub_urb;
+    $post_code = $formData->post_code;
+    $tel_num = $formData->tel_num;
+    $mobile_num = $formData->mobile_num;
     $emailAddress = $formData->emailAddress;
     $stu_state = $formData->stu_state;
     $em_full_name = $formData->em_full_name;
@@ -866,33 +879,48 @@ if(@$_POST['formName']=='student_enrols'){
     $qual_10 = $formData->qual_10;
     $st_born_country = $formData->st_born_country;
     $qual_name_8_other = $formData->qual_name_8_other;
-    $qual_name_10_other = $formData->qual_name_10_other;
     $qual_name_9_other = $formData->qual_name_9_other;
+    $qual_name_10_other = $formData->qual_name_10_other;
     $lan_spoken_other = $formData->lan_spoken_other;
     $st_disability_type = json_encode($formData->st_disability_type);
     $disability_type_other = $formData->disability_type_other;
-    $admin_id=$_SESSION['user_id'];
+    $admin_id = $_SESSION['user_id'];
 
+    // --- Insert query ---
+    $query = "INSERT INTO `student_enrolments`
+    (`st_unique_id`, `st_enquiry_id`, `st_rto_name`, `st_courses`, `st_branch`, `st_photo`,
+     `st_given_name`, `st_surname`, `st_dob`, `st_country_birth`, `st_street`, `st_suburb`,
+     `st_state`, `st_post_code`, `st_tel_num`, `st_email`, `st_mobile`, `st_emerg_name`,
+     `st_emerg_relation`, `st_emerg_mobile`, `st_emerg_agree`, `st_usi`, `st_emp_status`,
+     `st_self_status`, `st_citizenship`, `st_gender`, `st_credit_transfer`, `st_highest_school`,
+     `st_secondary_school`, `st_born_country`, `st_born_country_other`, `st_origin`, `st_lan_spoken`,
+     `st_lan_spoken_other`, `st_disability`, `st_disability_type`, `st_disability_type_other`,
+     `st_study_reason`, `st_study_reason_other`, `st_qual_1`, `st_qual_2`, `st_qual_3`, `st_qual_4`,
+     `st_qual_5`, `st_qual_6`, `st_qual_7`, `st_qual_8`, `st_qual_9`, `st_qual_10`, `st_qual_8_other`,
+     `st_qual_9_other`, `st_qual_10_other`, `st_created_by`)
+    VALUES
+    ('1','$enquiry_id','$rto_name','$courses','$branch_name','$photo','$given_name','$surname',
+     '$dob','$birth_country','$street_details','$sub_urb','$stu_state','$post_code','$tel_num',
+     '$emailAddress','$mobile_num','$em_full_name','$em_relation','$em_mobile_num','$em_agree_check',
+     '$usi_id','$emp_status','$self_status','$st_citizen','$gender_check','$cred_tansf','$highest_school',
+     '$sec_school','$born_country','$st_born_country','$origin','$lan_spoken','$lan_spoken_other',
+     '$disability','$st_disability_type','$disability_type_other','$study_reason','$study_reason_other',
+     '$qual_1','$qual_2','$qual_3','$qual_4','$qual_5','$qual_6','$qual_7','$qual_8','$qual_9','$qual_10',
+     '$qual_name_8_other','$qual_name_9_other','$qual_name_10_other',$admin_id)";
 
-    $query="INSERT INTO `student_enrolment`(`st_unique_id`, `st_enquiry_id`, `st_rto_name`, `st_courses`, `st_branch`, `st_photo`, `st_given_name`, `st_surname`, `st_dob`, `st_country_birth`, `st_street`, `st_suburb`, `st_state`, `st_post_code`, `st_tel_num`, `st_email`, `st_mobile`, `st_emerg_name`, `st_emerg_relation`, `st_emerg_mobile`, `st_emerg_agree`, `st_usi`, `st_emp_status`, `st_self_status`, `st_citizenship`, `st_gender`, `st_credit_transfer`, `st_highest_school`, `st_secondary_school`, `st_born_country`, `st_born_country_other`, `st_origin`, `st_lan_spoken`, `st_lan_spoken_other`, `st_disability`, `st_disability_type`, `st_disability_type_other`, `st_study_reason`, `st_study_reason_other`, `st_qual_1`, `st_qual_2`, `st_qual_3`, `st_qual_4`, `st_qual_5`, `st_qual_6`, `st_qual_7`, `st_qual_8`, `st_qual_9`, `st_qual_10`, `st_qual_8_other`, `st_qual_9_other`, `st_qual_10_other`, `st_created_by`) VALUES ('1','$enquiry_id','$rto_name','$courses','$branch_name','$photo','$given_name','$surname','$dob','$birth_country','$street_details','$sub_urb','$stu_state','$post_code','$tel_num','$emailAddress','$mobile_num','$em_full_name','$em_relation','$em_mobile_num','$em_agree_check','$usi_id','$emp_status','$self_status','$st_citizen','$gender_check','$cred_tansf','$highest_school','$sec_school','$born_country','$st_born_country','$origin','$lan_spoken','$lan_spoken_other','$disability','$st_disability_type','$disability_type_other','$study_reason','$study_reason_other','$qual_1','$qual_2','$qual_3','$qual_4','$qual_5','$qual_6','$qual_7','$qual_8','$qual_9','$qual_10','$qual_name_8_other','$qual_name_9_other','$qual_name_10_other',$admin_id);";
-    $queryExec=mysqli_query($connection,$query);
-    $lastId=mysqli_insert_id($connection);
+    $queryExec = mysqli_query($connection, $query);
+    $lastId = mysqli_insert_id($connection);
 
-    $courseId=json_decode($courses)[0];
-    $courseID=mysqli_fetch_array(mysqli_query($connection,"SELECT * FROM courses WHERE course_id=$courseId"));
+    // Generate unique ID based on year + course name + ID
+    $courseId = json_decode($courses)[0];
+    $courseID = mysqli_fetch_array(mysqli_query($connection, "SELECT * FROM courses WHERE course_id=$courseId"));
+    $dateYear = date('Y');
+    $uniqueId = sprintf($dateYear . $courseID['course_name'] . '%04d', $lastId);
 
-    $dateYear=date('Y');
-    $uniqueId=sprintf($dateYear.$courseID['course_name'].'%04d', $lastId);
+    $querys = mysqli_query($connection, "UPDATE student_enrolment SET st_unique_id='$uniqueId' WHERE st_enrol_id=$lastId");
+    $error = mysqli_error($connection);
 
-    $querys=mysqli_query($connection,"UPDATE student_enrolment SET st_unique_id='$uniqueId' WHERE st_enrol_id=$lastId");
-    $error=mysqli_error($connection);
-
-    if($error!=''){
-        echo 1;
-    }else{
-        echo $uniqueId;
-    }
-
+    echo ($error != '') ? 1 : $uniqueId;
 }
 
 if (@$_POST['formName'] == 'invoice_submit_company') {
@@ -1211,14 +1239,66 @@ $query=mysqli_query($connection,"SELECT user_id,user_type,user_name,user_log_id 
 $error=mysqli_error($connection);
 $id=mysqli_fetch_array($query);
 if($id['user_id']=='' || $id['user_id']=='undefined'){
-    echo 1;
+    echo "1|invalid";
 }else{
     $_SESSION['user_id']=$id['user_id'];
     $_SESSION['user_type']=$id['user_type'];
     $_SESSION['user_name']=$id['user_name'];
     $_SESSION['user_log_id']=$id['user_log_id'];
-    echo 0;
+    echo "0|".$id['user_type'];
 }
+}
+
+if(@$_POST['formName'] == 'get_user'){
+    $id = $_POST['user_id'];
+    $result = mysqli_query($connection, "SELECT * FROM users WHERE user_id='$id'");
+    echo json_encode(mysqli_fetch_assoc($result));
+}
+
+// EDIT USER
+if(@$_POST['formName'] == 'edit_user'){
+    $id = $_POST['user_id'];
+    $name = $_POST['user_name'];
+    $email = $_POST['user_email'];
+    $password = $_POST['user_password'];
+    $type = $_POST['user_type'];
+    $status = $_POST['user_status'];
+    $modified = date('Y-m-d H:i:s');
+
+    if($password != ''){
+        $update = mysqli_query($connection, "UPDATE users SET user_name='$name', user_email='$email', user_password='$password', user_type='$type', user_status='$status', modified_date='$modified' WHERE user_id='$id'");
+    } else {
+        $update = mysqli_query($connection, "UPDATE users SET user_name='$name', user_email='$email', user_type='$type', user_status='$status', modified_date='$modified' WHERE user_id='$id'");
+    }
+
+    if($update){
+        // Reload user list HTML
+        $users = mysqli_query($connection, "SELECT * FROM users WHERE user_type=0 ORDER BY user_id DESC");
+        include('../includes/user_list_partial.php');
+    }else{
+        echo 1;
+    }
+}
+
+if(@$_POST['formName'] == 'create_user'){
+    $name = $_POST['user_name'];
+    $email = $_POST['user_email'];
+    $password = $_POST['user_password'];
+    $type = $_POST['user_type'];
+    $status = $_POST['user_status'];
+
+    $user_log_id = strtoupper(substr(md5(uniqid()), 0, 8));
+    $created = date('Y-m-d H:i:s');
+
+    $insert = mysqli_query($connection, "INSERT INTO users (user_log_id, user_name, user_email, user_password, user_type, user_status, created_date)
+                                         VALUES ('$user_log_id', '$name', '$email', '$password', '$type', '$status', '$created')");
+    if($insert){
+        // Reload user list HTML
+        $users = mysqli_query($connection, "SELECT * FROM users WHERE user_type=0 ORDER BY user_id DESC");
+        include('../includes/user_list_partial.php');
+    }else{
+        echo 1;
+    }
 }
 
 if(@$_REQUEST['name']=='singleinvoice'){
@@ -1804,6 +1884,212 @@ require 'vendor/autoload.php';
 $connection->close();
 
 }
+
+if (@$_POST['formName'] == 'uploadEnrolmentExcel') {
+
+    $targetDir = "uploads/attendance/";
+    if (!is_dir($targetDir)) {
+        mkdir($targetDir, 0777, true);
+    }
+
+    $targetFile = $targetDir . basename($_FILES["fileUpload"]["name"]);
+    $fileType = pathinfo($targetFile, PATHINFO_EXTENSION);
+
+    if ($fileType != "csv") {
+        exit("Only CSV files (.csv) are allowed.");
+    }
+
+    if (!move_uploaded_file($_FILES["fileUpload"]["tmp_name"], $targetFile)) {
+        exit("Sorry, there was an error uploading your file.");
+    }
+
+    if (($handle = fopen($targetFile, "r")) === false) {
+        exit("Unable to open uploaded CSV file.");
+    }
+
+    $tbody = '';
+    $rowCount = 0;
+
+    // Read header
+    $headers = fgetcsv($handle, 10000, ",");
+
+    // 🔹 Define mapping arrays for dropdowns
+    $stateMap = [
+        "NSW - New South Wales" => 1,
+        "VIC - Victoria" => 2,
+        "ACT - Australian Capital Territory" => 3,
+        "NT - Northern Territoy" => 4,
+        "WA - Western Australia" => 5,
+        "QLD - Queensland" => 6,
+        "SA - South Australia" => 7,
+        "TAS - Tasmania" => 8,
+    ];
+
+    $empStatusMap = [
+        "Full time employee (More than 35 hours)" => 1,
+        "Part time employee (Less than 35 hours)" => 2,
+        "Self employed - Not employing others Employer" => 3,
+        "Employed - Unpaid family worker in a family business" => 4,
+        "Unemployed - Seeking full time work" => 5,
+        "Unemployed - Seeking part time work" => 6,
+        "Not employed - Not seeking employment" => 7,
+    ];
+
+    $selfStatusMap = [
+        "A sole supporting parent" => 1,
+        "A person with a history of short term employment experience" => 2,
+        "A person returning to the workforce after an absence of 12 month or more" => 3,
+        "A person who requires assistance with reading and writing" => 4,
+    ];
+
+    $citizenMap = [
+        "Australian Citizen" => 1,
+        "New Zealand Citizen" => 2,
+        "Australian Permanent Resident" => 3,
+        "Humanitarian Visa" => 4,
+        "Temporary Resident" => 5,
+    ];
+
+    $highestSchoolMap = [
+        "Completed Year 12 Completed Year 11" => 1,
+        "Completed Year 10 Completed Year 9" => 2,
+        "Completed Year 8 Never Attended School" => 3,
+    ];
+
+    $studyReasonMap = [
+        "To get a job" => 1,
+        "To develop my existing business" => 2,
+        "To start my own business" => 3,
+        "To try for a dierent career" => 4,
+        "To get a better job / promotion" => 5,
+        "It was a requirement of my job" => 6,
+        "I wanted extra skills for my job" => 7,
+        "To get into another course or study" => 8,
+        "For personal interest or self-development" => 9,
+        "Other Reason" => 10,
+    ];
+
+    while (($data = fgetcsv($handle, 10000, ",")) !== false) {
+        if (empty($data[0]) || empty($data[1])) continue;
+
+        // Basic fields
+        $enquiry_id         = $data[0];
+        $rto_name           = $data[1];
+        $courses_raw        = $data[2];
+        $branch_name        = $data[3];
+        $given_name         = $data[4];
+        $surname            = $data[5];
+        $dob                = date('Y-m-d', strtotime($data[6]));
+        $birth_country      = $data[7];
+        $street_details     = $data[8];
+        $sub_urb            = $data[9];
+        $post_code          = $data[10];
+        $tel_num            = $data[11];
+        $mobile_num         = $data[12];
+        $emailAddress       = $data[13];
+        $stu_state_raw      = trim($data[14]);
+        $em_full_name       = $data[15];
+        $em_relation        = $data[16];
+        $em_mobile_num      = $data[17];
+        $em_agree_check     = $data[18];
+        $usi_id             = $data[19];
+        $emp_status_raw     = trim($data[20]);
+        $self_status_raw    = trim($data[21]);
+        $st_citizen_raw     = trim($data[22]);
+        $highest_school_raw = trim($data[23]);
+        $study_reason_raw   = trim($data[24]); // Multi-select
+        $study_reason_other = $data[25];
+        $gender_check       = $data[26];
+        $cred_tansf         = $data[27];
+        $sec_school         = $data[28];
+        $born_country       = $data[29];
+        $origin             = $data[30];
+        $lan_spoken         = $data[31];
+        $disability         = $data[32];
+        $qual_1             = $data[33];
+        $qual_2             = $data[34];
+        $qual_3             = $data[35];
+        $qual_4             = $data[36];
+        $qual_5             = $data[37];
+        $qual_6             = $data[38];
+        $qual_7             = $data[39];
+        $qual_8             = $data[40];
+        $qual_9             = $data[41];
+        $qual_10            = $data[42];
+        $st_born_country    = $data[43];
+        $qual_name_8_other  = $data[44];
+        $qual_name_9_other  = $data[45];
+        $qual_name_10_other = $data[46];
+        $lan_spoken_other   = $data[47];
+        $disability_type_other = $data[48];
+        $st_disability_type = json_encode([]);
+        $photo              = json_encode([]);
+        $admin_id           = $_SESSION['user_id'] ?? 1;
+
+        // 🔹 Convert dropdown values by mapping name → ID
+        $stu_state        = $stateMap[$stu_state_raw] ?? 0;
+        $emp_status       = $empStatusMap[$emp_status_raw] ?? 0;
+        $self_status      = $selfStatusMap[$self_status_raw] ?? 0;
+        $st_citizen       = $citizenMap[$st_citizen_raw] ?? 0;
+        $highest_school   = $highestSchoolMap[$highest_school_raw] ?? 0;
+
+        // 🔹 Multi-select: study_reason
+        $reasonNames = array_map('trim', explode(',', $study_reason_raw));
+        $reasonIds = [];
+        foreach ($reasonNames as $r) {
+            if (isset($studyReasonMap[$r])) {
+                $reasonIds[] = $studyReasonMap[$r];
+            }
+        }
+        $study_reason = json_encode($reasonIds);
+
+        // 🔹 Convert course names → IDs
+        $courseNames = array_map('trim', explode(',', $courses_raw));
+        $courseIds = [];
+        foreach ($courseNames as $cname) {
+            $cname = mysqli_real_escape_string($connection, $cname);
+            $actualCourseName = explode('-', $cname)[0];
+            $q = mysqli_query($connection, "SELECT course_id FROM courses WHERE course_sname='$actualCourseName' LIMIT 1");
+            if ($q && mysqli_num_rows($q) > 0) {
+                $row = mysqli_fetch_assoc($q);
+                $courseIds[] = $row['course_id'];
+            }
+        }
+        $courses = json_encode($courseIds);
+
+        // 🔹 Insert
+        $sql = "INSERT INTO student_enrolments
+        (st_unique_id,st_enquiry_id, st_rto_name, st_courses, st_branch, st_photo, st_given_name, st_surname, st_dob, st_country_birth, st_street, st_suburb, st_post_code, st_tel_num, st_email, st_mobile, st_state, st_emerg_name, st_emerg_relation, st_emerg_mobile, st_emerg_agree, st_usi, st_emp_status, st_self_status, st_citizenship, st_highest_school, st_study_reason, st_study_reason_other, st_gender, st_credit_transfer, st_secondary_school, st_born_country, st_origin, st_lan_spoken, st_disability, st_qual_1, st_qual_2, st_qual_3, st_qual_4, st_qual_5, st_qual_6, st_qual_7, st_qual_8, st_qual_9, st_qual_10, st_born_country_other, st_qual_8_other, st_qual_9_other, st_qual_10_other, st_lan_spoken_other, st_disability_type, st_disability_type_other, st_created_by)
+        VALUES
+        ('1','$enquiry_id','$rto_name','$courses','$branch_name','$photo','$given_name','$surname','$dob','$birth_country','$street_details','$sub_urb','$post_code','$tel_num','$emailAddress','$mobile_num','$stu_state','$em_full_name','$em_relation','$em_mobile_num','$em_agree_check','$usi_id','$emp_status','$self_status','$st_citizen','$highest_school','$study_reason','$study_reason_other','$gender_check','$cred_tansf','$sec_school','$born_country','$origin','$lan_spoken','$disability','$qual_1','$qual_2','$qual_3','$qual_4','$qual_5','$qual_6','$qual_7','$qual_8','$qual_9','$qual_10','$st_born_country','$qual_name_8_other','$qual_name_9_other','$qual_name_10_other','$lan_spoken_other','$st_disability_type','$disability_type_other',$admin_id)";
+
+        if (mysqli_query($connection, $sql)) {
+            $rowCount++;
+            $tbody .= "<tr>
+                <td>$enquiry_id</td>
+                <td>$rto_name</td>
+                <td>$given_name $surname</td>
+                <td>$emailAddress</td>
+                <td>$mobile_num</td>
+            </tr>";
+        } else {
+            $tbody .= "<tr><td colspan='5' style='color:red;'>DB Error: " . mysqli_error($connection) . "</td></tr>";
+        }
+    }
+
+    fclose($handle);
+
+    echo "<p><b>Uploaded successfully:</b> $rowCount rows inserted.</p>";
+    echo "<table border='1' cellpadding='5'>
+            <tr><th>Enquiry ID</th><th>RTO</th><th>Name</th><th>Email</th><th>Mobile</th></tr>
+            $tbody
+          </table>";
+
+    mysqli_close($connection);
+}
+
+
+
 
 if(@$_POST['formName']=='fetchEnquiries'){    
 

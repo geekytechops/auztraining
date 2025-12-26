@@ -169,7 +169,9 @@ if(@$_SESSION['user_type']!=''){
                                 <div class="card">
                                     <div class="card-body">
                                         <h4 class="card-title mb-4">Appointments by Status</h4>
-                                        <canvas id="statusChart"></canvas>
+                                        <div style="position: relative; height: 300px;">
+                                            <canvas id="statusChart"></canvas>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -177,7 +179,9 @@ if(@$_SESSION['user_type']!=''){
                                 <div class="card">
                                     <div class="card-body">
                                         <h4 class="card-title mb-4">Appointments by Purpose</h4>
-                                        <canvas id="purposeChart"></canvas>
+                                        <div style="position: relative; height: 300px;">
+                                            <canvas id="purposeChart"></canvas>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -188,7 +192,9 @@ if(@$_SESSION['user_type']!=''){
                                 <div class="card">
                                     <div class="card-body">
                                         <h4 class="card-title mb-4">Appointments by Staff Member</h4>
-                                        <canvas id="staffChart"></canvas>
+                                        <div style="position: relative; height: 300px;">
+                                            <canvas id="staffChart"></canvas>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -196,7 +202,9 @@ if(@$_SESSION['user_type']!=''){
                                 <div class="card">
                                     <div class="card-body">
                                         <h4 class="card-title mb-4">Daily Appointments Trend</h4>
-                                        <canvas id="dailyTrendChart"></canvas>
+                                        <div style="position: relative; height: 300px;">
+                                            <canvas id="dailyTrendChart"></canvas>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -292,26 +300,44 @@ if(@$_SESSION['user_type']!=''){
                             $('#missed_count').text(data.summary.missed);
                             $('#cancelled_count').text(data.summary.cancelled);
                             
-                            // Update charts
-                            updateStatusChart(data.charts.status);
-                            updatePurposeChart(data.charts.purpose);
-                            updateStaffChart(data.charts.staff);
-                            updateDailyTrendChart(data.charts.daily);
+                            // Update charts - use setTimeout to ensure DOM is ready
+                            setTimeout(function() {
+                                updateStatusChart(data.charts.status);
+                                updatePurposeChart(data.charts.purpose);
+                                updateStaffChart(data.charts.staff);
+                                updateDailyTrendChart(data.charts.daily);
+                            }, 100);
                             
                             // Update table
                             updateAppointmentsTable(data.appointments);
                         } catch(e) {
                             console.error('Error parsing report data:', e);
+                            console.error('Response:', response);
                         }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', error);
+                        console.error('Status:', status);
                     }
                 });
             }
             
             function updateStatusChart(data) {
-                var ctx = document.getElementById('statusChart').getContext('2d');
-                if(statusChart) statusChart.destroy();
+                var ctx = document.getElementById('statusChart');
+                if(!ctx) return;
                 
-                statusChart = new Chart(ctx, {
+                if(statusChart) {
+                    statusChart.destroy();
+                    statusChart = null;
+                }
+                
+                // Ensure we have data
+                if(!data.labels || data.labels.length === 0) {
+                    data.labels = ['No Data'];
+                    data.values = [0];
+                }
+                
+                statusChart = new Chart(ctx.getContext('2d'), {
                     type: 'doughnut',
                     data: {
                         labels: data.labels,
@@ -322,16 +348,37 @@ if(@$_SESSION['user_type']!=''){
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: false
+                        maintainAspectRatio: true,
+                        animation: {
+                            animateRotate: true,
+                            animateScale: false,
+                            duration: 1000
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
                     }
                 });
             }
             
             function updatePurposeChart(data) {
-                var ctx = document.getElementById('purposeChart').getContext('2d');
-                if(purposeChart) purposeChart.destroy();
+                var ctx = document.getElementById('purposeChart');
+                if(!ctx) return;
                 
-                purposeChart = new Chart(ctx, {
+                if(purposeChart) {
+                    purposeChart.destroy();
+                    purposeChart = null;
+                }
+                
+                // Ensure we have data
+                if(!data.labels || data.labels.length === 0) {
+                    data.labels = ['No Data'];
+                    data.values = [0];
+                }
+                
+                purposeChart = new Chart(ctx.getContext('2d'), {
                     type: 'bar',
                     data: {
                         labels: data.labels,
@@ -343,10 +390,21 @@ if(@$_SESSION['user_type']!=''){
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: false,
+                        maintainAspectRatio: true,
+                        animation: {
+                            duration: 1000
+                        },
                         scales: {
                             y: {
-                                beginAtZero: true
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
                             }
                         }
                     }
@@ -354,10 +412,21 @@ if(@$_SESSION['user_type']!=''){
             }
             
             function updateStaffChart(data) {
-                var ctx = document.getElementById('staffChart').getContext('2d');
-                if(staffChart) staffChart.destroy();
+                var ctx = document.getElementById('staffChart');
+                if(!ctx) return;
                 
-                staffChart = new Chart(ctx, {
+                if(staffChart) {
+                    staffChart.destroy();
+                    staffChart = null;
+                }
+                
+                // Ensure we have data
+                if(!data.labels || data.labels.length === 0) {
+                    data.labels = ['No Data'];
+                    data.values = [0];
+                }
+                
+                staffChart = new Chart(ctx.getContext('2d'), {
                     type: 'bar',
                     data: {
                         labels: data.labels,
@@ -369,10 +438,21 @@ if(@$_SESSION['user_type']!=''){
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: false,
+                        maintainAspectRatio: true,
+                        animation: {
+                            duration: 1000
+                        },
                         scales: {
                             y: {
-                                beginAtZero: true
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
                             }
                         }
                     }
@@ -380,10 +460,21 @@ if(@$_SESSION['user_type']!=''){
             }
             
             function updateDailyTrendChart(data) {
-                var ctx = document.getElementById('dailyTrendChart').getContext('2d');
-                if(dailyTrendChart) dailyTrendChart.destroy();
+                var ctx = document.getElementById('dailyTrendChart');
+                if(!ctx) return;
                 
-                dailyTrendChart = new Chart(ctx, {
+                if(dailyTrendChart) {
+                    dailyTrendChart.destroy();
+                    dailyTrendChart = null;
+                }
+                
+                // Ensure we have data
+                if(!data.labels || data.labels.length === 0) {
+                    data.labels = ['No Data'];
+                    data.values = [0];
+                }
+                
+                dailyTrendChart = new Chart(ctx.getContext('2d'), {
                     type: 'line',
                     data: {
                         labels: data.labels,
@@ -392,15 +483,28 @@ if(@$_SESSION['user_type']!=''){
                             data: data.values,
                             borderColor: '#0bb197',
                             backgroundColor: 'rgba(11, 177, 151, 0.1)',
-                            tension: 0.4
+                            tension: 0.4,
+                            fill: true
                         }]
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: false,
+                        maintainAspectRatio: true,
+                        animation: {
+                            duration: 1000
+                        },
                         scales: {
                             y: {
-                                beginAtZero: true
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
                             }
                         }
                     }

@@ -2332,5 +2332,477 @@ if(@$_POST['formName']=='fetchCounsel'){
 
 }
 
+// ==================== APPOINTMENT SYSTEM FUNCTIONS ====================
+
+// Appointment Booking
+if(@$_POST['formName']=='appointment_booking'){
+    $appointment_id = $_POST['appointment_id'];
+    $appointment_date = $_POST['appointment_date'];
+    $appointment_time = $_POST['appointment_time'];
+    $appointment_datetime = $appointment_date . ' ' . $appointment_time;
+    $booked_by = $_POST['created_by'];
+    $booked_by_name = $_POST['booked_by_name'];
+    $booking_comments = $_POST['booking_comments'];
+    $purpose_id = $_POST['purpose_id'];
+    $appointment_to_see = $_POST['appointment_to_see'];
+    $attendee_type_id = $_POST['attendee_type_id'];
+    $student_name = isset($_POST['student_name']) ? $_POST['student_name'] : '';
+    $student_phone = isset($_POST['student_phone']) ? $_POST['student_phone'] : '';
+    $student_email = isset($_POST['student_email']) ? $_POST['student_email'] : '';
+    $business_name = isset($_POST['business_name']) ? $_POST['business_name'] : '';
+    $business_contact = isset($_POST['business_contact']) ? $_POST['business_contact'] : '';
+    $send_email = isset($_POST['send_email']) ? 1 : 0;
+    $staff_member_type = $_POST['staff_member_type'];
+    $meeting_type = $_POST['meeting_type'];
+    $location_id = isset($_POST['location_id']) && $_POST['location_id'] != '' ? $_POST['location_id'] : 'NULL';
+    $platform_id = isset($_POST['platform_id']) && $_POST['platform_id'] != '' ? $_POST['platform_id'] : 'NULL';
+    $online_meeting_link = isset($_POST['online_meeting_link']) ? $_POST['online_meeting_link'] : '';
+    $timezone_state = $_POST['timezone_state'];
+    $appointment_time_state = isset($_POST['appointment_time_state']) && $_POST['appointment_time_state'] != '' ? $_POST['appointment_time_state'] : $appointment_datetime;
+    $appointment_time_adelaide = isset($_POST['appointment_time_adelaide']) && $_POST['appointment_time_adelaide'] != '' ? $_POST['appointment_time_adelaide'] : $appointment_datetime;
+    $appointment_time_india = isset($_POST['appointment_time_india']) && $_POST['appointment_time_india'] != '' ? $_POST['appointment_time_india'] : $appointment_datetime;
+    $appointment_time_philippines = isset($_POST['appointment_time_philippines']) && $_POST['appointment_time_philippines'] != '' ? $_POST['appointment_time_philippines'] : $appointment_datetime;
+    $connected_enquiry_id = isset($_POST['connected_enquiry_id']) && $_POST['connected_enquiry_id'] != '' ? "'".$_POST['connected_enquiry_id']."'" : 'NULL';
+    $connected_enrolment_id = isset($_POST['connected_enrolment_id']) && $_POST['connected_enrolment_id'] != '' ? "'".$_POST['connected_enrolment_id']."'" : 'NULL';
+    $connected_counselling_id = isset($_POST['connected_counselling_id']) && $_POST['connected_counselling_id'] != '' ? $_POST['connected_counselling_id'] : 'NULL';
+    $appointment_notes = isset($_POST['appointment_notes']) ? $_POST['appointment_notes'] : '';
+    $created_by = $_POST['created_by'];
+    
+    if($appointment_id == '0'){
+        // Insert new appointment
+        $query = "INSERT INTO appointments (appointment_date, appointment_time, appointment_datetime, booked_by, booked_by_name, booking_comments, purpose_id, appointment_to_see, attendee_type_id, student_name, student_phone, student_email, business_name, business_contact, send_email, staff_member_type, meeting_type, location_id, platform_id, online_meeting_link, timezone_state, appointment_time_state, appointment_time_adelaide, appointment_time_india, appointment_time_philippines, connected_enquiry_id, connected_enrolment_id, connected_counselling_id, appointment_notes, created_by) VALUES ('$appointment_date', '$appointment_time', '$appointment_datetime', $booked_by, '$booked_by_name', '$booking_comments', $purpose_id, $appointment_to_see, $attendee_type_id, '$student_name', '$student_phone', '$student_email', '$business_name', '$business_contact', $send_email, '$staff_member_type', '$meeting_type', $location_id, $platform_id, '$online_meeting_link', '$timezone_state', '$appointment_time_state', '$appointment_time_adelaide', '$appointment_time_india', '$appointment_time_philippines', $connected_enquiry_id, $connected_enrolment_id, $connected_counselling_id, '$appointment_notes', $created_by)";
+    } else {
+        // Update existing appointment
+        $query = "UPDATE appointments SET appointment_date='$appointment_date', appointment_time='$appointment_time', appointment_datetime='$appointment_datetime', booked_by_name='$booked_by_name', booking_comments='$booking_comments', purpose_id=$purpose_id, appointment_to_see=$appointment_to_see, attendee_type_id=$attendee_type_id, student_name='$student_name', student_phone='$student_phone', student_email='$student_email', business_name='$business_name', business_contact='$business_contact', send_email=$send_email, staff_member_type='$staff_member_type', meeting_type='$meeting_type', location_id=$location_id, platform_id=$platform_id, online_meeting_link='$online_meeting_link', timezone_state='$timezone_state', appointment_time_state='$appointment_time_state', appointment_time_adelaide='$appointment_time_adelaide', appointment_time_india='$appointment_time_india', appointment_time_philippines='$appointment_time_philippines', connected_enquiry_id=$connected_enquiry_id, connected_enrolment_id=$connected_enrolment_id, connected_counselling_id=$connected_counselling_id, appointment_notes='$appointment_notes', modified_date=NOW(), modified_by=$created_by WHERE appointment_id=$appointment_id";
+    }
+    
+    $result = mysqli_query($connection, $query);
+    $error = mysqli_error($connection);
+    
+    if($error != ''){
+        echo 0;
+    } else {
+        $appt_id = $appointment_id == '0' ? mysqli_insert_id($connection) : $appointment_id;
+        
+        // Send email if enabled
+        if($send_email == 1 && $student_email != ''){
+            $mail_to = $student_email;
+            $mail_subject = "Appointment Confirmation";
+            $mail_body = "Your appointment has been booked for " . date('d M Y h:i A', strtotime($appointment_datetime)) . ".<br><br>Details:<br>Purpose: " . getPurposeName($connection, $purpose_id) . "<br>Meeting Type: " . $meeting_type;
+            send_mail($mail_to, $mail_subject, $mail_body);
+        }
+        
+        echo 1;
+    }
+}
+
+// Get appointments for calendar
+if(@$_POST['formName']=='get_appointments_calendar'){
+    $start = $_POST['start'];
+    $end = $_POST['end'];
+    
+    $query = "SELECT a.*, p.purpose_name, p.purpose_color FROM appointments a 
+              LEFT JOIN appointment_purposes p ON a.purpose_id = p.purpose_id 
+              WHERE a.delete_status != 1 AND a.appointment_datetime >= '$start' AND a.appointment_datetime <= '$end'";
+    
+    $result = mysqli_query($connection, $query);
+    $events = array();
+    
+    while($row = mysqli_fetch_array($result)){
+        $title = $row['purpose_name'];
+        if($row['student_name'] != ''){
+            $title .= ' - ' . $row['student_name'];
+        } else if($row['business_name'] != ''){
+            $title .= ' - ' . $row['business_name'];
+        }
+        
+        $events[] = array(
+            'id' => $row['appointment_id'],
+            'title' => $title,
+            'start' => $row['appointment_datetime'],
+            'color' => $row['purpose_color'],
+            'extendedProps' => array(
+                'status' => $row['appointment_status'],
+                'purpose' => $row['purpose_name']
+            )
+        );
+    }
+    
+    echo json_encode($events);
+}
+
+// Get appointment details
+if(@$_POST['formName']=='get_appointment_details'){
+    $appointment_id = $_POST['appointment_id'];
+    
+    $query = "SELECT a.*, p.purpose_name, p.purpose_color, at.type_name as attendee_type, l.location_name, pl.platform_name, u.user_name as staff_name 
+              FROM appointments a 
+              LEFT JOIN appointment_purposes p ON a.purpose_id = p.purpose_id 
+              LEFT JOIN appointment_attendee_types at ON a.attendee_type_id = at.type_id 
+              LEFT JOIN appointment_locations l ON a.location_id = l.location_id 
+              LEFT JOIN appointment_platforms pl ON a.platform_id = pl.platform_id 
+              LEFT JOIN users u ON a.appointment_to_see = u.user_id 
+              WHERE a.appointment_id = $appointment_id";
+    
+    $result = mysqli_query($connection, $query);
+    $appointment = mysqli_fetch_array($result);
+    
+    $html = '<input type="hidden" id="appointment_status_hidden" value="'.$appointment['appointment_status'].'">';
+    $html .= '<div class="row">';
+    $html .= '<div class="col-md-6"><strong>Date & Time:</strong></div><div class="col-md-6">' . date('d M Y h:i A', strtotime($appointment['appointment_datetime'])) . '</div>';
+    $html .= '<div class="col-md-6"><strong>Purpose:</strong></div><div class="col-md-6"><span class="color-preview" style="background:'.$appointment['purpose_color'].'"></span>' . $appointment['purpose_name'] . '</div>';
+    $html .= '<div class="col-md-6"><strong>Status:</strong></div><div class="col-md-6"><span class="status-badge status-'.$appointment['appointment_status'].'">' . ucfirst(str_replace('-', ' ', $appointment['appointment_status'])) . '</span></div>';
+    $html .= '<div class="col-md-6"><strong>Booked By:</strong></div><div class="col-md-6">' . $appointment['booked_by_name'] . '</div>';
+    $html .= '<div class="col-md-6"><strong>Staff Member:</strong></div><div class="col-md-6">' . $appointment['staff_name'] . ' (' . $appointment['staff_member_type'] . ')</div>';
+    $html .= '<div class="col-md-6"><strong>Meeting Type:</strong></div><div class="col-md-6">' . $appointment['meeting_type'] . '</div>';
+    
+    if($appointment['location_name']){
+        $html .= '<div class="col-md-6"><strong>Location:</strong></div><div class="col-md-6">' . $appointment['location_name'] . '</div>';
+    }
+    
+    if($appointment['platform_name']){
+        $html .= '<div class="col-md-6"><strong>Platform:</strong></div><div class="col-md-6">' . $appointment['platform_name'] . '</div>';
+    }
+    
+    if($appointment['student_name']){
+        $html .= '<div class="col-md-6"><strong>Student Name:</strong></div><div class="col-md-6">' . $appointment['student_name'] . '</div>';
+        $html .= '<div class="col-md-6"><strong>Student Phone:</strong></div><div class="col-md-6">' . $appointment['student_phone'] . '</div>';
+        $html .= '<div class="col-md-6"><strong>Student Email:</strong></div><div class="col-md-6">' . $appointment['student_email'] . '</div>';
+    }
+    
+    if($appointment['business_name']){
+        $html .= '<div class="col-md-6"><strong>Business Name:</strong></div><div class="col-md-6">' . $appointment['business_name'] . '</div>';
+        $html .= '<div class="col-md-6"><strong>Business Contact:</strong></div><div class="col-md-6">' . $appointment['business_contact'] . '</div>';
+    }
+    
+    if($appointment['time_in']){
+        $html .= '<div class="col-md-6"><strong>Time In:</strong></div><div class="col-md-6">' . date('d M Y h:i A', strtotime($appointment['time_in'])) . '</div>';
+    }
+    
+    if($appointment['time_out']){
+        $html .= '<div class="col-md-6"><strong>Time Out:</strong></div><div class="col-md-6">' . date('d M Y h:i A', strtotime($appointment['time_out'])) . '</div>';
+    }
+    
+    if($appointment['appointment_notes']){
+        $html .= '<div class="col-md-12 mt-3"><strong>Notes:</strong><br>' . nl2br($appointment['appointment_notes']) . '</div>';
+    }
+    
+    $html .= '</div>';
+    
+    echo $html;
+}
+
+// Update appointment status
+if(@$_POST['formName']=='update_appointment_status'){
+    $appointment_id = $_POST['appointment_id'];
+    $status = $_POST['status'];
+    $meeting_happened = ($status == 'completed') ? 1 : 0;
+    
+    $query = "UPDATE appointments SET appointment_status='$status', meeting_happened=$meeting_happened, modified_date=NOW() WHERE appointment_id=$appointment_id";
+    $result = mysqli_query($connection, $query);
+    
+    echo $result ? 1 : 0;
+}
+
+// Record time in/out
+if(@$_POST['formName']=='record_time_in_out'){
+    $appointment_id = $_POST['appointment_id'];
+    $type = $_POST['type'];
+    $now = date('Y-m-d H:i:s');
+    
+    if($type == 'in'){
+        $query = "UPDATE appointments SET time_in='$now', modified_date=NOW() WHERE appointment_id=$appointment_id";
+    } else {
+        $query = "UPDATE appointments SET time_out='$now', modified_date=NOW() WHERE appointment_id=$appointment_id";
+    }
+    
+    $result = mysqli_query($connection, $query);
+    echo $result ? 1 : 0;
+}
+
+// Get appointment reports
+if(@$_POST['formName']=='get_appointment_reports'){
+    $date_range = $_POST['date_range'];
+    $start_date = '';
+    $end_date = '';
+    
+    if($date_range == 'today'){
+        $start_date = date('Y-m-d');
+        $end_date = date('Y-m-d');
+    } else if($date_range == 'week'){
+        $start_date = date('Y-m-d', strtotime('monday this week'));
+        $end_date = date('Y-m-d', strtotime('sunday this week'));
+    } else if($date_range == 'month'){
+        $start_date = date('Y-m-01');
+        $end_date = date('Y-m-t');
+    } else {
+        $start_date = $_POST['start_date'];
+        $end_date = $_POST['end_date'];
+    }
+    
+    $query = "SELECT a.*, p.purpose_name, at.type_name as attendee_type, u.user_name as staff_name 
+              FROM appointments a 
+              LEFT JOIN appointment_purposes p ON a.purpose_id = p.purpose_id 
+              LEFT JOIN appointment_attendee_types at ON a.attendee_type_id = at.type_id 
+              LEFT JOIN users u ON a.appointment_to_see = u.user_id 
+              WHERE a.delete_status != 1 AND DATE(a.appointment_date) >= '$start_date' AND DATE(a.appointment_date) <= '$end_date'";
+    
+    $result = mysqli_query($connection, $query);
+    
+    $summary = array('total' => 0, 'attended' => 0, 'missed' => 0, 'cancelled' => 0);
+    $statusData = array('labels' => array(), 'values' => array());
+    $purposeData = array('labels' => array(), 'values' => array());
+    $staffData = array('labels' => array(), 'values' => array());
+    $dailyData = array('labels' => array(), 'values' => array());
+    $appointments = array();
+    
+    $statusCounts = array();
+    $purposeCounts = array();
+    $staffCounts = array();
+    $dailyCounts = array();
+    
+    while($row = mysqli_fetch_array($result)){
+        $summary['total']++;
+        
+        if($row['appointment_status'] == 'completed'){
+            $summary['attended']++;
+        } else if(in_array($row['appointment_status'], array('no-show', 'missed'))){
+            $summary['missed']++;
+        } else if($row['appointment_status'] == 'cancelled'){
+            $summary['cancelled']++;
+        }
+        
+        // Status counts
+        $status = ucfirst(str_replace('-', ' ', $row['appointment_status']));
+        if(!isset($statusCounts[$status])){
+            $statusCounts[$status] = 0;
+        }
+        $statusCounts[$status]++;
+        
+        // Purpose counts
+        $purpose = $row['purpose_name'];
+        if(!isset($purposeCounts[$purpose])){
+            $purposeCounts[$purpose] = 0;
+        }
+        $purposeCounts[$purpose]++;
+        
+        // Staff counts
+        $staff = $row['staff_name'];
+        if(!isset($staffCounts[$staff])){
+            $staffCounts[$staff] = 0;
+        }
+        $staffCounts[$staff]++;
+        
+        // Daily counts
+        $day = date('Y-m-d', strtotime($row['appointment_date']));
+        if(!isset($dailyCounts[$day])){
+            $dailyCounts[$day] = 0;
+        }
+        $dailyCounts[$day]++;
+        
+        // Appointment details
+        $appointments[] = array(
+            'id' => $row['appointment_id'],
+            'datetime' => date('d M Y h:i A', strtotime($row['appointment_datetime'])),
+            'purpose' => $row['purpose_name'],
+            'attendee' => $row['student_name'] ? $row['student_name'] : ($row['business_name'] ? $row['business_name'] : '-'),
+            'staff' => $row['staff_name'],
+            'status' => $row['appointment_status'],
+            'meeting_type' => $row['meeting_type']
+        );
+    }
+    
+    // Format chart data
+    foreach($statusCounts as $label => $value){
+        $statusData['labels'][] = $label;
+        $statusData['values'][] = $value;
+    }
+    
+    foreach($purposeCounts as $label => $value){
+        $purposeData['labels'][] = $label;
+        $purposeData['values'][] = $value;
+    }
+    
+    foreach($staffCounts as $label => $value){
+        $staffData['labels'][] = $label;
+        $staffData['values'][] = $value;
+    }
+    
+    ksort($dailyCounts);
+    foreach($dailyCounts as $label => $value){
+        $dailyData['labels'][] = date('d M', strtotime($label));
+        $dailyData['values'][] = $value;
+    }
+    
+    $response = array(
+        'summary' => $summary,
+        'charts' => array(
+            'status' => $statusData,
+            'purpose' => $purposeData,
+            'staff' => $staffData,
+            'daily' => $dailyData
+        ),
+        'appointments' => $appointments
+    );
+    
+    echo json_encode($response);
+}
+
+// Manage purposes
+if(@$_POST['formName']=='get_purposes'){
+    $query = "SELECT * FROM appointment_purposes WHERE purpose_status != 1 ORDER BY purpose_name";
+    $result = mysqli_query($connection, $query);
+    
+    $html = '<table class="table table-sm"><thead><tr><th>Purpose</th><th>Color</th><th>Actions</th></tr></thead><tbody>';
+    while($row = mysqli_fetch_array($result)){
+        $html .= '<tr>';
+        $html .= '<td>'.$row['purpose_name'].'</td>';
+        $html .= '<td><span class="color-preview" style="background:'.$row['purpose_color'].'"></span></td>';
+        $html .= '<td><button class="btn btn-sm btn-danger" onclick="deletePurpose('.$row['purpose_id'].')">Delete</button></td>';
+        $html .= '</tr>';
+    }
+    $html .= '</tbody></table>';
+    
+    echo $html;
+}
+
+if(@$_POST['formName']=='add_purpose'){
+    $purpose_name = $_POST['purpose_name'];
+    $purpose_color = $_POST['purpose_color'];
+    
+    $query = "INSERT INTO appointment_purposes (purpose_name, purpose_color) VALUES ('$purpose_name', '$purpose_color')";
+    $result = mysqli_query($connection, $query);
+    
+    echo $result ? 1 : 0;
+}
+
+// Manage attendee types
+if(@$_POST['formName']=='get_attendee_types'){
+    $query = "SELECT * FROM appointment_attendee_types WHERE type_status != 1 ORDER BY type_name";
+    $result = mysqli_query($connection, $query);
+    
+    $html = '<table class="table table-sm"><thead><tr><th>Type</th><th>Actions</th></tr></thead><tbody>';
+    while($row = mysqli_fetch_array($result)){
+        $html .= '<tr>';
+        $html .= '<td>'.$row['type_name'].'</td>';
+        $html .= '<td><button class="btn btn-sm btn-danger" onclick="deleteAttendeeType('.$row['type_id'].')">Delete</button></td>';
+        $html .= '</tr>';
+    }
+    $html .= '</tbody></table>';
+    
+    echo $html;
+}
+
+if(@$_POST['formName']=='add_attendee_type'){
+    $type_name = $_POST['type_name'];
+    
+    $query = "INSERT INTO appointment_attendee_types (type_name) VALUES ('$type_name')";
+    $result = mysqli_query($connection, $query);
+    
+    echo $result ? 1 : 0;
+}
+
+// Manage locations
+if(@$_POST['formName']=='get_locations'){
+    $query = "SELECT * FROM appointment_locations WHERE location_status != 1 ORDER BY location_name";
+    $result = mysqli_query($connection, $query);
+    
+    $html = '<table class="table table-sm"><thead><tr><th>Location</th><th>Actions</th></tr></thead><tbody>';
+    while($row = mysqli_fetch_array($result)){
+        $html .= '<tr>';
+        $html .= '<td>'.$row['location_name'].'</td>';
+        $html .= '<td><button class="btn btn-sm btn-danger" onclick="deleteLocation('.$row['location_id'].')">Delete</button></td>';
+        $html .= '</tr>';
+    }
+    $html .= '</tbody></table>';
+    
+    echo $html;
+}
+
+if(@$_POST['formName']=='add_location'){
+    $location_name = $_POST['location_name'];
+    
+    $query = "INSERT INTO appointment_locations (location_name) VALUES ('$location_name')";
+    $result = mysqli_query($connection, $query);
+    
+    echo $result ? 1 : 0;
+}
+
+// Manage platforms
+if(@$_POST['formName']=='get_platforms'){
+    $query = "SELECT * FROM appointment_platforms WHERE platform_status != 1 ORDER BY platform_name";
+    $result = mysqli_query($connection, $query);
+    
+    $html = '<table class="table table-sm"><thead><tr><th>Platform</th><th>Actions</th></tr></thead><tbody>';
+    while($row = mysqli_fetch_array($result)){
+        $html .= '<tr>';
+        $html .= '<td>'.$row['platform_name'].'</td>';
+        $html .= '<td><button class="btn btn-sm btn-danger" onclick="deletePlatform('.$row['platform_id'].')">Delete</button></td>';
+        $html .= '</tr>';
+    }
+    $html .= '</tbody></table>';
+    
+    echo $html;
+}
+
+if(@$_POST['formName']=='add_platform'){
+    $platform_name = $_POST['platform_name'];
+    
+    $query = "INSERT INTO appointment_platforms (platform_name) VALUES ('$platform_name')";
+    $result = mysqli_query($connection, $query);
+    
+    echo $result ? 1 : 0;
+}
+
+// Appointment blocks
+if(@$_POST['formName']=='add_appointment_block'){
+    $block_date = $_POST['block_date'];
+    $block_start_time = $_POST['block_start_time'];
+    $block_end_time = $_POST['block_end_time'];
+    $block_staff_member_id = isset($_POST['block_staff_member_id']) && $_POST['block_staff_member_id'] != '' ? $_POST['block_staff_member_id'] : 'NULL';
+    $block_reason = isset($_POST['block_reason']) ? $_POST['block_reason'] : '';
+    $created_by = $_SESSION['user_id'];
+    
+    $query = "INSERT INTO appointment_blocks (block_date, block_start_time, block_end_time, block_staff_member_id, block_reason, created_by) VALUES ('$block_date', '$block_start_time', '$block_end_time', $block_staff_member_id, '$block_reason', $created_by)";
+    $result = mysqli_query($connection, $query);
+    
+    echo $result ? 1 : 0;
+}
+
+if(@$_POST['formName']=='get_appointment_blocks'){
+    $query = "SELECT b.*, u.user_name FROM appointment_blocks b LEFT JOIN users u ON b.block_staff_member_id = u.user_id WHERE b.block_status != 1 ORDER BY b.block_date DESC, b.block_start_time";
+    $result = mysqli_query($connection, $query);
+    
+    $blocks = array();
+    while($row = mysqli_fetch_array($result)){
+        $blocks[] = array(
+            'id' => $row['block_id'],
+            'date' => date('d M Y', strtotime($row['block_date'])),
+            'start_time' => date('h:i A', strtotime($row['block_start_time'])),
+            'end_time' => date('h:i A', strtotime($row['block_end_time'])),
+            'staff' => $row['user_name'],
+            'reason' => $row['block_reason']
+        );
+    }
+    
+    echo json_encode($blocks);
+}
+
+if(@$_POST['formName']=='delete_appointment_block'){
+    $block_id = $_POST['block_id'];
+    
+    $query = "UPDATE appointment_blocks SET block_status=1 WHERE block_id=$block_id";
+    $result = mysqli_query($connection, $query);
+    
+    echo $result ? 1 : 0;
+}
+
+// Helper function
+function getPurposeName($connection, $purpose_id){
+    $query = "SELECT purpose_name FROM appointment_purposes WHERE purpose_id = $purpose_id";
+    $result = mysqli_query($connection, $query);
+    $row = mysqli_fetch_array($result);
+    return $row['purpose_name'];
+}
 
 ?>

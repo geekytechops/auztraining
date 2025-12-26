@@ -70,6 +70,22 @@
                             </li>
                             <?php } ?>
                             <?php 
+                            if(@$_SESSION['user_type']==1){
+                            ?>
+                            <li>
+                                <a href="javascript: void(0);" class="has-arrow waves-effect">
+                                    <i class="mdi mdi-calendar-clock"></i>
+                                    <span>Appointments</span>
+                                </a>
+                                <ul class="sub-menu" aria-expanded="false">
+                                    <li><a href="appointment_calendar.php">Calendar View</a></li>
+                                    <li><a href="appointment_booking.php">Book Appointment</a></li>
+                                    <li><a href="appointment_reports.php">Reports</a></li>
+                                    <li><a href="appointment_blocks.php">Block Slots</a></li>
+                                </ul>
+                            </li>
+                            <?php } ?>
+                            <?php 
                             if(@$_SESSION['user_type']==0){
                             ?>
                             <li class="">

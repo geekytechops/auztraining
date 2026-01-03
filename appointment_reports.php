@@ -19,6 +19,22 @@ if(@$_SESSION['user_type']!=''){
         
         <!-- Chart.js -->
         <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+        <style>
+            .chart-container {
+                position: relative;
+                height: 300px;
+                width: 100%;
+                overflow: hidden;
+                padding: 10px;
+            }
+            .chart-container canvas {
+                max-width: 100% !important;
+                max-height: 100% !important;
+            }
+            .card-body {
+                overflow: hidden;
+            }
+        </style>
     </head>
 
     <body data-topbar="colored">
@@ -169,7 +185,7 @@ if(@$_SESSION['user_type']!=''){
                                 <div class="card">
                                     <div class="card-body">
                                         <h4 class="card-title mb-4">Appointments by Status</h4>
-                                        <div style="position: relative; height: 300px;">
+                                        <div class="chart-container">
                                             <canvas id="statusChart"></canvas>
                                         </div>
                                     </div>
@@ -179,7 +195,7 @@ if(@$_SESSION['user_type']!=''){
                                 <div class="card">
                                     <div class="card-body">
                                         <h4 class="card-title mb-4">Appointments by Purpose</h4>
-                                        <div style="position: relative; height: 300px;">
+                                        <div class="chart-container">
                                             <canvas id="purposeChart"></canvas>
                                         </div>
                                     </div>
@@ -192,7 +208,7 @@ if(@$_SESSION['user_type']!=''){
                                 <div class="card">
                                     <div class="card-body">
                                         <h4 class="card-title mb-4">Appointments by Staff Member</h4>
-                                        <div style="position: relative; height: 300px;">
+                                        <div class="chart-container">
                                             <canvas id="staffChart"></canvas>
                                         </div>
                                     </div>
@@ -202,7 +218,7 @@ if(@$_SESSION['user_type']!=''){
                                 <div class="card">
                                     <div class="card-body">
                                         <h4 class="card-title mb-4">Daily Appointments Trend</h4>
-                                        <div style="position: relative; height: 300px;">
+                                        <div class="chart-container">
                                             <canvas id="dailyTrendChart"></canvas>
                                         </div>
                                     </div>
@@ -348,7 +364,7 @@ if(@$_SESSION['user_type']!=''){
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: true,
+                        maintainAspectRatio: false,
                         animation: {
                             animateRotate: true,
                             animateScale: false,
@@ -356,7 +372,22 @@ if(@$_SESSION['user_type']!=''){
                         },
                         plugins: {
                             legend: {
-                                position: 'bottom'
+                                position: 'bottom',
+                                labels: {
+                                    boxWidth: 12,
+                                    padding: 10,
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            }
+                        },
+                        layout: {
+                            padding: {
+                                top: 5,
+                                bottom: 5,
+                                left: 5,
+                                right: 5
                             }
                         }
                     }

@@ -36,8 +36,8 @@ if(@$_SESSION['user_id']!=''){
                                 <div class="">
                                     <div class="text-center">
                                         <a href="index.html" class="">
-                                            <img src="assets/images/logo-dark.png" alt="" height="50" class="auth-logo logo-dark mx-auto">
-                                            <img src="assets/images/logo-light.png" alt="" height="50" class="auth-logo logo-light mx-auto">
+                                            <img src="assets/images/logo-dark.webp" alt="" height="80" class="auth-logo logo-dark mx-auto">
+                                            <img src="assets/images/logo-dark.png" alt="" height="80" class="auth-logo logo-light mx-auto">
                                         </a>
                                     </div>
                                     <!-- end row -->

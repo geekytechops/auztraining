@@ -48,7 +48,7 @@
 <body>
     <div class="container">
         <div class="logo">
-            <img src="assets/images/logo-dark.png" alt="Company Logo">
+            <img src="assets/images/logo-dark.webp" alt="Company Logo">
         </div>
         <div class="thank-you-img">
             <img src="assets/images/thumbnails/thank_you.png" alt="Thank You">

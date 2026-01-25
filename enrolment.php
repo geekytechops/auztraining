@@ -36,10 +36,10 @@ if(@$_SESSION['user_type']!=''){
         <?php include('includes/app_includes.php'); ?>
     </head>
 
-    <body data-topbar="colored">
+    <body>
 
         <!-- Begin page -->
-        <div id="layout-wrapper">
+        <div class="main-wrapper">
 
             
             <?php include('includes/header.php'); ?>
@@ -48,9 +48,8 @@ if(@$_SESSION['user_type']!=''){
             <!-- ============================================================== -->
             <!-- Start right Content here -->
             <!-- ============================================================== -->
-            <div class="main-content">
-
-                <div class="page-content">
+            <div class="page-wrapper">
+                <div class="content pb-0">
                     <div class="container-fluid">
 
                         <!-- start page title -->
@@ -768,16 +767,9 @@ if(@$_SESSION['user_type']!=''){
 
                     </div> <!-- container-fluid -->
                 </div>
-                <!-- End Page-content -->                            
-                
             </div>
-            <!-- end main content-->
 
         </div>
-        <!-- END layout-wrapper -->
-
-        <!-- Right bar overlay-->
-        <div class="rightbar-overlay"></div>
         <?php include('includes/footer_includes.php'); ?>
         <script>
 

@@ -1,60 +1,72 @@
-<?php session_start(); ?>
-<header id="page-topbar">
-                <div class="navbar-header">
-                    <div class="d-flex">
-                        <!-- LOGO -->
-                        <div class="navbar-brand-box text-center">
-                            <a href="index.html" class="logo logo-dark">
-                                <span class="logo-sm">
-                                    <img src="assets/images/logo-sm.png" alt="logo-sm-dark" height="25">
-                                </span>
-                                <span class="logo-lg">
-                                    <img src="assets/images/logo-dark.png" alt="logo-dark" height="50">
-                                </span>
-                            </a>
+<?php 
+ini_set('display_errors', '0');
+session_start(); ?>
+<?php $CRM_ASSET_BASE = 'crm/html/template/assets'; ?>
+<header class="navbar-header">
+    <div class="page-container topbar-menu">
+        <div class="d-flex align-items-center gap-2">
 
-                            <a href="index.html" class="logo logo-light">
-                                <span class="logo-sm">
-                                    <img src="assets/images/logo-sm.png" alt="logo-sm-light" height="25">
-                                </span>
-                                <span class="logo-lg">
-                                    <img src="assets/images/logo-light.png" alt="logo-light" height="50">
-                                </span>
+            <a href="dashboard.php" class="logo">
+                <span class="logo-light">
+                    <span class="logo-lg"><img src="<?php echo $CRM_ASSET_BASE; ?>/img/logo.png" alt="logo"></span>
+                    <span class="logo-sm"><img src="<?php echo $CRM_ASSET_BASE; ?>/img/logo-small.png" alt="small logo"></span>
+                </span>
+                <span class="logo-dark">
+                    <span class="logo-lg"><img src="<?php echo $CRM_ASSET_BASE; ?>/img/logo-white.svg" alt="dark logo"></span>
+                </span>
+            </a>
+
+            <a id="mobile_btn" class="mobile-btn" href="#sidebar">
+                <i class="ti ti-menu-deep fs-24"></i>
+            </a>
+
+            <button class="sidenav-toggle-btn btn border-0 p-0" id="toggle_btn2">
+                <i class="ti ti-arrow-bar-to-right"></i>
+            </button>
+
+            <div class="me-auto d-flex align-items-center header-search d-lg-flex d-none">
+                <div class="input-icon position-relative me-2">
+                    <input type="text" class="form-control" placeholder="Search Keyword">
+                    <span class="input-icon-addon d-inline-flex p-0 header-search-icon"><i class="ti ti-command"></i></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center">
+            <div class="header-item d-flex d-lg-none me-2">
+                <button class="topbar-link btn" data-bs-toggle="modal" data-bs-target="#searchModal" type="button">
+                    <i class="ti ti-search fs-16"></i>
+                </button>
+            </div>
+
+            <div class="header-item">
+                <div class="dropdown me-2">
+                    <a href="javascript:void(0);" class="btn topbar-link btnFullscreen"><i class="ti ti-maximize"></i></a>
+                </div>
+            </div>
+
+            <div class="header-item d-none d-sm-flex me-2">
+                <button class="topbar-link btn topbar-link" id="light-dark-mode" type="button">
+                    <i class="ti ti-moon fs-16"></i>
+                </button>
+            </div>
+
+            <div class="header-item">
+                <div class="dropdown">
+                    <a href="javascript:void(0);" class="btn topbar-link" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="d-none d-sm-inline-flex me-1"><?php echo @$_SESSION['user_name']; ?></span>
+                        <i class="ti ti-chevron-down"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end">
+                        <div class="pt-2 mt-2 border-top">
+                            <a href="index.php?name=logout" class="dropdown-item text-danger">
+                                <i class="ti ti-logout me-1 fs-17 align-middle"></i>
+                                <span class="align-middle">Sign Out</span>
                             </a>
                         </div>
-
-                        <button type="button" class="btn btn-sm px-3 font-size-24 header-item waves-effect" id="vertical-menu-btn">
-                            <i class="ri-menu-2-line align-middle"></i>
-                        </button>
-
-                        <!-- App Search-->
-                        <!-- <form class="app-search d-none d-lg-block">
-                            <div class="position-relative">
-                                <input type="text" class="form-control" placeholder="Search...">
-                                <span class="ri-search-line"></span>
-                            </div>
-                        </form> -->
-                    </div>
-
-                    <div class="d-flex">                        
-
-                        <div class="dropdown d-inline-block user-dropdown">
-                            <button type="button" class="btn header-item waves-effect" id="page-header-user-dropdown"
-                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <img class="rounded-circle header-profile-user" src="assets/images/users/default_img.png"
-                                    alt="Header Avatar">
-                                <span class="d-none d-xl-inline-block ms-1"><?php echo $_SESSION['user_name']; ?></span>
-                                <i class="mdi mdi-chevron-down d-none d-xl-inline-block"></i>
-                            </button>
-                            <div class="dropdown-menu dropdown-menu-end">
-                                <!-- item-->
-                                <!-- <a class="dropdown-item" href="#"><i class="ri-user-line align-middle me-1"></i> Profile</a> -->
-                                <!-- <a class="dropdown-item d-block" href="#"><i class="ri-settings-2-line align-middle me-1"></i> Settings</a>                                 -->
-                                <!-- <div class="dropdown-divider"></div> -->
-                                <a class="dropdown-item text-danger" href="index.php?name=logout"><i class="ri-shut-down-line align-middle me-1 text-danger"></i> Logout</a>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
-            </header>
+            </div>
+        </div>
+    </div>
+</header>

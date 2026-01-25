@@ -1,33 +1,17 @@
 <!-- JAVASCRIPT -->
-<script src="assets/libs/jquery/jquery.min.js"></script>
-<script src="assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="assets/libs/metismenu/metisMenu.min.js"></script>
-<script src="assets/libs/simplebar/simplebar.min.js"></script>
-<script src="assets/libs/node-waves/waves.min.js"></script>
-<script src="assets/libs/select2/js/select2.min.js"></script>
-
-<script src="assets/js/pages/bootstrap-toasts.init.js"></script>
-
-<script src="assets/libs/datatables.net/js/jquery.dataTables.min.js"></script>
-<script src="assets/libs/datatables.net-bs4/js/dataTables.bootstrap4.min.js"></script>
-
-<!-- Required datatable js -->
-<script src="assets/libs/datatables.net/js/jquery.dataTables.min.js"></script>
-<script src="assets/libs/datatables.net-bs4/js/dataTables.bootstrap4.min.js"></script>
-
-<!-- Buttons examples -->
-<script src="assets/libs/datatables.net-buttons/js/dataTables.buttons.min.js"></script>
-<script src="assets/libs/datatables.net-buttons-bs4/js/buttons.bootstrap4.min.js"></script>
-<!-- Responsive examples -->
-<script src="assets/libs/datatables.net-responsive/js/dataTables.responsive.min.js"></script>
-<script src="assets/libs/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js"></script>
-
-<script type="text/javascript" src="//cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
-
-<script type="text/javascript" src="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.js"></script>
-<link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.css" />
-
-<script src="assets/libs/sweetalert2/sweetalert2.min.js"></script>
+<?php $CRM_ASSET_BASE = 'crm/html/template/assets'; ?>
+<script src="<?php echo $CRM_ASSET_BASE; ?>/js/jquery-3.7.1.min.js"></script>
+<script src="<?php echo $CRM_ASSET_BASE; ?>/js/bootstrap.bundle.min.js"></script>
+<script src="<?php echo $CRM_ASSET_BASE; ?>/js/moment.min.js"></script>
+<script src="<?php echo $CRM_ASSET_BASE; ?>/plugins/daterangepicker/daterangepicker.js"></script>
+<script src="<?php echo $CRM_ASSET_BASE; ?>/plugins/datatables/js/jquery.dataTables.min.js"></script>
+<script src="<?php echo $CRM_ASSET_BASE; ?>/plugins/datatables/js/dataTables.bootstrap5.min.js"></script>
+<script src="<?php echo $CRM_ASSET_BASE; ?>/plugins/simplebar/simplebar.min.js"></script>
+<script src="<?php echo $CRM_ASSET_BASE; ?>/plugins/select2/js/select2.min.js"></script>
+<script src="<?php echo $CRM_ASSET_BASE; ?>/plugins/sweetalert2/sweetalert2.min.js"></script>
+<script src="<?php echo $CRM_ASSET_BASE; ?>/js/sweetalerts.js"></script>
+<script src="<?php echo $CRM_ASSET_BASE; ?>/js/theme-script.js"></script>
+<script src="<?php echo $CRM_ASSET_BASE; ?>/js/script.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta2/js/bootstrap-select.min.js"></script>
 
@@ -38,8 +22,3 @@
 
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.1.1/js/buttons.html5.min.js"></script>
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.1.1/js/buttons.print.min.js"></script>
-<!-- materialdesign icon js-->
-<script src="assets/js/pages/materialdesign.init.js"></script>
-
-<script src="assets/js/app.js"></script>
-<script src="assets/js/panel.js"></script>

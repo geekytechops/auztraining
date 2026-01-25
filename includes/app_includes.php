@@ -1,25 +1,127 @@
 <?php
  error_reporting(0);     
 ?>
-        <!-- jvectormap -->
-        <link href="assets/libs/jqvmap/jqvmap.min.css" rel="stylesheet" />
-        <!-- Bootstrap Css -->
-        <link href="assets/css/bootstrap.min.css" id="bootstrap-style" rel="stylesheet" type="text/css" />
+        <?php $CRM_ASSET_BASE = 'crm/html/template/assets'; ?>
+        <script>
+            (function () {
+                var THEME_KEY = "__THEME_CONFIG__";
+                var MINI_KEY = "__CRM_MINI_SIDEBAR__";
 
-        <link href="assets/libs/datatables.net-bs4/css/dataTables.bootstrap4.min.css" rel="stylesheet" type="text/css" />
-        <link href="assets/libs/datatables.net-buttons-bs4/css/buttons.bootstrap4.min.css" rel="stylesheet" type="text/css" />
-        <link href="assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
-        <link href="assets/libs/select2/css/select2.min.css" rel="stylesheet" type="text/css">
+                function safeParse(json) {
+                    try { return JSON.parse(json); } catch (e) { return null; }
+                }
 
+                function safeStringify(obj) {
+                    try { return JSON.stringify(obj); } catch (e) { return null; }
+                }
+
+                function applyMiniToThemeConfig(raw, isMini) {
+                    var cfg = typeof raw === 'string' ? safeParse(raw) : raw;
+                    if (!cfg || typeof cfg !== 'object') return null;
+                    if (!cfg.sidenav || typeof cfg.sidenav !== 'object') cfg.sidenav = {};
+                    cfg.sidenav.size = isMini ? 'mini' : 'default';
+                    return cfg;
+                }
+
+                try {
+                    var savedTheme = localStorage.getItem(THEME_KEY);
+                    var savedMini = localStorage.getItem(MINI_KEY) === '1';
+                    if (savedTheme) {
+                        var merged = applyMiniToThemeConfig(savedTheme, savedMini);
+                        if (merged) {
+                            var mergedStr = safeStringify(merged);
+                            if (mergedStr) savedTheme = mergedStr;
+                            try { localStorage.setItem(THEME_KEY, savedTheme); } catch (e) {}
+                        }
+                    }
+                    if (savedTheme && !sessionStorage.getItem(THEME_KEY)) {
+                        sessionStorage.setItem(THEME_KEY, savedTheme);
+                    }
+                } catch (e) {}
+
+                try {
+                    var _setItem = sessionStorage.setItem.bind(sessionStorage);
+                    var _removeItem = sessionStorage.removeItem.bind(sessionStorage);
+                    sessionStorage.setItem = function (k, v) {
+                        _setItem(k, v);
+                        if (k === THEME_KEY) {
+                            try { localStorage.setItem(THEME_KEY, v); } catch (e) {}
+                        }
+                    };
+                    sessionStorage.removeItem = function (k) {
+                        _removeItem(k);
+                        if (k === THEME_KEY) {
+                            try { localStorage.removeItem(THEME_KEY); } catch (e) {}
+                        }
+                    };
+                } catch (e) {}
+
+                document.addEventListener('DOMContentLoaded', function () {
+                    try {
+                        var isMini = localStorage.getItem(MINI_KEY) === '1';
+                        if (isMini) {
+                            document.body.classList.add('mini-sidebar');
+                            var t1 = document.getElementById('toggle_btn');
+                            var t2 = document.getElementById('toggle_btn2');
+                            if (t1) t1.classList.remove('active');
+                            if (t2) t2.classList.remove('active');
+                            var headerLeft = document.querySelector('.header-left');
+                            if (headerLeft) headerLeft.classList.remove('active');
+                        }
+                    } catch (e) {}
+
+                    document.addEventListener('click', function (ev) {
+                        var el = ev.target;
+                        if (!el) return;
+                        var btn = el.closest ? el.closest('#toggle_btn, #toggle_btn2') : null;
+                        if (!btn) return;
+
+                        setTimeout(function () {
+                            try {
+                                var nowMini = document.body.classList.contains('mini-sidebar');
+                                localStorage.setItem(MINI_KEY, nowMini ? '1' : '0');
+
+                                var currentTheme = sessionStorage.getItem(THEME_KEY) || localStorage.getItem(THEME_KEY);
+                                if (currentTheme) {
+                                    var updated = applyMiniToThemeConfig(currentTheme, nowMini);
+                                    var updatedStr = safeStringify(updated);
+                                    if (updatedStr) {
+                                        sessionStorage.setItem(THEME_KEY, updatedStr);
+                                        localStorage.setItem(THEME_KEY, updatedStr);
+                                    }
+                                }
+                            } catch (e) {}
+                        }, 0);
+                    }, true);
+                });
+            })();
+        </script>
+        <link rel="stylesheet" href="<?php echo $CRM_ASSET_BASE; ?>/css/bootstrap.min.css">
+        <link rel="stylesheet" href="<?php echo $CRM_ASSET_BASE; ?>/plugins/tabler-icons/tabler-icons.min.css">
+        <link rel="stylesheet" href="<?php echo $CRM_ASSET_BASE; ?>/plugins/simplebar/simplebar.min.css">
+        <link rel="stylesheet" href="<?php echo $CRM_ASSET_BASE; ?>/plugins/datatables/css/dataTables.bootstrap5.min.css">
+        <link rel="stylesheet" href="<?php echo $CRM_ASSET_BASE; ?>/plugins/daterangepicker/daterangepicker.css">
+        <link rel="stylesheet" href="<?php echo $CRM_ASSET_BASE; ?>/plugins/select2/css/select2.min.css">
+        <link rel="stylesheet" href="<?php echo $CRM_ASSET_BASE; ?>/css/style.css" id="app-style">
+        <link rel="stylesheet" href="assets/css/panel.css">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta2/css/bootstrap-select.min.css" />
-        
-        <!-- Icons Css -->
-        <link href="assets/css/icons.min.css" rel="stylesheet" type="text/css" />
 
-        <!-- App Css-->
-        <link href="assets/css/app.min.css" id="app-style" rel="stylesheet" type="text/css" />
-
-        <link href="assets/css/panel.css" rel="stylesheet" type="text/css" />
+        <style>
+            @media (min-width: 992px) {
+                body.mini-sidebar .page-wrapper {
+                    margin-left: var(--sidenav-width-sm) !important;
+                }
+                body.mini-sidebar.expand-menu .page-wrapper {
+                    margin-left: var(--sidenav-width) !important;
+                }
+                body.mini-sidebar .navbar-header {
+                    margin-left: var(--sidenav-width-sm) !important;
+                }
+                body.mini-sidebar.expand-menu .navbar-header {
+                    margin-left: var(--sidenav-width) !important;
+                }
+            }
+        </style>
 
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
 

@@ -60,7 +60,7 @@
 <body>
     <div class="container">        
         <div class="logo">
-            <img src="assets/images/logo-dark.png" alt="Company Logo">
+            <img src="assets/images/logo-dark.webp" alt="Company Logo">
         </div>
         <p style="text-align: center; font-weight: bold;">
             We have received a new Enquiry with the Enquiry ID

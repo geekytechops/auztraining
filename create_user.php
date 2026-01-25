@@ -15,14 +15,14 @@ if(@$_SESSION['user_type']==1){
     <?php include('includes/app_includes.php'); ?>
 </head>
 
-<body data-topbar="colored">
-    <div id="layout-wrapper">
+<body>
+    <div class="main-wrapper">
 
         <?php include('includes/header.php'); ?>
         <?php include('includes/sidebar.php'); ?>
 
-        <div class="main-content">
-            <div class="page-content">
+        <div class="page-wrapper">
+            <div class="content pb-0">
                 <div class="container-fluid">
 
                     <!-- Page Title -->
@@ -138,8 +138,6 @@ if(@$_SESSION['user_type']==1){
         </div>
 
     </div>
-
-    <div class="rightbar-overlay"></div>
     <?php include('includes/footer_includes.php'); ?>
 
     <script>

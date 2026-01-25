@@ -986,7 +986,7 @@ if (@$_POST['formName'] == 'invoice_submit_company') {
          $company_account = "A/c Number: 1255 8010";
  
          // Add Logo
-         $pdf->Image('../assets/images/logo-dark.png', 15, 10, 40, 20, '', '', '', false, 300);
+         $pdf->Image('../assets/images/logo-dark.webp', 15, 10, 40, 20, '', '', '', false, 300);
  
          // Set Title
          $pdf->SetFont('helvetica', 'B', 16);
@@ -1118,7 +1118,7 @@ if(@$_POST['formName']=='invoice_submit'){
     $orientation_details = "14th March 2025 (Friday) from 3 PM to 5 PM.";
     
     // Company Logo
-    $pdf->Image('../assets/images/logo-dark.png', 160, 10, 40, 20, '', '', '', false, 300);
+    $pdf->Image('../assets/images/logo-dark.webp', 160, 10, 40, 20, '', '', '', false, 300);
     $pdf->Ln(30);
     
     // Title
@@ -2129,7 +2129,8 @@ if(@$_POST['formName']=='fetchEnquiries'){
             }
     
             $st_states=['-','NSW - New South Wales','VIC - Victoria','ACT - Australian Capital Territory','NT - Northern Territoy','WA - Western Australia','QLD - Queensland','SA - South Australia','TAS - Tasmania'];
-            $state_name= $st_states[$selectDataQry['st_state']];
+            $stateIndex = isset($selectDataQry['st_state']) ? (int)$selectDataQry['st_state'] : 0;
+            $state_name = $st_states[$stateIndex] ?? '-';
             
             $st_course_type=['-','Rpl','Regular','Regular - Group','Short courses','Short course - Group'];
             $courseTypeId=$selectDataQry['st_course_type'];
@@ -2803,6 +2804,134 @@ function getPurposeName($connection, $purpose_id){
     $result = mysqli_query($connection, $query);
     $row = mysqli_fetch_array($result);
     return $row['purpose_name'];
+}
+
+// Course Cancellation Form Processing
+if(@$_POST['formName']=='course_cancellation'){
+    if(!function_exists('send_mail')){
+        require_once('mail_function.php');
+    }
+    
+    $title = mysqli_real_escape_string($connection, $_POST['title']);
+    $family_name = mysqli_real_escape_string($connection, $_POST['family_name']);
+    $given_names = mysqli_real_escape_string($connection, $_POST['given_names']);
+    $residential_address = mysqli_real_escape_string($connection, $_POST['residential_address']);
+    $post_code = mysqli_real_escape_string($connection, $_POST['post_code']);
+    $contact_number = mysqli_real_escape_string($connection, $_POST['contact_number']);
+    $email = mysqli_real_escape_string($connection, $_POST['email']);
+    $date_of_birth = !empty($_POST['date_of_birth']) ? mysqli_real_escape_string($connection, $_POST['date_of_birth']) : NULL;
+    $gender = !empty($_POST['gender']) ? mysqli_real_escape_string($connection, $_POST['gender']) : NULL;
+    $course_code = !empty($_POST['course_code']) ? mysqli_real_escape_string($connection, $_POST['course_code']) : NULL;
+    $course_title = !empty($_POST['course_title']) ? mysqli_real_escape_string($connection, $_POST['course_title']) : NULL;
+    $date_of_enrolment = !empty($_POST['date_of_enrolment']) ? mysqli_real_escape_string($connection, $_POST['date_of_enrolment']) : NULL;
+    $reason_for_cancellation = mysqli_real_escape_string($connection, $_POST['reason_for_cancellation']);
+    $reason_other_details = !empty($_POST['reason_other_details']) ? mysqli_real_escape_string($connection, $_POST['reason_other_details']) : NULL;
+    $cancellation_effective_date = mysqli_real_escape_string($connection, $_POST['cancellation_effective_date']);
+    $cooling_off_period = mysqli_real_escape_string($connection, $_POST['cooling_off_period']);
+    $account_type = !empty($_POST['account_type']) ? mysqli_real_escape_string($connection, $_POST['account_type']) : NULL;
+    $bank_name = !empty($_POST['bank_name']) ? mysqli_real_escape_string($connection, $_POST['bank_name']) : NULL;
+    $bsb = !empty($_POST['bsb']) ? mysqli_real_escape_string($connection, $_POST['bsb']) : NULL;
+    $account_number = !empty($_POST['account_number']) ? mysqli_real_escape_string($connection, $_POST['account_number']) : NULL;
+    $full_name = mysqli_real_escape_string($connection, $_POST['full_name']);
+    $signature = mysqli_real_escape_string($connection, $_POST['signature']);
+    $submission_date = mysqli_real_escape_string($connection, $_POST['submission_date']);
+    
+    $query = "INSERT INTO course_cancellations (title, family_name, given_names, residential_address, post_code, contact_number, email, date_of_birth, gender, course_code, course_title, date_of_enrolment, reason_for_cancellation, reason_other_details, cancellation_effective_date, cooling_off_period, account_type, bank_name, bsb, account_number, full_name, signature, submission_date) 
+              VALUES ('$title', '$family_name', '$given_names', '$residential_address', '$post_code', '$contact_number', '$email', " . ($date_of_birth ? "'$date_of_birth'" : "NULL") . ", " . ($gender ? "'$gender'" : "NULL") . ", " . ($course_code ? "'$course_code'" : "NULL") . ", " . ($course_title ? "'$course_title'" : "NULL") . ", " . ($date_of_enrolment ? "'$date_of_enrolment'" : "NULL") . ", '$reason_for_cancellation', " . ($reason_other_details ? "'$reason_other_details'" : "NULL") . ", '$cancellation_effective_date', '$cooling_off_period', " . ($account_type ? "'$account_type'" : "NULL") . ", " . ($bank_name ? "'$bank_name'" : "NULL") . ", " . ($bsb ? "'$bsb'" : "NULL") . ", " . ($account_number ? "'$account_number'" : "NULL") . ", '$full_name', '$signature', '$submission_date')";
+    
+    $result = mysqli_query($connection, $query);
+    $error = mysqli_error($connection);
+    
+    if($error != '' || !$result){
+        echo '0';
+    } else {
+        $lastId = mysqli_insert_id($connection);
+        $uniqueId = sprintf('CC%05d', $lastId);
+        $updateQuery = mysqli_query($connection, "UPDATE course_cancellations SET cancellation_unique_id='$uniqueId' WHERE cancellation_id=$lastId");
+        
+        if(mysqli_error($connection) == ''){
+            echo $uniqueId;
+            
+            // Send email
+            $mail_to = $email;
+            $mail_subject = "Course Cancellation Form Submitted - National College Australia";
+            $mail_body = "Dear $given_names $family_name,<br><br>";
+            $mail_body .= "Thank you for submitting your Course Cancellation Form.<br><br>";
+            $mail_body .= "<b>Reference ID:</b> $uniqueId<br>";
+            $mail_body .= "<b>Submission Date:</b> $submission_date<br><br>";
+            $mail_body .= "Your cancellation request is being processed. You will be contacted shortly regarding the status of your application.<br><br>";
+            $mail_body .= "If you have any questions, please contact Client Services.<br><br>";
+            $mail_body .= "Best regards,<br>National College Australia";
+            
+            send_mail($mail_to, $mail_subject, $mail_body);
+        } else {
+            echo '0';
+        }
+    }
+}
+
+// Course Extension Form Processing
+if(@$_POST['formName']=='course_extension'){
+    if(!function_exists('send_mail')){
+        require_once('mail_function.php');
+    }
+    
+    $title = mysqli_real_escape_string($connection, $_POST['title']);
+    $family_name = mysqli_real_escape_string($connection, $_POST['family_name']);
+    $given_names = mysqli_real_escape_string($connection, $_POST['given_names']);
+    $residential_address = mysqli_real_escape_string($connection, $_POST['residential_address']);
+    $post_code = mysqli_real_escape_string($connection, $_POST['post_code']);
+    $contact_number = mysqli_real_escape_string($connection, $_POST['contact_number']);
+    $email = mysqli_real_escape_string($connection, $_POST['email']);
+    $course_code = !empty($_POST['course_code']) ? mysqli_real_escape_string($connection, $_POST['course_code']) : NULL;
+    $course_title = !empty($_POST['course_title']) ? mysqli_real_escape_string($connection, $_POST['course_title']) : NULL;
+    $enrolment_date = !empty($_POST['enrolment_date']) ? mysqli_real_escape_string($connection, $_POST['enrolment_date']) : NULL;
+    $reason_for_extension = mysqli_real_escape_string($connection, $_POST['reason_for_extension']);
+    $reason_other_details = !empty($_POST['reason_other_details']) ? mysqli_real_escape_string($connection, $_POST['reason_other_details']) : NULL;
+    $full_name = mysqli_real_escape_string($connection, $_POST['full_name']);
+    $signature = mysqli_real_escape_string($connection, $_POST['signature']);
+    $submission_date = mysqli_real_escape_string($connection, $_POST['submission_date']);
+    
+    // Extract extension duration from reason_other_details if it contains duration info
+    $extension_duration = NULL;
+    if($reason_other_details && preg_match('/(\d+)\s*(month|months|week|weeks|day|days)/i', $reason_other_details, $matches)){
+        $extension_duration = $matches[0];
+    }
+    
+    $query = "INSERT INTO course_extensions (title, family_name, given_names, residential_address, post_code, contact_number, email, course_code, course_title, enrolment_date, reason_for_extension, reason_other_details, extension_duration, full_name, signature, submission_date) 
+              VALUES ('$title', '$family_name', '$given_names', '$residential_address', '$post_code', '$contact_number', '$email', " . ($course_code ? "'$course_code'" : "NULL") . ", " . ($course_title ? "'$course_title'" : "NULL") . ", " . ($enrolment_date ? "'$enrolment_date'" : "NULL") . ", '$reason_for_extension', " . ($reason_other_details ? "'$reason_other_details'" : "NULL") . ", " . ($extension_duration ? "'$extension_duration'" : "NULL") . ", '$full_name', '$signature', '$submission_date')";
+    
+    $result = mysqli_query($connection, $query);
+    $error = mysqli_error($connection);
+    
+    if($error != '' || !$result){
+        echo '0';
+    } else {
+        $lastId = mysqli_insert_id($connection);
+        $uniqueId = sprintf('CE%05d', $lastId);
+        $updateQuery = mysqli_query($connection, "UPDATE course_extensions SET extension_unique_id='$uniqueId' WHERE extension_id=$lastId");
+        
+        if(mysqli_error($connection) == ''){
+            echo $uniqueId;
+            
+            // Send email
+            $mail_to = $email;
+            $mail_subject = "Course Extension Application Submitted - National College Australia";
+            $mail_body = "Dear $given_names $family_name,<br><br>";
+            $mail_body .= "Thank you for submitting your Application for Course Extension Form.<br><br>";
+            $mail_body .= "<b>Reference ID:</b> $uniqueId<br>";
+            $mail_body .= "<b>Submission Date:</b> $submission_date<br>";
+            $mail_body .= "<b>Reason:</b> $reason_for_extension<br><br>";
+            $mail_body .= "Your extension request is being reviewed. You will be contacted shortly regarding the status of your application.<br><br>";
+            $mail_body .= "<strong>Please note:</strong> Course extension rollover fees apply. Please refer to www.nationalcollege.edu.au for fee information.<br><br>";
+            $mail_body .= "If you have any questions, please contact Client Services.<br><br>";
+            $mail_body .= "Best regards,<br>National College Australia";
+            
+            send_mail($mail_to, $mail_subject, $mail_body);
+        } else {
+            echo '0';
+        }
+    }
 }
 
 ?>

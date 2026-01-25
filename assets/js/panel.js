@@ -98,6 +98,7 @@ function SuccessPop(Message,timing){
 
 function ErrorPop(Message,timing){
     Swal.fire({
+        position: 'center',
         icon: 'error',
         title: 'Oops...',
         text: Message,

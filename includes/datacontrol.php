@@ -2934,4 +2934,252 @@ if(@$_POST['formName']=='course_extension'){
     }
 }
 
+// Course Cancellations DataTable API
+if(@$_GET['name']=='courseCancellations'){
+    ob_clean();
+    header('Content-Type: application/json');
+    
+    $query = "SELECT * FROM course_cancellations WHERE status = 0 ORDER BY created_date DESC";
+    $result = mysqli_query($connection, $query);
+    
+    $data = array();
+    while($row = mysqli_fetch_array($result)){
+        $refundStatus = isset($row['refund_to_be_issued']) ? trim($row['refund_to_be_issued']) : '';
+        $status = 'Pending';
+        $statusClass = 'warning';
+        
+        if($refundStatus == 'Yes'){
+            $status = 'Approved';
+            $statusClass = 'success';
+        } elseif($refundStatus == 'No' && $refundStatus != ''){
+            $status = 'Processed';
+            $statusClass = 'info';
+        }
+        
+        // Show Process button only if not yet processed (refund_to_be_issued is empty or NULL)
+        if($refundStatus == '' || $refundStatus == NULL){
+            $action = '<button class="btn btn-sm btn-success btn-accept" data-id="'.$row['cancellation_id'].'"><i class="ti ti-check"></i> Process</button>';
+        } else {
+            $action = '<span class="badge bg-'.$statusClass.'">'.$status.'</span>';
+        }
+        
+        $data[] = array(
+            'reference_id' => $row['cancellation_unique_id'] ? $row['cancellation_unique_id'] : 'N/A',
+            'name' => $row['given_names'] . ' ' . $row['family_name'],
+            'email' => $row['email'],
+            'contact_number' => $row['contact_number'],
+            'course_code' => $row['course_code'] ? $row['course_code'] : '-',
+            'course_title' => $row['course_title'] ? $row['course_title'] : '-',
+            'reason' => $row['reason_for_cancellation'],
+            'effective_date' => $row['cancellation_effective_date'] ? date('d M Y', strtotime($row['cancellation_effective_date'])) : '-',
+            'cooling_off' => $row['cooling_off_period'],
+            'status' => '<span class="badge bg-'.$statusClass.'">'.$status.'</span>',
+            'submitted_date' => $row['submission_date'] ? date('d M Y', strtotime($row['submission_date'])) : '-',
+            'action' => $action
+        );
+    }
+    
+    echo json_encode(array('data' => $data));
+    exit;
+}
+
+// Course Extensions DataTable API
+if(@$_GET['name']=='courseExtensions'){
+    // Clear any previous output
+    ob_clean();
+    header('Content-Type: application/json');
+    
+    $query = "SELECT * FROM course_extensions WHERE status = 0 ORDER BY created_date DESC";
+    $result = mysqli_query($connection, $query);
+    
+    $data = array();
+    while($row = mysqli_fetch_array($result)){
+        $extensionStatus = isset($row['extension_approved']) ? trim($row['extension_approved']) : '';
+        $status = 'Pending';
+        $statusClass = 'warning';
+        
+        if($extensionStatus == 'Yes'){
+            $status = 'Approved';
+            $statusClass = 'success';
+        } elseif($extensionStatus == 'No' && $extensionStatus != ''){
+            $status = 'Rejected';
+            $statusClass = 'danger';
+        }
+        
+        // Show Process button only if not yet processed (extension_approved is empty or NULL)
+        if($extensionStatus == '' || $extensionStatus == NULL){
+            $action = '<button class="btn btn-sm btn-success btn-accept" data-id="'.$row['extension_id'].'"><i class="ti ti-check"></i> Process</button>';
+        } else {
+            $action = '<span class="badge bg-'.$statusClass.'">'.$status.'</span>';
+        }
+        
+        $data[] = array(
+            'reference_id' => $row['extension_unique_id'] ? $row['extension_unique_id'] : 'N/A',
+            'name' => $row['given_names'] . ' ' . $row['family_name'],
+            'email' => $row['email'],
+            'contact_number' => $row['contact_number'],
+            'course_code' => $row['course_code'] ? $row['course_code'] : '-',
+            'course_title' => $row['course_title'] ? $row['course_title'] : '-',
+            'reason' => $row['reason_for_extension'],
+            'enrolment_date' => $row['enrolment_date'] ? date('d M Y', strtotime($row['enrolment_date'])) : '-',
+            'status' => '<span class="badge bg-'.$statusClass.'">'.$status.'</span>',
+            'submitted_date' => $row['submission_date'] ? date('d M Y', strtotime($row['submission_date'])) : '-',
+            'action' => $action
+        );
+    }
+    
+    echo json_encode(array('data' => $data));
+    exit;
+}
+
+// Process Course Cancellation (Office Use Only)
+if(@$_POST['formName']=='process_cancellation'){
+    // Clear any previous output
+    ob_clean();
+    
+    if(!function_exists('send_mail')){
+        require_once('mail_function.php');
+    }
+    
+    $cancellation_id = intval($_POST['cancellation_id']);
+    $refund_to_be_issued = mysqli_real_escape_string($connection, $_POST['refund_to_be_issued']);
+    $refund_approved_by = !empty($_POST['refund_approved_by']) ? mysqli_real_escape_string($connection, $_POST['refund_approved_by']) : NULL;
+    $refund_approved_date = !empty($_POST['refund_approved_date']) ? mysqli_real_escape_string($connection, $_POST['refund_approved_date']) : NULL;
+    $refund_amount = !empty($_POST['refund_amount']) ? floatval($_POST['refund_amount']) : NULL;
+    $date_forwarded_to_finance = !empty($_POST['date_forwarded_to_finance']) ? mysqli_real_escape_string($connection, $_POST['date_forwarded_to_finance']) : NULL;
+    $finance_initial = !empty($_POST['finance_initial']) ? mysqli_real_escape_string($connection, $_POST['finance_initial']) : NULL;
+    $office_comments = !empty($_POST['office_comments']) ? mysqli_real_escape_string($connection, $_POST['office_comments']) : NULL;
+    $processed_by = $_SESSION['user_id'];
+    
+    $updateQuery = "UPDATE course_cancellations SET 
+        refund_to_be_issued = '$refund_to_be_issued',
+        refund_approved_by = " . ($refund_approved_by ? "'$refund_approved_by'" : "NULL") . ",
+        refund_approved_date = " . ($refund_approved_date ? "'$refund_approved_date'" : "NULL") . ",
+        refund_amount = " . ($refund_amount ? $refund_amount : "NULL") . ",
+        date_forwarded_to_finance = " . ($date_forwarded_to_finance ? "'$date_forwarded_to_finance'" : "NULL") . ",
+        finance_initial = " . ($finance_initial ? "'$finance_initial'" : "NULL") . ",
+        office_comments = " . ($office_comments ? "'$office_comments'" : "NULL") . ",
+        modified_by = $processed_by,
+        modified_date = CURDATE()
+        WHERE cancellation_id = $cancellation_id";
+    
+    $result = mysqli_query($connection, $updateQuery);
+    $error = mysqli_error($connection);
+    
+    if($error){
+        echo '0';
+        exit;
+    }
+    
+    if($result && mysqli_affected_rows($connection) > 0){
+        // Get student details for email
+        $studentQuery = mysqli_query($connection, "SELECT * FROM course_cancellations WHERE cancellation_id = $cancellation_id");
+        $student = mysqli_fetch_array($studentQuery);
+        
+        // Send email to student
+        $mail_to = $student['email'];
+        $mail_subject = "Course Cancellation Request - Update";
+        $mail_body = "Dear " . $student['given_names'] . " " . $student['family_name'] . ",<br><br>";
+        
+        if($refund_to_be_issued == 'Yes'){
+            $mail_body .= "Your Course Cancellation Request (Reference ID: " . $student['cancellation_unique_id'] . ") has been <strong>approved</strong>.<br><br>";
+            if($refund_amount){
+                $mail_body .= "<b>Refund Amount:</b> $" . number_format($refund_amount, 2) . "<br>";
+            }
+            $mail_body .= "Your refund will be processed according to our refund policy. You will be notified once the refund has been processed.<br><br>";
+        } else {
+            $mail_body .= "Your Course Cancellation Request (Reference ID: " . $student['cancellation_unique_id'] . ") has been <strong>processed</strong>.<br><br>";
+            $mail_body .= "Please note that no refund will be issued as per our cancellation policy.<br><br>";
+        }
+        
+        if($office_comments){
+            $mail_body .= "<b>Comments:</b> " . $office_comments . "<br><br>";
+        }
+        
+        $mail_body .= "If you have any questions, please contact Client Services.<br><br>";
+        $mail_body .= "Best regards,<br>National College Australia";
+        
+        send_mail($mail_to, $mail_subject, $mail_body);
+        
+        echo '1';
+    } else {
+        echo '0';
+    }
+    exit;
+}
+
+// Process Course Extension (Office Use Only)
+if(@$_POST['formName']=='process_extension'){
+    // Clear any previous output
+    ob_clean();
+    
+    if(!function_exists('send_mail')){
+        require_once('mail_function.php');
+    }
+    
+    $extension_id = intval($_POST['extension_id']);
+    $extension_approved = mysqli_real_escape_string($connection, $_POST['extension_approved']);
+    $application_approved_by = !empty($_POST['application_approved_by']) ? mysqli_real_escape_string($connection, $_POST['application_approved_by']) : NULL;
+    $approval_initial = !empty($_POST['approval_initial']) ? mysqli_real_escape_string($connection, $_POST['approval_initial']) : NULL;
+    $approval_date = !empty($_POST['approval_date']) ? mysqli_real_escape_string($connection, $_POST['approval_date']) : NULL;
+    $rollover_fee = !empty($_POST['rollover_fee']) ? floatval($_POST['rollover_fee']) : NULL;
+    $office_comments = !empty($_POST['office_comments']) ? mysqli_real_escape_string($connection, $_POST['office_comments']) : NULL;
+    $processed_by = $_SESSION['user_id'];
+    
+    $updateQuery = "UPDATE course_extensions SET 
+        extension_approved = '$extension_approved',
+        application_approved_by = " . ($application_approved_by ? "'$application_approved_by'" : "NULL") . ",
+        approval_initial = " . ($approval_initial ? "'$approval_initial'" : "NULL") . ",
+        approval_date = " . ($approval_date ? "'$approval_date'" : "NULL") . ",
+        rollover_fee = " . ($rollover_fee ? $rollover_fee : "NULL") . ",
+        office_comments = " . ($office_comments ? "'$office_comments'" : "NULL") . ",
+        modified_by = $processed_by,
+        modified_date = CURDATE()
+        WHERE extension_id = $extension_id";
+    
+    $result = mysqli_query($connection, $updateQuery);
+    $error = mysqli_error($connection);
+    
+    if($error){
+        echo '0';
+        exit;
+    }
+    
+    if($result && mysqli_affected_rows($connection) > 0){
+        // Get student details for email
+        $studentQuery = mysqli_query($connection, "SELECT * FROM course_extensions WHERE extension_id = $extension_id");
+        $student = mysqli_fetch_array($studentQuery);
+        
+        // Send email to student
+        $mail_to = $student['email'];
+        $mail_subject = "Course Extension Application - Update";
+        $mail_body = "Dear " . $student['given_names'] . " " . $student['family_name'] . ",<br><br>";
+        
+        if($extension_approved == 'Yes'){
+            $mail_body .= "Your Application for Course Extension (Reference ID: " . $student['extension_unique_id'] . ") has been <strong>approved</strong>.<br><br>";
+            if($rollover_fee){
+                $mail_body .= "<b>Rollover Fee:</b> $" . number_format($rollover_fee, 2) . "<br>";
+                $mail_body .= "Please arrange payment of the rollover fee. For payment details, please refer to www.nationalcollege.edu.au<br><br>";
+            }
+        } else {
+            $mail_body .= "Your Application for Course Extension (Reference ID: " . $student['extension_unique_id'] . ") has been <strong>reviewed</strong>.<br><br>";
+            $mail_body .= "Unfortunately, we are unable to offer an extension at this time.<br><br>";
+        }
+        
+        if($office_comments){
+            $mail_body .= "<b>Comments:</b> " . $office_comments . "<br><br>";
+        }
+        
+        $mail_body .= "If you have any questions, please contact Client Services.<br><br>";
+        $mail_body .= "Best regards,<br>National College Australia";
+        
+        send_mail($mail_to, $mail_subject, $mail_body);
+        
+        echo '1';
+    } else {
+        echo '0';
+    }
+    exit;
+}
+
 ?>

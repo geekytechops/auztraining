@@ -168,12 +168,24 @@ if(@$_SESSION['user_type']!=''){
                         processData: false,
                         success: function(response) {
                             if(response == '1') {
-                                Swal.fire('Success', 'Block added successfully', 'success').then(() => {
+                                Swal.fire({
+                                    position: 'center',
+                                    icon: 'success',
+                                    title: 'Success',
+                                    text: 'Block added successfully',
+                                    confirmButtonColor: '#0bb197'
+                                }).then(() => {
                                     resetBlockForm();
                                     loadBlocks();
                                 });
                             } else {
-                                Swal.fire('Error', 'Cannot add block', 'error');
+                                Swal.fire({
+                                    position: 'center',
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: 'Cannot add block',
+                                    confirmButtonColor: '#dc3545'
+                                });
                             }
                         }
                     });
@@ -217,6 +229,7 @@ if(@$_SESSION['user_type']!=''){
             
             function deleteBlock(blockId) {
                 Swal.fire({
+                    position: 'center',
                     title: 'Delete Block?',
                     text: 'Are you sure you want to delete this blocked slot?',
                     icon: 'warning',
@@ -235,11 +248,23 @@ if(@$_SESSION['user_type']!=''){
                             },
                             success: function(response) {
                                 if(response == '1') {
-                                    Swal.fire('Success', 'Block deleted successfully', 'success').then(() => {
+                                    Swal.fire({
+                                        position: 'center',
+                                        icon: 'success',
+                                        title: 'Success',
+                                        text: 'Block deleted successfully',
+                                        confirmButtonColor: '#0bb197'
+                                    }).then(() => {
                                         loadBlocks();
                                     });
                                 } else {
-                                    Swal.fire('Error', 'Cannot delete block', 'error');
+                                    Swal.fire({
+                                        position: 'center',
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: 'Cannot delete block',
+                                        confirmButtonColor: '#dc3545'
+                                    });
                                 }
                             }
                         });

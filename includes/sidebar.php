@@ -95,6 +95,16 @@
                                     <a href="invoices1.php"><i class="ti ti-file-invoice"></i><span>Invoices</span></a>
                                 </li>
                                 <?php } ?>
+
+                                <?php if(@$_SESSION['user_type']==1){ ?>
+                                <li class="submenu">
+                                    <a href="javascript:void(0);"><i class="ti ti-file-off"></i><span>Course Forms</span><span class="menu-arrow"></span></a>
+                                    <ul>
+                                        <li><a href="course_cancellations_list.php">Course Cancellations</a></li>
+                                        <li><a href="course_extensions_list.php">Course Extensions</a></li>
+                                    </ul>
+                                </li>
+                                <?php } ?>
                             </ul>
                         </li>
                     </ul>

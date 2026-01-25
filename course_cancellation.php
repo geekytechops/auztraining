@@ -452,6 +452,7 @@
 
                     if(!isValid){
                         Swal.fire({
+                            position: 'center',
                             icon: 'error',
                             title: 'Validation Error',
                             text: 'Please fill all required fields correctly',
@@ -478,6 +479,7 @@
                             
                             if(response == '0' || response == ''){
                                 Swal.fire({
+                                    position: 'center',
                                     icon: 'error',
                                     title: 'Error',
                                     text: 'Cannot submit form. Please try again.',
@@ -521,6 +523,7 @@
                             $('#loader-container').hide();
                             $('#course_cancellation_form').css('opacity','');
                             Swal.fire({
+                                position: 'center',
                                 icon: 'error',
                                 title: 'Error',
                                 text: 'An error occurred. Please try again.',

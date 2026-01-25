@@ -270,12 +270,24 @@ if(@$_SESSION['user_type']!=''){
                     },
                     success: function(response) {
                         if(response == '1') {
-                            Swal.fire('Success', 'Appointment status updated successfully', 'success').then(() => {
+                            Swal.fire({
+                                position: 'center',
+                                icon: 'success',
+                                title: 'Success',
+                                text: 'Appointment status updated successfully',
+                                confirmButtonColor: '#0bb197'
+                            }).then(() => {
                                 $('#appointmentDetailsModal').modal('hide');
                                 calendar.refetchEvents();
                             });
                         } else {
-                            Swal.fire('Error', 'Cannot update appointment status', 'error');
+                            Swal.fire({
+                                position: 'center',
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Cannot update appointment status',
+                                confirmButtonColor: '#dc3545'
+                            });
                         }
                     }
                 });
@@ -292,12 +304,24 @@ if(@$_SESSION['user_type']!=''){
                     },
                     success: function(response) {
                         if(response == '1') {
-                            Swal.fire('Success', 'Time recorded successfully', 'success').then(() => {
+                            Swal.fire({
+                                position: 'center',
+                                icon: 'success',
+                                title: 'Success',
+                                text: 'Time recorded successfully',
+                                confirmButtonColor: '#0bb197'
+                            }).then(() => {
                                 loadAppointmentDetails(currentAppointmentId);
                                 calendar.refetchEvents();
                             });
                         } else {
-                            Swal.fire('Error', 'Cannot record time', 'error');
+                            Swal.fire({
+                                position: 'center',
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Cannot record time',
+                                confirmButtonColor: '#dc3545'
+                            });
                         }
                     }
                 });

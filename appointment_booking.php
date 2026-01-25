@@ -655,7 +655,13 @@ if(@$_SESSION['user_type']!=''){
                     });
                     
                     if(!isValid) {
-                        Swal.fire('Error', 'Please fill all required fields', 'error');
+                        Swal.fire({
+                            position: 'center',
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Please fill all required fields',
+                            confirmButtonColor: '#dc3545'
+                        });
                         return;
                     }
                     
@@ -686,15 +692,33 @@ if(@$_SESSION['user_type']!=''){
                         processData: false,
                         success: function(response) {
                             if(response == '1' || response == '0') {
-                                Swal.fire('Error', 'Cannot save appointment. Please try again.', 'error');
+                                Swal.fire({
+                                    position: 'center',
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: 'Cannot save appointment. Please try again.',
+                                    confirmButtonColor: '#dc3545'
+                                });
                             } else {
-                                Swal.fire('Success', 'Appointment saved successfully!', 'success').then(() => {
+                                Swal.fire({
+                                    position: 'center',
+                                    icon: 'success',
+                                    title: 'Success',
+                                    text: 'Appointment saved successfully!',
+                                    confirmButtonColor: '#0bb197'
+                                }).then(() => {
                                     window.location.href = 'appointment_calendar.php';
                                 });
                             }
                         },
                         error: function() {
-                            Swal.fire('Error', 'An error occurred. Please try again.', 'error');
+                            Swal.fire({
+                                position: 'center',
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'An error occurred. Please try again.',
+                                confirmButtonColor: '#dc3545'
+                            });
                         }
                     });
                 });
@@ -796,12 +820,24 @@ if(@$_SESSION['user_type']!=''){
                         },
                         success: function(response) {
                             if(response == '1') {
-                                Swal.fire('Success', 'Purpose added successfully', 'success');
+                                Swal.fire({
+                                    position: 'center',
+                                    icon: 'success',
+                                    title: 'Success',
+                                    text: 'Purpose added successfully',
+                                    confirmButtonColor: '#0bb197'
+                                });
                                 $('#new_purpose_name').val('');
                                 loadPurposes();
                                 location.reload();
                             } else {
-                                Swal.fire('Error', 'Cannot add purpose', 'error');
+                                Swal.fire({
+                                    position: 'center',
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: 'Cannot add purpose',
+                                    confirmButtonColor: '#dc3545'
+                                });
                             }
                         }
                     });
@@ -820,12 +856,24 @@ if(@$_SESSION['user_type']!=''){
                         },
                         success: function(response) {
                             if(response == '1') {
-                                Swal.fire('Success', 'Attendee type added successfully', 'success');
+                                Swal.fire({
+                                    position: 'center',
+                                    icon: 'success',
+                                    title: 'Success',
+                                    text: 'Attendee type added successfully',
+                                    confirmButtonColor: '#0bb197'
+                                });
                                 $('#new_attendee_type_name').val('');
                                 loadAttendeeTypes();
                                 location.reload();
                             } else {
-                                Swal.fire('Error', 'Cannot add attendee type', 'error');
+                                Swal.fire({
+                                    position: 'center',
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: 'Cannot add attendee type',
+                                    confirmButtonColor: '#dc3545'
+                                });
                             }
                         }
                     });
@@ -844,12 +892,24 @@ if(@$_SESSION['user_type']!=''){
                         },
                         success: function(response) {
                             if(response == '1') {
-                                Swal.fire('Success', 'Location added successfully', 'success');
+                                Swal.fire({
+                                    position: 'center',
+                                    icon: 'success',
+                                    title: 'Success',
+                                    text: 'Location added successfully',
+                                    confirmButtonColor: '#0bb197'
+                                });
                                 $('#new_location_name').val('');
                                 loadLocations();
                                 location.reload();
                             } else {
-                                Swal.fire('Error', 'Cannot add location', 'error');
+                                Swal.fire({
+                                    position: 'center',
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: 'Cannot add location',
+                                    confirmButtonColor: '#dc3545'
+                                });
                             }
                         }
                     });
@@ -868,12 +928,24 @@ if(@$_SESSION['user_type']!=''){
                         },
                         success: function(response) {
                             if(response == '1') {
-                                Swal.fire('Success', 'Platform added successfully', 'success');
+                                Swal.fire({
+                                    position: 'center',
+                                    icon: 'success',
+                                    title: 'Success',
+                                    text: 'Platform added successfully',
+                                    confirmButtonColor: '#0bb197'
+                                });
                                 $('#new_platform_name').val('');
                                 loadPlatforms();
                                 location.reload();
                             } else {
-                                Swal.fire('Error', 'Cannot add platform', 'error');
+                                Swal.fire({
+                                    position: 'center',
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: 'Cannot add platform',
+                                    confirmButtonColor: '#dc3545'
+                                });
                             }
                         }
                     });

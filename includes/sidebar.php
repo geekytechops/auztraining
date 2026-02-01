@@ -40,8 +40,12 @@
                                 <?php } ?>
 
                                 <?php if(@$_SESSION['user_type']==1){ ?>
-                                <li>
-                                    <a href="enrolment.php"><i class="ti ti-user-plus"></i><span>Enrolment</span></a>
+                                <li class="submenu">
+                                    <a href="javascript:void(0);"><i class="ti ti-user-plus"></i><span>Enrolment</span><span class="menu-arrow"></span></a>
+                                    <ul>
+                                        <li><a href="enrolment.php">Enrolment (Legacy)</a></li>
+                                        <li><a href="enrolment_online.php">Enrolment Form (Online)</a></li>
+                                    </ul>
                                 </li>
                                 <?php } ?>
 

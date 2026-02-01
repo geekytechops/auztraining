@@ -923,6 +923,157 @@ if (@$_POST['formName'] == 'student_enrols') {
     echo ($error != '') ? 1 : $uniqueId;
 }
 
+// --- Enrolment Form Online (PDF form) ---
+if (@$_POST['formName'] == 'student_enrols_online') {
+    $raw = isset($_POST['details']) ? json_decode($_POST['details'], true) : array();
+    if (!is_array($raw)) {
+        echo json_encode(array('success' => false, 'message' => 'Invalid form data.'));
+        exit;
+    }
+    $d = function($key, $def = '') use ($raw) {
+        return isset($raw[$key]) && $raw[$key] !== '' ? $raw[$key] : $def;
+    };
+    $uploadDir = __DIR__ . '/../uploads/';
+    $photo = '[]';
+    if (!empty($_FILES['image']['name'][0])) {
+        $uploadedFiles = array();
+        foreach ($_FILES['image']['name'] as $key => $fileName) {
+            $tmpName = $_FILES['image']['tmp_name'][$key];
+            $fileExt = pathinfo($fileName, PATHINFO_EXTENSION);
+            $uniqueName = rand(1000, 999999) . '_' . time() . '.' . strtolower($fileExt);
+            $targetPath = $uploadDir . $uniqueName;
+            if (move_uploaded_file($tmpName, $targetPath)) {
+                $uploadedFiles[] = $uniqueName;
+            }
+        }
+        $photo = json_encode($uploadedFiles);
+    }
+    $enquiry_id = mysqli_real_escape_string($connection, $d('enquiry_id'));
+    $rto_name = mysqli_real_escape_string($connection, $d('rto_name'));
+    $branch_name = mysqli_real_escape_string($connection, $d('branch_name'));
+    $courses = is_array($raw['courses']) ? $raw['courses'] : array();
+    $coursesJson = json_encode($courses);
+    $given_name = mysqli_real_escape_string($connection, $d('given_name'));
+    $surname = mysqli_real_escape_string($connection, $d('surname'));
+    $dob = mysqli_real_escape_string($connection, $d('dob'));
+    $birth_country = mysqli_real_escape_string($connection, $d('birth_country'));
+    $street_details = mysqli_real_escape_string($connection, $d('street_details'));
+    $sub_urb = mysqli_real_escape_string($connection, $d('sub_urb'));
+    $stu_state = mysqli_real_escape_string($connection, $d('stu_state'));
+    $post_code = mysqli_real_escape_string($connection, $d('post_code'));
+    $mobile_num = mysqli_real_escape_string($connection, $d('mobile_num'));
+    $emailAddress = mysqli_real_escape_string($connection, $d('emailAddress'));
+    $em_full_name = mysqli_real_escape_string($connection, $d('em_full_name'));
+    $em_relation = mysqli_real_escape_string($connection, $d('em_relation'));
+    $em_mobile_num = mysqli_real_escape_string($connection, $d('em_mobile_num'));
+    $usi_id = mysqli_real_escape_string($connection, $d('usi_id'));
+    $gender_check = mysqli_real_escape_string($connection, $d('gender_check'));
+    $highest_school = mysqli_real_escape_string($connection, $d('highest_school'));
+    $sec_school = mysqli_real_escape_string($connection, $d('sec_school'));
+    $study_reason = mysqli_real_escape_string($connection, $d('study_reason'));
+    $study_reason_other = mysqli_real_escape_string($connection, $d('study_reason_other'));
+    $cred_tansf = mysqli_real_escape_string($connection, $d('cred_tansf'));
+    $origin = mysqli_real_escape_string($connection, $d('origin'));
+    $lan_spoken = mysqli_real_escape_string($connection, $d('lan_spoken'));
+    $lan_spoken_other = mysqli_real_escape_string($connection, $d('lan_spoken_other'));
+    $disability = mysqli_real_escape_string($connection, $d('disability'));
+    $st_disability_type = isset($raw['st_disability_type']) && is_array($raw['st_disability_type']) ? json_encode($raw['st_disability_type']) : '[]';
+    $disability_type_other = mysqli_real_escape_string($connection, $d('disability_type_other'));
+    $emp_status = mysqli_real_escape_string($connection, $d('emp_status'));
+    $admin_id = (int)($_SESSION['user_id'] ?? 0);
+
+    $qualification_code_title = mysqli_real_escape_string($connection, $d('qualification_code_title'));
+    $age_declaration_18 = (int)$d('age_declaration_18');
+    $city_of_birth = mysqli_real_escape_string($connection, $d('city_of_birth'));
+    $postal_same_as_above = $d('postal_same_as_above') !== '' ? (int)$d('postal_same_as_above') : 'NULL';
+    $postal_address = mysqli_real_escape_string($connection, $d('postal_address'));
+    $english_read_write = mysqli_real_escape_string($connection, $d('english_read_write'));
+    $work_phone = mysqli_real_escape_string($connection, $d('work_phone'));
+    $home_phone = mysqli_real_escape_string($connection, $d('home_phone'));
+    $year_completed_school = mysqli_real_escape_string($connection, $d('year_completed_school'));
+    $mode_delivery = mysqli_real_escape_string($connection, $d('mode_delivery'));
+    $qualification_attained = mysqli_real_escape_string($connection, $d('qualification_attained'));
+    $industry_of_work = mysqli_real_escape_string($connection, $d('industry_of_work'));
+    $computer_access = mysqli_real_escape_string($connection, $d('computer_access'));
+    $computer_literacy = mysqli_real_escape_string($connection, $d('computer_literacy'));
+    $numeracy_skills = mysqli_real_escape_string($connection, $d('numeracy_skills'));
+    $additional_support = mysqli_real_escape_string($connection, $d('additional_support'));
+    $additional_support_specify = mysqli_real_escape_string($connection, $d('additional_support_specify'));
+    $usi_declaration = (int)$d('usi_declaration');
+    $privacy_declaration = (int)$d('privacy_declaration');
+    $refund_declaration = (int)$d('refund_declaration');
+    $office_coordinator_name = mysqli_real_escape_string($connection, $d('office_coordinator_name'));
+    $office_invoice_provided = (int)$d('office_invoice_provided');
+    $office_receipt_collected = (int)$d('office_receipt_collected');
+    $office_lms_access = (int)$d('office_lms_access');
+    $office_resources_access = (int)$d('office_resources_access');
+    $office_uploaded_sms = (int)$d('office_uploaded_sms');
+    $office_welcome_pack_sent = (int)$d('office_welcome_pack_sent');
+    $candidate_declaration = (int)$d('candidate_declaration');
+    $candidate_full_name = mysqli_real_escape_string($connection, $d('candidate_full_name'));
+    $candidate_date = mysqli_real_escape_string($connection, $d('candidate_date'));
+    $candidate_signature = mysqli_real_escape_string($connection, $d('candidate_signature'));
+
+    $tel_num = $home_phone;
+    $em_agree_check = '1';
+    $self_status = '';
+    $st_citizen = '';
+    $born_country = '';
+    $st_born_country = '';
+    $qual_1 = $qual_2 = $qual_3 = $qual_4 = $qual_5 = $qual_6 = $qual_7 = $qual_8 = $qual_9 = $qual_10 = '';
+    $qual_name_8_other = $qual_name_9_other = $qual_name_10_other = '';
+
+    $cols = "st_unique_id, st_enquiry_id, st_rto_name, st_courses, st_branch, st_photo, st_given_name, st_surname, st_dob, st_country_birth, st_street, st_suburb, st_state, st_post_code, st_tel_num, st_email, st_mobile, st_emerg_name, st_emerg_relation, st_emerg_mobile, st_emerg_agree, st_usi, st_emp_status, st_self_status, st_citizenship, st_gender, st_credit_transfer, st_highest_school, st_secondary_school, st_born_country, st_born_country_other, st_origin, st_lan_spoken, st_lan_spoken_other, st_disability, st_disability_type, st_disability_type_other, st_study_reason, st_study_reason_other, st_qual_1, st_qual_2, st_qual_3, st_qual_4, st_qual_5, st_qual_6, st_qual_7, st_qual_8, st_qual_9, st_qual_10, st_qual_8_other, st_qual_9_other, st_qual_10_other, st_created_by";
+    $vals = "'1','$enquiry_id','$rto_name','$coursesJson','$branch_name','$photo','$given_name','$surname','$dob','$birth_country','$street_details','$sub_urb','$stu_state','$post_code','$tel_num','$emailAddress','$mobile_num','$em_full_name','$em_relation','$em_mobile_num','$em_agree_check','$usi_id','$emp_status','$self_status','$st_citizen','$gender_check','$cred_tansf','$highest_school','$sec_school','$born_country','$st_born_country','$origin','$lan_spoken','$lan_spoken_other','$disability','$st_disability_type','$disability_type_other','$study_reason','$study_reason_other','$qual_1','$qual_2','$qual_3','$qual_4','$qual_5','$qual_6','$qual_7','$qual_8','$qual_9','$qual_10','$qual_name_8_other','$qual_name_9_other','$qual_name_10_other',$admin_id";
+
+    $query = "INSERT INTO student_enrolments ($cols) VALUES ($vals)";
+    $queryExec = mysqli_query($connection, $query);
+    if (!$queryExec) {
+        echo json_encode(array('success' => false, 'message' => 'Database error: ' . mysqli_error($connection)));
+        exit;
+    }
+    $lastId = mysqli_insert_id($connection);
+    $courseId = !empty($courses) ? (int)$courses[0] : 0;
+    $courseID = $courseId ? mysqli_fetch_array(mysqli_query($connection, "SELECT * FROM courses WHERE course_id=$courseId")) : null;
+    $dateYear = date('Y');
+    $uniqueId = $courseID ? sprintf($dateYear . $courseID['course_name'] . '%04d', $lastId) : ($dateYear . 'ENR' . sprintf('%04d', $lastId));
+    $coursesDisplay = '';
+    if (!empty($courses) && $courseID) {
+        $names = array();
+        foreach ($courses as $cid) {
+            $r = mysqli_fetch_array(mysqli_query($connection, "SELECT course_sname, course_name FROM courses WHERE course_id=" . (int)$cid));
+            if ($r) $names[] = $r['course_sname'] . '-' . $r['course_name'];
+        }
+        $coursesDisplay = implode(', ', $names);
+    }
+
+    $updateEnrol = "INSERT INTO student_enrolment (st_enquiry_id, st_unique_id, st_enrol_status, st_given_name, st_name, st_mobile, st_email, st_qualifications, st_enrol_course, st_venue, st_middle_name, st_source) VALUES ('$enquiry_id','$uniqueId',0,'$given_name','$surname','$mobile_num','$emailAddress','','$courseId','','','')";
+    mysqli_query($connection, $updateEnrol);
+
+    $updateStUnique = "UPDATE student_enrolments SET st_unique_id='$uniqueId' WHERE st_enrol_id=$lastId";
+    mysqli_query($connection, $updateStUnique);
+
+    $updNew = "UPDATE student_enrolments SET qualification_code_title='$qualification_code_title', age_declaration_18=" . ($age_declaration_18 ? 1 : 'NULL') . ", city_of_birth='$city_of_birth', postal_same_as_above=$postal_same_as_above, postal_address='$postal_address', english_read_write='$english_read_write', work_phone='$work_phone', home_phone='$home_phone', year_completed_school='$year_completed_school', mode_delivery='$mode_delivery', qualification_attained='$qualification_attained', industry_of_work='$industry_of_work', computer_access='$computer_access', computer_literacy='$computer_literacy', numeracy_skills='$numeracy_skills', additional_support='$additional_support', additional_support_specify='$additional_support_specify', usi_declaration=$usi_declaration, privacy_declaration=$privacy_declaration, refund_declaration=$refund_declaration, office_coordinator_name='$office_coordinator_name', office_invoice_provided=$office_invoice_provided, office_receipt_collected=$office_receipt_collected, office_lms_access=$office_lms_access, office_resources_access=$office_resources_access, office_uploaded_sms=$office_uploaded_sms, office_welcome_pack_sent=$office_welcome_pack_sent, candidate_declaration=$candidate_declaration, candidate_full_name='$candidate_full_name', candidate_date='" . ($candidate_date ? $candidate_date : '') . "', candidate_signature='$candidate_signature', form_source='online' WHERE st_enrol_id=$lastId";
+    @mysqli_query($connection, $updNew);
+
+    $pdfData = array_merge($raw, array(
+        'office_student_id' => $uniqueId,
+        'courses_display'   => $coursesDisplay,
+        'emailAddress'     => $emailAddress,
+    ));
+    $pdfDir = __DIR__ . '/enrolments_pdf/';
+    if (!is_dir($pdfDir)) {
+        @mkdir($pdfDir, 0755, true);
+    }
+    $pdfPath = $pdfDir . 'Enrolment_' . $uniqueId . '.pdf';
+    require_once __DIR__ . '/enrolment_pdf_generator.php';
+    enrolment_generate_pdf($pdfData, $pdfPath);
+
+    $pdfUrl = 'includes/enrolments_pdf/Enrolment_' . $uniqueId . '.pdf';
+    echo json_encode(array('success' => true, 'unique_id' => $uniqueId, 'pdf_url' => $pdfUrl));
+    exit;
+}
+
 if (@$_POST['formName'] == 'invoice_submit_company') {
 
      // Sanitize input

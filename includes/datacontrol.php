@@ -2351,6 +2351,7 @@ if(@$_POST['formName']=='fetchEnquiries'){
             $tbody.='<td class="imp-none">'.$coursesName.'</td>';
             $tbody.='<td class="imp-none">'.$visacCond.'</td>';
             $tbody.='<td class="imp-none">'.$visastatus.'</td>';
+            $tbody.='<td><a class="btn btn-outline-primary btn-sm" href="student_enquiry.php?eq='.base64_encode($selectDataQry['st_id']).'">Edit</a></td>';
             $tbody.='</tr>';
         }
     }
@@ -2476,12 +2477,52 @@ if(@$_POST['formName']=='fetchCounsel'){
             $tbody.='<td>'.$selectDataQry['counsil_mem_name'].'</td>';
             $tbody.='<td>'.date('Y-m-d H:i',strtotime($selectDataQry['counsil_timing'])).'</td>';
             $tbody.='<td>'.$endDate.'</td>';
+            $tbody.='<td><a class="btn btn-outline-primary btn-sm" href="counselling_form.php?eq='.base64_encode($selectDataQry['counsil_id']).'">Edit</a></td>';
             $tbody.='</tr>';
         }
     }
 
     echo $tbody;
 
+}
+
+if(@$_POST['formName']=='fetchFollowupList'){
+    $where='';
+    if(@$_POST['objFilter']){
+        $objFilter=$_POST['objFilter'];
+        foreach($objFilter as $key=>$value){
+            if($key=='flw_contacted_time' || $key=='flw_date'){
+                if(strpos($value,' - ')!==false){
+                    $parts=explode(' - ',$value);
+                    $from_date=date('Y-m-d',strtotime(trim($parts[0]))).' 00:00:00';
+                    $to_date=date('Y-m-d',strtotime(trim($parts[1]))).' 23:59:59';
+                    $where.=' AND `'.$key.'` BETWEEN "'.$from_date.'" AND "'.$to_date.'"';
+                }
+            }else{
+                $where.=' AND `'.$key.'` LIKE "%'.mysqli_real_escape_string($connection,$value).'%"';
+            }
+        }
+    }
+    $tbody='';
+    $selectData=mysqli_query($connection,"SELECT * FROM `followup_calls` WHERE `flw_enquiry_status`=0".$where);
+    if(mysqli_num_rows($selectData)!=0){
+        while($row=mysqli_fetch_array($selectData)){
+            $contacted_time=$row['flw_contacted_time']!='' ? date('d M Y H:i',strtotime($row['flw_contacted_time'])) : '';
+            $flw_date=$row['flw_date']!='' ? date('d M Y',strtotime($row['flw_date'])) : '';
+            $tbody.='<tr>';
+            $tbody.='<td>'.$row['enquiry_id'].'</td>';
+            $tbody.='<td>'.$row['flw_name'].'</td>';
+            $tbody.='<td>'.$row['flw_phone'].'</td>';
+            $tbody.='<td>'.$row['flw_contacted_person'].'</td>';
+            $tbody.='<td>'.$contacted_time.'</td>';
+            $tbody.='<td>'.$flw_date.'</td>';
+            $tbody.='<td>'.$row['flw_mode_contact'].'</td>';
+            $tbody.='<td>'.($row['flw_comments']!='' ? $row['flw_comments'] : '-').'</td>';
+            $tbody.='<td><a class="btn btn-outline-primary btn-sm" href="followup_call.php?flw_id='.base64_encode($row['flw_id']).'">Edit</a></td>';
+            $tbody.='</tr>';
+        }
+    }
+    echo $tbody;
 }
 
 // ==================== APPOINTMENT SYSTEM FUNCTIONS ====================

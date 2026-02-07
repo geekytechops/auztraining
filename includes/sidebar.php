@@ -34,8 +34,12 @@
                                 <?php } ?>
 
                                 <?php if(@$_SESSION['user_type']==1){ ?>
-                                <li>
-                                    <a href="student_enquiry.php"><i class="ti ti-file-text"></i><span>Student's Enquiry</span></a>
+                                <li class="submenu">
+                                    <a href="javascript:void(0);"><i class="ti ti-file-text"></i><span>Enquiries</span><span class="menu-arrow"></span></a>
+                                    <ul>
+                                        <li><a href="student_enquiry.php">Create Enquiry</a></li>
+                                        <li><a href="student_enquiry.php?view=list">View Enquiry</a></li>
+                                    </ul>
                                 </li>
                                 <?php } ?>
 
@@ -52,18 +56,6 @@
                                 <?php if(@$_SESSION['user_type']==1){ ?>
                                 <li>
                                     <a href="create_user.php"><i class="ti ti-users"></i><span>Create User</span></a>
-                                </li>
-                                <?php } ?>
-
-                                <?php if(@$_SESSION['user_type']==1){ ?>
-                                <li>
-                                    <a href="followup_call.php"><i class="ti ti-phone"></i><span>Follow Up Call</span></a>
-                                </li>
-                                <?php } ?>
-
-                                <?php if(@$_SESSION['user_type']==1){ ?>
-                                <li>
-                                    <a href="counselling_form.php"><i class="ti ti-book"></i><span>Counseling</span></a>
                                 </li>
                                 <?php } ?>
 

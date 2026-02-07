@@ -2,6 +2,185 @@
 <?php 
 session_start();
 if(@$_SESSION['user_type']!=''){
+
+    if(isset($_GET['view']) && $_GET['view']=='list'){
+        ?><!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>View Enquiry</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <?php include('includes/app_includes.php'); ?>
+    <style>
+        #viewEnquiryAccordion .accordion-button { font-weight: 600; }
+        #viewEnquiryAccordion .table-responsive { overflow-x: auto; overflow-y: visible; min-height: 0; }
+        #viewEnquiryAccordion .dataTables_wrapper .dataTables_filter input { margin-left: 0.5em; border-radius: 4px; padding: 4px 8px; }
+        #viewEnquiryAccordion .dataTables_wrapper .dataTables_length select { padding: 4px 8px; margin: 0 4px; border-radius: 4px; }
+        #viewEnquiryAccordion .dataTables_wrapper .dataTables_paginate .pagination { margin: 0; }
+        /* Ensure all enquiry table columns show - strip imp-none so Edit stays in Action column */
+        #datatable_enquiries tbody td.imp-none { display: table-cell !important; }
+        #datatable_enquiries { min-width: 1200px; }
+        #viewEnquiryAccordion .dataTables_scrollBody { overflow-x: auto !important; }
+    </style>
+</head>
+<body>
+<div class="main-wrapper">
+<?php include('includes/header.php'); ?>
+<?php include('includes/sidebar.php'); ?>
+            <div class="page-wrapper">
+                <div class="content pb-0">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                                    <h4 class="mb-sm-0">View Enquiry</h4>
+                                    <div class="page-title-right">
+                                        <ol class="breadcrumb m-0">
+                                            <li class="breadcrumb-item"><a href="student_enquiry.php">Create Enquiry</a></li>
+                                            <li class="breadcrumb-item active">View Enquiry</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion" id="viewEnquiryAccordion">
+                            <!-- Accordion 1: Student Enquiries -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headEnquiries">
+                                    <button class="accordion-button fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEnquiries" aria-expanded="true" aria-controls="collapseEnquiries">Student Enquiries</button>
+                                </h2>
+                                <div id="collapseEnquiries" class="accordion-collapse collapse show" aria-labelledby="headEnquiries" data-bs-parent="#viewEnquiryAccordion">
+                                    <div class="accordion-body">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="table-responsive">
+                                                    <table id="datatable_enquiries" class="table table-striped table-bordered nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Enquiry ID</th><th>Student Name</th><th>Contact Number</th><th>Email</th><th>Course Type</th><th>Date</th><th>States</th><th>Course</th><th>Visa Condition</th><th>Visa Status</th><th>Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="student_filter_body"></tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Accordion 2: Counseling -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headCounseling">
+                                    <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCounseling" aria-expanded="false" aria-controls="collapseCounseling">Counseling</button>
+                                </h2>
+                                <div id="collapseCounseling" class="accordion-collapse collapse" aria-labelledby="headCounseling" data-bs-parent="#viewEnquiryAccordion">
+                                    <div class="accordion-body">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="table-responsive">
+                                                    <table id="datatable_counseling" class="table table-striped table-bordered nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Student Name</th><th>Enquiry ID</th><th>Phone</th><th>Email</th><th>Type</th><th>Team Member</th><th>Start Date</th><th>End Date</th><th>Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="counsel_filter_body"></tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Accordion 3: Follow Up Call -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headFollowup">
+                                    <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFollowupList" aria-expanded="false" aria-controls="collapseFollowupList">Follow Up Call</button>
+                                </h2>
+                                <div id="collapseFollowupList" class="accordion-collapse collapse" aria-labelledby="headFollowup" data-bs-parent="#viewEnquiryAccordion">
+                                    <div class="accordion-body">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="table-responsive">
+                                                    <table id="datatable_followup" class="table table-striped table-bordered nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Enquiry ID</th><th>Name</th><th>Phone</th><th>Contacted Person</th><th>Contacted Time</th><th>Date</th><th>Mode of Contact</th><th>Staff Notes</th><th>Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="followup_filter_body"></tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php include('includes/footer_includes.php'); ?>
+        <script>
+        function initDataTableEnquiries(){
+            if($.fn.DataTable.isDataTable('#datatable_enquiries')) return;
+            $('#datatable_enquiries').DataTable({
+                lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                pageLength: 10,
+                language: { paginate: { previous: "<i class=\"mdi mdi-chevron-left\">", next: "<i class=\"mdi mdi-chevron-right\">" } },
+                drawCallback: function(){ $(".dataTables_paginate > .pagination").addClass("pagination-rounded"); },
+                scrollX: true,
+                autoWidth: false,
+                columnDefs: [ { width: '90px', targets: 0 }, { width: '120px', targets: 1 }, { width: '110px', targets: 2 }, { width: '160px', targets: 3 }, { width: '90px', targets: 10 } ],
+                order: [[0, 'desc']]
+            });
+        }
+        function initDataTableCounseling(){
+            if($.fn.DataTable.isDataTable('#datatable_counseling')) return;
+            $('#datatable_counseling').DataTable({
+                lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                pageLength: 10,
+                language: { paginate: { previous: "<i class=\"mdi mdi-chevron-left\">", next: "<i class=\"mdi mdi-chevron-right\">" } },
+                drawCallback: function(){ $(".dataTables_paginate > .pagination").addClass("pagination-rounded"); },
+                scrollX: true,
+                order: [[6, 'desc']]
+            });
+        }
+        function initDataTableFollowup(){
+            if($.fn.DataTable.isDataTable('#datatable_followup')) return;
+            $('#datatable_followup').DataTable({
+                lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                pageLength: 10,
+                language: { paginate: { previous: "<i class=\"mdi mdi-chevron-left\">", next: "<i class=\"mdi mdi-chevron-right\">" } },
+                drawCallback: function(){ $(".dataTables_paginate > .pagination").addClass("pagination-rounded"); },
+                scrollX: true,
+                order: [[5, 'desc']]
+            });
+        }
+        $(function(){
+            $.ajax({ type:'post', url:'includes/datacontrol.php', data:{ formName:'fetchEnquiries' }, success:function(data){
+                var html = (data && data.trim()) ? data : '<tr><td colspan="11">No records</td></tr>';
+                $('#student_filter_body').html(html);
+                $('#student_filter_body td.imp-none').removeClass('imp-none');
+                initDataTableEnquiries();
+            }});
+            $.ajax({ type:'post', url:'includes/datacontrol.php', data:{ formName:'fetchCounsel' }, success:function(data){
+                $('#counsel_filter_body').html(data && data.trim() ? data : '<tr><td colspan="9">No records</td></tr>');
+                initDataTableCounseling();
+            }});
+            $.ajax({ type:'post', url:'includes/datacontrol.php', data:{ formName:'fetchFollowupList' }, success:function(data){
+                $('#followup_filter_body').html(data && data.trim() ? data : '<tr><td colspan="9">No records</td></tr>');
+                initDataTableFollowup();
+            }});
+        });
+        </script>
+        </body></html>
+        <?php
+        exit;
+    }
     
             $courses=mysqli_query($connection,"SELECT * from courses where course_status!=1");
         $visaStatus=mysqli_query($connection,"SELECT * from visa_statuses where visa_state_status!=1");
@@ -82,6 +261,14 @@ if(@$_SESSION['user_type']!=''){
         $slot_book_status=0;
     }
 
+    $enquiryIds=mysqli_query($connection,"SELECT st_enquiry_id,st_name,st_phno from student_enquiry where st_enquiry_status!=1");
+    $enquiryIdsCounselling=mysqli_query($connection,"SELECT st_enquiry_id,st_name,st_phno from student_enquiry where st_enquiry_status!=1");
+    $enquiryIdsFollowup=mysqli_query($connection,"SELECT st_enquiry_id,st_name,st_phno from student_enquiry where st_enquiry_status!=1");
+    $counsilEqId=0;
+    $followupEqId=0;
+    $counsil_Query=array('st_enquiry_id'=>'','counsil_timing'=>'','counsil_end_time'=>'','counsil_type'=>'','counsil_mem_name'=>'','counsil_aus_stay_time'=>'','counsil_work_status'=>'','counsil_visa_condition'=>'','counsil_education'=>'','counsil_aus_study_status'=>'','counsil_course'=>'','counsil_university'=>'','counsil_qualification'=>'','counsil_eng_rate'=>'','counsil_migration_test'=>'','counsil_overall_result'=>'','counsil_module_result'=>'','counsil_job_nature'=>'','counsil_vaccine_status'=>'','counsil_pref_comments'=>'','counsil_remarks'=>'');
+    $followup_Query=array('flw_name'=>'','flw_phone'=>'','flw_contacted_person'=>'','flw_contacted_time'=>'','flw_date'=>'','flw_mode_contact'=>'','flw_comments'=>'','flw_progress_state'=>'','flw_remarks'=>'');
+
 ?>
 <!doctype html>
 <html lang="en">
@@ -145,6 +332,15 @@ if(@$_SESSION['user_type']!=''){
                         </div>
                         <!-- end page title -->
 
+        <div class="accordion mb-3" id="enquiryMainAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingStudentEnquiry">
+                    <button class="accordion-button fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#collapseStudentEnquiry" aria-expanded="true" aria-controls="collapseStudentEnquiry">
+                        Student Enquiry
+                    </button>
+                </h2>
+                <div id="collapseStudentEnquiry" class="accordion-collapse collapse show" aria-labelledby="headingStudentEnquiry" data-bs-parent="#enquiryMainAccordion">
+                    <div class="accordion-body p-0">
         <form class="student_enquiry_form" id="student_enquiry_form">
         <div class="row">
             <div class="col-xl-12">
@@ -937,6 +1133,30 @@ if(@$_SESSION['user_type']!=''){
                                     </div>
                                 </div>
                             </form>
+                    </div></div></div>
+            <!-- Accordion 2: Counseling -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingCounseling">
+                    <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCounseling" aria-expanded="false" aria-controls="collapseCounseling">Counseling</button>
+                </h2>
+                <div id="collapseCounseling" class="accordion-collapse collapse" aria-labelledby="headingCounseling" data-bs-parent="#enquiryMainAccordion">
+                    <div class="accordion-body">
+                        <?php include('includes/counselling_accordion_form.php'); ?>
+                    </div>
+                </div>
+            </div>
+            <!-- Accordion 3: Follow Up Call -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingFollowup">
+                    <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFollowup" aria-expanded="false" aria-controls="collapseFollowup">Follow Up Call</button>
+                </h2>
+                <div id="collapseFollowup" class="accordion-collapse collapse" aria-labelledby="headingFollowup" data-bs-parent="#enquiryMainAccordion">
+                    <div class="accordion-body">
+                        <?php include('includes/followup_accordion_form.php'); ?>
+                    </div>
+                </div>
+            </div>
+        </div>
                     </div> <!-- container-fluid -->
                 </div>
             </div>
@@ -1734,6 +1954,78 @@ if(@$_SESSION['user_type']!=''){
                 }
 
             }
+
+            $(document).on('change','#counselling_form .mig_test',function(){
+                var mig_test=$('#counselling_form .mig_test:checked').val();
+                $('#counselling_form .mig_test_child').toggle(mig_test==1);
+            });
+            $(document).on('change','#counselling_form .aus_study',function(){
+                var aus_study=$('#counselling_form .aus_study:checked').val();
+                $('#counselling_form .aus_study_child').toggle(aus_study==1);
+            });
+            $(document).on('change','#followup_enquiry_id',function(){
+                var opt=$('#followup_enquiry_id option:selected');
+                $('#followup_mobile_num').val(opt.data('mobile')||'');
+                $('#followup_student_name').val(opt.data('name')||'');
+            });
+            $(document).on('click','#counseling_submit',function(){
+                var $f=$('#counselling_form');
+                var enquiry_id=($('#counselling_enquiry_id').length ? $('#counselling_enquiry_id').val() : '').toString().trim();
+                var counseling_timing=$('#counseling_timing').val().trim();
+                var counseling_type=$f.find('.counseling_type:checked').val();
+                var member_name=$('#counselling_member_name').val().trim();
+                var aus_duration=$('#aus_duration').val().trim();
+                var work_status=$f.find('.work_status:checked').val();
+                var visa_condition=$('#counselling_visa_condition').val();
+                if(visa_condition=='0')visa_condition='';
+                var education=$('#counselling_education').val();
+                var aus_study=$f.find('.aus_study:checked').val();
+                var qualification=$('#counselling_qualification').val();
+                var eng_rate=$('#counselling_eng_rate').val();
+                var mig_test=$f.find('.mig_test:checked').val();
+                var vaccine_status=$f.find('.vaccine_status:checked').val();
+                var remarks=[];$f.find('.counselling_remarks:checked').each(function(){remarks.push(this.value);});
+                var checkId=$('#counselling_check_update').val();
+                var aus_study_error=1;
+                if(aus_study==1){if($('#counselling_course').val()==''||$('#counselling_university_name').val()=='')aus_study_error=0;}
+                var mig_test_error=1;
+                if(mig_test==1){if($('#counselling_overall_result').val()==''||$('#counselling_module_result').val()==''||$('#counselling_job_nature').val()=='')mig_test_error=0;}
+                if(!enquiry_id||!counseling_timing||!counseling_type||!member_name||!aus_duration||!work_status||!visa_condition||!education||eng_rate==''||!vaccine_status||!qualification||aus_study_error==0||mig_test_error==0){
+                    if(!enquiry_id)$('#counselling_enquiry_id').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                    return;
+                }
+                var details={formName:'counseling_form',vaccine_status:vaccine_status,job_nature:$('#counselling_job_nature').val(),module_result:$('#counselling_module_result').val(),pref_comment:$('#counselling_pref_comment').val(),eng_rate:eng_rate,mig_test:mig_test,overall_result:$('#counselling_overall_result').val(),course:$('#counselling_course').val(),university_name:$('#counselling_university_name').val(),qualification:qualification,counseling_timing:counseling_timing,counseling_end_timing:$('#counseling_end_timing').val(),enquiry_id:enquiry_id,counseling_type:counseling_type,member_name:member_name,aus_duration:aus_duration,work_status:work_status,visa_condition:visa_condition,education:education,remarks:remarks,aus_study:aus_study,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
+                $.ajax({type:'post',url:'includes/datacontrol.php',data:details,success:function(data){
+                    if(data==1){$('#toast-text').html('Record Added Successfully');$('#borderedToast1Btn').trigger('click');setTimeout(function(){location.reload();},400);}
+                    else{$('.toast-text2').html('Cannot add record. Please try again later');$('#borderedToast2Btn').trigger('click');}
+                }});
+            });
+            $(document).on('click','#followup_check',function(){
+                var student_name=$('#followup_student_name').val().trim();
+                var contact_num=$('#followup_mobile_num').val().trim();
+                var contacted_person=$('#followup_contacted_person').val().trim();
+                var contacted_time=$('#followup_contacted_time').val().trim();
+                var date=$('#followup_date').val().trim();
+                var contactMode=$('#followup_mode_contacted').val();
+                var comments=$('#followup_comments').val().trim();
+                var progress_status=$('#followup_progress_status').val();
+                var enquiry_id=$('#followup_enquiry_id').val();
+                var remarks=[];$('#followup_form_embed .followup_remarks:checked').each(function(){remarks.push(this.value);});
+                var checkId=$('#followup_check_update').val();
+                if(!date||!contactMode||!contacted_person||!student_name||!contacted_time||!contact_num||contact_num.length!=10){
+                    if(!contact_num||contact_num.length!=10)$('#followup_mobile_num').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                    if(!contactMode)$('#followup_mode_contacted').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                    if(!contacted_time)$('#followup_contacted_time').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                    if(!date)$('#followup_date').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                    if(!student_name)$('#followup_student_name').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                    return;
+                }
+                var details={formName:'followup_call',student_name:student_name,date:date,contacted_person:contacted_person,contacted_time:contacted_time,contactMode:contactMode,progress_status:progress_status,contact_num:contact_num,enquiry_id:enquiry_id,remarks:remarks,comments:comments,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
+                $.ajax({type:'post',url:'includes/datacontrol.php',data:details,success:function(data){
+                    if(data==1){$('#toast-text').html('Record Added Successfully');$('#borderedToast1Btn').trigger('click');setTimeout(function(){location.reload();},400);}
+                    else{$('.toast-text2').html('Cannot add record. Please try again later');$('#borderedToast2Btn').trigger('click');}
+                }});
+            });
 
         </script>
     </body>

@@ -1219,7 +1219,8 @@ if(@$_SESSION['user_type']!=''){
                                 </div>
                             </form>
                     </div></div></div>
-            <!-- Accordion 2: Counseling -->
+            <?php if (!$is_student_portal): ?>
+            <!-- Accordion 2: Counseling (admin only) -->
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingCounseling">
                     <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCounseling" aria-expanded="false" aria-controls="collapseCounseling">Counseling</button>
@@ -1230,7 +1231,7 @@ if(@$_SESSION['user_type']!=''){
                     </div>
                 </div>
             </div>
-            <!-- Accordion 3: Follow Up Call -->
+            <!-- Accordion 3: Follow Up Call (admin only) -->
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingFollowup">
                     <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFollowup" aria-expanded="false" aria-controls="collapseFollowup">Follow Up Call</button>
@@ -1241,6 +1242,7 @@ if(@$_SESSION['user_type']!=''){
                     </div>
                 </div>
             </div>
+            <?php endif; ?>
         </div>
                     </div> <!-- container-fluid -->
             <?php if(!$is_student_portal): ?>

@@ -1,15 +1,18 @@
 <?php 
 include('includes/dbconnect.php'); 
 session_start();
-
-if(@$_SESSION['user_type']==1){
-    $users=mysqli_query($connection,"SELECT * FROM users WHERE user_type=0 ORDER BY user_id DESC");
+if(!isset($_SESSION['user_id']) || $_SESSION['user_id'] === ''){
+    header('Location: index.php');
+    exit;
+}
+if(@$_SESSION['user_type']==1 || @$_SESSION['user_type']==2){
+    $users=mysqli_query($connection,"SELECT * FROM users WHERE user_type IN (1,2) ORDER BY user_id DESC");
 ?>
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>Create / Edit User</title>
+    <title>Staff Management</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="assets/images/favicon.ico">
     <?php include('includes/app_includes.php'); ?>
@@ -29,11 +32,11 @@ if(@$_SESSION['user_type']==1){
                     <div class="row">
                         <div class="col-12">
                             <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                                <h4 class="mb-sm-0">Create / Edit User</h4>
+                                <h4 class="mb-sm-0">Staff Management</h4>
                                 <div class="page-title-right">
                                     <ol class="breadcrumb m-0">
                                         <li class="breadcrumb-item"><a href="dashboard.php">Dashboard</a></li>
-                                        <li class="breadcrumb-item active">User Management</li>
+                                        <li class="breadcrumb-item active">Staff Management</li>
                                     </ol>
                                 </div>
                             </div>
@@ -46,40 +49,40 @@ if(@$_SESSION['user_type']==1){
                         <div class="col-xl-6">
                             <div class="card">
                                 <div class="card-body">
-                                    <h4 class="card-title text-center" id="form_title">Create User</h4>
-
+                                    <h4 class="card-title text-center" id="form_title">Create Staff</h4>
+                                    <p class="text-muted small text-center mb-0">Create admin or staff accounts only. Students register via the student portal.</p>
                                     <input type="hidden" id="edit_user_id" value="">
 
                                     <div class="mb-3">
-                                        <label class="form-label">User Name</label>
-                                        <input type="text" id="user_name" name="user_name" class="form-control" placeholder="Enter User Name" required>
-                                        <div class="error-feedback">Please enter the user name</div>
+                                        <label class="form-label">Staff Name</label>
+                                        <input type="text" id="user_name" name="user_name" class="form-control" placeholder="Enter staff name" required>
+                                        <div class="error-feedback">Please enter the staff name</div>
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label">User Email</label>
-                                        <input type="email" id="user_email" name="user_email" class="form-control" placeholder="Enter Email" required>
+                                        <label class="form-label">Staff Email</label>
+                                        <input type="email" id="user_email" name="user_email" class="form-control" placeholder="Enter email" required>
                                         <div class="error-feedback">Please enter a valid email</div>
                                     </div>
 
                                     <div class="mb-3">
                                         <label class="form-label">Password</label>
-                                        <input type="password" id="user_password" name="user_password" class="form-control" placeholder="Enter Password" required>
+                                        <input type="password" id="user_password" name="user_password" class="form-control" placeholder="Enter password" required>
                                         <div class="error-feedback">Please enter a password</div>
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label">User Type</label>
+                                        <label class="form-label">Role</label>
                                         <select id="user_type" name="user_type" class="form-select" required>
                                             <option value="">-- Select --</option>
                                             <option value="1">Admin</option>
-                                            <option value="0">User</option>
+                                            <option value="2">Staff</option>
                                         </select>
-                                        <div class="error-feedback">Please select a user type</div>
+                                        <div class="error-feedback">Please select a role</div>
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label">User Status</label>
+                                        <label class="form-label">Status</label>
                                         <select id="user_status" name="user_status" class="form-select">
                                             <option value="0">Active</option>
                                             <option value="1">Inactive</option>
@@ -87,7 +90,7 @@ if(@$_SESSION['user_type']==1){
                                     </div>
 
                                     <div class="text-center">
-                                        <button type="button" id="create_user_submit" class="btn btn-primary w-50">Create User</button>
+                                        <button type="button" id="create_user_submit" class="btn btn-primary w-50">Create Staff</button>
                                     </div>
                                 </div>
                             </div>
@@ -97,7 +100,7 @@ if(@$_SESSION['user_type']==1){
                         <div class="col-xl-6">
                             <div class="card">
                                 <div class="card-body">
-                                    <h4 class="card-title text-center">Existing Users</h4>
+                                    <h4 class="card-title text-center">Existing Staff</h4>
                                     <div class="table-responsive">
                                         <table class="table table-striped align-middle mb-0">
                                             <thead>
@@ -105,18 +108,22 @@ if(@$_SESSION['user_type']==1){
                                                     <th>ID</th>
                                                     <th>Name</th>
                                                     <th>Email</th>
+                                                    <th>Role</th>
                                                     <th>Status</th>
                                                     <th>Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="user_list">
                                                 <?php 
+                                                mysqli_data_seek($users, 0);
                                                 while($user=mysqli_fetch_array($users)){ 
+                                                    $role = $user['user_type']==1 ? 'Admin' : ($user['user_type']==2 ? 'Staff' : '—');
                                                 ?>
                                                 <tr>
                                                     <td><?php echo $user['user_id']; ?></td>
-                                                    <td><?php echo $user['user_name']; ?></td>
-                                                    <td><?php echo $user['user_email']; ?></td>
+                                                    <td><?php echo htmlspecialchars($user['user_name']); ?></td>
+                                                    <td><?php echo htmlspecialchars($user['user_email']); ?></td>
+                                                    <td><?php echo $role; ?></td>
                                                     <td><?php echo $user['user_status']==0 ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>'; ?></td>
                                                     <td>
                                                         <button class="btn btn-sm btn-warning edit_user" data-id="<?php echo $user['user_id']; ?>">
@@ -178,8 +185,8 @@ if(@$_SESSION['user_type']==1){
                         }else{
                             document.getElementById('create_user_form').reset();
                             $('#edit_user_id').val('');
-                            $('#form_title').html('Create User');
-                            $('#create_user_submit').text('Create User');
+                            $('#form_title').html('Create Staff');
+                            $('#create_user_submit').text('Create Staff');
                             $('#toast-text').html(id ? 'User updated successfully!' : 'User created successfully!');
                             $('#borderedToast1Btn').trigger('click');
                             $('#user_list').html(data); // reload user list
@@ -198,8 +205,8 @@ if(@$_SESSION['user_type']==1){
                 data: {formName: 'get_user', user_id: id},
                 dataType: 'json',
                 success: function(user){
-                    $('#form_title').html('Edit User');
-                    $('#create_user_submit').text('Update User');
+                    $('#form_title').html('Edit Staff');
+                    $('#create_user_submit').text('Update Staff');
                     $('#edit_user_id').val(user.user_id);
                     $('#user_name').val(user.user_name);
                     $('#user_email').val(user.user_email);

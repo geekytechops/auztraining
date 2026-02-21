@@ -710,6 +710,12 @@ if(@$_POST['formName']=='followup_call'){
             $lastId=mysqli_insert_id($connection);
             if($lastId!=''){
                 if($enquiry_flow_status!==null) mysqli_query($connection,"UPDATE student_enquiry SET st_enquiry_flow_status=$enquiry_flow_status WHERE st_enquiry_id='$enquiry_id'");
+                if($next_followup_date !== null){
+                    if(!function_exists('google_calendar_create_event')) require_once(__DIR__ . '/google_calendar_helper.php');
+                    $title = 'Follow-up: ' . $enquiry_id . ' – ' . $student_name;
+                    $end_dt = date('Y-m-d H:i:s', strtotime($next_followup_date) + 1800);
+                    @google_calendar_create_event($connection, $title, $next_followup_date, $end_dt, $follow_up_notes ?: 'Enquiry follow-up reminder.');
+                }
                 echo "1";
             }else{
                 echo "0";
@@ -721,6 +727,12 @@ if(@$_POST['formName']=='followup_call'){
             $query=mysqli_query($connection,"UPDATE followup_calls SET `enquiry_id`='$enquiry_id',`flw_progress_state`='$progress_status',`flw_name`='$student_name',`flw_phone`='$contact_num',`flw_contacted_person`='$contacted_person',`flw_contacted_time`='$contacted_time',`flw_date`='$date',`flw_remarks`='$remarks',`flw_comments`='$comments',`flw_mode_contact`='$mode_contact_val',`flw_followup_type`='$followup_type',`flw_follow_up_notes`='$follow_up_notes',`flw_next_followup_date`=$next_sql,`flw_follow_up_outcome`='$follow_up_outcome',`flw_modified_date`='$dates',`flw_modifiedby`=$admin_id WHERE `flw_id`=$checkId");
             if($query){
                 if($enquiry_flow_status!==null) mysqli_query($connection,"UPDATE student_enquiry SET st_enquiry_flow_status=$enquiry_flow_status WHERE st_enquiry_id='$enquiry_id'");
+                if($next_followup_date !== null){
+                    if(!function_exists('google_calendar_create_event')) require_once(__DIR__ . '/google_calendar_helper.php');
+                    $title = 'Follow-up: ' . $enquiry_id . ' – ' . $student_name;
+                    $end_dt = date('Y-m-d H:i:s', strtotime($next_followup_date) + 1800);
+                    @google_calendar_create_event($connection, $title, $next_followup_date, $end_dt, $follow_up_notes ?: 'Enquiry follow-up reminder.');
+                }
                 echo "1";
             }else{
                 echo "0";
@@ -1597,7 +1609,7 @@ if(@$_POST['formName']=='student_register'){
     exit;
 }
 
-// Student portal: login
+// Student login: try admin-created student (users table, user_type=0) first, then self-registered (student_users)
 if(@$_POST['formName']=='student_login'){
     $email = mysqli_real_escape_string($connection, trim($_POST['email'] ?? ''));
     $password = $_POST['password'] ?? '';
@@ -1605,20 +1617,33 @@ if(@$_POST['formName']=='student_login'){
         echo json_encode(array('success' => false, 'message' => 'Email and password required.'));
         exit;
     }
-    $q = mysqli_query($connection, "SELECT id, full_name, password_hash FROM student_users WHERE email='$email' AND status=1");
-    if(mysqli_num_rows($q) === 0){
-        echo json_encode(array('success' => false, 'message' => 'Invalid email or password.'));
+    // 1) Admin-created student (users table, user_type=0) – same layout as staff, only Documents + My Enquiry
+    $uq = mysqli_query($connection, "SELECT user_id, user_type, user_name, user_log_id FROM users WHERE user_email='$email' AND user_password='$password' AND user_type=0 AND user_status=0");
+    if($uq && mysqli_num_rows($uq) > 0){
+        $urow = mysqli_fetch_assoc($uq);
+        $_SESSION['user_id'] = $urow['user_id'];
+        $_SESSION['user_type'] = 0;
+        $_SESSION['user_name'] = $urow['user_name'];
+        $_SESSION['user_log_id'] = $urow['user_log_id'];
+        echo json_encode(array('success' => true, 'redirect' => 'student_docs.php'));
         exit;
     }
-    $row = mysqli_fetch_assoc($q);
-    if(!password_verify($password, $row['password_hash'])){
-        echo json_encode(array('success' => false, 'message' => 'Invalid email or password.'));
+    // 2) Self-registered student (student_users)
+    $q = mysqli_query($connection, "SELECT id, full_name, password_hash, email FROM student_users WHERE email='$email' AND status=1");
+    if($q && mysqli_num_rows($q) > 0){
+        $row = mysqli_fetch_assoc($q);
+        if(!password_verify($password, $row['password_hash'])){
+            echo json_encode(array('success' => false, 'message' => 'Invalid email or password.'));
+            exit;
+        }
+        $_SESSION['user_id'] = $row['id'];
+        $_SESSION['user_type'] = 'student';
+        $_SESSION['user_name'] = $row['full_name'];
+        $_SESSION['student_email'] = $row['email'];
+        echo json_encode(array('success' => true, 'redirect' => 'student_portal.php'));
         exit;
     }
-    $_SESSION['user_id'] = $row['id'];
-    $_SESSION['user_type'] = 'student';
-    $_SESSION['user_name'] = $row['full_name'];
-    echo json_encode(array('success' => true, 'redirect' => 'student_portal.php'));
+    echo json_encode(array('success' => false, 'message' => 'Invalid email or password.'));
     exit;
 }
 
@@ -1645,8 +1670,8 @@ if(@$_POST['formName'] == 'edit_user'){
     }
 
     if($update){
-        // Reload user list HTML
-        $users = mysqli_query($connection, "SELECT * FROM users WHERE user_type=0 ORDER BY user_id DESC");
+        // Reload staff list HTML (Admin + Staff only)
+        $users = mysqli_query($connection, "SELECT * FROM users WHERE user_type IN (1,2) ORDER BY user_id DESC");
         include('../includes/user_list_partial.php');
     }else{
         echo 1;
@@ -1666,8 +1691,8 @@ if(@$_POST['formName'] == 'create_user'){
     $insert = mysqli_query($connection, "INSERT INTO users (user_log_id, user_name, user_email, user_password, user_type, user_status, created_date)
                                          VALUES ('$user_log_id', '$name', '$email', '$password', '$type', '$status', '$created')");
     if($insert){
-        // Reload user list HTML
-        $users = mysqli_query($connection, "SELECT * FROM users WHERE user_type=0 ORDER BY user_id DESC");
+        // Reload staff list HTML (Admin + Staff only)
+        $users = mysqli_query($connection, "SELECT * FROM users WHERE user_type IN (1,2) ORDER BY user_id DESC");
         include('../includes/user_list_partial.php');
     }else{
         echo 1;

@@ -1,13 +1,32 @@
 <?php include('includes/dbconnect.php'); ?>
 <?php 
 session_start();
-// print_r($_SESSION);
-if(@$_SESSION['user_type']==0){
-    $enrolId=$_SESSION['user_log_id'];
-    
-    $enrolId=$_SESSION['user_log_id'];
-    $selectQry=mysqli_query($connection,"SELECT st_unique_id,st_doc_names FROM `student_docs` WHERE `st_unique_id`='$enrolId'");
-    
+// Require login: students go to student_login, others to index
+if(!isset($_SESSION['user_id']) || $_SESSION['user_id'] === ''){
+    header('Location: student_login.php');
+    exit;
+}
+// Students only (user_type=0 or 'student'). Staff (1,2) go to dashboard.
+$ut = @$_SESSION['user_type'];
+if($ut !== 0 && $ut !== 'student'){
+    header('Location: dashboard.php');
+    exit;
+}
+$enrolId = isset($_SESSION['user_log_id']) ? $_SESSION['user_log_id'] : '';
+$student_user_id = (int)@$_SESSION['user_id'];
+$student_email = '';
+$my_enquiry = null;
+if($ut === 0 && $student_user_id){
+    $u = @mysqli_fetch_assoc(mysqli_query($connection,"SELECT user_email FROM users WHERE user_id=$student_user_id LIMIT 1"));
+    if($u && !empty($u['user_email'])) $student_email = mysqli_real_escape_string($connection, $u['user_email']);
+}elseif($ut === 'student' && !empty($_SESSION['student_email'])){
+    $student_email = mysqli_real_escape_string($connection, $_SESSION['student_email']);
+}
+if($student_email !== ''){
+    $eq = mysqli_query($connection,"SELECT st_id, st_enquiry_id, st_name FROM student_enquiry WHERE st_email='$student_email' AND st_enquiry_status!=1 ORDER BY st_id DESC LIMIT 1");
+    if($eq && mysqli_num_rows($eq)) $my_enquiry = mysqli_fetch_assoc($eq);
+}
+$selectQry = $enrolId !== '' ? mysqli_query($connection,"SELECT st_unique_id,st_doc_names FROM `student_docs` WHERE `st_unique_id`='$enrolId'") : null;
 ?>
 <!doctype html>
 <html lang="en">
@@ -26,42 +45,53 @@ if(@$_SESSION['user_type']==0){
 
     <body data-topbar="colored">
 
-        <!-- Begin page -->
-        <div id="layout-wrapper">
-
-            
+        <!-- Begin page (same structure as dashboard for correct sidebar width) -->
+        <div class="main-wrapper">
             <?php include('includes/header.php'); ?>
             <?php include('includes/sidebar.php'); ?>
-            
-            <!-- ============================================================== -->
-            <!-- Start right Content here -->
-            <!-- ============================================================== -->
-            <div class="main-content">
-
-                <div class="page-content">
+            <div class="page-wrapper">
+                <div class="content pb-0">
                     <div class="container-fluid">
 
                         <!-- start page title -->
                         <div class="row">
                             <div class="col-12">
                                 <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                                    <h4 class="mb-sm-0">Documents Upload</h4>
-
+                                    <h4 class="mb-sm-0">Student – Documents &amp; Enquiry</h4>
                                     <div class="page-title-right">
                                         <ol class="breadcrumb m-0">
-                                            <li class="breadcrumb-item"><a href="javascript: void(0);">Forms</a></li>
-                                            <li class="breadcrumb-item active">Documents Upload</li>
+                                            <li class="breadcrumb-item active">Documents &amp; Enquiry</li>
                                         </ol>
                                     </div>
-
                                 </div>
                             </div>
                         </div>
+                        <?php if($my_enquiry): ?>
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="card border-primary">
+                                    <div class="card-body py-3">
+                                        <strong>My Enquiry</strong> – <?php echo htmlspecialchars($my_enquiry['st_enquiry_id']); ?> (<?php echo htmlspecialchars($my_enquiry['st_name']); ?>)
+                                        <a href="student_enquiry_form.php" class="btn btn-sm btn-primary ms-2">Complete / view enquiry</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
                         <!-- end page title -->
+                        <?php if($enrolId === ''): ?>
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="alert alert-info mb-0">
+                                    <strong>Documents upload</strong> – After you submit your enquiry (via <a href="student_enquiry_form.php">My Enquiry</a>), you will receive enrolment details. You can then upload your Date of Birth and Address proof documents here.
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
                         <?php 
                             $dob=0;
                             $address=0;
-                        $selectQryRowss=mysqli_num_rows($selectQry);
+                        $selectQryRowss = ($selectQry && is_object($selectQry)) ? mysqli_num_rows($selectQry) : 0;
                         if($selectQryRowss!=0){
                             $selectQryRess=mysqli_fetch_array($selectQry);
                             // print_r($selectQryRess);
@@ -98,13 +128,13 @@ if(@$_SESSION['user_type']==0){
                                             <div class="col-md-6">
                                                 <div class="mb-3">
                                                     <label class="form-label" for="courses">Date of Birth</label>
-                                                    <input type="file" id="dob" name="dob" class="form-control" accept=".pdf" onchange="uploadDocs(this)" <?php echo $dob==1 ? 'disabled' : '' ?>>
+                                                    <input type="file" id="dob" name="dob" class="form-control" accept=".pdf" onchange="uploadDocs(this)" <?php echo ($dob==1 || $enrolId==='') ? 'disabled' : '' ?>>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="mb-3">
                                                     <label class="form-label" for="courses">Address Proof</label>
-                                                    <input type="file" id="address" name="address" class="form-control" accept=".pdf" onchange="uploadDocs(this)" <?php echo $address==1 ? 'disabled' : '' ?>>
+                                                    <input type="file" id="address" name="address" class="form-control" accept=".pdf" onchange="uploadDocs(this)" <?php echo ($address==1 || $enrolId==='') ? 'disabled' : '' ?>>
                                                 </div>
                                             </div>
                                         </div>
@@ -120,10 +150,10 @@ if(@$_SESSION['user_type']==0){
                                         <?php 
                                     $columnStart='';
                                     $imageDiv='';
-                                    $selectQry=mysqli_query($connection,"SELECT st_unique_id,st_doc_names FROM `student_docs` WHERE `st_unique_id`='$enrolId'");
-                                    $selectQryRows=mysqli_num_rows($selectQry);
+                                    $selectQryDocs = $enrolId !== '' ? mysqli_query($connection,"SELECT st_unique_id,st_doc_names FROM `student_docs` WHERE `st_unique_id`='".mysqli_real_escape_string($connection,$enrolId)."'") : null;
+                                    $selectQryRows = ($selectQryDocs && is_object($selectQryDocs)) ? mysqli_num_rows($selectQryDocs) : 0;
                                     if($selectQryRows!=0){
-                                    $selectQryRes=mysqli_fetch_array($selectQry);
+                                    $selectQryRes=mysqli_fetch_array($selectQryDocs);
                                     if($selectQryRes['st_doc_names']!='[]'){
                                     $imageArray=json_decode($selectQryRes['st_doc_names']);
                                         for($i=0;$i<count($imageArray);$i++){
@@ -166,13 +196,9 @@ if(@$_SESSION['user_type']==0){
                     </form>
                     </div> <!-- container-fluid -->
                 </div>
-                <!-- End Page-content -->                            
-                
             </div>
-            <!-- end main content-->
-
         </div>
-        <!-- END layout-wrapper -->
+        <!-- END main-wrapper (matches dashboard layout) -->
 
         <!-- Right bar overlay-->
         <div class="rightbar-overlay"></div>
@@ -256,9 +282,6 @@ if(@$_SESSION['user_type']==0){
         </script>
     </body>
 </html>
-<?php }else{ 
-
-header("Location: index.php");
-
-}
+<?php
+// (Students only; staff already redirected at top)
 ?>

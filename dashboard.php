@@ -1,7 +1,15 @@
 <?php include('includes/dbconnect.php'); ?>
 <?php 
 session_start();
-// print_r($_SESSION);
+if(!isset($_SESSION['user_id']) || $_SESSION['user_id'] === ''){
+    header('Location: index.php');
+    exit;
+}
+// Students (user_type=0) use student area only
+if(isset($_SESSION['user_type']) && (int)$_SESSION['user_type']===0){
+    header('Location: student_docs.php');
+    exit;
+}
 if(isset($_SESSION['user_type'])){
 
     $courses=mysqli_query($connection,"SELECT * from courses where course_status!=1");

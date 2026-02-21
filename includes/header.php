@@ -1,12 +1,15 @@
 <?php 
 ini_set('display_errors', '0');
 session_start(); ?>
-<?php $CRM_ASSET_BASE = 'crm/html/template/assets'; ?>
+<?php 
+$CRM_ASSET_BASE = 'crm/html/template/assets';
+$header_home_url = (isset($_SESSION['user_type']) && ($_SESSION['user_type'] === 0 || $_SESSION['user_type'] === 'student')) ? 'student_docs.php' : 'dashboard.php';
+?>
 <header class="navbar-header">
     <div class="page-container topbar-menu">
         <div class="d-flex align-items-center gap-2">
 
-            <a href="dashboard.php" class="logo">
+            <a href="<?php echo $header_home_url; ?>" class="logo">
                 <span class="logo-light">
                     <span class="logo-lg"><img src="<?php echo $CRM_ASSET_BASE; ?>/img/logo.png" alt="logo"></span>
                     <span class="logo-sm"><img src="<?php echo $CRM_ASSET_BASE; ?>/img/logo-small.png" alt="small logo"></span>

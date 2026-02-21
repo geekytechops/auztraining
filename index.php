@@ -131,15 +131,14 @@ if(@$_SESSION['user_id']!=''){
                         data:details,
                         success:function(data){
                             if(data.split('|')[0]==0){
-                                if(data.split('|')[0]==0 && data.split('|')[1]==1){
+                                var ut = data.split('|')[1];
+                                if(ut==1 || ut==2){
                                     window.location.href="dashboard.php";
-                                    document.getElementById('login_form').reset();
-                                    $('#login_error').hide();
                                 }else{
                                     window.location.href="student_docs.php";
-                                    document.getElementById('login_form').reset();
-                                    $('#login_error').hide();
                                 }
+                                document.getElementById('login_form').reset();
+                                $('#login_error').hide();
                             }else{
                                 $('#login_error').show();
                             }

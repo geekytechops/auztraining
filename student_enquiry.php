@@ -521,6 +521,38 @@ if(@$_SESSION['user_type']!=''){
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="enquiry_source">Enquiry Source</label>
+                                                        <select name="enquiry_source" class="form-select" id="enquiry_source">
+                                                        <?php
+                                                        $st_enquiry_source = ['--select--','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads','Agent / referral'];
+                                                        $sel_source = isset($queryRes['st_enquiry_source']) ? (int)$queryRes['st_enquiry_source'] : 0;
+                                                        for($i=0;$i<count($st_enquiry_source);$i++){
+                                                            $ch = $i === $sel_source ? 'selected' : '';
+                                                            echo '<option value="'.$i.'" '.$ch.'>'.$st_enquiry_source[$i].'</option>';
+                                                        }
+                                                        ?>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <?php if (!$is_student_portal): ?>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="enquiry_college">Received Enquiry for Which college</label>
+                                                        <select name="enquiry_college" class="form-select" id="enquiry_college">
+                                                        <?php
+                                                        $st_enquiry_college = ['--select--','Apt Training College','Milton College','NCA','Power Education','Auz Training'];
+                                                        $sel_college = isset($queryRes['st_enquiry_college']) ? (int)$queryRes['st_enquiry_college'] : 0;
+                                                        for($i=0;$i<count($st_enquiry_college);$i++){
+                                                            $ch = $i === $sel_college ? 'selected' : '';
+                                                            echo '<option value="'.$i.'" '.$ch.'>'.$st_enquiry_college[$i].'</option>';
+                                                        }
+                                                        ?>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <?php endif; ?>
                                             </div>
                                     </div>
                                 </div>
@@ -1699,7 +1731,7 @@ if(@$_SESSION['user_type']!=''){
                     courses=courses.filter(item => item !== '0');
                     remarks=remarks.filter(item => item !== '0');
                     
-                    details={formName:'student_enquiry',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,payment:payment,checkId:checkId,visaStatus:visaStatus,surname:surname,enquiryDate:enquiryDate,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,hearedby:hearedby,memberName:memberName,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,visaNote:visaNote,prefComment:prefComment,comments:comments,appointment_booked:appointment_booked,visaCondition:visaCondition,remarks:remarks,reg_grp_names:reg_grp_names,streetDetails:streetDetails,enquiryFor:enquiryFor,courseType:courseType,shore:shore,ethnicity:ethnicity,rpl_arrays:JSON.stringify(rpl_array),short_grps:JSON.stringify(short_grp),slot_books:JSON.stringify(slot_book),admin_id:"<?php echo $_SESSION['user_id']; ?>",formId:<?php echo $form_id; ?>,rpl_status:'<?php echo $rpl_status; ?>',short_grp_status:'<?php echo $short_grp_status; ?>',reg_grp_status:'<?php echo $reg_grp_status; ?>',slot_book_status:'<?php echo $slot_book_status; ?>'};
+                    details={formName:'student_enquiry',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,payment:payment,checkId:checkId,visaStatus:visaStatus,surname:surname,enquiryDate:enquiryDate,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,hearedby:hearedby,memberName:memberName,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,visaNote:visaNote,prefComment:prefComment,comments:comments,appointment_booked:appointment_booked,visaCondition:visaCondition,remarks:remarks,reg_grp_names:reg_grp_names,streetDetails:streetDetails,enquiryFor:enquiryFor,courseType:courseType,shore:shore,ethnicity:ethnicity,enquiry_source:$('#enquiry_source').val()||0,location:($('#location').val()||'').trim(),enquiry_college:($('#enquiry_college').length ? $('#enquiry_college').val() : 0)||0,rpl_arrays:JSON.stringify(rpl_array),short_grps:JSON.stringify(short_grp),slot_books:JSON.stringify(slot_book),admin_id:"<?php echo $_SESSION['user_id']; ?>",formId:<?php echo $form_id; ?>,rpl_status:'<?php echo $rpl_status; ?>',short_grp_status:'<?php echo $short_grp_status; ?>',reg_grp_status:'<?php echo $reg_grp_status; ?>',slot_book_status:'<?php echo $slot_book_status; ?>'};
                     $.ajax({
                         type:'post',
                         url:'includes/datacontrol.php',

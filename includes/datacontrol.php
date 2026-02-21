@@ -5,6 +5,21 @@ require_once __DIR__ . '/../vendor/tecnickcom/tcpdf/tcpdf.php';
 // use TCPDF;
 
 session_start();
+
+function enquiry_ack_email_body($name, $enquiry_id, $form_url, $register_url, $login_url) {
+    $site = 'National College Australia';
+    $html = '<div style="font-family:Segoe UI,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;color:#333;">';
+    $html .= '<p style="font-size:16px;line-height:1.6;">Hi ' . htmlspecialchars($name) . ',</p>';
+    $html .= '<p style="font-size:16px;line-height:1.6;">Thank you for your interest in <strong>' . htmlspecialchars($site) . '</strong>.</p>';
+    $html .= '<p style="font-size:16px;line-height:1.6;">Your enquiry has been received. Please keep your <strong>Enquiry ID: ' . htmlspecialchars($enquiry_id) . '</strong> for reference.</p>';
+    $html .= '<p style="font-size:16px;line-height:1.6;"><strong>Next step – complete your application:</strong></p>';
+    $html .= '<p style="margin:20px 0;"><a href="' . htmlspecialchars($form_url) . '" style="display:inline-block;background:#158887;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:600;">Complete your form</a></p>';
+    $html .= '<p style="font-size:14px;color:#666;">If you don\'t have an account yet, <a href="' . htmlspecialchars($register_url) . '">register here</a> using the same email, then complete your form. Already have an account? <a href="' . htmlspecialchars($login_url) . '">Log in here</a>.</p>';
+    $html .= '<p style="font-size:14px;color:#666;margin-top:24px;">Best regards,<br>' . htmlspecialchars($site) . '</p>';
+    $html .= '</div>';
+    return $html;
+}
+
 if(@$_POST['formName']=='logout'){
     session_destroy();
     header('Location: ../index.php');
@@ -271,6 +286,9 @@ $shore=$_POST['shore'];
 $ethnicity=$_POST['ethnicity'];
 $visaNote=$_POST['visaNote'];
 $created_by=$_POST['admin_id'];
+$enquiry_source = isset($_POST['enquiry_source']) ? (int)$_POST['enquiry_source'] : 0;
+$location = mysqli_real_escape_string($connection, $_POST['location'] ?? '');
+$enquiry_college = isset($_POST['enquiry_college']) ? (int)$_POST['enquiry_college'] : 0;
 $formId=$_POST['formId'];
 $slot_book_status=$_POST['slot_book_status'];
 $short_grp_status=$_POST['short_grp_status'];
@@ -295,7 +313,9 @@ if((int)$checkId > 0 && isset($_SESSION['user_type']) && $_SESSION['user_type'] 
 
 if($checkId==0){
 
-    $query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_member_name,st_phno,st_email,st_course,st_fee,st_visa_status,st_visa_condition,st_visa_note,st_surname,st_suburb,st_state,st_post_code,st_visited,st_heared,st_hearedby,st_startplan_date,st_refered,st_refer_name,st_refer_alumni,st_comments,st_pref_comments,st_appoint_book,st_remarks,st_street_details,st_enquiry_for,st_enquiry_date,st_course_type,st_shore,st_ethnicity,st_created_by)VALUES('$studentName','$memberName','$contactName','$emailAddress','$courses','$payment',$visaStatus,$visaCondition,'$visaNote','$surname','$suburb','$stuState',$postCode,$visit_before,'$hear_about','$hearedby','$plan_to_start_date',$refer_select,'$referer_name',$refer_alumni,'$comments','$prefComment',$appointment_booked,'$remarks','$streetDetails',$enquiryFor,'$enquiryDate',$courseType,$shore,'$ethnicity',$created_by)");
+    $enquiry_source_val = $enquiry_source > 0 ? $enquiry_source : 'NULL';
+$enquiry_college_val = $enquiry_college > 0 ? $enquiry_college : 'NULL';
+$query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_member_name,st_phno,st_email,st_course,st_fee,st_visa_status,st_visa_condition,st_visa_note,st_surname,st_suburb,st_state,st_post_code,st_visited,st_heared,st_hearedby,st_startplan_date,st_refered,st_refer_name,st_refer_alumni,st_comments,st_pref_comments,st_appoint_book,st_remarks,st_street_details,st_enquiry_for,st_enquiry_date,st_course_type,st_shore,st_ethnicity,st_created_by,st_enquiry_source,st_location,st_enquiry_college)VALUES('$studentName','$memberName','$contactName','$emailAddress','$courses','$payment',$visaStatus,$visaCondition,'$visaNote','$surname','$suburb','$stuState',$postCode,$visit_before,'$hear_about','$hearedby','$plan_to_start_date',$refer_select,'$referer_name',$refer_alumni,'$comments','$prefComment',$appointment_booked,'$remarks','$streetDetails',$enquiryFor,'$enquiryDate',$courseType,$shore,'$ethnicity',$created_by,$enquiry_source_val,'$location',$enquiry_college_val)");
     
     echo mysqli_error($connection);
     $lastId=mysqli_insert_id($connection);
@@ -307,10 +327,18 @@ if($checkId==0){
     }else{
         echo $uniqueId;
 
-        $mail_to=$emailAddress;
-        $mail_subject="Your Enquiry Successfully Created";
-        $mail_body="Please keep your enquiry ID noted for future uses<br><b>Enquiry ID: </b>".$uniqueId;
-        send_mail($mail_to,$mail_subject,$mail_body);
+        $mail_to = $emailAddress;
+        $mail_subject = "Enquiry received – Ref: " . $uniqueId;
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $script_path = dirname(dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+        $crm_base = rtrim($protocol . '://' . $host . $script_path, '/') . '/';
+        $eq_token = base64_encode((string)$lastId);
+        $enquiry_form_url = $crm_base . 'student_enquiry.php?eq=' . $eq_token;
+        $register_url = $crm_base . 'student_register.php';
+        $login_url = $crm_base . 'student_login.php';
+        $mail_body = enquiry_ack_email_body($studentName, $uniqueId, $enquiry_form_url, $register_url, $login_url);
+        send_mail($mail_to, $mail_subject, $mail_body);
 
         // insert course Type data
         if($courseType==1){
@@ -343,7 +371,9 @@ if($checkId==0){
 
 }else{
     
-    if(mysqli_query($connection,"UPDATE student_enquiry SET `st_name`='$studentName',`st_member_name`='$memberName' ,`st_phno`='$contactName',`st_email`='$emailAddress',`st_course`='$courses',`st_fee`='$payment',`st_visa_status`=$visaStatus,`st_visa_condition`=$visaCondition ,`st_visa_note`='$visaNote', `st_surname`='$surname' , `st_suburb`= '$suburb' , `st_state`='$stuState',`st_post_code`= $postCode,`st_visited`=$visit_before,`st_heared`='$hear_about',`st_hearedby`='$hearedby',`st_startplan_date`='$plan_to_start_date',`st_refered`=$refer_select,`st_refer_name`='$referer_name',`st_refer_alumni`=$refer_alumni,`st_comments`='$comments',`st_pref_comments`='$prefComment',`st_appoint_book`= $appointment_booked,`st_remarks`='$remarks',`st_street_details`= '$streetDetails' , `st_enquiry_for`= $enquiryFor , `st_enquiry_date`='$enquiryDate' ,`st_course_type`=$courseType , `st_shore`=$shore,`st_ethnicity`='$ethnicity',`st_modified_by`= $created_by , `st_modified_date`='$now'  WHERE `st_id`=$checkId")){        
+    $enquiry_source_update = $enquiry_source > 0 ? $enquiry_source : 'NULL';
+$enquiry_college_update = $enquiry_college > 0 ? $enquiry_college : 'NULL';
+if(mysqli_query($connection,"UPDATE student_enquiry SET `st_name`='$studentName',`st_member_name`='$memberName' ,`st_phno`='$contactName',`st_email`='$emailAddress',`st_course`='$courses',`st_fee`='$payment',`st_visa_status`=$visaStatus,`st_visa_condition`=$visaCondition ,`st_visa_note`='$visaNote', `st_surname`='$surname' , `st_suburb`= '$suburb' , `st_state`='$stuState',`st_post_code`= $postCode,`st_visited`=$visit_before,`st_heared`='$hear_about',`st_hearedby`='$hearedby',`st_startplan_date`='$plan_to_start_date',`st_refered`=$refer_select,`st_refer_name`='$referer_name',`st_refer_alumni`=$refer_alumni,`st_comments`='$comments',`st_pref_comments`='$prefComment',`st_appoint_book`= $appointment_booked,`st_remarks`='$remarks',`st_street_details`= '$streetDetails' , `st_enquiry_for`= $enquiryFor , `st_enquiry_date`='$enquiryDate' ,`st_course_type`=$courseType , `st_shore`=$shore,`st_ethnicity`='$ethnicity',`st_modified_by`= $created_by , `st_modified_date`='$now', `st_enquiry_source`=$enquiry_source_update, `st_location`='$location', `st_enquiry_college`=$enquiry_college_update WHERE `st_id`=$checkId")){        
 
         // insert course Type data
         if($courseType==1){

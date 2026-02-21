@@ -168,6 +168,59 @@ if(@$_POST['formName']=='student_enquiry_common'){
     }
 
 }
+// Public web enquiry (minimal form) - creates enquiry and returns Enquiry ID; student must register to access full form
+if(@$_POST['formName']=='public_enquiry'){
+    $enquiryFor = isset($_POST['enquiryFor']) ? (int)$_POST['enquiryFor'] : 1;
+    if($enquiryFor==1){
+        $studentName = mysqli_real_escape_string($connection, $_POST['studentName'] ?? '');
+        $memberName = mysqli_real_escape_string($connection, $_POST['memberName'] ?? '');
+    }else{
+        $studentName = mysqli_real_escape_string($connection, $_POST['memberName'] ?? '');
+        $memberName = mysqli_real_escape_string($connection, $_POST['studentName'] ?? '');
+    }
+    $contactName = mysqli_real_escape_string($connection, $_POST['contactName'] ?? '');
+    $emailAddress = mysqli_real_escape_string($connection, $_POST['emailAddress'] ?? '');
+    $courses = isset($_POST['courses']) && is_array($_POST['courses']) ? json_encode($_POST['courses']) : '[]';
+    $surname = mysqli_real_escape_string($connection, $_POST['surname'] ?? '');
+    $suburb = mysqli_real_escape_string($connection, $_POST['suburb'] ?? '');
+    $prefComment = mysqli_real_escape_string($connection, $_POST['prefComment'] ?? '');
+    $stuState = mysqli_real_escape_string($connection, $_POST['stuState'] ?? '0');
+    $postCode = (int)($_POST['postCode'] ?? 0);
+    $visit_before = (int)($_POST['visit_before'] ?? 0);
+    $hear_about = mysqli_real_escape_string($connection, $_POST['hear_about'] ?? '');
+    $hearedby = mysqli_real_escape_string($connection, $_POST['hearedby'] ?? '');
+    $plan_to_start_date = mysqli_real_escape_string($connection, $_POST['plan_to_start_date'] ?? '0000-00-00 00:00:00');
+    if($plan_to_start_date === '' || $plan_to_start_date === '0000-00-00') $plan_to_start_date = '0000-00-00 00:00:00';
+    $refer_select = (int)($_POST['refer_select'] ?? 0);
+    $referer_name = mysqli_real_escape_string($connection, $_POST['referer_name'] ?? '');
+    $refer_alumni = (int)($_POST['refer_alumni'] ?? 0);
+    $streetDetails = mysqli_real_escape_string($connection, $_POST['streetDetails'] ?? '');
+    $enquiryDate = mysqli_real_escape_string($connection, $_POST['enquiry_date'] ?? date('Y-m-d'));
+    $enquiryDate = $enquiryDate ? $enquiryDate . ' 00:00:00' : date('Y-m-d H:i:s');
+    $created_by = 0; // public
+    $form_type = 2; // 2 = public web enquiry
+    $payment = '';
+    $visaStatus = 0;
+    $visaCondition = 1;
+    $visaNote = '';
+    $comments = '';
+    $remarks = '';
+    $appointment_booked = 0;
+    $courseType = 0;
+    $shore = 0;
+    $ethnicity = '';
+    $query = mysqli_query($connection, "INSERT INTO student_enquiry(st_name,st_member_name,st_phno,st_email,st_course,st_fee,st_visa_status,st_visa_condition,st_visa_note,st_surname,st_suburb,st_state,st_post_code,st_visited,st_heared,st_hearedby,st_startplan_date,st_refered,st_refer_name,st_refer_alumni,st_comments,st_pref_comments,st_appoint_book,st_remarks,st_street_details,st_enquiry_for,st_enquiry_date,st_course_type,st_shore,st_ethnicity,st_created_by,st_gen_enq_type) VALUES ('$studentName','$memberName','$contactName','$emailAddress','$courses','$payment',$visaStatus,$visaCondition,'$visaNote','$surname','$suburb','$stuState',$postCode,$visit_before,'$hear_about','$hearedby','$plan_to_start_date',$refer_select,'$referer_name',$refer_alumni,'$comments','$prefComment',$appointment_booked,'$remarks','$streetDetails',$enquiryFor,'$enquiryDate',$courseType,$shore,'$ethnicity',$created_by,$form_type)");
+    $lastId = mysqli_insert_id($connection);
+    $error = mysqli_error($connection);
+    if($error !== '' || $lastId <= 0){
+        echo json_encode(array('success' => false, 'message' => 'Could not save enquiry. Please try again.'));
+        exit;
+    }
+    $uniqueId = sprintf('EQ%05d', $lastId);
+    mysqli_query($connection, "UPDATE student_enquiry SET st_enquiry_id='$uniqueId' WHERE st_id=$lastId");
+    echo json_encode(array('success' => true, 'enquiry_id' => $uniqueId));
+    exit;
+}
 if(@$_POST['formName']=='student_enquiry'){
 
 
@@ -228,6 +281,17 @@ $now=date('Y-m-d H:i:s');
 $rpl_arrays=json_decode($_POST['rpl_arrays']);
 $short_grps=json_decode($_POST['short_grps']);
 $slot_books=json_decode($_POST['slot_books']);
+
+// Student portal: allow update only for own enquiry
+if((int)$checkId > 0 && isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'student'){
+    $sid = (int)$_SESSION['user_id'];
+    $check_own = mysqli_query($connection, "SELECT st_id FROM student_enquiry WHERE st_id=".(int)$checkId." AND student_user_id=$sid");
+    if(!$check_own || mysqli_num_rows($check_own) === 0){
+        echo 0;
+        exit;
+    }
+    $created_by = 0; // student update: no staff modifier
+}
 
 if($checkId==0){
 
@@ -1398,6 +1462,71 @@ if($id['user_id']=='' || $id['user_id']=='undefined'){
     $_SESSION['user_log_id']=$id['user_log_id'];
     echo "0|".$id['user_type'];
 }
+}
+
+// Student portal: register (link enquiry by email)
+if(@$_POST['formName']=='student_register'){
+    $email = mysqli_real_escape_string($connection, trim($_POST['email'] ?? ''));
+    $password = $_POST['password'] ?? '';
+    $full_name = mysqli_real_escape_string($connection, trim($_POST['full_name'] ?? ''));
+    $enquiry_id_input = mysqli_real_escape_string($connection, trim($_POST['enquiry_id'] ?? ''));
+    if($email === '' || $password === '' || $full_name === ''){
+        echo json_encode(array('success' => false, 'message' => 'Email, password and full name are required.'));
+        exit;
+    }
+    if(strlen($password) < 6){
+        echo json_encode(array('success' => false, 'message' => 'Password must be at least 6 characters.'));
+        exit;
+    }
+    $check = mysqli_query($connection, "SELECT id FROM student_users WHERE email='$email'");
+    if(mysqli_num_rows($check) > 0){
+        echo json_encode(array('success' => false, 'message' => 'This email is already registered. Please log in.'));
+        exit;
+    }
+    if($enquiry_id_input !== ''){
+        $enq = mysqli_query($connection, "SELECT st_id FROM student_enquiry WHERE st_enquiry_status=0 AND st_enquiry_id='$enquiry_id_input' AND st_email='$email' LIMIT 1");
+    } else {
+        $enq = mysqli_query($connection, "SELECT st_id FROM student_enquiry WHERE st_enquiry_status=0 AND st_email='$email' ORDER BY st_id DESC LIMIT 1");
+    }
+    $password_hash = password_hash($password, PASSWORD_DEFAULT);
+    $ins = mysqli_query($connection, "INSERT INTO student_users (email, password_hash, full_name, status) VALUES ('$email','$password_hash','$full_name',1)");
+    if(!$ins){
+        echo json_encode(array('success' => false, 'message' => 'Registration failed. Please try again.'));
+        exit;
+    }
+    $student_id = mysqli_insert_id($connection);
+    if(mysqli_num_rows($enq) > 0){
+        $er = mysqli_fetch_array($enq);
+        $st_id = (int)$er['st_id'];
+        mysqli_query($connection, "UPDATE student_enquiry SET student_user_id=$student_id WHERE st_id=$st_id");
+    }
+    echo json_encode(array('success' => true, 'message' => 'Registered successfully. You can now log in.'));
+    exit;
+}
+
+// Student portal: login
+if(@$_POST['formName']=='student_login'){
+    $email = mysqli_real_escape_string($connection, trim($_POST['email'] ?? ''));
+    $password = $_POST['password'] ?? '';
+    if($email === '' || $password === ''){
+        echo json_encode(array('success' => false, 'message' => 'Email and password required.'));
+        exit;
+    }
+    $q = mysqli_query($connection, "SELECT id, full_name, password_hash FROM student_users WHERE email='$email' AND status=1");
+    if(mysqli_num_rows($q) === 0){
+        echo json_encode(array('success' => false, 'message' => 'Invalid email or password.'));
+        exit;
+    }
+    $row = mysqli_fetch_assoc($q);
+    if(!password_verify($password, $row['password_hash'])){
+        echo json_encode(array('success' => false, 'message' => 'Invalid email or password.'));
+        exit;
+    }
+    $_SESSION['user_id'] = $row['id'];
+    $_SESSION['user_type'] = 'student';
+    $_SESSION['user_name'] = $row['full_name'];
+    echo json_encode(array('success' => true, 'redirect' => 'student_portal.php'));
+    exit;
 }
 
 if(@$_POST['formName'] == 'get_user'){

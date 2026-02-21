@@ -1,8 +1,17 @@
 <?php include('includes/dbconnect.php'); ?>
 <?php 
 session_start();
+$is_student_portal = (@$_SESSION['user_type'] === 'student');
 if(@$_SESSION['user_type']!=''){
 
+    if($is_student_portal && (!isset($_GET['eq']) || $_GET['eq']==='')){
+        header('Location: student_portal.php');
+        exit;
+    }
+    if($is_student_portal && isset($_GET['view']) && $_GET['view']=='list'){
+        header('Location: student_portal.php');
+        exit;
+    }
     if(isset($_GET['view']) && $_GET['view']=='list'){
         ?><!doctype html>
 <html lang="en">
@@ -188,7 +197,16 @@ if(@$_SESSION['user_type']!=''){
     if(isset($_GET['eq'])){
         $Updatestatus=1;
         $eqId=base64_decode($_GET['eq']);
+        $eqId=(int)$eqId;
         $queryRes=mysqli_fetch_array(mysqli_query($connection,"SELECT * from student_enquiry where st_enquiry_status!=1 and st_id=$eqId"));
+        if(!$queryRes){
+            if($is_student_portal){ header('Location: student_portal.php'); exit; }
+            $queryRes=array();
+        }
+        if($is_student_portal && !empty($queryRes) && (int)($queryRes['student_user_id']??0) !== (int)$_SESSION['user_id']){
+            header('Location: student_portal.php');
+            exit;
+        }
         $form_id=$queryRes['st_id'];
 
 
@@ -248,6 +266,7 @@ if(@$_SESSION['user_type']!=''){
     }else{
         $Updatestatus=0;
         $eqId=0;
+        $queryRes=array();
         $rpl_array=["rpl_exp" => '' , "exp_in"=>'' , "exp_docs"=>'' , "exp_prev"=>'' , "exp_name"=>''  , "exp_years"=>''  , "exp_prev_name"=>'']; 
         $slot_book=["slot_book_time"=>'',"slot_book_purpose"=>'',"slot_book_date"=>'',"slot_book_by"=>'',"slot_book_link"=>''];  
         $short_grp=["short_grp_org_name" => '' , "short_grp_org_type"=>'' , "short_grp_campus"=>'',"short_grp_date"=>'', "short_grp_num_std"=> '',"short_grp_ind_exp"=>'',"short_grp_con_type"=>'' , "short_grp_con_num"=>'',"short_grp_con_name"=>'',"short_grp_con_email"=>'',"short_grp_before"=>'' ];  
@@ -297,33 +316,33 @@ if(@$_SESSION['user_type']!=''){
         <div class="main-wrapper">
 
             
+            <?php if($is_student_portal): ?>
+            <div class="border-bottom bg-light py-2">
+                <div class="container-fluid d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold">National College Australia – My Enquiry</span>
+                    <span><a href="student_portal.php">My Portal</a> &nbsp;|&nbsp; <a href="student_logout.php">Logout</a></span>
+                </div>
+            </div>
+            <div class="container-fluid py-4">
+            <?php else: ?>
             <?php include('includes/header.php'); ?>
             <?php include('includes/sidebar.php'); ?>
-            
-            <!-- ============================================================== -->
-            <!-- Start right Content here -->
-            <!-- ============================================================== -->
             <div class="page-wrapper">
                 <div class="content pb-0">
                     <div class="container-fluid">
-
-                        <!-- start page title -->
                         <div class="row">
                             <div class="col-12">
                                 <div class="page-title-box d-sm-flex align-items-center justify-content-between">
                                     <h4 class="mb-sm-0">Student's Enquiry</h4>
-
                                     <div class="page-title-right">
-                                        
                                         <ol class="breadcrumb m-0 align-items-baseline">
                                         <li class="breadcrumb-item">
-                                            <button type="button" id="generate_qr" onclick="genQR()" class="btn btn-info waves-effect waves-light">Create QR Code <i class="mdi mdi-qrcode-edit"></i> 
-                                            </button>
+                                            <button type="button" id="generate_qr" onclick="genQR()" class="btn btn-info waves-effect waves-light">Create QR Code <i class="mdi mdi-qrcode-edit"></i> </button>
                                             <div class="d-none" id="qrcode"></div>
                                             <a id="downloadLink" download="enquiry_QR.png" class="d-none">Download QR Code</a>
-                                            </li>
-                                            <li class="breadcrumb-item"><a href="javascript: void(0);">Forms</a></li>
-                                            <li class="breadcrumb-item active">Student's Enquiry</li>
+                                        </li>
+                                        <li class="breadcrumb-item"><a href="javascript: void(0);">Forms</a></li>
+                                        <li class="breadcrumb-item active">Student's Enquiry</li>
                                         </ol>
                                     </div>
 
@@ -331,7 +350,7 @@ if(@$_SESSION['user_type']!=''){
                             </div>
                         </div>
                         <!-- end page title -->
-
+            <?php endif; ?>
         <div class="accordion mb-3" id="enquiryMainAccordion">
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingStudentEnquiry">
@@ -539,7 +558,7 @@ if(@$_SESSION['user_type']!=''){
                     </div>
                 </div>
 
-                                <div class="row" id="rpl_form" style="display:<?php echo $queryRes['st_course_type']==1? : 'none' ?>">
+                                <div class="row" id="rpl_form" style="display:<?php echo (isset($queryRes['st_course_type']) && $queryRes['st_course_type']==1) ? 'block' : 'none' ?>">
                                    <div class="col-xl-12">
                                         <div class="card">
                                             <div class="card-body">
@@ -1158,9 +1177,13 @@ if(@$_SESSION['user_type']!=''){
             </div>
         </div>
                     </div> <!-- container-fluid -->
+            <?php if(!$is_student_portal): ?>
                 </div>
             </div>
-
+            <?php endif; ?>
+            <?php if($is_student_portal): ?>
+            </div><!-- student container-fluid -->
+            <?php endif; ?>
         </div>
         <?php include('includes/footer_includes.php'); ?>
         <script>

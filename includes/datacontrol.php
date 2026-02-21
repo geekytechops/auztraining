@@ -2401,11 +2401,20 @@ if(@$_POST['formName']=='fetchEnquiries'){
         while($selectDataQry=mysqli_fetch_array($selectData)){
 
 
-            $coursesNames=json_decode($selectDataQry['st_course']);
-            $coursesName='<div class="td_scroll_height">';
-            foreach($coursesNames as $value){
-                $courses=mysqli_fetch_array(mysqli_query($connection,"SELECT * from courses where course_status!=1 AND course_id=".$value));
-                $coursesName.= $courses['course_sname'].'-'.$courses['course_name']." , <br>"; 
+            $coursesNames = json_decode($selectDataQry['st_course']);
+            $courseDisplayList = array();
+            if (is_array($coursesNames)) {
+                foreach ($coursesNames as $value) {
+                    $courses = mysqli_fetch_array(mysqli_query($connection, "SELECT * from courses where course_status!=1 AND course_id=" . (int)$value));
+                    if (!empty($courses['course_sname']) || !empty($courses['course_name'])) {
+                        $courseDisplayList[] = $courses['course_sname'] . '-' . $courses['course_name'];
+                    }
+                }
+            }
+            $firstCourse = count($courseDisplayList) > 0 ? $courseDisplayList[0] : ' - ';
+            $coursesName = '<span class="course-cell-first">' . htmlspecialchars($firstCourse) . '</span>';
+            if (count($courseDisplayList) > 1) {
+                $coursesName .= ' <span class="course-view-more" data-courses="' . htmlspecialchars(json_encode($courseDisplayList), ENT_QUOTES, 'UTF-8') . '" title="Courses"><i class="mdi mdi-plus-circle-outline"></i> <span class="course-view-more-text">view more</span></span>';
             }
     
             $st_states=['-','NSW - New South Wales','VIC - Victoria','ACT - Australian Capital Territory','NT - Northern Territoy','WA - Western Australia','QLD - Queensland','SA - South Australia','TAS - Tasmania'];
@@ -2414,10 +2423,6 @@ if(@$_POST['formName']=='fetchEnquiries'){
             
             $st_course_type=['-','Rpl','Regular','Regular - Group','Short courses','Short course - Group'];
             $courseTypeId=$selectDataQry['st_course_type'];
-        
-            $coursesNamePos = strrpos($coursesName, ',');
-            $coursesName = substr($coursesName, 0, $coursesNamePos);
-            $coursesName.='</div>';
         
             $visited=$selectDataQry['st_visited']==1 ? 'Visited' : ( $selectDataQry['st_visited']==2 ? 'Not Visited' : ' - ' ) ;
             

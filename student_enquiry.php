@@ -26,10 +26,20 @@ if(@$_SESSION['user_type']!=''){
         #viewEnquiryAccordion .dataTables_wrapper .dataTables_filter input { margin-left: 0.5em; border-radius: 4px; padding: 4px 8px; }
         #viewEnquiryAccordion .dataTables_wrapper .dataTables_length select { padding: 4px 8px; margin: 0 4px; border-radius: 4px; }
         #viewEnquiryAccordion .dataTables_wrapper .dataTables_paginate .pagination { margin: 0; }
+        #viewEnquiryAccordion .dataTables_wrapper .dataTables_paginate .page-link { display: inline-flex; align-items: center; justify-content: center; min-width: 2em; }
+        #viewEnquiryAccordion .dataTables_wrapper .dataTables_paginate .page-link i.ti { font-size: 1.1em; }
         /* Ensure all enquiry table columns show - strip imp-none so Edit stays in Action column */
         #datatable_enquiries tbody td.imp-none { display: table-cell !important; }
         #datatable_enquiries { min-width: 1200px; }
         #viewEnquiryAccordion .dataTables_scrollBody { overflow-x: auto !important; }
+        .course-cell-first { display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; vertical-align: middle; }
+        .course-view-more { color: #0d6efd; cursor: pointer; white-space: nowrap; font-size: 0.9em; vertical-align: middle; }
+        .course-view-more:hover { color: #0a58ca; text-decoration: underline; }
+        .course-view-more .mdi { font-size: 1.1em; vertical-align: middle; }
+        .course-view-more-text { margin-left: 1px; }
+        .popover-body { max-height: 280px; overflow-y: auto; }
+        #viewEnquiryAccordion .dataTables_scrollBody { cursor: grab; user-select: none; }
+        #viewEnquiryAccordion .dataTables_scrollBody.drag-scrolling { cursor: grabbing; }
     </style>
 </head>
 <body>
@@ -134,13 +144,31 @@ if(@$_SESSION['user_type']!=''){
         </div>
         <?php include('includes/footer_includes.php'); ?>
         <script>
+        function initCoursePopovers(){
+            $('.course-view-more').each(function(){
+                var el = $(this);
+                if (el.data('bs.popover')) el.popover('dispose');
+                var raw = el.attr('data-courses');
+                if (!raw) return;
+                try {
+                    var courses = JSON.parse(raw);
+                    if (courses && courses.length) {
+                        var content = courses.map(function(c){ return $('<div/>').text(c).html(); }).join('<br>');
+                        el.popover({ html: true, content: content, trigger: 'hover focus', title: 'All courses', container: 'body', sanitize: false });
+                    }
+                } catch(e) {}
+            });
+        }
         function initDataTableEnquiries(){
             if($.fn.DataTable.isDataTable('#datatable_enquiries')) return;
             $('#datatable_enquiries').DataTable({
                 lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
                 pageLength: 10,
-                language: { paginate: { previous: "<i class=\"mdi mdi-chevron-left\">", next: "<i class=\"mdi mdi-chevron-right\">" } },
-                drawCallback: function(){ $(".dataTables_paginate > .pagination").addClass("pagination-rounded"); },
+                language: { paginate: { previous: "<i class=\"ti ti-chevron-left\"></i>", next: "<i class=\"ti ti-chevron-right\"></i>" } },
+                drawCallback: function(){
+                    $(".dataTables_paginate > .pagination").addClass("pagination-rounded");
+                    initCoursePopovers();
+                },
                 scrollX: true,
                 autoWidth: false,
                 columnDefs: [ { width: '90px', targets: 0 }, { width: '120px', targets: 1 }, { width: '110px', targets: 2 }, { width: '160px', targets: 3 }, { width: '90px', targets: 10 } ],
@@ -152,7 +180,7 @@ if(@$_SESSION['user_type']!=''){
             $('#datatable_counseling').DataTable({
                 lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
                 pageLength: 10,
-                language: { paginate: { previous: "<i class=\"mdi mdi-chevron-left\">", next: "<i class=\"mdi mdi-chevron-right\">" } },
+                language: { paginate: { previous: "<i class=\"ti ti-chevron-left\"></i>", next: "<i class=\"ti ti-chevron-right\"></i>" } },
                 drawCallback: function(){ $(".dataTables_paginate > .pagination").addClass("pagination-rounded"); },
                 scrollX: true,
                 order: [[6, 'desc']]
@@ -163,18 +191,56 @@ if(@$_SESSION['user_type']!=''){
             $('#datatable_followup').DataTable({
                 lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
                 pageLength: 10,
-                language: { paginate: { previous: "<i class=\"mdi mdi-chevron-left\">", next: "<i class=\"mdi mdi-chevron-right\">" } },
+                language: { paginate: { previous: "<i class=\"ti ti-chevron-left\"></i>", next: "<i class=\"ti ti-chevron-right\"></i>" } },
                 drawCallback: function(){ $(".dataTables_paginate > .pagination").addClass("pagination-rounded"); },
                 scrollX: true,
                 order: [[5, 'desc']]
             });
         }
+        var dragScroll = null;
+        $(document).on('mousedown', '#viewEnquiryAccordion .dataTables_scrollBody', function(e){
+            var el = $(this);
+            dragScroll = { el: this, startX: e.pageX, startScroll: this.scrollLeft };
+            el.addClass('drag-scrolling');
+        });
+        $(document).on('mousemove', function(e){
+            if (!dragScroll) return;
+            e.preventDefault();
+            dragScroll.el.scrollLeft = dragScroll.startScroll + (dragScroll.startX - e.pageX);
+        });
+        $(document).on('mouseup mouseleave', function(e){
+            if (dragScroll) {
+                $(dragScroll.el).removeClass('drag-scrolling');
+                dragScroll = null;
+            }
+        });
+        $(document).on('touchstart', '#viewEnquiryAccordion .dataTables_scrollBody', function(e){
+            if (e.originalEvent.touches.length !== 1) return;
+            var el = $(this);
+            dragScroll = { el: this, startX: e.originalEvent.touches[0].pageX, startScroll: this.scrollLeft };
+            el.addClass('drag-scrolling');
+        });
+        $(document).on('touchmove', function(e){
+            if (!dragScroll || e.originalEvent.touches.length !== 1) return;
+            e.preventDefault();
+            var x = e.originalEvent.touches[0].pageX;
+            dragScroll.el.scrollLeft += (dragScroll.startX - x);
+            dragScroll.startX = x;
+            dragScroll.startScroll = dragScroll.el.scrollLeft;
+        });
+        $(document).on('touchend touchcancel', function(){
+            if (dragScroll) {
+                $(dragScroll.el).removeClass('drag-scrolling');
+                dragScroll = null;
+            }
+        });
         $(function(){
             $.ajax({ type:'post', url:'includes/datacontrol.php', data:{ formName:'fetchEnquiries' }, success:function(data){
                 var html = (data && data.trim()) ? data : '<tr><td colspan="11">No records</td></tr>';
                 $('#student_filter_body').html(html);
                 $('#student_filter_body td.imp-none').removeClass('imp-none');
                 initDataTableEnquiries();
+                initCoursePopovers();
             }});
             $.ajax({ type:'post', url:'includes/datacontrol.php', data:{ formName:'fetchCounsel' }, success:function(data){
                 $('#counsel_filter_body').html(data && data.trim() ? data : '<tr><td colspan="9">No records</td></tr>');

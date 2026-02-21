@@ -2096,7 +2096,7 @@ if(@$_SESSION['user_type']!=''){
                 var enquiry_id=($('#counselling_enquiry_id').length ? $('#counselling_enquiry_id').val() : '').toString().trim();
                 var counseling_timing=$('#counseling_timing').val().trim();
                 var counseling_type=$f.find('.counseling_type:checked').val();
-                var member_name=$('#counselling_member_name').val().trim();
+                var member_name=$('#member_name').val().trim();
                 var aus_duration=$('#aus_duration').val().trim();
                 var work_status=$f.find('.work_status:checked').val();
                 var visa_condition=$('#counselling_visa_condition').val();
@@ -2117,11 +2117,34 @@ if(@$_SESSION['user_type']!=''){
                     if(!enquiry_id)$('#counselling_enquiry_id').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
                     return;
                 }
-                var details={formName:'counseling_form',vaccine_status:vaccine_status,job_nature:$('#counselling_job_nature').val(),module_result:$('#counselling_module_result').val(),pref_comment:$('#counselling_pref_comment').val(),eng_rate:eng_rate,mig_test:mig_test,overall_result:$('#counselling_overall_result').val(),course:$('#counselling_course').val(),university_name:$('#counselling_university_name').val(),qualification:qualification,counseling_timing:counseling_timing,counseling_end_timing:$('#counseling_end_timing').val(),enquiry_id:enquiry_id,counseling_type:counseling_type,member_name:member_name,aus_duration:aus_duration,work_status:work_status,visa_condition:visa_condition,education:education,remarks:remarks,aus_study:aus_study,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
+                var details={formName:'counseling_form',vaccine_status:vaccine_status,job_nature:$('#counselling_job_nature').val(),module_result:$('#counselling_module_result').val(),pref_comment:$('#counselling_pref_comment').val(),eng_rate:eng_rate,mig_test:mig_test,overall_result:$('#counselling_overall_result').val(),course:$('#counselling_course').val(),university_name:$('#counselling_university_name').val(),qualification:qualification,counseling_timing:counseling_timing,counseling_end_timing:$('#counseling_end_timing').val(),enquiry_id:enquiry_id,counseling_type:counseling_type,member_name:member_name,preferred_intake_date:$('#counselling_preferred_intake_date').val(),mode_of_study:$('#counselling_mode_of_study').val(),aus_duration:aus_duration,work_status:work_status,visa_condition:visa_condition,education:education,remarks:remarks,aus_study:aus_study,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
                 $.ajax({type:'post',url:'includes/datacontrol.php',data:details,success:function(data){
                     if(data==1){$('#toast-text').html('Record Added Successfully');$('#borderedToast1Btn').trigger('click');setTimeout(function(){location.reload();},400);}
                     else{$('.toast-text2').html('Cannot add record. Please try again later');$('#borderedToast2Btn').trigger('click');}
                 }});
+            });
+            $(document).on('change','#followup_enquiry_flow_status',function(){
+                var status=$(this).val();
+                if(!status){ $('#followup_email_template_section').hide(); return; }
+                var enquiry_id=$('#followup_enquiry_id').val();
+                $.post('includes/datacontrol.php',{ get_enquiry_status_template: 1, status_code: status, enquiry_id: enquiry_id },function(data){
+                    try{ var j=JSON.parse(data); $('#followup_email_subject').val(j.subject||''); $('#followup_email_body').val(j.body||''); $('#followup_email_template_section').show(); }catch(e){ $('#followup_email_template_section').hide(); }
+                });
+            });
+            $(document).on('click','#followup_send_status_email',function(){
+                var enquiry_id=$('#followup_enquiry_id').val();
+                var status_code=$('#followup_enquiry_flow_status').val();
+                var subject=$('#followup_email_subject').val().trim();
+                var body=$('#followup_email_body').val().trim();
+                if(!enquiry_id||enquiry_id=='0'){ alert('Please select an Enquiry ID first.'); return; }
+                if(!subject||!body){ alert('Please enter subject and message.'); return; }
+                var save_as_default = $('#followup_save_template_default').is(':checked') ? 1 : 0;
+                var $btn=$('#followup_send_status_email').prop('disabled',true).text('Sending...');
+                $.post('includes/datacontrol.php',{ send_enquiry_status_email: 1, enquiry_id: enquiry_id, status_code: status_code, subject: subject, body: body, save_as_default: save_as_default },function(data){
+                    $btn.prop('disabled',false).text('Send email');
+                    if(data=='1'){ $('#toast-text').html('Email sent successfully'); $('#borderedToast1Btn').trigger('click'); }
+                    else{ $('.toast-text2').html(data||'Failed to send email'); $('#borderedToast2Btn').trigger('click'); }
+                });
             });
             $(document).on('click','#followup_check',function(){
                 var student_name=$('#followup_student_name').val().trim();
@@ -2130,20 +2153,24 @@ if(@$_SESSION['user_type']!=''){
                 var contacted_time=$('#followup_contacted_time').val().trim();
                 var date=$('#followup_date').val().trim();
                 var contactMode=$('#followup_mode_contacted').val();
+                var followupType=$('#followup_followup_type').val();
+                var enquiry_flow_status=$('#followup_enquiry_flow_status').val();
+                var follow_up_notes=$('#followup_follow_up_notes').val().trim();
+                var next_followup_date=$('#followup_next_followup_date').val();
+                var follow_up_outcome=$('#followup_follow_up_outcome').val();
                 var comments=$('#followup_comments').val().trim();
                 var progress_status=$('#followup_progress_status').val();
                 var enquiry_id=$('#followup_enquiry_id').val();
                 var remarks=[];$('#followup_form_embed .followup_remarks:checked').each(function(){remarks.push(this.value);});
                 var checkId=$('#followup_check_update').val();
-                if(!date||!contactMode||!contacted_person||!student_name||!contacted_time||!contact_num||contact_num.length!=10){
+                if(!contacted_person||!student_name||!contacted_time||!contact_num||contact_num.length!=10){
                     if(!contact_num||contact_num.length!=10)$('#followup_mobile_num').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
-                    if(!contactMode)$('#followup_mode_contacted').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
                     if(!contacted_time)$('#followup_contacted_time').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
-                    if(!date)$('#followup_date').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
                     if(!student_name)$('#followup_student_name').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
                     return;
                 }
-                var details={formName:'followup_call',student_name:student_name,date:date,contacted_person:contacted_person,contacted_time:contacted_time,contactMode:contactMode,progress_status:progress_status,contact_num:contact_num,enquiry_id:enquiry_id,remarks:remarks,comments:comments,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
+                if(!date) date = contacted_time ? contacted_time.slice(0,10) : '';
+                var details={formName:'followup_call',student_name:student_name,date:date,contacted_person:contacted_person,contacted_time:contacted_time,contactMode:contactMode||followupType,followup_type:followupType,enquiry_flow_status:enquiry_flow_status,follow_up_notes:follow_up_notes,next_followup_date:next_followup_date,follow_up_outcome:follow_up_outcome,progress_status:progress_status,contact_num:contact_num,enquiry_id:enquiry_id,remarks:remarks,comments:comments,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
                 $.ajax({type:'post',url:'includes/datacontrol.php',data:details,success:function(data){
                     if(data==1){$('#toast-text').html('Record Added Successfully');$('#borderedToast1Btn').trigger('click');setTimeout(function(){location.reload();},400);}
                     else{$('.toast-text2').html('Cannot add record. Please try again later');$('#borderedToast2Btn').trigger('click');}

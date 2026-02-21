@@ -2,7 +2,7 @@
 if(!isset($enquiryIdsCounselling)) $enquiryIdsCounselling = $enquiryIds ?? null;
 if(!isset($counsilEqId)) $counsilEqId = 0;
 if(!isset($counsil_Query)) $counsil_Query = array();
-$counsil_Query = array_merge(array('st_enquiry_id'=>'','counsil_timing'=>'','counsil_end_time'=>'','counsil_type'=>'','counsil_mem_name'=>'','counsil_aus_stay_time'=>'','counsil_work_status'=>'','counsil_visa_condition'=>'','counsil_education'=>'','counsil_aus_study_status'=>'','counsil_course'=>'','counsil_university'=>'','counsil_qualification'=>'','counsil_eng_rate'=>'','counsil_migration_test'=>'','counsil_overall_result'=>'','counsil_module_result'=>'','counsil_job_nature'=>'','counsil_vaccine_status'=>'','counsil_pref_comments'=>'','counsil_remarks'=>''), $counsil_Query);
+$counsil_Query = array_merge(array('st_enquiry_id'=>'','counsil_timing'=>'','counsil_end_time'=>'','counsil_type'=>'','counsil_mem_name'=>'','counsil_preferred_intake_date'=>'','counsil_mode_of_study'=>'','counsil_aus_stay_time'=>'','counsil_work_status'=>'','counsil_visa_condition'=>'','counsil_education'=>'','counsil_aus_study_status'=>'','counsil_course'=>'','counsil_university'=>'','counsil_qualification'=>'','counsil_eng_rate'=>'','counsil_migration_test'=>'','counsil_overall_result'=>'','counsil_module_result'=>'','counsil_job_nature'=>'','counsil_vaccine_status'=>'','counsil_pref_comments'=>'','counsil_remarks'=>''), $counsil_Query);
 ?>
 <form class="followup_form" id="counselling_form">
 <div class="row">
@@ -40,9 +40,18 @@ echo "<option value='0'>No Enquiries Found</option>";
 <div class="col-md-6"><div class="mb-3"><label class="form-label">Counseling Type<span class="asterisk">*</span></label><br>
 <input type="radio" id="counseling_type1" name="counseling_type" class="form-check-input counseling_type" value="1" <?php echo $counsil_Query['counsil_type']==''||$counsil_Query['counsil_type']==1 ? 'checked' : ''; ?>><label for="counseling_type1">Face to Face</label>
 <input type="radio" id="counseling_type2" name="counseling_type" class="form-check-input counseling_type" value="2" <?php echo $counsil_Query['counsil_type']==2 ? 'checked' : ''; ?>><label for="counseling_type2">Video</label></div></div>
-<div class="col-md-6"><div class="mb-3"><label class="form-label" for="member_name">Name of the member doing the counselling<span class="asterisk">*</span></label>
-<input type="text" class="form-control" id="member_name" placeholder="Team Member Name" value="<?php echo $counsil_Query['counsil_mem_name']; ?>">
-<div class="error-feedback">Please enter the Member Name</div></div></div>
+<div class="col-md-6"><div class="mb-3"><label class="form-label" for="member_name">Counsellor's Name<span class="asterisk">*</span></label>
+<input type="text" class="form-control" id="member_name" placeholder="Counsellor Name" value="<?php echo $counsil_Query['counsil_mem_name']; ?>">
+<div class="error-feedback">Please enter the Counsellor Name</div></div></div>
+<div class="col-md-6"><div class="mb-3"><label class="form-label" for="counselling_preferred_intake_date">Preferred Intake Date</label>
+<input type="date" class="form-control" id="counselling_preferred_intake_date" value="<?php echo !empty($counsil_Query['counsil_preferred_intake_date']) ? date('Y-m-d', strtotime($counsil_Query['counsil_preferred_intake_date'])) : ''; ?>"></div></div>
+<div class="col-md-6"><div class="mb-3"><label class="form-label" for="counselling_mode_of_study">Mode of Study</label>
+<select class="form-select" id="counselling_mode_of_study">
+<option value="">--select--</option>
+<option value="1" <?php echo (isset($counsil_Query['counsil_mode_of_study']) && $counsil_Query['counsil_mode_of_study']==1) ? 'selected' : ''; ?>>Face to Face</option>
+<option value="2" <?php echo (isset($counsil_Query['counsil_mode_of_study']) && $counsil_Query['counsil_mode_of_study']==2) ? 'selected' : ''; ?>>Online</option>
+<option value="3" <?php echo (isset($counsil_Query['counsil_mode_of_study']) && $counsil_Query['counsil_mode_of_study']==3) ? 'selected' : ''; ?>>Blended</option>
+</select></div></div>
 <div class="col-md-6"><div class="mb-3"><label class="form-label" for="aus_duration">How long the student has been to Aus<span class="asterisk">*</span></label>
 <input type="text" class="form-control" id="aus_duration" placeholder="Duration" value="<?php echo $counsil_Query['counsil_aus_stay_time']; ?>">
 <div class="error-feedback">Please enter the Duration</div></div></div>

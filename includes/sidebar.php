@@ -39,6 +39,7 @@
                                     <ul>
                                         <li><a href="student_enquiry.php">Create Enquiry</a></li>
                                         <li><a href="student_enquiry.php?view=list">View Enquiry</a></li>
+                                        <li><a href="enquiry_email_templates.php">Enquiry Email Templates</a></li>
                                     </ul>
                                 </li>
                                 <?php } ?>

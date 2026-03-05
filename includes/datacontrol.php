@@ -2659,37 +2659,74 @@ if(@$_POST['formName']=='fetchEnquiryList'){
 
 // Enquiry reports data (management)
 if(@$_POST['formName']=='fetchEnquiryReports'){
+    // Capture and discard any notices/warnings so JSON stays clean
+    if(function_exists('ob_start')){ ob_start(); }
+
     $flow_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_flow_status'")) ? 'COALESCE(e.st_enquiry_flow_status,1)' : '1';
     $source_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_source'")) ? 'e.st_enquiry_source' : '0';
     $base_where = " FROM student_enquiry e WHERE e.st_enquiry_status = 0 ";
-    $total_enquiries = (int)mysqli_fetch_row(mysqli_query($connection, "SELECT COUNT(*)" . $base_where))[0];
-    $converted_count = (int)mysqli_fetch_row(mysqli_query($connection, "SELECT COUNT(*) FROM student_enquiry e WHERE e.st_enquiry_status=0 AND e.st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '' AND st_enquiry_id IS NOT NULL)"))[0];
-    $conversion_rate = $total_enquiries > 0 ? round(($converted_count / $total_enquiries) * 100, 1) : 0;
+    $total_enquiries = 0;
+    $converted_count = 0;
+    $conversion_rate = 0;
     $by_course = array();
-    $cq = mysqli_query($connection, "SELECT c.course_id, c.course_sname, c.course_name, COUNT(*) AS cnt FROM student_enquiry e INNER JOIN courses c ON (e.st_course LIKE CONCAT('%', c.course_id, '%')) AND c.course_status != 1 WHERE e.st_enquiry_status = 0 GROUP BY c.course_id, c.course_sname, c.course_name ORDER BY cnt DESC");
-    while($r = mysqli_fetch_assoc($cq)) $by_course[] = array('course'=>$r['course_sname'].' - '.$r['course_name'], 'count'=>(int)$r['cnt']);
-    $sources = array('','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads','Agent / referral');
     $by_source = array();
-    $sq = mysqli_query($connection, "SELECT $source_col AS src, COUNT(*) AS cnt FROM student_enquiry e WHERE e.st_enquiry_status = 0 GROUP BY $source_col");
-    while($r = mysqli_fetch_assoc($sq)){
-        $idx = (int)$r['src'];
-        $by_source[] = array('source'=> isset($sources[$idx]) ? $sources[$idx] : ('Source '.$idx), 'count'=>(int)$r['cnt']);
-    }
     $counsellor_perf = array();
-    $cpq = mysqli_query($connection, "SELECT c.counsil_mem_name AS name, COUNT(DISTINCT c.st_enquiry_id) AS enquiries, COUNT(DISTINCT CASE WHEN e.st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '' AND st_enquiry_id IS NOT NULL) THEN e.st_enquiry_id END) AS converted FROM counseling_details c INNER JOIN student_enquiry e ON e.st_enquiry_id = c.st_enquiry_id AND e.st_enquiry_status = 0 AND c.counsil_enquiry_status = 0 GROUP BY c.counsil_mem_name ORDER BY enquiries DESC");
-    while($r = mysqli_fetch_assoc($cpq)) $counsellor_perf[] = array('counsellor'=>$r['name'], 'enquiries'=>(int)$r['enquiries'], 'converted'=>(int)$r['converted'], 'rate'=> $r['enquiries'] > 0 ? round(((int)$r['converted']/$r['enquiries'])*100,1) : 0);
     $followup_effect = array('with_followup'=>0, 'converted_with_followup'=>0);
+    $lost_count = 0;
+
+    $res_total = mysqli_query($connection, "SELECT COUNT(*)" . $base_where);
+    if($res_total && ($row = mysqli_fetch_row($res_total))){ $total_enquiries = (int)$row[0]; }
+    $res_conv = mysqli_query($connection, "SELECT COUNT(*) FROM student_enquiry e WHERE e.st_enquiry_status=0 AND e.st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '' AND st_enquiry_id IS NOT NULL)");
+    if($res_conv && ($row = mysqli_fetch_row($res_conv))){ $converted_count = (int)$row[0]; }
+    if($total_enquiries > 0){ $conversion_rate = round(($converted_count / $total_enquiries) * 100, 1); }
+
+    $cq = mysqli_query($connection, "SELECT c.course_id, c.course_sname, c.course_name, COUNT(*) AS cnt FROM student_enquiry e INNER JOIN courses c ON (e.st_course LIKE CONCAT('%', c.course_id, '%')) AND c.course_status != 1 WHERE e.st_enquiry_status = 0 GROUP BY c.course_id, c.course_sname, c.course_name ORDER BY cnt DESC");
+    if($cq){
+        while($r = mysqli_fetch_assoc($cq)){
+            $by_course[] = array('course'=>$r['course_sname'].' - '.$r['course_name'], 'count'=>(int)$r['cnt']);
+        }
+    }
+    $sources = array('','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads','Agent / referral');
+    $sq = mysqli_query($connection, "SELECT $source_col AS src, COUNT(*) AS cnt FROM student_enquiry e WHERE e.st_enquiry_status = 0 GROUP BY $source_col");
+    if($sq){
+        while($r = mysqli_fetch_assoc($sq)){
+            $idx = (int)$r['src'];
+            $by_source[] = array('source'=> isset($sources[$idx]) ? $sources[$idx] : ('Source '.$idx), 'count'=>(int)$r['cnt']);
+        }
+    }
+    $cpq = mysqli_query($connection, "SELECT c.counsil_mem_name AS name, COUNT(DISTINCT c.st_enquiry_id) AS enquiries, COUNT(DISTINCT CASE WHEN e.st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '' AND st_enquiry_id IS NOT NULL) THEN e.st_enquiry_id END) AS converted FROM counseling_details c INNER JOIN student_enquiry e ON e.st_enquiry_id = c.st_enquiry_id AND e.st_enquiry_status = 0 AND c.counsil_enquiry_status = 0 GROUP BY c.counsil_mem_name ORDER BY enquiries DESC");
+    if($cpq){
+        while($r = mysqli_fetch_assoc($cpq)){
+            $enq = (int)$r['enquiries'];
+            $conv = (int)$r['converted'];
+            $rate = $enq > 0 ? round(($conv / $enq)*100,1) : 0;
+            $counsellor_perf[] = array('counsellor'=>$r['name'], 'enquiries'=>$enq, 'converted'=>$conv, 'rate'=>$rate);
+        }
+    }
     $next_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM followup_calls LIKE 'flw_next_followup_date'"));
     if($next_col){
         $fq = mysqli_query($connection, "SELECT COUNT(DISTINCT e.st_id) AS with_fup FROM student_enquiry e INNER JOIN followup_calls f ON f.enquiry_id = e.st_enquiry_id WHERE e.st_enquiry_status = 0");
-        if($fq && $fr = mysqli_fetch_assoc($fq)) $followup_effect['with_followup'] = (int)$fr['with_followup'];
+        if($fq && ($fr = mysqli_fetch_assoc($fq))) $followup_effect['with_followup'] = (int)$fr['with_fup'];
         $fq2 = mysqli_query($connection, "SELECT COUNT(DISTINCT e.st_id) AS cnt FROM student_enquiry e INNER JOIN followup_calls f ON f.enquiry_id = e.st_enquiry_id WHERE e.st_enquiry_status = 0 AND e.st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '' AND st_enquiry_id IS NOT NULL)");
-        if($fq2 && $fr2 = mysqli_fetch_assoc($fq2)) $followup_effect['converted_with_followup'] = (int)$fr2['cnt'];
+        if($fq2 && ($fr2 = mysqli_fetch_assoc($fq2))) $followup_effect['converted_with_followup'] = (int)$fr2['cnt'];
     }
-    $lost_count = 0;
-    if($flow_col !== '1') $lost_count = (int)mysqli_fetch_row(mysqli_query($connection, "SELECT COUNT(*) FROM student_enquiry WHERE st_enquiry_status = 0 AND COALESCE(st_enquiry_flow_status,1) = 7"))[0];
+    if($flow_col !== '1'){
+        $res_lost = mysqli_query($connection, "SELECT COUNT(*) FROM student_enquiry WHERE st_enquiry_status = 0 AND COALESCE(st_enquiry_flow_status,1) = 7");
+        if($res_lost && ($row = mysqli_fetch_row($res_lost))) $lost_count = (int)$row[0];
+    }
+
+    if(function_exists('ob_get_length') && ob_get_length()){ @ob_clean(); }
     header('Content-Type: application/json');
-    echo json_encode(array('by_course'=>$by_course,'by_source'=>$by_source,'conversion_rate'=>$conversion_rate,'total_enquiries'=>$total_enquiries,'converted_count'=>$converted_count,'counsellor_performance'=>$counsellor_perf,'followup_effectiveness'=>$followup_effect,'lost_count'=>$lost_count));
+    echo json_encode(array(
+        'by_course'=>$by_course,
+        'by_source'=>$by_source,
+        'conversion_rate'=>$conversion_rate,
+        'total_enquiries'=>$total_enquiries,
+        'converted_count'=>$converted_count,
+        'counsellor_performance'=>$counsellor_perf,
+        'followup_effectiveness'=>$followup_effect,
+        'lost_count'=>$lost_count
+    ));
     exit;
 }
 

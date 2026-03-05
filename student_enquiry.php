@@ -402,11 +402,11 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                     <div class="page-title-right">
                                         <ol class="breadcrumb m-0 align-items-baseline">
                                         <?php if (!$is_student_portal): ?>
-                                        <li class="breadcrumb-item">
+                                        <!-- <li class="breadcrumb-item">
                                             <button type="button" id="generate_qr" onclick="genQR()" class="btn btn-info waves-effect waves-light">Create QR Code <i class="mdi mdi-qrcode-edit"></i> </button>
                                             <div class="d-none" id="qrcode"></div>
                                             <a id="downloadLink" download="enquiry_QR.png" class="d-none">Download QR Code</a>
-                                        </li>
+                                        </li> -->
                                         <li class="breadcrumb-item"><a href="javascript: void(0);">Forms</a></li>
                                         <?php endif; ?>
                                         <li class="breadcrumb-item active"><?php echo $is_student_portal ? 'My Enquiry' : "Student's Enquiry"; ?></li>
@@ -2082,11 +2082,6 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var aus_study=$('#counselling_form .aus_study:checked').val();
                 $('#counselling_form .aus_study_child').toggle(aus_study==1);
             });
-            $(document).on('change','#followup_enquiry_id',function(){
-                var opt=$('#followup_enquiry_id option:selected');
-                $('#followup_mobile_num').val(opt.data('mobile')||'');
-                $('#followup_student_name').val(opt.data('name')||'');
-            });
             $(document).on('click','#counseling_submit',function(){
                 var $f=$('#counselling_form');
                 var enquiry_id=($('#counselling_enquiry_id').length ? $('#counselling_enquiry_id').val() : '').toString().trim();
@@ -2155,8 +2150,8 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             loadFollowupTemplateForCurrentStatus();
 
             $(document).on('click','#followup_check',function(){
-                var student_name=$('#followup_student_name').val().trim();
-                var contact_num=$('#followup_mobile_num').val().trim();
+                var student_name=$('#student_name').val().trim();
+                var contact_num=$('#contact_num').val().trim();
                 var contacted_person=$('#followup_contacted_person').val().trim();
                 var contacted_time=$('#followup_contacted_time').val().trim();
                 var date=$('#followup_date').val().trim();
@@ -2166,19 +2161,17 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var follow_up_notes=$('#followup_follow_up_notes').val().trim();
                 var next_followup_date=$('#followup_next_followup_date').val();
                 var follow_up_outcome=$('#followup_follow_up_outcome').val();
-                var comments=$('#followup_comments').val().trim();
-                var progress_status=$('#followup_progress_status').val();
                 var enquiry_id=$('#followup_enquiry_id').val();
                 var remarks=[];$('#followup_form_embed .followup_remarks:checked').each(function(){remarks.push(this.value);});
                 var checkId=$('#followup_check_update').val();
                 if(!contacted_person||!student_name||!contacted_time||!contact_num||contact_num.length!=10){
-                    if(!contact_num||contact_num.length!=10)$('#followup_mobile_num').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                    if(!contact_num||contact_num.length!=10)$('#contact_num').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
                     if(!contacted_time)$('#followup_contacted_time').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
-                    if(!student_name)$('#followup_student_name').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                    if(!student_name)$('#student_name').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
                     return;
                 }
                 if(!date) date = contacted_time ? contacted_time.slice(0,10) : '';
-                var details={formName:'followup_call',student_name:student_name,date:date,contacted_person:contacted_person,contacted_time:contacted_time,contactMode:contactMode||followupType,followup_type:followupType,enquiry_flow_status:enquiry_flow_status,follow_up_notes:follow_up_notes,next_followup_date:next_followup_date,follow_up_outcome:follow_up_outcome,progress_status:progress_status,contact_num:contact_num,enquiry_id:enquiry_id,remarks:remarks,comments:comments,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
+                var details={formName:'followup_call',student_name:student_name,date:date,contacted_person:contacted_person,contacted_time:contacted_time,contactMode:contactMode||followupType,followup_type:followupType,enquiry_flow_status:enquiry_flow_status,follow_up_notes:follow_up_notes,next_followup_date:next_followup_date,follow_up_outcome:follow_up_outcome,contact_num:contact_num,enquiry_id:enquiry_id,remarks:remarks,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
                 $.ajax({type:'post',url:'includes/datacontrol.php',data:details,success:function(data){
                     if(data==1){$('#toast-text').html('Record Added Successfully');$('#borderedToast1Btn').trigger('click');setTimeout(function(){location.reload();},400);}
                     else{$('.toast-text2').html('Cannot add record. Please try again later');$('#borderedToast2Btn').trigger('click');}

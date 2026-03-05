@@ -73,7 +73,7 @@ if($visaRes['visa_id']==4) echo '</optgroup>';
 <div class="col-md-6"><div class="mb-3"><label class="form-label" for="counselling_pref_comment">Any preferences or requirements</label><input type="text" class="form-control" id="counselling_pref_comment" placeholder="Requirements" value="<?php echo $counsil_Query['counsil_pref_comments']; ?>"></div></div>
 <div class="col-md-6"><div class="mb-3"><label class="form-label" for="remarks">Remarks</label>
 <?php
-$st_remarks=['Seems to be interested to do course and need to contact asap','contacted and followed','Good with communication skills','Sent enrollement form online/ hard copies','Want to do the course asap','not interested much','Looking for government funding','Have done counselling before but wants to get more info','Counseling is done but enrolment is due','Have done the counselling before','Seems like having attitude','Want to book an appointment for counselling','Will callus back again','Planning to relocate to other state','Wants to get COE for visa purpose'];
+$st_remarks=['Seems to be interested to do course and need to contact asap','Good with communication skills','Sent enrollement form online/ hard copies','Want to do the course asap','Looking for government funding','Have done counselling before but wants to get more info','Counseling is done but enrolment is due','Have done the counselling before','Seems like having attitude','Want to book an appointment for counselling','Planning to relocate to other state','Wants to get COE for visa purpose'];
 $remarksSel=($counsil_Query['counsil_remarks']!='') ? json_decode($counsil_Query['counsil_remarks']) : array();
 for($i=1;$i<count($st_remarks);$i++){
 $checked=in_array($i,$remarksSel) ? 'checked' : '';

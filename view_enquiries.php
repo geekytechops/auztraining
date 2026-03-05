@@ -12,6 +12,7 @@ if($ut !== 1 && $ut !== 2){
 }
 $courses_q = mysqli_query($connection, "SELECT course_id, course_sname, course_name FROM courses WHERE course_status!=1 ORDER BY course_sname");
 $sources = array('','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads','Agent / referral');
+$staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE user_status!=1 ORDER BY user_name");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -170,7 +171,17 @@ $sources = array('','Website form','Phone call','Walk-in','Email','WhatsApp','Fa
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label small">Counsellor</label>
-                                <input type="text" id="filter_counsellor" class="form-control form-control-sm" placeholder="Name">
+                                <select id="filter_counsellor" class="form-select form-select-sm">
+                                    <option value="0">All</option>
+                                    <?php 
+                                    if($staff_q){
+                                        mysqli_data_seek($staff_q,0);
+                                        while($u = mysqli_fetch_assoc($staff_q)){
+                                            echo '<option value="'.(int)$u['user_id'].'">'.htmlspecialchars($u['user_name']).'</option>';
+                                        }
+                                    }
+                                    ?>
+                                </select>
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label small">Date From</label>
@@ -253,7 +264,8 @@ $(function(){
     loadList();
     $('#btn_apply').on('click', function(){ loadList(); });
     $('#btn_reset').on('click', function(){
-        $('#filter_search,#filter_counsellor').val('');
+        $('#filter_search').val('');
+        $('#filter_counsellor').val('0');
         $('#filter_course').val('0');
         $('#filter_status,#filter_source').val('-1');
         $('#filter_date_from,#filter_date_to').val('');

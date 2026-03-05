@@ -126,8 +126,9 @@ if(@$_SESSION['user_type']==1 || @$_SESSION['user_type']==2){
                                                     <td><?php echo $role; ?></td>
                                                     <td><?php echo $user['user_status']==0 ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>'; ?></td>
                                                     <td>
-                                                        <button class="btn btn-sm btn-warning edit_user" data-id="<?php echo $user['user_id']; ?>">
-                                                            <i class="mdi mdi-pencil"></i>
+                                                        <button type="button" class="btn btn-sm btn-warning edit_user d-inline-flex align-items-center px-2" data-id="<?php echo $user['user_id']; ?>">
+                                                            <i class="mdi mdi-pencil me-1"></i>
+                                                            <span>Edit</span>
                                                         </button>
                                                     </td>
                                                 </tr>

@@ -2567,7 +2567,7 @@ if(@$_POST['formName']=='fetchEnquiryList'){
     $filter_status = isset($_POST['filter_status']) ? (int)$_POST['filter_status'] : -1;
     $filter_date_from = isset($_POST['filter_date_from']) ? mysqli_real_escape_string($connection, $_POST['filter_date_from']) : '';
     $filter_date_to = isset($_POST['filter_date_to']) ? mysqli_real_escape_string($connection, $_POST['filter_date_to']) : '';
-    $filter_counsellor = isset($_POST['filter_counsellor']) ? mysqli_real_escape_string($connection, trim($_POST['filter_counsellor'])) : '';
+    $filter_counsellor = isset($_POST['filter_counsellor']) ? (int)$_POST['filter_counsellor'] : 0;
     $filter_source = isset($_POST['filter_source']) ? (int)$_POST['filter_source'] : -1;
     $sort_by = isset($_POST['sort_by']) ? $_POST['sort_by'] : 'latest';
     $flow_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_flow_status'")) ? 'COALESCE(e.st_enquiry_flow_status,1)' : '1';
@@ -2590,8 +2590,16 @@ if(@$_POST['formName']=='fetchEnquiryList'){
     if($filter_date_to !== ''){
         $where .= " AND DATE(COALESCE(e.created_date, e.st_enquiry_date)) <= '".date('Y-m-d', strtotime($filter_date_to))."' ";
     }
-    if($filter_counsellor !== ''){
-        $where .= " AND EXISTS (SELECT 1 FROM counseling_details c WHERE c.st_enquiry_id = e.st_enquiry_id AND c.counsil_enquiry_status=0 AND (c.counsil_mem_name LIKE '%$filter_counsellor%' OR c.counsil_createdby IN (SELECT user_id FROM users WHERE user_name LIKE '%$filter_counsellor%'))) ";
+    if($filter_counsellor > 0){
+        $where .= " AND EXISTS (
+            SELECT 1 FROM counseling_details c 
+            WHERE c.st_enquiry_id = e.st_enquiry_id 
+              AND c.counsil_enquiry_status=0 
+              AND (
+                    c.counsil_createdby = $filter_counsellor 
+                 OR c.counsil_mem_name IN (SELECT user_name FROM users WHERE user_id=$filter_counsellor)
+              )
+        ) ";
     }
     if($filter_source >= 0){
         $where .= " AND $source_col = ".(int)$filter_source;
@@ -2634,7 +2642,7 @@ if(@$_POST['formName']=='fetchEnquiryList'){
         $flow_status = (int)($r['flow_status'] ?? 1);
         $status_label = $status_labels[$flow_status] ?? 'New';
         $status_class = $status_classes[$flow_status] ?? 'secondary';
-        $next_fup_html = '-';
+        $next_fup_html = '<span class="badge bg-secondary">No follow-up yet</span>';
         $next_class = '';
         if($next_fup){
             $next_ts = strtotime($next_fup);

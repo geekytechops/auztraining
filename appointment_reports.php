@@ -317,7 +317,7 @@ $reportUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users W
 
         </div>
 
-        <!-- Reuse appointment details modal from calendar view -->
+        <!-- Appointment details modal with actions (same as calendar) -->
         <div class="modal fade" id="appointmentDetailsModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -330,6 +330,31 @@ $reportUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users W
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" id="edit_appointment_btn">Edit</button>
+                        <button type="button" class="btn btn-success" id="mark_completed_btn" style="display:none;">Mark as Completed</button>
+                        <button type="button" class="btn btn-warning" id="mark_no_show_btn" style="display:none;">Mark as No-Show</button>
+                        <button type="button" class="btn btn-danger" id="cancel_appointment_btn" style="display:none;">Cancel</button>
+                        <button type="button" class="btn btn-info" id="time_in_btn" style="display:none;">Time In</button>
+                        <button type="button" class="btn btn-info" id="time_out_btn" style="display:none;">Time Out</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cancel confirmation modal -->
+        <div class="modal fade" id="cancelConfirmModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Cancel Appointment?</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to cancel this appointment?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                        <button type="button" class="btn btn-danger" id="confirm_cancel_btn">Yes, cancel it</button>
                     </div>
                 </div>
             </div>
@@ -339,6 +364,7 @@ $reportUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users W
         
         <script>
             var statusChart, purposeChart, staffChart, dailyTrendChart;
+            var currentAppointmentId = null;
             
             $(document).ready(function() {
                 $('#date_range').on('change', function() {
@@ -352,6 +378,38 @@ $reportUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users W
                 });
                 
                 loadReports();
+
+                // Modal button handlers (same behaviour as calendar view)
+                $('#edit_appointment_btn').on('click', function() {
+                    if(currentAppointmentId) {
+                        window.location.href = 'appointment_booking.php?id=' + btoa(currentAppointmentId);
+                    }
+                });
+                
+                $('#mark_completed_btn').on('click', function() {
+                    updateAppointmentStatus('completed');
+                });
+                
+                $('#mark_no_show_btn').on('click', function() {
+                    updateAppointmentStatus('no-show');
+                });
+                
+                $('#cancel_appointment_btn').on('click', function() {
+                    $('#cancelConfirmModal').modal('show');
+                });
+                
+                $('#time_in_btn').on('click', function() {
+                    recordTimeInOut('in');
+                });
+                
+                $('#time_out_btn').on('click', function() {
+                    recordTimeInOut('out');
+                });
+
+                $('#confirm_cancel_btn').on('click', function(){
+                    $('#cancelConfirmModal').modal('hide');
+                    updateAppointmentStatus('cancelled');
+                });
             });
             
             function loadReports() {
@@ -717,6 +775,7 @@ $reportUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users W
             }
 
             function openAppointmentDetails(id){
+                currentAppointmentId = id;
                 $.ajax({
                     url: 'includes/datacontrol.php',
                     type: 'POST',
@@ -727,6 +786,76 @@ $reportUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users W
                     success: function(response){
                         $('#appointment_details_content').html(response);
                         $('#appointmentDetailsModal').modal('show');
+
+                        // Show/hide action buttons based on status (same logic as calendar)
+                        var status = $('#appointment_status_hidden').val();
+                        if(status == 'scheduled') {
+                            $('#mark_completed_btn').show();
+                            $('#mark_no_show_btn').show();
+                            $('#cancel_appointment_btn').show();
+                            $('#time_in_btn').show();
+                            $('#time_out_btn').hide();
+                        } else if(status == 'completed') {
+                            $('#mark_completed_btn').hide();
+                            $('#mark_no_show_btn').hide();
+                            $('#cancel_appointment_btn').hide();
+                            $('#time_in_btn').hide();
+                            $('#time_out_btn').hide();
+                        } else {
+                            $('#mark_completed_btn').hide();
+                            $('#mark_no_show_btn').hide();
+                            $('#cancel_appointment_btn').hide();
+                            $('#time_in_btn').hide();
+                            $('#time_out_btn').hide();
+                        }
+                    }
+                });
+            }
+
+            function updateAppointmentStatus(status) {
+                $.ajax({
+                    url: 'includes/datacontrol.php',
+                    type: 'POST',
+                    data: {
+                        formName: 'update_appointment_status',
+                        appointment_id: currentAppointmentId,
+                        status: status
+                    },
+                    success: function(response) {
+                        if(response == '1') {
+                            $('#toast-text').html('Appointment status updated successfully');
+                            $('#borderedToast1Btn').trigger('click');
+                            $('#appointmentDetailsModal').modal('hide');
+                            loadReports();
+                        } else {
+                            $('.toast-text2').html('Cannot update appointment status');
+                            $('#borderedToast2Btn').trigger('click');
+                        }
+                    }
+                });
+            }
+
+            function recordTimeInOut(type) {
+                $.ajax({
+                    url: 'includes/datacontrol.php',
+                    type: 'POST',
+                    data: {
+                        formName: 'record_time_in_out',
+                        appointment_id: currentAppointmentId,
+                        type: type
+                    },
+                    success: function(response) {
+                        if(response == '1') {
+                            $('#toast-text').html('Time recorded successfully');
+                            $('#borderedToast1Btn').trigger('click');
+                            if(currentAppointmentId){
+                                openAppointmentDetails(currentAppointmentId);
+                            }
+                            loadReports();
+                        } else {
+                            $('.toast-text2').html('Cannot record time');
+                            $('#borderedToast2Btn').trigger('click');
+                        }
                     }
                 });
             }

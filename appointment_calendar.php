@@ -65,6 +65,13 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
             .status-cancelled { background: #ff3d60; color: white; }
             .status-no-show { background: #fcb92c; color: white; }
             .status-missed { background: #74788d; color: white; }
+            .more-events-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                display: inline-block;
+                margin-right: 6px;
+            }
             /* Ensure list view text is readable */
             .fc-list-event-title, .fc-list-event-time, .fc-list-event-title a {
                 color: #000 !important;
@@ -193,6 +200,26 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
             </div>
         </div>
 
+        <!-- More events modal for day with many appointments -->
+        <div class="modal fade" id="moreEventsModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Appointments on <span id="moreEventsDate"></span></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ul class="list-group" id="moreEventsList">
+                            <!-- Filled via JS -->
+                        </ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <?php include('includes/footer_includes.php'); ?>
         
         <!-- FullCalendar JS -->
@@ -217,45 +244,42 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                         minute: '2-digit',
                         meridiem: 'short'
                     },
-                    // Custom renderer only for grid views; list views use default rendering
-                    eventContent: function(arg) {
-                        if (arg.view.type.indexOf('list') === 0) {
-                            // use FullCalendar's default for list views
-                            return;
-                        }
-                        var timeRange = arg.timeText || '';
-                        if(arg.event.end){
-                            var endStr = FullCalendar.formatDate(arg.event.end, {
+                    dayMaxEvents: 3,
+                    moreLinkContent: function(arg){
+                        return { html: '<span class="text-primary fw-semibold">+'+arg.num+' more</span>' };
+                    },
+                    moreLinkClick: function(arg){
+                        // Build modal list of all events for this day
+                        var $list = $('#moreEventsList');
+                        $list.empty();
+                        var dateLabel = FullCalendar.formatDate(arg.date, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
+                        $('#moreEventsDate').text(dateLabel);
+                        arg.allSegs.forEach(function(seg){
+                            var ev = seg.event;
+                            var color = ev.backgroundColor || ev.borderColor || '#0bb197';
+                            var startStr = FullCalendar.formatDate(ev.start, {
                                 hour: 'numeric',
                                 minute: '2-digit',
                                 meridiem: 'short'
                             });
-                            // Avoid duplicate if end equals start
-                            if(endStr && endStr !== timeRange){
-                                timeRange = timeRange ? (timeRange + ' - ' + endStr) : endStr;
-                            }
-                        }
-                        var container = document.createElement('div');
-                        container.className = 'fc-custom-event';
-
-                        // colored dot indicator (like list view)
-                        var dot = document.createElement('span');
-                        dot.className = 'fc-event-dot';
-                        var bg = arg.event.backgroundColor || arg.event.borderColor || arg.event.textColor || '#0bb197';
-                        dot.style.backgroundColor = bg;
-                        container.appendChild(dot);
-
-                        if(timeRange){
-                            var timeSpan = document.createElement('span');
-                            timeSpan.className = 'fc-event-time me-1';
-                            timeSpan.textContent = timeRange;
-                            container.appendChild(timeSpan);
-                        }
-                        var titleSpan = document.createElement('span');
-                        titleSpan.className = 'fc-event-title';
-                        titleSpan.textContent = arg.event.title;
-                        container.appendChild(titleSpan);
-                        return { domNodes: [container] };
+                            var endStr = ev.end ? FullCalendar.formatDate(ev.end, {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                meridiem: 'short'
+                            }) : '';
+                            var timeRange = endStr && endStr !== startStr ? (startStr + ' - ' + endStr) : startStr;
+                            var row = '<li class="list-group-item d-flex justify-content-between align-items-center more-event-item" data-id="'+ev.id+'">'+
+                                      '<div class="d-flex align-items-center">'+
+                                      '<span class="more-events-dot" style="background:'+color+';"></span>'+
+                                      '<span class="me-2 small text-muted">'+timeRange+'</span>'+
+                                      '<span>'+ev.title+'</span>'+
+                                      '</div>'+
+                                      '<button type="button" class="btn btn-sm btn-outline-primary">View</button>'+
+                                      '</li>';
+                            $list.append(row);
+                        });
+                        $('#moreEventsModal').modal('show');
+                        return false; // prevent default popover
                     },
                     events: function(fetchInfo, successCallback, failureCallback) {
                         $.ajax({
@@ -328,6 +352,16 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
 
                 $('#calendar_staff_filter').on('change', function(){
                     calendar.refetchEvents();
+                });
+
+                // Delegate click for View buttons in the "more events" modal
+                $('#moreEventsList').on('click', '.more-event-item button', function(){
+                    var id = $(this).closest('.more-event-item').data('id');
+                    if(id){
+                        $('#moreEventsModal').modal('hide');
+                        // Reuse existing details loader
+                        loadAppointmentDetails(id);
+                    }
                 });
             });
             

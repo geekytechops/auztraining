@@ -5,6 +5,9 @@ if(!isset($followup_Query)) $followup_Query = array();
 $followup_Query = array_merge(array('enquiry_id'=>'','flw_name'=>'','flw_phone'=>'','flw_contacted_person'=>'','flw_contacted_time'=>'','flw_date'=>'','flw_mode_contact'=>'','flw_followup_type'=>'','flw_follow_up_notes'=>'','flw_next_followup_date'=>'','flw_follow_up_outcome'=>'','flw_comments'=>'','flw_progress_state'=>'','flw_remarks'=>''), $followup_Query);
 $enquiry_flow_statuses = array(1=>'New',2=>'Contacted',3=>'Follow-up Required',4=>'Interested',5=>'Documents Collected',6=>'Enrolled',7=>'Not Interested',8=>'Invalid / Duplicate');
 $follow_up_outcomes = array(''=>'--select--','No answer'=>'No answer','Call back later'=>'Call back later','Sent info'=>'Sent info','Enrolment in progress'=>'Enrolment in progress');
+
+// Load active users for Responsible Staff dropdown
+$followupUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE user_status != 1 ORDER BY user_name");
 ?>
 <form class="followup_form" id="followup_form_embed">
 <div class="row">
@@ -15,12 +18,21 @@ $followup_enquiry_code = isset($followup_Query['enquiry_id']) ? $followup_Query[
 <input type="text" readonly class="form-control-plaintext fw-semibold" value="<?php echo $followup_enquiry_code ? $followup_enquiry_code : 'Save enquiry first'; ?>">
 <input type="hidden" name="enquiry_id" id="followup_enquiry_id" value="<?php echo htmlspecialchars($followup_enquiry_code); ?>">
 <div class="error-feedback">Please Select the Enquiry ID</div></div></div>
-<div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_student_name">Student Name<span class="asterisk">*</span></label>
-<input type="text" class="form-control" placeholder="Student Name" id="followup_student_name" value="<?php echo $followup_Query['flw_name']; ?>"><div class="error-feedback">Please enter the Student Name</div></div></div>
-<div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_mobile_num">Contact Number<span class="asterisk">*</span></label>
-<input type="text" class="form-control number-field" id="followup_mobile_num" placeholder="Contact Number" value="<?php echo $followup_Query['flw_phone']; ?>" maxlength="10"><div class="error-feedback">Please enter the Contact Number</div></div></div>
-<div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_contacted_person">Contacted Person<span class="asterisk">*</span></label>
-<input type="text" class="form-control" id="followup_contacted_person" placeholder="Contacted Person Name" value="<?php echo $followup_Query['flw_contacted_person']; ?>"><div class="error-feedback">Please enter the Contacted Person Name</div></div></div>
+<div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_contacted_person">Responsible Staff<span class="asterisk">*</span></label>
+<select class="form-select" id="followup_contacted_person">
+<option value="">--select--</option>
+<?php
+if($followupUsers){
+    mysqli_data_seek($followupUsers, 0);
+    while($u = mysqli_fetch_array($followupUsers)){
+        $name = $u['user_name'];
+        $selected = ($followup_Query['flw_contacted_person'] === $name) ? 'selected' : '';
+        echo '<option value="'.htmlspecialchars($name).'" '.$selected.'>'.htmlspecialchars($name).'</option>';
+    }
+}
+?>
+</select>
+<div class="error-feedback">Please select the Responsible Staff</div></div></div>
 <div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_contacted_time">Follow-up Date &amp; Time<span class="asterisk">*</span></label>
 <input type="datetime-local" class="form-control" id="followup_contacted_time" value="<?php echo $followup_Query['flw_contacted_time']=='' ? '' : date('Y-m-d\TH:i',strtotime($followup_Query['flw_contacted_time'])); ?>"><div class="error-feedback">Please select the follow-up date and time</div></div></div>
 <div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_followup_type">Follow-up Type<span class="asterisk">*</span></label>
@@ -51,8 +63,6 @@ $followup_enquiry_code = isset($followup_Query['enquiry_id']) ? $followup_Query[
 <input type="date" class="form-control" id="followup_date" value="<?php echo $followup_Query['flw_date']=='' ? '' : date('Y-m-d',strtotime($followup_Query['flw_date'])); ?>"></div></div>
 <div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_mode_contacted">Mode of Contact</label>
 <input type="text" class="form-control" id="followup_mode_contacted" value="<?php echo $followup_Query['flw_mode_contact']; ?>" placeholder="e.g. Phone, 3cx"></div></div>
-<div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_comments">Staff Notes</label><input type="text" class="form-control" id="followup_comments" value="<?php echo $followup_Query['flw_comments']; ?>"></div></div>
-<div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_progress_status">Status or Progress</label><input type="text" class="form-control" id="followup_progress_status" value="<?php echo $followup_Query['flw_progress_state']; ?>" maxlength="255"></div></div>
 <div class="col-12 mb-3" id="followup_email_template_section" style="display:none;">
 <div class="card border-primary"><div class="card-header bg-light">Send status email to student</div><div class="card-body">
 <p class="text-muted small">When you change Enquiry Status, the matching email template is loaded. Review, edit if needed, and send.</p>
@@ -63,7 +73,7 @@ $followup_enquiry_code = isset($followup_Query['enquiry_id']) ? $followup_Query[
 </div></div></div>
 <div class="col-md-6"><div class="mb-3"><label class="form-label" for="remarks">Remarks</label>
 <?php
-$st_remarks=['Seems to be interested to do course and need to contact asap','contacted and followed','Good with communication skills','Sent enrollement form online/ hard copies','Want to do the course asap','not interested much','Looking for government funding','Have done counselling before but wants to get more info','Counseling is done but enrolment is due','Have done the counselling before','Seems like having attitude','Want to book an appointment for counselling','Will callus back again','Planning to relocate to other state','Wants to get COE for visa purpose'];
+$st_remarks=['Seems to be interested to do course and need to contact asap','Good with communication skills','Sent enrollement form online/ hard copies','Want to do the course asap','Looking for government funding','Have done counselling before but wants to get more info','Counseling is done but enrolment is due','Have done the counselling before','Seems like having attitude','Want to book an appointment for counselling','Planning to relocate to other state','Wants to get COE for visa purpose'];
 $remarksSel=($followup_Query['flw_remarks']!='') ? json_decode($followup_Query['flw_remarks']) : array();
 for($i=1;$i<count($st_remarks);$i++){
 $checked=in_array($i,$remarksSel) ? 'checked' : '';

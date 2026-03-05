@@ -28,15 +28,34 @@ if(isset($_POST['get_enquiry_status_template']) && isset($_POST['status_code']))
     $status_code = (int)$_POST['status_code'];
     $enquiry_id = isset($_POST['enquiry_id']) ? mysqli_real_escape_string($connection, $_POST['enquiry_id']) : '';
     $student_name = '';
+    $first_name = '';
+    $course_name = '';
     if($enquiry_id){
-        $r = @mysqli_fetch_array(mysqli_query($connection, "SELECT st_name FROM student_enquiry WHERE st_enquiry_id='$enquiry_id' AND st_enquiry_status!=1 LIMIT 1"));
-        if($r) $student_name = $r['st_name'];
+        $r = @mysqli_fetch_array(mysqli_query($connection, "SELECT st_name, st_course FROM student_enquiry WHERE st_enquiry_id='$enquiry_id' AND st_enquiry_status!=1 LIMIT 1"));
+        if($r){
+            $student_name = $r['st_name'];
+            $first_name = trim(strtok($student_name, ' '));
+            if(!empty($r['st_course'])){
+                $ids = json_decode($r['st_course'], true);
+                if(is_array($ids) && count($ids)){
+                    $cid = (int)$ids[0];
+                    $cr = @mysqli_fetch_array(mysqli_query($connection, "SELECT CONCAT(course_sname,' ',course_name) AS nm FROM courses WHERE course_id=$cid AND course_status!=1 LIMIT 1"));
+                    if($cr && !empty($cr['nm'])) $course_name = $cr['nm'];
+                }
+            }
+        }
     }
     $q = mysqli_query($connection, "SELECT subject, body FROM enquiry_status_email_templates WHERE status_code=$status_code LIMIT 1");
     if($q && mysqli_num_rows($q)){
         $row = mysqli_fetch_assoc($q);
         $subject = $row['subject'];
-        $body = str_replace('{{student_name}}', $student_name, $row['body']);
+        $body_tpl = $row['body'];
+        $repl = array(
+            '{{student_name}}' => $student_name,
+            '{{FirstName}}'    => $first_name ?: $student_name,
+            '{{CourseName}}'   => $course_name
+        );
+        $body = strtr($body_tpl, $repl);
         echo json_encode(array('subject'=>$subject, 'body'=>$body));
     } else echo json_encode(array('subject'=>'', 'body'=>''));
     exit;
@@ -47,11 +66,34 @@ if(isset($_POST['send_enquiry_status_email']) && isset($_POST['enquiry_id']) && 
     $body = $_POST['body'];
     $save_as_default = !empty($_POST['save_as_default']) && isset($_POST['status_code']);
     $status_code = $save_as_default ? (int)$_POST['status_code'] : 0;
-    $q = mysqli_query($connection, "SELECT st_email, st_name FROM student_enquiry WHERE st_enquiry_id='$enquiry_id' AND st_enquiry_status!=1 LIMIT 1");
+    $q = mysqli_query($connection, "SELECT st_email, st_name, st_course FROM student_enquiry WHERE st_enquiry_id='$enquiry_id' AND st_enquiry_status!=1 LIMIT 1");
     if($q && mysqli_num_rows($q)){
         $row = mysqli_fetch_assoc($q);
         $to = $row['st_email'];
-        $body_sent = str_replace('{{student_name}}', $row['st_name'], $body);
+        $student_name = $row['st_name'];
+        $first_name = trim(strtok($student_name, ' '));
+        $course_name = '';
+        if(!empty($row['st_course'])){
+            $ids = json_decode($row['st_course'], true);
+            if(is_array($ids) && count($ids)){
+                $cid = (int)$ids[0];
+                $cr = @mysqli_fetch_array(mysqli_query($connection, "SELECT CONCAT(course_sname,' ',course_name) AS nm FROM courses WHERE course_id=$cid AND course_status!=1 LIMIT 1"));
+                if($cr && !empty($cr['nm'])) $course_name = $cr['nm'];
+            }
+        }
+        $officer_name = '';
+        if(isset($_SESSION['user_id']) && $_SESSION['user_id']){
+            $uid = (int)$_SESSION['user_id'];
+            $ur = @mysqli_fetch_array(mysqli_query($connection, "SELECT user_name FROM users WHERE user_id=$uid LIMIT 1"));
+            if($ur && !empty($ur['user_name'])) $officer_name = $ur['user_name'];
+        }
+        $repl = array(
+            '{{student_name}}' => $student_name,
+            '{{FirstName}}'    => $first_name ?: $student_name,
+            '{{CourseName}}'   => $course_name,
+            '{{OfficerName}}'  => $officer_name
+        );
+        $body_sent = strtr($body, $repl);
         if(!function_exists('send_mail')){
             require_once(__DIR__ . '/mail_function.php');
         }

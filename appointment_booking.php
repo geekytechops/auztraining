@@ -9,6 +9,7 @@ if(@$_SESSION['user_type']!=''){
     $locations = mysqli_query($connection, "SELECT * FROM appointment_locations WHERE location_status != 1 ORDER BY location_name");
     $platforms = mysqli_query($connection, "SELECT * FROM appointment_platforms WHERE platform_status != 1 ORDER BY platform_name");
     $users = mysqli_query($connection, "SELECT * FROM users WHERE user_status != 1 ORDER BY user_name");
+    $usersForShare = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE user_status != 1 ORDER BY user_name");
     $enquiries = mysqli_query($connection, "SELECT st_enquiry_id, st_name, st_surname, st_phno, st_email FROM student_enquiry WHERE st_enquiry_status != 1 ORDER BY st_enquiry_id DESC");
     $enrolments = mysqli_query($connection, "SELECT st_unique_id, st_given_name, st_surname, st_email, st_mobile FROM student_enrolments WHERE st_status != 1 ORDER BY st_unique_id DESC");
     $counsellings = mysqli_query($connection, "SELECT counsil_id, st_enquiry_id FROM counseling_details WHERE counsil_enquiry_status != 1 ORDER BY counsil_id DESC");
@@ -125,9 +126,13 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label">Appointment Time <span class="asterisk">*</span></label>
-                                                        <input type="time" class="form-control" id="appointment_time" name="appointment_time" 
+                                                        <label class="form-label d-block">Time Slot:</label>
+                                                        <span class="me-2">From:</span>
+                                                        <input type="time" class="form-control d-inline-block w-auto" id="appointment_time" name="appointment_time" 
                                                                value="<?php echo $editMode ? date('H:i', strtotime($appointmentData['appointment_time'])) : ''; ?>" required>
+                                                        <span class="ms-2">To:</span>
+                                                        <input type="time" class="form-control d-inline-block w-auto" id="appointment_time_to" name="appointment_time_to"
+                                                               value="<?php echo $editMode && !empty($appointmentData['appointment_time']) ? date('H:i', strtotime($appointmentData['appointment_time'])) : ''; ?>">
                                                         <div class="error-feedback">Please select appointment time</div>
                                                     </div>
                                                 </div>
@@ -236,6 +241,46 @@ if(@$_SESSION['user_type']!=''){
                                             </div>
 
                                             <hr>
+
+                                            <!-- Share With (visibility control) -->
+                                            <h5 class="mb-3">Share With</h5>
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <div class="mb-3">
+                                                        <?php
+                                                        $selectedShare = array();
+                                                        $shareAll = false;
+                                                        if($editMode && !empty($appointmentData['appointment_shared_with'])){
+                                                            if(trim($appointmentData['appointment_shared_with']) === 'ALL'){
+                                                                $shareAll = true;
+                                                            } else {
+                                                                $selectedShare = array_map('intval', explode(',', $appointmentData['appointment_shared_with']));
+                                                            }
+                                                        }
+                                                        ?>
+                                                        <div class="form-check mb-2">
+                                                            <input class="form-check-input" type="checkbox" id="share_all" <?php echo $shareAll ? 'checked' : ''; ?>>
+                                                            <label class="form-check-label" for="share_all">
+                                                                All (share with all employees)
+                                                            </label>
+                                                        </div>
+                                                        <div class="row">
+                                                            <?php
+                                                            mysqli_data_seek($usersForShare, 0);
+                                                            while($u = mysqli_fetch_array($usersForShare)){
+                                                                $uid = (int)$u['user_id'];
+                                                                $checked = $shareAll || in_array($uid, $selectedShare) ? 'checked' : '';
+                                                                echo '<div class="col-md-4"><div class="form-check">';
+                                                                echo '<input class="form-check-input share-with-item" type="checkbox" name="share_with[]" id="share_with_'.$uid.'" value="'.$uid.'" '.$checked.'>';
+                                                                echo '<label class="form-check-label" for="share_with_'.$uid.'">'.htmlspecialchars($u['user_name']).'</label>';
+                                                                echo '</div></div>';
+                                                            }
+                                                            ?>
+                                                        </div>
+                                                        <small class="text-muted d-block mt-1">If no one is selected, only admins will see this appointment.</small>
+                                                    </div>
+                                                </div>
+                                            </div>
 
                                             <!-- Attendee Information -->
                                             <h5 class="mb-3">Attendee Information</h5>
@@ -655,13 +700,8 @@ if(@$_SESSION['user_type']!=''){
                     });
                     
                     if(!isValid) {
-                        Swal.fire({
-                            position: 'center',
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'Please fill all required fields',
-                            confirmButtonColor: '#dc3545'
-                        });
+                        $('.toast-text2').html('Please fill all required fields.');
+                        $('#borderedToast2Btn').trigger('click');
                         return;
                     }
                     
@@ -691,36 +731,39 @@ if(@$_SESSION['user_type']!=''){
                         contentType: false,
                         processData: false,
                         success: function(response) {
-                            if(response == '1' || response == '0') {
-                                Swal.fire({
-                                    position: 'center',
-                                    icon: 'error',
-                                    title: 'Error',
-                                    text: 'Cannot save appointment. Please try again.',
-                                    confirmButtonColor: '#dc3545'
-                                });
-                            } else {
-                                Swal.fire({
-                                    position: 'center',
-                                    icon: 'success',
-                                    title: 'Success',
-                                    text: 'Appointment saved successfully!',
-                                    confirmButtonColor: '#0bb197'
-                                }).then(() => {
+                            // Backend echoes: 1 = success, 2 = double-booking conflict, 0 or others = failure
+                            var res = (response || '').toString().trim();
+                            if(res === '1') {
+                                $('#toast-text').html('Appointment saved successfully!');
+                                $('#borderedToast1Btn').trigger('click');
+                                setTimeout(function(){
                                     window.location.href = 'appointment_calendar.php';
-                                });
+                                }, 600);
+                            } else if(res === '2') {
+                                $('.toast-text2').html('Time Slot Already Booked. This person is already booked for the selected time. Please choose a different time slot.');
+                                $('#borderedToast2Btn').trigger('click');
+                            } else {
+                                $('.toast-text2').html('Cannot save appointment. Please try again.');
+                                $('#borderedToast2Btn').trigger('click');
                             }
                         },
                         error: function() {
-                            Swal.fire({
-                                position: 'center',
-                                icon: 'error',
-                                title: 'Error',
-                                text: 'An error occurred. Please try again.',
-                                confirmButtonColor: '#dc3545'
-                            });
+                            $('.toast-text2').html('An error occurred. Please try again.');
+                            $('#borderedToast2Btn').trigger('click');
                         }
                     });
+                });
+
+                // Share With: select all toggles
+                $('#share_all').on('change', function(){
+                    var checked = $(this).is(':checked');
+                    $('.share-with-item').prop('checked', checked);
+                });
+
+                $('.share-with-item').on('change', function(){
+                    if(!$(this).is(':checked')){
+                        $('#share_all').prop('checked', false);
+                    }
                 });
             });
             
@@ -820,24 +863,14 @@ if(@$_SESSION['user_type']!=''){
                         },
                         success: function(response) {
                             if(response == '1') {
-                                Swal.fire({
-                                    position: 'center',
-                                    icon: 'success',
-                                    title: 'Success',
-                                    text: 'Purpose added successfully',
-                                    confirmButtonColor: '#0bb197'
-                                });
+                                $('#toast-text').html('Purpose added successfully');
+                                $('#borderedToast1Btn').trigger('click');
                                 $('#new_purpose_name').val('');
                                 loadPurposes();
                                 location.reload();
                             } else {
-                                Swal.fire({
-                                    position: 'center',
-                                    icon: 'error',
-                                    title: 'Error',
-                                    text: 'Cannot add purpose',
-                                    confirmButtonColor: '#dc3545'
-                                });
+                                $('.toast-text2').html('Cannot add purpose');
+                                $('#borderedToast2Btn').trigger('click');
                             }
                         }
                     });
@@ -856,24 +889,14 @@ if(@$_SESSION['user_type']!=''){
                         },
                         success: function(response) {
                             if(response == '1') {
-                                Swal.fire({
-                                    position: 'center',
-                                    icon: 'success',
-                                    title: 'Success',
-                                    text: 'Attendee type added successfully',
-                                    confirmButtonColor: '#0bb197'
-                                });
+                                $('#toast-text').html('Attendee type added successfully');
+                                $('#borderedToast1Btn').trigger('click');
                                 $('#new_attendee_type_name').val('');
                                 loadAttendeeTypes();
                                 location.reload();
                             } else {
-                                Swal.fire({
-                                    position: 'center',
-                                    icon: 'error',
-                                    title: 'Error',
-                                    text: 'Cannot add attendee type',
-                                    confirmButtonColor: '#dc3545'
-                                });
+                                $('.toast-text2').html('Cannot add attendee type');
+                                $('#borderedToast2Btn').trigger('click');
                             }
                         }
                     });
@@ -892,24 +915,14 @@ if(@$_SESSION['user_type']!=''){
                         },
                         success: function(response) {
                             if(response == '1') {
-                                Swal.fire({
-                                    position: 'center',
-                                    icon: 'success',
-                                    title: 'Success',
-                                    text: 'Location added successfully',
-                                    confirmButtonColor: '#0bb197'
-                                });
+                                $('#toast-text').html('Location added successfully');
+                                $('#borderedToast1Btn').trigger('click');
                                 $('#new_location_name').val('');
                                 loadLocations();
                                 location.reload();
                             } else {
-                                Swal.fire({
-                                    position: 'center',
-                                    icon: 'error',
-                                    title: 'Error',
-                                    text: 'Cannot add location',
-                                    confirmButtonColor: '#dc3545'
-                                });
+                                $('.toast-text2').html('Cannot add location');
+                                $('#borderedToast2Btn').trigger('click');
                             }
                         }
                     });
@@ -928,24 +941,14 @@ if(@$_SESSION['user_type']!=''){
                         },
                         success: function(response) {
                             if(response == '1') {
-                                Swal.fire({
-                                    position: 'center',
-                                    icon: 'success',
-                                    title: 'Success',
-                                    text: 'Platform added successfully',
-                                    confirmButtonColor: '#0bb197'
-                                });
+                                $('#toast-text').html('Platform added successfully');
+                                $('#borderedToast1Btn').trigger('click');
                                 $('#new_platform_name').val('');
                                 loadPlatforms();
                                 location.reload();
                             } else {
-                                Swal.fire({
-                                    position: 'center',
-                                    icon: 'error',
-                                    title: 'Error',
-                                    text: 'Cannot add platform',
-                                    confirmButtonColor: '#dc3545'
-                                });
+                                $('.toast-text2').html('Cannot add platform');
+                                $('#borderedToast2Btn').trigger('click');
                             }
                         }
                     });

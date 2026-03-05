@@ -162,24 +162,13 @@ if(@$_SESSION['user_type']!=''){
                         processData: false,
                         success: function(response) {
                             if(response == '1') {
-                                Swal.fire({
-                                    position: 'center',
-                                    icon: 'success',
-                                    title: 'Success',
-                                    text: 'Block added successfully',
-                                    confirmButtonColor: '#0bb197'
-                                }).then(() => {
-                                    resetBlockForm();
-                                    loadBlocks();
-                                });
+                                $('#toast-text').html('Block added successfully');
+                                $('#borderedToast1Btn').trigger('click');
+                                resetBlockForm();
+                                loadBlocks();
                             } else {
-                                Swal.fire({
-                                    position: 'center',
-                                    icon: 'error',
-                                    title: 'Error',
-                                    text: 'Cannot add block',
-                                    confirmButtonColor: '#dc3545'
-                                });
+                                $('.toast-text2').html('Cannot add block');
+                                $('#borderedToast2Btn').trigger('click');
                             }
                         }
                     });
@@ -222,46 +211,23 @@ if(@$_SESSION['user_type']!=''){
             }
             
             function deleteBlock(blockId) {
-                Swal.fire({
-                    position: 'center',
-                    title: 'Delete Block?',
-                    text: 'Are you sure you want to delete this blocked slot?',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#ff3d60',
-                    cancelButtonColor: '#74788d',
-                    confirmButtonText: 'Yes, delete it'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: 'includes/datacontrol.php',
-                            type: 'POST',
-                            data: {
-                                formName: 'delete_appointment_block',
-                                block_id: blockId
-                            },
-                            success: function(response) {
-                                if(response == '1') {
-                                    Swal.fire({
-                                        position: 'center',
-                                        icon: 'success',
-                                        title: 'Success',
-                                        text: 'Block deleted successfully',
-                                        confirmButtonColor: '#0bb197'
-                                    }).then(() => {
-                                        loadBlocks();
-                                    });
-                                } else {
-                                    Swal.fire({
-                                        position: 'center',
-                                        icon: 'error',
-                                        title: 'Error',
-                                        text: 'Cannot delete block',
-                                        confirmButtonColor: '#dc3545'
-                                    });
-                                }
-                            }
-                        });
+                if(!confirm('Are you sure you want to delete this blocked slot?')) return;
+                $.ajax({
+                    url: 'includes/datacontrol.php',
+                    type: 'POST',
+                    data: {
+                        formName: 'delete_appointment_block',
+                        block_id: blockId
+                    },
+                    success: function(response) {
+                        if(response == '1') {
+                            $('#toast-text').html('Block deleted successfully');
+                            $('#borderedToast1Btn').trigger('click');
+                            loadBlocks();
+                        } else {
+                            $('.toast-text2').html('Cannot delete block');
+                            $('#borderedToast2Btn').trigger('click');
+                        }
                     }
                 });
             }

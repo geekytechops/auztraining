@@ -71,10 +71,10 @@ $sidebar_home_url = $is_student_sidebar ? 'student_docs.php' : 'dashboard.php';
                                 <li class="submenu">
                                     <a href="javascript:void(0);"><i class="ti ti-calendar"></i><span>Appointments</span><span class="menu-arrow"></span></a>
                                     <ul>
-                                        <li><a href="appointment_calendar.php">Calendar View</a></li>
                                         <li><a href="appointment_booking.php">Book Appointment</a></li>
-                                        <li><a href="appointment_reports.php">Reports</a></li>
                                         <li><a href="appointment_blocks.php">Block Slots</a></li>
+                                        <li><a href="appointment_calendar.php">Calendar View</a></li>
+                                        <li><a href="appointment_reports.php">List View</a></li>
                                     </ul>
                                 </li>
                                 <?php } ?>

@@ -2,6 +2,10 @@
 <?php 
 session_start();
 if(@$_SESSION['user_type']!=''){
+
+$calendarUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE user_status != 1 ORDER BY user_name");
+$currentUserId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
+$currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] : 0;
 ?>
 <!doctype html>
 <html lang="en">
@@ -24,6 +28,29 @@ if(@$_SESSION['user_type']!=''){
             .fc-event {
                 cursor: pointer;
             }
+            /* Ensure calendar event text is readable and not overlapping */
+            .fc-daygrid-event {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                color: #000 !important;
+                font-size: 0.85rem;
+            }
+            .fc-daygrid-event .fc-event-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                margin-right: 4px;
+                flex-shrink: 0;
+            }
+            .fc-daygrid-event .fc-event-time {
+                color: #000 !important;
+                font-weight: 500;
+            }
+            .fc-daygrid-event .fc-event-title {
+                color: #000 !important;
+                font-weight: 600;
+            }
             .appointment-actions {
                 margin-bottom: 20px;
             }
@@ -38,6 +65,10 @@ if(@$_SESSION['user_type']!=''){
             .status-cancelled { background: #ff3d60; color: white; }
             .status-no-show { background: #fcb92c; color: white; }
             .status-missed { background: #74788d; color: white; }
+            /* Ensure list view text is readable */
+            .fc-list-event-title, .fc-list-event-time, .fc-list-event-title a {
+                color: #000 !important;
+            }
         </style>
     </head>
 
@@ -79,7 +110,8 @@ if(@$_SESSION['user_type']!=''){
                             <div class="col-12">
                                 <div class="card">
                                     <div class="card-body">
-                                        <div class="appointment-actions mb-3">
+                                        <div class="appointment-actions mb-3 d-flex flex-wrap align-items-center justify-content-between">
+                                            <div class="mb-2">
                                             <a href="appointment_booking.php" class="btn btn-primary waves-effect waves-light">
                                                 <i class="mdi mdi-plus"></i> Book New Appointment
                                             </a>
@@ -89,6 +121,21 @@ if(@$_SESSION['user_type']!=''){
                                             <a href="appointment_blocks.php" class="btn btn-warning waves-effect waves-light">
                                                 <i class="mdi mdi-block-helper"></i> Manage Blocked Slots
                                             </a>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label me-2 mb-0">Filter by Staff:</label>
+                                                <select class="form-select d-inline-block w-auto" id="calendar_staff_filter">
+                                                    <option value="0" <?php echo $currentUserType===1 ? 'selected' : ''; ?>>All Staff</option>
+                                                    <?php 
+                                                    mysqli_data_seek($calendarUsers, 0);
+                                                    while($u = mysqli_fetch_array($calendarUsers)){
+                                                        $uid = (int)$u['user_id'];
+                                                        $selected = ($currentUserType!==1 && $uid===$currentUserId) ? 'selected' : '';
+                                                        echo '<option value="'.$uid.'" '.$selected.'>'.htmlspecialchars($u['user_name']).'</option>';
+                                                    }
+                                                    ?>
+                                                </select>
+                                            </div>
                                         </div>
                                         
                                         <div id="calendar"></div>
@@ -127,6 +174,25 @@ if(@$_SESSION['user_type']!=''){
             </div>
         </div>
 
+        <!-- Cancel confirmation modal -->
+        <div class="modal fade" id="cancelConfirmModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Cancel Appointment?</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to cancel this appointment?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                        <button type="button" class="btn btn-danger" id="confirm_cancel_btn">Yes, cancel it</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <?php include('includes/footer_includes.php'); ?>
         
         <!-- FullCalendar JS -->
@@ -146,6 +212,51 @@ if(@$_SESSION['user_type']!=''){
                         center: 'title',
                         right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
                     },
+                    eventTimeFormat: {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        meridiem: 'short'
+                    },
+                    // Custom renderer only for grid views; list views use default rendering
+                    eventContent: function(arg) {
+                        if (arg.view.type.indexOf('list') === 0) {
+                            // use FullCalendar's default for list views
+                            return;
+                        }
+                        var timeRange = arg.timeText || '';
+                        if(arg.event.end){
+                            var endStr = FullCalendar.formatDate(arg.event.end, {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                meridiem: 'short'
+                            });
+                            // Avoid duplicate if end equals start
+                            if(endStr && endStr !== timeRange){
+                                timeRange = timeRange ? (timeRange + ' - ' + endStr) : endStr;
+                            }
+                        }
+                        var container = document.createElement('div');
+                        container.className = 'fc-custom-event';
+
+                        // colored dot indicator (like list view)
+                        var dot = document.createElement('span');
+                        dot.className = 'fc-event-dot';
+                        var bg = arg.event.backgroundColor || arg.event.borderColor || arg.event.textColor || '#0bb197';
+                        dot.style.backgroundColor = bg;
+                        container.appendChild(dot);
+
+                        if(timeRange){
+                            var timeSpan = document.createElement('span');
+                            timeSpan.className = 'fc-event-time me-1';
+                            timeSpan.textContent = timeRange;
+                            container.appendChild(timeSpan);
+                        }
+                        var titleSpan = document.createElement('span');
+                        titleSpan.className = 'fc-event-title';
+                        titleSpan.textContent = arg.event.title;
+                        container.appendChild(titleSpan);
+                        return { domNodes: [container] };
+                    },
                     events: function(fetchInfo, successCallback, failureCallback) {
                         $.ajax({
                             url: 'includes/datacontrol.php',
@@ -153,7 +264,8 @@ if(@$_SESSION['user_type']!=''){
                             data: {
                                 formName: 'get_appointments_calendar',
                                 start: fetchInfo.startStr,
-                                end: fetchInfo.endStr
+                                end: fetchInfo.endStr,
+                                staff_filter: $('#calendar_staff_filter').val() || 0
                             },
                             success: function(response) {
                                 try {
@@ -198,19 +310,7 @@ if(@$_SESSION['user_type']!=''){
                 });
                 
                 $('#cancel_appointment_btn').on('click', function() {
-                    Swal.fire({
-                        title: 'Cancel Appointment?',
-                        text: 'Are you sure you want to cancel this appointment?',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#ff3d60',
-                        cancelButtonColor: '#74788d',
-                        confirmButtonText: 'Yes, cancel it'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            updateAppointmentStatus('cancelled');
-                        }
-                    });
+                    $('#cancelConfirmModal').modal('show');
                 });
                 
                 $('#time_in_btn').on('click', function() {
@@ -219,6 +319,15 @@ if(@$_SESSION['user_type']!=''){
                 
                 $('#time_out_btn').on('click', function() {
                     recordTimeInOut('out');
+                });
+
+                $('#confirm_cancel_btn').on('click', function(){
+                    $('#cancelConfirmModal').modal('hide');
+                    updateAppointmentStatus('cancelled');
+                });
+
+                $('#calendar_staff_filter').on('change', function(){
+                    calendar.refetchEvents();
                 });
             });
             
@@ -270,24 +379,13 @@ if(@$_SESSION['user_type']!=''){
                     },
                     success: function(response) {
                         if(response == '1') {
-                            Swal.fire({
-                                position: 'center',
-                                icon: 'success',
-                                title: 'Success',
-                                text: 'Appointment status updated successfully',
-                                confirmButtonColor: '#0bb197'
-                            }).then(() => {
-                                $('#appointmentDetailsModal').modal('hide');
-                                calendar.refetchEvents();
-                            });
+                            $('#toast-text').html('Appointment status updated successfully');
+                            $('#borderedToast1Btn').trigger('click');
+                            $('#appointmentDetailsModal').modal('hide');
+                            calendar.refetchEvents();
                         } else {
-                            Swal.fire({
-                                position: 'center',
-                                icon: 'error',
-                                title: 'Error',
-                                text: 'Cannot update appointment status',
-                                confirmButtonColor: '#dc3545'
-                            });
+                            $('.toast-text2').html('Cannot update appointment status');
+                            $('#borderedToast2Btn').trigger('click');
                         }
                     }
                 });
@@ -304,24 +402,13 @@ if(@$_SESSION['user_type']!=''){
                     },
                     success: function(response) {
                         if(response == '1') {
-                            Swal.fire({
-                                position: 'center',
-                                icon: 'success',
-                                title: 'Success',
-                                text: 'Time recorded successfully',
-                                confirmButtonColor: '#0bb197'
-                            }).then(() => {
-                                loadAppointmentDetails(currentAppointmentId);
-                                calendar.refetchEvents();
-                            });
+                            $('#toast-text').html('Time recorded successfully');
+                            $('#borderedToast1Btn').trigger('click');
+                            loadAppointmentDetails(currentAppointmentId);
+                            calendar.refetchEvents();
                         } else {
-                            Swal.fire({
-                                position: 'center',
-                                icon: 'error',
-                                title: 'Error',
-                                text: 'Cannot record time',
-                                confirmButtonColor: '#dc3545'
-                            });
+                            $('.toast-text2').html('Cannot record time');
+                            $('#borderedToast2Btn').trigger('click');
                         }
                     }
                 });

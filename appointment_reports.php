@@ -2,6 +2,9 @@
 <?php 
 session_start();
 if(@$_SESSION['user_type']!=''){
+
+// Fetch employees for filters
+$reportUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE user_status != 1 ORDER BY user_name");
 ?>
 <!doctype html>
 <html lang="en">
@@ -9,7 +12,7 @@ if(@$_SESSION['user_type']!=''){
     <head>
         
         <meta charset="utf-8" />
-        <title>Appointment Reports</title>
+        <title>Appointment List View</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta content="Premium Multipurpose Admin & Dashboard Template" name="description" />
         <meta content="Themesdesign" name="author" />
@@ -34,6 +37,20 @@ if(@$_SESSION['user_type']!=''){
             .card-body {
                 overflow: hidden;
             }
+            /* Status badge colors (shared with calendar) */
+            .status-badge {
+                padding: 5px 10px;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: 600;
+                color: #fff;
+                display: inline-block;
+            }
+            .status-scheduled { background: #0bb197; }   /* Pending */
+            .status-completed { background: #0ac074; }
+            .status-cancelled { background: #ff3d60; }
+            .status-no-show  { background: #fcb92c; color: #000; }
+            .status-missed   { background: #74788d; }
         </style>
     </head>
 
@@ -57,13 +74,13 @@ if(@$_SESSION['user_type']!=''){
                         <div class="row">
                             <div class="col-12">
                                 <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                                    <h4 class="mb-sm-0">Appointment Reports</h4>
+                                    <h4 class="mb-sm-0">Appointment List View</h4>
 
                                     <div class="page-title-right">
                                         <ol class="breadcrumb m-0">
                                             <li class="breadcrumb-item"><a href="javascript: void(0);">Forms</a></li>
                                             <li class="breadcrumb-item"><a href="appointment_calendar.php">Appointments</a></li>
-                                            <li class="breadcrumb-item active">Reports</li>
+                                            <li class="breadcrumb-item active">List View</li>
                                         </ol>
                                     </div>
 
@@ -77,12 +94,13 @@ if(@$_SESSION['user_type']!=''){
                             <div class="col-12">
                                 <div class="card">
                                     <div class="card-body">
-                                        <h5 class="card-title mb-3">Filter Reports</h5>
-                                        <div class="row">
+                                        <h5 class="card-title mb-3">Filter Appointments</h5>
+                                        <div class="row g-3">
                                             <div class="col-md-3">
                                                 <label class="form-label">Date Range</label>
                                                 <select class="form-select" id="date_range">
                                                     <option value="today">Today</option>
+                                                    <option value="tomorrow">Tomorrow</option>
                                                     <option value="week">This Week</option>
                                                     <option value="month" selected>This Month</option>
                                                     <option value="custom">Custom Range</option>
@@ -99,6 +117,31 @@ if(@$_SESSION['user_type']!=''){
                                             <div class="col-md-3">
                                                 <label class="form-label">&nbsp;</label><br>
                                                 <button type="button" class="btn btn-primary" onclick="loadReports()">Generate Report</button>
+                                            </div>
+                                        </div>
+                                        <div class="row g-3 mt-1">
+                                            <div class="col-md-3">
+                                                <label class="form-label">Status</label>
+                                                <select class="form-select" id="status_filter">
+                                                    <option value="">All</option>
+                                                    <option value="scheduled">Pending</option>
+                                                    <option value="completed">Completed</option>
+                                                    <option value="cancelled">Cancelled</option>
+                                                    <option value="no-show">No-show</option>
+                                                    <option value="missed">Missed</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label">Employee</label>
+                                                <select class="form-select" id="staff_filter">
+                                                    <option value="0">All Employees</option>
+                                                    <?php 
+                                                    mysqli_data_seek($reportUsers, 0);
+                                                    while($u = mysqli_fetch_array($reportUsers)){
+                                                        echo '<option value="'.$u['user_id'].'">'.htmlspecialchars($u['user_name']).'</option>';
+                                                    }
+                                                    ?>
+                                                </select>
                                             </div>
                                         </div>
                                     </div>
@@ -178,54 +221,67 @@ if(@$_SESSION['user_type']!=''){
                             </div>
                         </div>
 
-                        <!-- Charts -->
+                        <!-- Today's Appointments -->
                         <div class="row">
-                            <div class="col-xl-6">
+                            <div class="col-12">
                                 <div class="card">
                                     <div class="card-body">
-                                        <h4 class="card-title mb-4">Appointments by Status</h4>
-                                        <div class="chart-container">
-                                            <canvas id="statusChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h4 class="card-title mb-4">Appointments by Purpose</h4>
-                                        <div class="chart-container">
-                                            <canvas id="purposeChart"></canvas>
+                                        <h4 class="card-title mb-4">Today's Appointments</h4>
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Date</th>
+                                                        <th>Time Slot</th>
+                                                        <th>Purpose</th>
+                                                        <th>Attendee</th>
+                                                        <th>Staff Member</th>
+                                                        <th>Status</th>
+                                                        <th>Meeting Type</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="today_appointments_body">
+                                                    <!-- Loaded via JS -->
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
+                        <!-- Upcoming Appointments -->
                         <div class="row">
-                            <div class="col-xl-6">
+                            <div class="col-12">
                                 <div class="card">
                                     <div class="card-body">
-                                        <h4 class="card-title mb-4">Appointments by Staff Member</h4>
-                                        <div class="chart-container">
-                                            <canvas id="staffChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h4 class="card-title mb-4">Daily Appointments Trend</h4>
-                                        <div class="chart-container">
-                                            <canvas id="dailyTrendChart"></canvas>
+                                        <h4 class="card-title mb-4">Upcoming Appointments</h4>
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Date</th>
+                                                        <th>Time Slot</th>
+                                                        <th>Purpose</th>
+                                                        <th>Attendee</th>
+                                                        <th>Staff Member</th>
+                                                        <th>Status</th>
+                                                        <th>Meeting Type</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="upcoming_appointments_body">
+                                                    <!-- Loaded via JS -->
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Detailed Reports Table -->
+                        <!-- Detailed Appointments List -->
                         <div class="row">
                             <div class="col-12">
                                 <div class="card">
@@ -235,7 +291,8 @@ if(@$_SESSION['user_type']!=''){
                                             <table class="table table-bordered table-striped" id="appointments_table">
                                                 <thead>
                                                     <tr>
-                                                        <th>Date & Time</th>
+                                                        <th>Date</th>
+                                                        <th>Time Slot</th>
                                                         <th>Purpose</th>
                                                         <th>Attendee</th>
                                                         <th>Staff Member</th>
@@ -258,6 +315,24 @@ if(@$_SESSION['user_type']!=''){
                 </div>
             </div>
 
+        </div>
+
+        <!-- Reuse appointment details modal from calendar view -->
+        <div class="modal fade" id="appointmentDetailsModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Appointment Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body" id="appointment_details_content">
+                        <!-- Content loaded via AJAX -->
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <?php include('includes/footer_includes.php'); ?>
@@ -283,6 +358,8 @@ if(@$_SESSION['user_type']!=''){
                 var dateRange = $('#date_range').val();
                 var startDate = '';
                 var endDate = '';
+                var statusFilter = $('#status_filter').val();
+                var staffFilter = $('#staff_filter').val();
                 
                 if(dateRange == 'custom') {
                     startDate = $('#start_date').val();
@@ -296,7 +373,9 @@ if(@$_SESSION['user_type']!=''){
                         formName: 'get_appointment_reports',
                         date_range: dateRange,
                         start_date: startDate,
-                        end_date: endDate
+                            end_date: endDate,
+                            status_filter: statusFilter,
+                            staff_filter: staffFilter
                     },
                     success: function(response) {
                         try {
@@ -316,7 +395,9 @@ if(@$_SESSION['user_type']!=''){
                                 updateDailyTrendChart(data.charts.daily);
                             }, 100);
                             
-                            // Update table
+                            // Update tables
+                            updateTodayAppointmentsTable(data.appointments);
+                            updateUpcomingAppointmentsTable(data.appointments);
                             updateAppointmentsTable(data.appointments);
                         } catch(e) {
                             console.error('Error parsing report data:', e);
@@ -534,29 +615,119 @@ if(@$_SESSION['user_type']!=''){
                 });
             }
             
+            function updateTodayAppointmentsTable(appointments) {
+                var tbody = $('#today_appointments_body');
+                tbody.empty();
+                if(!appointments || !appointments.length){
+                    tbody.append('<tr><td colspan="8" class="text-center text-muted">No appointments</td></tr>');
+                    return;
+                }
+                var today = new Date().toISOString().slice(0,10);
+                var any = false;
+                appointments.forEach(function(appt){
+                    if(appt.date_raw === today){
+                        any = true;
+                        var row = '<tr>' +
+                            '<td>'+escapeHtml(appt.datetime.split(" ")[0])+'</td>' +
+                            '<td>'+escapeHtml(appt.time_slot)+'</td>' +
+                            '<td>'+escapeHtml(appt.purpose)+'</td>' +
+                            '<td>'+escapeHtml(appt.attendee)+'</td>' +
+                            '<td>'+escapeHtml(appt.staff)+'</td>' +
+                            '<td><span class="status-badge status-'+appt.status+'">'+escapeHtml(formatStatus(appt.status))+'</span></td>' +
+                            '<td>'+escapeHtml(appt.meeting_type)+'</td>' +
+                            '<td><button type="button" class="btn btn-sm btn-primary" onclick="openAppointmentDetails('+appt.id+')">View</button></td>' +
+                            '</tr>';
+                        tbody.append(row);
+                    }
+                });
+                if(!any){
+                    tbody.append('<tr><td colspan="8" class="text-center text-muted">No appointments</td></tr>');
+                }
+            }
+
+            function updateUpcomingAppointmentsTable(appointments) {
+                var tbody = $('#upcoming_appointments_body');
+                tbody.empty();
+                if(!appointments || !appointments.length){
+                    tbody.append('<tr><td colspan="8" class="text-center text-muted">No appointments</td></tr>');
+                    return;
+                }
+                var today = new Date().toISOString().slice(0,10);
+                var any = false;
+                appointments.forEach(function(appt){
+                    if(appt.date_raw > today && appt.status !== 'cancelled'){
+                        any = true;
+                        var row = '<tr>' +
+                            '<td>'+escapeHtml(appt.datetime.split(" ")[0])+'</td>' +
+                            '<td>'+escapeHtml(appt.time_slot)+'</td>' +
+                            '<td>'+escapeHtml(appt.purpose)+'</td>' +
+                            '<td>'+escapeHtml(appt.attendee)+'</td>' +
+                            '<td>'+escapeHtml(appt.staff)+'</td>' +
+                            '<td><span class="status-badge status-'+appt.status+'">'+escapeHtml(formatStatus(appt.status))+'</span></td>' +
+                            '<td>'+escapeHtml(appt.meeting_type)+'</td>' +
+                            '<td><button type="button" class="btn btn-sm btn-primary" onclick="openAppointmentDetails('+appt.id+')">View</button></td>' +
+                            '</tr>';
+                        tbody.append(row);
+                    }
+                });
+                if(!any){
+                    tbody.append('<tr><td colspan="8" class="text-center text-muted">No appointments</td></tr>');
+                }
+            }
+
             function updateAppointmentsTable(appointments) {
                 var tbody = $('#appointments_table_body');
                 tbody.empty();
                 
-                if(appointments.length == 0) {
-                    tbody.append('<tr><td colspan="7" class="text-center">No appointments found</td></tr>');
+                if(!appointments || appointments.length == 0) {
+                    tbody.append('<tr><td colspan="8" class="text-center">No appointments found</td></tr>');
                     return;
                 }
                 
                 appointments.forEach(function(apt) {
                     var statusClass = 'status-' + apt.status;
-                    var statusText = apt.status.charAt(0).toUpperCase() + apt.status.slice(1).replace('-', ' ');
+                    var statusText = formatStatus(apt.status);
                     
                     var row = '<tr>' +
-                        '<td>' + apt.datetime + '</td>' +
-                        '<td>' + apt.purpose + '</td>' +
-                        '<td>' + apt.attendee + '</td>' +
-                        '<td>' + apt.staff + '</td>' +
-                        '<td><span class="status-badge ' + statusClass + '">' + statusText + '</span></td>' +
-                        '<td>' + apt.meeting_type + '</td>' +
-                        '<td><a href="appointment_booking.php?id=' + btoa(apt.id) + '" class="btn btn-sm btn-primary">View</a></td>' +
+                        '<td>' + escapeHtml(apt.datetime.split(" ")[0]) + '</td>' +
+                        '<td>' + escapeHtml(apt.time_slot) + '</td>' +
+                        '<td>' + escapeHtml(apt.purpose) + '</td>' +
+                        '<td>' + escapeHtml(apt.attendee) + '</td>' +
+                        '<td>' + escapeHtml(apt.staff) + '</td>' +
+                        '<td><span class="status-badge ' + statusClass + '">' + escapeHtml(statusText) + '</span></td>' +
+                        '<td>' + escapeHtml(apt.meeting_type) + '</td>' +
+                        '<td><button type="button" class="btn btn-sm btn-primary" onclick="openAppointmentDetails('+apt.id+')">View</button></td>' +
                         '</tr>';
                     tbody.append(row);
+                });
+            }
+
+            function formatStatus(status){
+                if(!status) return '-';
+                return status.replace(/-/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase();});
+            }
+
+            function escapeHtml(s){
+                return (s || '').toString()
+                    .replace(/&/g,'&amp;')
+                    .replace(/</g,'&lt;')
+                    .replace(/>/g,'&gt;')
+                    .replace(/"/g,'&quot;')
+                    .replace(/'/g,'&#39;');
+            }
+
+            function openAppointmentDetails(id){
+                $.ajax({
+                    url: 'includes/datacontrol.php',
+                    type: 'POST',
+                    data: {
+                        formName: 'get_appointment_details',
+                        appointment_id: id
+                    },
+                    success: function(response){
+                        $('#appointment_details_content').html(response);
+                        $('#appointmentDetailsModal').modal('show');
+                    }
                 });
             }
         </script>

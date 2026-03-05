@@ -3126,6 +3126,8 @@ if(@$_POST['formName']=='appointment_booking'){
     $appointment_date = $_POST['appointment_date'];
     $appointment_time = $_POST['appointment_time'];
     $appointment_datetime = $appointment_date . ' ' . $appointment_time;
+    $appointment_time_to = isset($_POST['appointment_time_to']) && $_POST['appointment_time_to'] !== '' ? $_POST['appointment_time_to'] : $appointment_time;
+    $appointment_end_datetime = $appointment_date . ' ' . $appointment_time_to;
     $booked_by = $_POST['created_by'];
     $booked_by_name = $_POST['booked_by_name'];
     $booking_comments = $_POST['booking_comments'];
@@ -3152,14 +3154,54 @@ if(@$_POST['formName']=='appointment_booking'){
     $connected_enrolment_id = isset($_POST['connected_enrolment_id']) && $_POST['connected_enrolment_id'] != '' ? "'".$_POST['connected_enrolment_id']."'" : 'NULL';
     $connected_counselling_id = isset($_POST['connected_counselling_id']) && $_POST['connected_counselling_id'] != '' ? $_POST['connected_counselling_id'] : 'NULL';
     $appointment_notes = isset($_POST['appointment_notes']) ? $_POST['appointment_notes'] : '';
+    // Share with (visibility)
+    $share_with = isset($_POST['share_with']) ? $_POST['share_with'] : array();
+    $appointment_shared_with = '';
+    if(is_array($share_with) && count($share_with)){
+        $ids = array();
+        foreach($share_with as $sid){
+            $ids[] = (int)$sid;
+        }
+        $appointment_shared_with = implode(',', $ids);
+    }
     $created_by = $_POST['created_by'];
     
+    // Prevent double-booking: same attendee (student phone/email or business contact) at same start time
+    if($appointment_id == '0'){
+        $conflict_where = "appointment_datetime='$appointment_datetime' AND delete_status!=1";
+    } else {
+        $conflict_where = "appointment_datetime='$appointment_datetime' AND delete_status!=1 AND appointment_id!=$appointment_id";
+    }
+    $attendee_where = array();
+    if($student_phone !== '') $attendee_where[] = "(student_phone='".mysqli_real_escape_string($connection,$student_phone)."')";
+    if($student_email !== '') $attendee_where[] = "(student_email='".mysqli_real_escape_string($connection,$student_email)."')";
+    if($business_contact !== '') $attendee_where[] = "(business_contact='".mysqli_real_escape_string($connection,$business_contact)."')";
+    if(count($attendee_where)){
+        $check_sql = "SELECT COUNT(*) FROM appointments WHERE ".$conflict_where." AND (".implode(' OR ',$attendee_where).")";
+        $conf_res = mysqli_query($connection,$check_sql);
+        if($conf_res && ($cr = mysqli_fetch_row($conf_res)) && (int)$cr[0] > 0){
+            echo 2;
+            exit;
+        }
+    }
+
+    // Check if end-time columns exist (for backward compatibility)
+    $has_end_cols = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM appointments LIKE 'appointment_end_time'"));
+
     if($appointment_id == '0'){
         // Insert new appointment
-        $query = "INSERT INTO appointments (appointment_date, appointment_time, appointment_datetime, booked_by, booked_by_name, booking_comments, purpose_id, appointment_to_see, attendee_type_id, student_name, student_phone, student_email, business_name, business_contact, send_email, staff_member_type, meeting_type, location_id, platform_id, online_meeting_link, timezone_state, appointment_time_state, appointment_time_adelaide, appointment_time_india, appointment_time_philippines, connected_enquiry_id, connected_enrolment_id, connected_counselling_id, appointment_notes, created_by) VALUES ('$appointment_date', '$appointment_time', '$appointment_datetime', $booked_by, '$booked_by_name', '$booking_comments', $purpose_id, $appointment_to_see, $attendee_type_id, '$student_name', '$student_phone', '$student_email', '$business_name', '$business_contact', $send_email, '$staff_member_type', '$meeting_type', $location_id, $platform_id, '$online_meeting_link', '$timezone_state', '$appointment_time_state', '$appointment_time_adelaide', '$appointment_time_india', '$appointment_time_philippines', $connected_enquiry_id, $connected_enrolment_id, $connected_counselling_id, '$appointment_notes', $created_by)";
+        if($has_end_cols){
+            $query = "INSERT INTO appointments (appointment_date, appointment_time, appointment_end_time, appointment_datetime, appointment_end_datetime, booked_by, booked_by_name, booking_comments, purpose_id, appointment_to_see, attendee_type_id, student_name, student_phone, student_email, business_name, business_contact, send_email, staff_member_type, meeting_type, location_id, platform_id, online_meeting_link, timezone_state, appointment_time_state, appointment_time_adelaide, appointment_time_india, appointment_time_philippines, connected_enquiry_id, connected_enrolment_id, connected_counselling_id, appointment_notes, appointment_shared_with, created_by) VALUES ('$appointment_date', '$appointment_time', '$appointment_time_to', '$appointment_datetime', '$appointment_end_datetime', $booked_by, '$booked_by_name', '$booking_comments', $purpose_id, $appointment_to_see, $attendee_type_id, '$student_name', '$student_phone', '$student_email', '$business_name', '$business_contact', $send_email, '$staff_member_type', '$meeting_type', $location_id, $platform_id, '$online_meeting_link', '$timezone_state', '$appointment_time_state', '$appointment_time_adelaide', '$appointment_time_india', '$appointment_time_philippines', $connected_enquiry_id, $connected_enrolment_id, $connected_counselling_id, '$appointment_notes', ".($appointment_shared_with==='' ? "NULL" : "'$appointment_shared_with'").", $created_by)";
+        } else {
+            $query = "INSERT INTO appointments (appointment_date, appointment_time, appointment_datetime, booked_by, booked_by_name, booking_comments, purpose_id, appointment_to_see, attendee_type_id, student_name, student_phone, student_email, business_name, business_contact, send_email, staff_member_type, meeting_type, location_id, platform_id, online_meeting_link, timezone_state, appointment_time_state, appointment_time_adelaide, appointment_time_india, appointment_time_philippines, connected_enquiry_id, connected_enrolment_id, connected_counselling_id, appointment_notes, created_by) VALUES ('$appointment_date', '$appointment_time', '$appointment_datetime', $booked_by, '$booked_by_name', '$booking_comments', $purpose_id, $appointment_to_see, $attendee_type_id, '$student_name', '$student_phone', '$student_email', '$business_name', '$business_contact', $send_email, '$staff_member_type', '$meeting_type', $location_id, $platform_id, '$online_meeting_link', '$timezone_state', '$appointment_time_state', '$appointment_time_adelaide', '$appointment_time_india', '$appointment_time_philippines', $connected_enquiry_id, $connected_enrolment_id, $connected_counselling_id, '$appointment_notes', $created_by)";
+        }
     } else {
         // Update existing appointment
-        $query = "UPDATE appointments SET appointment_date='$appointment_date', appointment_time='$appointment_time', appointment_datetime='$appointment_datetime', booked_by_name='$booked_by_name', booking_comments='$booking_comments', purpose_id=$purpose_id, appointment_to_see=$appointment_to_see, attendee_type_id=$attendee_type_id, student_name='$student_name', student_phone='$student_phone', student_email='$student_email', business_name='$business_name', business_contact='$business_contact', send_email=$send_email, staff_member_type='$staff_member_type', meeting_type='$meeting_type', location_id=$location_id, platform_id=$platform_id, online_meeting_link='$online_meeting_link', timezone_state='$timezone_state', appointment_time_state='$appointment_time_state', appointment_time_adelaide='$appointment_time_adelaide', appointment_time_india='$appointment_time_india', appointment_time_philippines='$appointment_time_philippines', connected_enquiry_id=$connected_enquiry_id, connected_enrolment_id=$connected_enrolment_id, connected_counselling_id=$connected_counselling_id, appointment_notes='$appointment_notes', modified_date=NOW(), modified_by=$created_by WHERE appointment_id=$appointment_id";
+        if($has_end_cols){
+            $query = "UPDATE appointments SET appointment_date='$appointment_date', appointment_time='$appointment_time', appointment_end_time='$appointment_time_to', appointment_datetime='$appointment_datetime', appointment_end_datetime='$appointment_end_datetime', booked_by_name='$booked_by_name', booking_comments='$booking_comments', purpose_id=$purpose_id, appointment_to_see=$appointment_to_see, attendee_type_id=$attendee_type_id, student_name='$student_name', student_phone='$student_phone', student_email='$student_email', business_name='$business_name', business_contact='$business_contact', send_email=$send_email, staff_member_type='$staff_member_type', meeting_type='$meeting_type', location_id=$location_id, platform_id=$platform_id, online_meeting_link='$online_meeting_link', timezone_state='$timezone_state', appointment_time_state='$appointment_time_state', appointment_time_adelaide='$appointment_time_adelaide', appointment_time_india='$appointment_time_india', appointment_time_philippines='$appointment_time_philippines', connected_enquiry_id=$connected_enquiry_id, connected_enrolment_id=$connected_enrolment_id, connected_counselling_id=$connected_counselling_id, appointment_notes='$appointment_notes', appointment_shared_with=".($appointment_shared_with==='' ? "NULL" : "'$appointment_shared_with'").", modified_date=NOW(), modified_by=$created_by WHERE appointment_id=$appointment_id";
+        } else {
+            $query = "UPDATE appointments SET appointment_date='$appointment_date', appointment_time='$appointment_time', appointment_datetime='$appointment_datetime', booked_by_name='$booked_by_name', booking_comments='$booking_comments', purpose_id=$purpose_id, appointment_to_see=$appointment_to_see, attendee_type_id=$attendee_type_id, student_name='$student_name', student_phone='$student_phone', student_email='$student_email', business_name='$business_name', business_contact='$business_contact', send_email=$send_email, staff_member_type='$staff_member_type', meeting_type='$meeting_type', location_id=$location_id, platform_id=$platform_id, online_meeting_link='$online_meeting_link', timezone_state='$timezone_state', appointment_time_state='$appointment_time_state', appointment_time_adelaide='$appointment_time_adelaide', appointment_time_india='$appointment_time_india', appointment_time_philippines='$appointment_time_philippines', connected_enquiry_id=$connected_enquiry_id, connected_enrolment_id=$connected_enrolment_id, connected_counselling_id=$connected_counselling_id, appointment_notes='$appointment_notes', modified_date=NOW(), modified_by=$created_by WHERE appointment_id=$appointment_id";
+        }
     }
     
     $result = mysqli_query($connection, $query);
@@ -3186,10 +3228,36 @@ if(@$_POST['formName']=='appointment_booking'){
 if(@$_POST['formName']=='get_appointments_calendar'){
     $start = $_POST['start'];
     $end = $_POST['end'];
-    
+    $staff_filter = isset($_POST['staff_filter']) ? (int)$_POST['staff_filter'] : 0;
+
+    // Use appointment_date to ensure all appointments on those days are returned,
+    // regardless of time or end-time, then pass precise start/end to FullCalendar.
+    $startDate = date('Y-m-d', strtotime($start));
+    // FullCalendar's end is exclusive, so subtract one day for inclusive date filter
+    $endDate = date('Y-m-d', strtotime($end . ' -1 day'));
+
+    $has_end_cols = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM appointments LIKE 'appointment_end_datetime'"));
     $query = "SELECT a.*, p.purpose_name, p.purpose_color FROM appointments a 
               LEFT JOIN appointment_purposes p ON a.purpose_id = p.purpose_id 
-              WHERE a.delete_status != 1 AND a.appointment_datetime >= '$start' AND a.appointment_datetime <= '$end'";
+              WHERE a.delete_status != 1
+              AND a.appointment_date >= '$startDate'
+              AND a.appointment_date <= '$endDate'";
+
+    // Restrict visibility based on Share With for non-admin users
+    $currentUserId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
+    $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] : 0;
+    if($currentUserId && $currentUserType !== 1){
+        $query .= " AND (a.appointment_shared_with IS NULL 
+                         OR a.appointment_shared_with = '' 
+                         OR a.appointment_shared_with = 'ALL' 
+                         OR FIND_IN_SET($currentUserId, a.appointment_shared_with))";
+    }
+
+    if($staff_filter > 0){
+        $query .= " AND a.appointment_to_see = $staff_filter";
+    }
+
+            //   echo $query;
     
     $result = mysqli_query($connection, $query);
     $events = array();
@@ -3202,7 +3270,7 @@ if(@$_POST['formName']=='get_appointments_calendar'){
             $title .= ' - ' . $row['business_name'];
         }
         
-        $events[] = array(
+        $event = array(
             'id' => $row['appointment_id'],
             'title' => $title,
             'start' => $row['appointment_datetime'],
@@ -3212,6 +3280,10 @@ if(@$_POST['formName']=='get_appointments_calendar'){
                 'purpose' => $row['purpose_name']
             )
         );
+        if($has_end_cols && isset($row['appointment_end_datetime']) && !empty($row['appointment_end_datetime'])){
+            $event['end'] = $row['appointment_end_datetime'];
+        }
+        $events[] = $event;
     }
     
     echo json_encode($events);
@@ -3311,10 +3383,15 @@ if(@$_POST['formName']=='get_appointment_reports'){
     $date_range = $_POST['date_range'];
     $start_date = '';
     $end_date = '';
+    $status_filter = isset($_POST['status_filter']) ? trim($_POST['status_filter']) : '';
+    $staff_filter = isset($_POST['staff_filter']) ? (int)$_POST['staff_filter'] : 0;
     
     if($date_range == 'today'){
         $start_date = date('Y-m-d');
         $end_date = date('Y-m-d');
+    } else if($date_range == 'tomorrow'){
+        $start_date = date('Y-m-d', strtotime('+1 day'));
+        $end_date = $start_date;
     } else if($date_range == 'week'){
         $start_date = date('Y-m-d', strtotime('monday this week'));
         $end_date = date('Y-m-d', strtotime('sunday this week'));
@@ -3332,6 +3409,24 @@ if(@$_POST['formName']=='get_appointment_reports'){
               LEFT JOIN appointment_attendee_types at ON a.attendee_type_id = at.type_id 
               LEFT JOIN users u ON a.appointment_to_see = u.user_id 
               WHERE a.delete_status != 1 AND DATE(a.appointment_date) >= '$start_date' AND DATE(a.appointment_date) <= '$end_date'";
+
+    if($status_filter !== ''){
+        $status_filter_esc = mysqli_real_escape_string($connection, $status_filter);
+        $query .= " AND a.appointment_status = '$status_filter_esc'";
+    }
+    if($staff_filter > 0){
+        $query .= " AND a.appointment_to_see = $staff_filter";
+    }
+
+    // Apply Share With visibility rules (same as calendar): admins see all, others only shared/public
+    $currentUserId   = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
+    $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] : 0;
+    if($currentUserId && $currentUserType !== 1){
+        $query .= " AND (a.appointment_shared_with IS NULL 
+                         OR a.appointment_shared_with = '' 
+                         OR a.appointment_shared_with = 'ALL' 
+                         OR FIND_IN_SET($currentUserId, a.appointment_shared_with))";
+    }
     
     $result = mysqli_query($connection, $query);
     
@@ -3346,6 +3441,7 @@ if(@$_POST['formName']=='get_appointment_reports'){
     $purposeCounts = array();
     $staffCounts = array();
     $dailyCounts = array();
+    $has_end_cols = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM appointments LIKE 'appointment_end_datetime'"));
     
     while($row = mysqli_fetch_array($result)){
         $summary['total']++;
@@ -3387,9 +3483,15 @@ if(@$_POST['formName']=='get_appointment_reports'){
         $dailyCounts[$day]++;
         
         // Appointment details
+        $startTime = date('h:i A', strtotime($row['appointment_datetime']));
+        $endTime = ($has_end_cols && !empty($row['appointment_end_datetime'])) ? date('h:i A', strtotime($row['appointment_end_datetime'])) : '';
+        $timeSlot = $endTime ? $startTime . ' - ' . $endTime : $startTime;
+
         $appointments[] = array(
             'id' => $row['appointment_id'],
             'datetime' => date('d M Y h:i A', strtotime($row['appointment_datetime'])),
+            'date_raw' => $day,
+            'time_slot' => $timeSlot,
             'purpose' => $row['purpose_name'],
             'attendee' => $row['student_name'] ? $row['student_name'] : ($row['business_name'] ? $row['business_name'] : '-'),
             'staff' => $row['staff_name'],

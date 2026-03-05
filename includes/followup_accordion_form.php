@@ -33,10 +33,16 @@ $followup_enquiry_code = isset($followup_Query['enquiry_id']) ? $followup_Query[
 <select class="form-select" id="followup_enquiry_flow_status">
 <?php foreach($enquiry_flow_statuses as $k=>$v) echo '<option value="'.$k.'" '.((isset($followup_Query['enquiry_flow_status']) && $followup_Query['enquiry_flow_status']==$k) ? 'selected' : '').'>'.$v.'</option>'; ?>
 </select><small class="text-muted">Default: New for first-time enquiries</small></div></div>
+<div class="col-12 mb-3" id="followup_email_template_section">
+<div class="card border-primary"><div class="card-header bg-light">Send status email to student</div><div class="card-body">
+<p class="text-muted small">When you change Enquiry Status, the matching email template is loaded. Review, edit if needed, and send.</p>
+<label class="form-label">Subject</label><input type="text" class="form-control mb-2" id="followup_email_subject" placeholder="Email subject">
+<label class="form-label">Message</label><textarea class="form-control mb-2" id="followup_email_body" rows="4" placeholder="Email body"></textarea>
+<div class="form-check mb-2"><input type="checkbox" class="form-check-input" id="followup_save_template_default" value="1"><label class="form-check-label" for="followup_save_template_default">Save as default template for this status</label></div>
+<button type="button" class="btn btn-success btn-sm" id="followup_send_status_email">Send email</button>
+</div></div></div>
 <div class="col-12"><div class="mb-3"><label class="form-label" for="followup_follow_up_notes">Follow-Up Notes</label>
 <textarea class="form-control" id="followup_follow_up_notes" rows="3" placeholder="Free text notes"><?php echo htmlspecialchars(isset($followup_Query['flw_follow_up_notes']) ? $followup_Query['flw_follow_up_notes'] : ''); ?></textarea></div></div>
-<div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_next_followup_date">Next Follow-Up Date</label>
-<input type="datetime-local" class="form-control" id="followup_next_followup_date" value="<?php echo !empty($followup_Query['flw_next_followup_date']) ? date('Y-m-d\TH:i',strtotime($followup_Query['flw_next_followup_date'])) : ''; ?>" placeholder="Calendar reminder"><small class="text-muted">Reminder / notification</small></div></div>
 <div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_follow_up_outcome">Follow-Up Outcome</label>
 <select class="form-select" id="followup_follow_up_outcome">
 <?php foreach($follow_up_outcomes as $k=>$v) echo '<option value="'.htmlspecialchars($k).'" '.((isset($followup_Query['flw_follow_up_outcome']) && $followup_Query['flw_follow_up_outcome']==$k) ? 'selected' : '').'>'.htmlspecialchars($v).'</option>'; ?>

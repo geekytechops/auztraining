@@ -2119,13 +2119,22 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     else{$('.toast-text2').html('Cannot add record. Please try again later');$('#borderedToast2Btn').trigger('click');}
                 }});
             });
-            $(document).on('change','#followup_enquiry_flow_status',function(){
-                var status=$(this).val();
-                if(!status){ $('#followup_email_template_section').hide(); return; }
+            function loadFollowupTemplateForCurrentStatus(){
+                var status=$('#followup_enquiry_flow_status').val();
                 var enquiry_id=$('#followup_enquiry_id').val();
+                if(!status||!enquiry_id){ return; }
                 $.post('includes/datacontrol.php',{ get_enquiry_status_template: 1, status_code: status, enquiry_id: enquiry_id },function(data){
-                    try{ var j=JSON.parse(data); $('#followup_email_subject').val(j.subject||''); $('#followup_email_body').val(j.body||''); $('#followup_email_template_section').show(); }catch(e){ $('#followup_email_template_section').hide(); }
+                    try{
+                        var j=JSON.parse(data);
+                        $('#followup_email_subject').val(j.subject||'');
+                        $('#followup_email_body').val(j.body||'');
+                    }catch(e){
+                        // ignore parse errors, leave fields as-is
+                    }
                 });
+            }
+            $(document).on('change','#followup_enquiry_flow_status',function(){
+                loadFollowupTemplateForCurrentStatus();
             });
             $(document).on('click','#followup_send_status_email',function(){
                 var enquiry_id=$('#followup_enquiry_id').val();
@@ -2142,6 +2151,9 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     else{ $('.toast-text2').html(data||'Failed to send email'); $('#borderedToast2Btn').trigger('click'); }
                 });
             });
+            // Load default email template once when form is ready (for current status)
+            loadFollowupTemplateForCurrentStatus();
+
             $(document).on('click','#followup_check',function(){
                 var student_name=$('#followup_student_name').val().trim();
                 var contact_num=$('#followup_mobile_num').val().trim();

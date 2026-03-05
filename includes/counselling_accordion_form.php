@@ -9,26 +9,11 @@ $counsil_Query = array_merge(array('st_enquiry_id'=>'','counsil_timing'=>'','cou
 <div class="col-md-6">
 <div class="mb-3">
 <label class="form-label">Enquiry ID<span class="asterisk">*</span></label><br>
-<?php if($counsilEqId==0){ ?>
-<select class="selectpicker" title="--select--" data-live-search="true" name="enquiry_id" id="counselling_enquiry_id">
 <?php
-if($enquiryIdsCounselling && mysqli_num_rows($enquiryIdsCounselling)!=0){
-while($enquiryIdsRes=mysqli_fetch_array($enquiryIdsCounselling)){
-$checkQry=mysqli_query($connection,"SELECT * FROM `counseling_details` where st_enquiry_id='".$enquiryIdsRes['st_enquiry_id']."' AND counsil_enquiry_status=0");
-if(mysqli_num_rows($checkQry)==0){
-echo "<option value='".$enquiryIdsRes['st_enquiry_id']."' data-name='".$enquiryIdsRes['st_name']."' data-mobile='".$enquiryIdsRes['st_phno']."'>".$enquiryIdsRes['st_enquiry_id']."</option>";
-}else{
-echo "<option value='".$enquiryIdsRes['st_enquiry_id']."' data-name='".$enquiryIdsRes['st_name']."' data-mobile='".$enquiryIdsRes['st_phno']."' disabled>".$enquiryIdsRes['st_enquiry_id']."</option>";
-}
-}
-}else{
-echo "<option value='0'>No Enquiries Found</option>";
-}
+$counselling_enquiry_code = isset($counsil_Query['st_enquiry_id']) ? $counsil_Query['st_enquiry_id'] : '';
 ?>
-</select>
-<?php }else{ ?>
-<input type="text" readonly class="form-control" style="width:20%" value="<?php echo $counsil_Query['st_enquiry_id']; ?>" name="enquiry_id" id="counselling_enquiry_id">
-<?php }?>
+<input type="text" readonly class="form-control-plaintext fw-semibold" value="<?php echo $counselling_enquiry_code ? $counselling_enquiry_code : 'Save enquiry first'; ?>">
+<input type="hidden" name="enquiry_id" id="counselling_enquiry_id" value="<?php echo htmlspecialchars($counselling_enquiry_code); ?>">
 <div class="error-feedback">Please Select the Enquiry ID</div>
 </div>
 </div>

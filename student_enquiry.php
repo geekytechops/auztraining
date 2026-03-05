@@ -351,7 +351,18 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
     $counsilEqId=0;
     $followupEqId=0;
     $counsil_Query=array('st_enquiry_id'=>'','counsil_timing'=>'','counsil_end_time'=>'','counsil_type'=>'','counsil_mem_name'=>'','counsil_aus_stay_time'=>'','counsil_work_status'=>'','counsil_visa_condition'=>'','counsil_education'=>'','counsil_aus_study_status'=>'','counsil_course'=>'','counsil_university'=>'','counsil_qualification'=>'','counsil_eng_rate'=>'','counsil_migration_test'=>'','counsil_overall_result'=>'','counsil_module_result'=>'','counsil_job_nature'=>'','counsil_vaccine_status'=>'','counsil_pref_comments'=>'','counsil_remarks'=>'');
-    $followup_Query=array('flw_name'=>'','flw_phone'=>'','flw_contacted_person'=>'','flw_contacted_time'=>'','flw_date'=>'','flw_mode_contact'=>'','flw_comments'=>'','flw_progress_state'=>'','flw_remarks'=>'');
+    $followup_Query=array('enquiry_id'=>'','flw_name'=>'','flw_phone'=>'','flw_contacted_person'=>'','flw_contacted_time'=>'','flw_date'=>'','flw_mode_contact'=>'','flw_followup_type'=>'','flw_follow_up_notes'=>'','flw_next_followup_date'=>'','flw_follow_up_outcome'=>'','flw_comments'=>'','flw_progress_state'=>'','flw_remarks'=>'');
+
+    // When editing a specific enquiry, pre-fill counselling & follow-up context from that enquiry
+    if(!empty($queryRes) && !empty($queryRes['st_enquiry_id'])){
+        $current_enquiry_code = $queryRes['st_enquiry_id'];
+        $counsilEqId = $eqId;
+        $followupEqId = $eqId;
+        $counsil_Query['st_enquiry_id'] = $current_enquiry_code;
+        $followup_Query['enquiry_id'] = $current_enquiry_code;
+        $followup_Query['flw_name'] = $queryRes['st_name'] ?: $queryRes['st_member_name'];
+        $followup_Query['flw_phone'] = $queryRes['st_phno'];
+    }
 
 ?>
 <!doctype html>

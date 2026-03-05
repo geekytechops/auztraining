@@ -2,24 +2,19 @@
 if(!isset($enquiryIdsFollowup)) $enquiryIdsFollowup = $enquiryIds ?? null;
 if(!isset($followupEqId)) $followupEqId = 0;
 if(!isset($followup_Query)) $followup_Query = array();
-$followup_Query = array_merge(array('flw_name'=>'','flw_phone'=>'','flw_contacted_person'=>'','flw_contacted_time'=>'','flw_date'=>'','flw_mode_contact'=>'','flw_followup_type'=>'','flw_follow_up_notes'=>'','flw_next_followup_date'=>'','flw_follow_up_outcome'=>'','flw_comments'=>'','flw_progress_state'=>'','flw_remarks'=>''), $followup_Query);
+$followup_Query = array_merge(array('enquiry_id'=>'','flw_name'=>'','flw_phone'=>'','flw_contacted_person'=>'','flw_contacted_time'=>'','flw_date'=>'','flw_mode_contact'=>'','flw_followup_type'=>'','flw_follow_up_notes'=>'','flw_next_followup_date'=>'','flw_follow_up_outcome'=>'','flw_comments'=>'','flw_progress_state'=>'','flw_remarks'=>''), $followup_Query);
 $enquiry_flow_statuses = array(1=>'New',2=>'Contacted',3=>'Follow-up Required',4=>'Interested',5=>'Documents Collected',6=>'Enrolled',7=>'Not Interested',8=>'Invalid / Duplicate');
 $follow_up_outcomes = array(''=>'--select--','No answer'=>'No answer','Call back later'=>'Call back later','Sent info'=>'Sent info','Enrolment in progress'=>'Enrolment in progress');
 ?>
 <form class="followup_form" id="followup_form_embed">
 <div class="row">
 <div class="col-md-6"><div class="mb-3"><label class="form-label">Enquiry ID</label><br>
-<select class="selectpicker" title="--select--" data-live-search="true" name="enquiry_id" id="followup_enquiry_id">
 <?php
-if($enquiryIdsFollowup && mysqli_num_rows($enquiryIdsFollowup)!=0){
-while($enquiryIdsRes=mysqli_fetch_array($enquiryIdsFollowup)){
-echo "<option value='".$enquiryIdsRes['st_enquiry_id']."' data-name='".$enquiryIdsRes['st_name']."' data-mobile='".$enquiryIdsRes['st_phno']."'>".$enquiryIdsRes['st_enquiry_id']."</option>";
-}
-}else{
-echo "<option value='0'>No Enquiries Found</option>";
-}
+$followup_enquiry_code = isset($followup_Query['enquiry_id']) ? $followup_Query['enquiry_id'] : '';
 ?>
-</select><div class="error-feedback">Please Select the Enquiry ID</div></div></div>
+<input type="text" readonly class="form-control-plaintext fw-semibold" value="<?php echo $followup_enquiry_code ? $followup_enquiry_code : 'Save enquiry first'; ?>">
+<input type="hidden" name="enquiry_id" id="followup_enquiry_id" value="<?php echo htmlspecialchars($followup_enquiry_code); ?>">
+<div class="error-feedback">Please Select the Enquiry ID</div></div></div>
 <div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_student_name">Student Name<span class="asterisk">*</span></label>
 <input type="text" class="form-control" placeholder="Student Name" id="followup_student_name" value="<?php echo $followup_Query['flw_name']; ?>"><div class="error-feedback">Please enter the Student Name</div></div></div>
 <div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_mobile_num">Contact Number<span class="asterisk">*</span></label>

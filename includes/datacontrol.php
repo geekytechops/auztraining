@@ -2489,6 +2489,268 @@ if (@$_POST['formName'] == 'uploadEnrolmentExcel') {
 
 
 
+// Enquiry dashboard counts for counsellors (View Enquiries page)
+if(@$_POST['formName']=='fetchEnquiryDashboard'){
+    $base = "SELECT COUNT(*) FROM student_enquiry WHERE st_enquiry_status=0";
+    $today_start = date('Y-m-d 00:00:00');
+    $today_end = date('Y-m-d 23:59:59');
+    $week_start = date('Y-m-d 00:00:00', strtotime('-7 days'));
+    $month_start = date('Y-m-d 00:00:00', strtotime('-30 days'));
+    $last_week_start = date('Y-m-d 00:00:00', strtotime('-7 days'));
+    $flow_status_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_flow_status'")) ? 'st_enquiry_flow_status' : null;
+    $total_today = (int)mysqli_fetch_row(mysqli_query($connection, "$base AND COALESCE(created_date, st_enquiry_date) >= '$today_start' AND COALESCE(created_date, st_enquiry_date) <= '$today_end'"))[0];
+    $total_week = (int)mysqli_fetch_row(mysqli_query($connection, "$base AND COALESCE(created_date, st_enquiry_date) >= '$week_start'"))[0];
+    $total_month = (int)mysqli_fetch_row(mysqli_query($connection, "$base AND COALESCE(created_date, st_enquiry_date) >= '$month_start'"))[0];
+    $new_last_week = (int)mysqli_fetch_row(mysqli_query($connection, "$base AND COALESCE(created_date, st_enquiry_date) >= '$last_week_start'"))[0];
+    $followups_due_today = 0;
+    $next_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM followup_calls LIKE 'flw_next_followup_date'"));
+    if($next_col){
+        $today_d = date('Y-m-d');
+        $followups_due_today = (int)mysqli_fetch_row(mysqli_query($connection, "SELECT COUNT(DISTINCT e.st_id) FROM student_enquiry e INNER JOIN followup_calls f ON f.enquiry_id = e.st_enquiry_id AND e.st_enquiry_status=0 WHERE DATE(f.flw_next_followup_date) = '$today_d'"))[0];
+    }
+    $converted = (int)mysqli_fetch_row(mysqli_query($connection, "SELECT COUNT(*) FROM student_enquiry e WHERE e.st_enquiry_status=0 AND e.st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '' AND st_enquiry_id IS NOT NULL)"))[0];
+    $lost = 0;
+    if($flow_status_col){
+        $lost = (int)mysqli_fetch_row(mysqli_query($connection, "SELECT COUNT(*) FROM student_enquiry WHERE st_enquiry_status=0 AND COALESCE($flow_status_col,1)=7"))[0];
+    }
+    header('Content-Type: application/json');
+    echo json_encode(array('total_today'=>$total_today,'total_week'=>$total_week,'total_month'=>$total_month,'new_last_week'=>$new_last_week,'followups_due_today'=>$followups_due_today,'converted'=>$converted,'lost'=>$lost));
+    exit;
+}
+
+// Enquiry list for View Enquiries: filters, sort, next_followup_date, status
+if(@$_POST['formName']=='fetchEnquiryList'){
+    $search = isset($_POST['search']) ? mysqli_real_escape_string($connection, trim($_POST['search'])) : '';
+    $filter_course = isset($_POST['filter_course']) ? (int)$_POST['filter_course'] : 0;
+    $filter_status = isset($_POST['filter_status']) ? (int)$_POST['filter_status'] : -1;
+    $filter_date_from = isset($_POST['filter_date_from']) ? mysqli_real_escape_string($connection, $_POST['filter_date_from']) : '';
+    $filter_date_to = isset($_POST['filter_date_to']) ? mysqli_real_escape_string($connection, $_POST['filter_date_to']) : '';
+    $filter_counsellor = isset($_POST['filter_counsellor']) ? mysqli_real_escape_string($connection, trim($_POST['filter_counsellor'])) : '';
+    $filter_source = isset($_POST['filter_source']) ? (int)$_POST['filter_source'] : -1;
+    $sort_by = isset($_POST['sort_by']) ? $_POST['sort_by'] : 'latest';
+    $flow_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_flow_status'")) ? 'COALESCE(e.st_enquiry_flow_status,1)' : '1';
+    $source_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_source'")) ? 'e.st_enquiry_source' : '0';
+    $next_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM followup_calls LIKE 'flw_next_followup_date'"));
+    $sub_next = $next_col ? "(SELECT MAX(f.flw_next_followup_date) FROM followup_calls f WHERE f.enquiry_id = e.st_enquiry_id)" : "NULL";
+    $where = " e.st_enquiry_status = 0 ";
+    if($search !== ''){
+        $where .= " AND (e.st_name LIKE '%$search%' OR e.st_phno LIKE '%$search%' OR e.st_email LIKE '%$search%' OR e.st_enquiry_id LIKE '%$search%') ";
+    }
+    if($filter_course > 0){
+        $where .= " AND (e.st_course LIKE '%\"$filter_course\"%' OR e.st_course LIKE '%$filter_course%') ";
+    }
+    if($filter_status >= 0){
+        $where .= " AND $flow_col = ".(int)$filter_status;
+    }
+    if($filter_date_from !== ''){
+        $where .= " AND DATE(COALESCE(e.created_date, e.st_enquiry_date)) >= '".date('Y-m-d', strtotime($filter_date_from))."' ";
+    }
+    if($filter_date_to !== ''){
+        $where .= " AND DATE(COALESCE(e.created_date, e.st_enquiry_date)) <= '".date('Y-m-d', strtotime($filter_date_to))."' ";
+    }
+    if($filter_counsellor !== ''){
+        $where .= " AND EXISTS (SELECT 1 FROM counseling_details c WHERE c.st_enquiry_id = e.st_enquiry_id AND c.counsil_enquiry_status=0 AND (c.counsil_mem_name LIKE '%$filter_counsellor%' OR c.counsil_createdby IN (SELECT user_id FROM users WHERE user_name LIKE '%$filter_counsellor%'))) ";
+    }
+    if($filter_source >= 0){
+        $where .= " AND $source_col = ".(int)$filter_source;
+    }
+    $order_sql = " ORDER BY e.st_id DESC ";
+    if($sort_by === 'status'){
+        $order_sql = " ORDER BY $flow_col ASC, e.st_id DESC ";
+    }
+    $q = mysqli_query($connection, "SELECT e.st_id, e.st_enquiry_id, e.st_name, e.st_phno, e.st_email, e.st_course, e.st_course_type, e.st_enquiry_date, e.created_date, $flow_col AS flow_status FROM student_enquiry e WHERE $where $order_sql");
+    $status_labels = array(1=>'New',2=>'Contacted',3=>'Follow-up Required',4=>'Interested',5=>'Documents Collected',6=>'Enrolled',7=>'Not Interested',8=>'Invalid/Duplicate');
+    $status_classes = array(1=>'secondary',2=>'info',3=>'warning',4=>'primary',5=>'info',6=>'success',7=>'danger',8=>'secondary');
+    $tbody = '';
+    $rows = array();
+    while($r = mysqli_fetch_assoc($q)){
+        $next_fup = null;
+        if($next_col){
+            $nq = mysqli_query($connection, "SELECT MAX(flw_next_followup_date) AS n FROM followup_calls WHERE enquiry_id='".mysqli_real_escape_string($connection,$r['st_enquiry_id'])."'");
+            if($nq && ($nr = mysqli_fetch_assoc($nq)) && !empty($nr['n'])) $next_fup = $nr['n'];
+        }
+        $rows[] = array('r'=>$r,'next_fup'=>$next_fup);
+    }
+    if($sort_by === 'followup_date'){
+        usort($rows, function($a,$b){
+            $ta = $a['next_fup'] ? strtotime($a['next_fup']) : 0;
+            $tb = $b['next_fup'] ? strtotime($b['next_fup']) : 0;
+            return $tb - $ta;
+        });
+    }
+    foreach($rows as $row){
+        $r = $row['r']; $next_fup = $row['next_fup'];
+        $courseNames = array();
+        if(!empty($r['st_course'])){
+            $ids = json_decode($r['st_course']);
+            if(is_array($ids)) foreach($ids as $id){
+                $c = mysqli_fetch_array(mysqli_query($connection, "SELECT course_sname, course_name FROM courses WHERE course_status!=1 AND course_id=".(int)$id));
+                if($c) $courseNames[] = ($c['course_sname']??'').'-'.($c['course_name']??'');
+            }
+        }
+        $course_name = count($courseNames) ? htmlspecialchars($courseNames[0]) : '-';
+        $flow_status = (int)($r['flow_status'] ?? 1);
+        $status_label = $status_labels[$flow_status] ?? 'New';
+        $status_class = $status_classes[$flow_status] ?? 'secondary';
+        $next_fup_html = '-';
+        $next_class = '';
+        if($next_fup){
+            $next_ts = strtotime($next_fup);
+            $next_fup_html = date('d M Y', $next_ts).' '.date('H:i', $next_ts);
+            if(date('Y-m-d', $next_ts) < date('Y-m-d')) $next_class = 'text-danger fw-bold';
+            elseif(date('Y-m-d', $next_ts) == date('Y-m-d')) $next_class = 'text-warning fw-bold';
+            else $next_class = 'text-success';
+        }
+        $eq_enc = base64_encode($r['st_id']);
+        $tbody .= '<tr>';
+        $tbody .= '<td class="'.$next_class.'">'.$next_fup_html.'</td>';
+        $tbody .= '<td>'.htmlspecialchars($r['st_name']).'</td>';
+        $tbody .= '<td>'.htmlspecialchars($r['st_phno']).'</td>';
+        $tbody .= '<td>'.$course_name.'</td>';
+        $tbody .= '<td><span class="badge bg-'.$status_class.'">'.$status_label.'</span></td>';
+        $tbody .= '<td><a href="enquiry_details.php?eq='.$eq_enc.'" class="btn btn-sm btn-outline-primary">View Details</a></td>';
+        $tbody .= '</tr>';
+    }
+    echo $tbody ?: '<tr><td colspan="6">No records</td></tr>';
+    exit;
+}
+
+// Enquiry reports data (management)
+if(@$_POST['formName']=='fetchEnquiryReports'){
+    $flow_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_flow_status'")) ? 'COALESCE(e.st_enquiry_flow_status,1)' : '1';
+    $source_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_source'")) ? 'e.st_enquiry_source' : '0';
+    $base_where = " FROM student_enquiry e WHERE e.st_enquiry_status = 0 ";
+    $total_enquiries = (int)mysqli_fetch_row(mysqli_query($connection, "SELECT COUNT(*)" . $base_where))[0];
+    $converted_count = (int)mysqli_fetch_row(mysqli_query($connection, "SELECT COUNT(*) FROM student_enquiry e WHERE e.st_enquiry_status=0 AND e.st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '' AND st_enquiry_id IS NOT NULL)"))[0];
+    $conversion_rate = $total_enquiries > 0 ? round(($converted_count / $total_enquiries) * 100, 1) : 0;
+    $by_course = array();
+    $cq = mysqli_query($connection, "SELECT c.course_id, c.course_sname, c.course_name, COUNT(*) AS cnt FROM student_enquiry e INNER JOIN courses c ON (e.st_course LIKE CONCAT('%', c.course_id, '%')) AND c.course_status != 1 WHERE e.st_enquiry_status = 0 GROUP BY c.course_id, c.course_sname, c.course_name ORDER BY cnt DESC");
+    while($r = mysqli_fetch_assoc($cq)) $by_course[] = array('course'=>$r['course_sname'].' - '.$r['course_name'], 'count'=>(int)$r['cnt']);
+    $sources = array('','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads','Agent / referral');
+    $by_source = array();
+    $sq = mysqli_query($connection, "SELECT $source_col AS src, COUNT(*) AS cnt FROM student_enquiry e WHERE e.st_enquiry_status = 0 GROUP BY $source_col");
+    while($r = mysqli_fetch_assoc($sq)){
+        $idx = (int)$r['src'];
+        $by_source[] = array('source'=> isset($sources[$idx]) ? $sources[$idx] : ('Source '.$idx), 'count'=>(int)$r['cnt']);
+    }
+    $counsellor_perf = array();
+    $cpq = mysqli_query($connection, "SELECT c.counsil_mem_name AS name, COUNT(DISTINCT c.st_enquiry_id) AS enquiries, COUNT(DISTINCT CASE WHEN e.st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '' AND st_enquiry_id IS NOT NULL) THEN e.st_enquiry_id END) AS converted FROM counseling_details c INNER JOIN student_enquiry e ON e.st_enquiry_id = c.st_enquiry_id AND e.st_enquiry_status = 0 AND c.counsil_enquiry_status = 0 GROUP BY c.counsil_mem_name ORDER BY enquiries DESC");
+    while($r = mysqli_fetch_assoc($cpq)) $counsellor_perf[] = array('counsellor'=>$r['name'], 'enquiries'=>(int)$r['enquiries'], 'converted'=>(int)$r['converted'], 'rate'=> $r['enquiries'] > 0 ? round(((int)$r['converted']/$r['enquiries'])*100,1) : 0);
+    $followup_effect = array('with_followup'=>0, 'converted_with_followup'=>0);
+    $next_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM followup_calls LIKE 'flw_next_followup_date'"));
+    if($next_col){
+        $fq = mysqli_query($connection, "SELECT COUNT(DISTINCT e.st_id) AS with_fup FROM student_enquiry e INNER JOIN followup_calls f ON f.enquiry_id = e.st_enquiry_id WHERE e.st_enquiry_status = 0");
+        if($fq && $fr = mysqli_fetch_assoc($fq)) $followup_effect['with_followup'] = (int)$fr['with_followup'];
+        $fq2 = mysqli_query($connection, "SELECT COUNT(DISTINCT e.st_id) AS cnt FROM student_enquiry e INNER JOIN followup_calls f ON f.enquiry_id = e.st_enquiry_id WHERE e.st_enquiry_status = 0 AND e.st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '' AND st_enquiry_id IS NOT NULL)");
+        if($fq2 && $fr2 = mysqli_fetch_assoc($fq2)) $followup_effect['converted_with_followup'] = (int)$fr2['cnt'];
+    }
+    $lost_count = 0;
+    if($flow_col !== '1') $lost_count = (int)mysqli_fetch_row(mysqli_query($connection, "SELECT COUNT(*) FROM student_enquiry WHERE st_enquiry_status = 0 AND COALESCE(st_enquiry_flow_status,1) = 7"))[0];
+    header('Content-Type: application/json');
+    echo json_encode(array('by_course'=>$by_course,'by_source'=>$by_source,'conversion_rate'=>$conversion_rate,'total_enquiries'=>$total_enquiries,'converted_count'=>$converted_count,'counsellor_performance'=>$counsellor_perf,'followup_effectiveness'=>$followup_effect,'lost_count'=>$lost_count));
+    exit;
+}
+
+// Export Enquiry Reports as Excel
+if(@$_POST['formName']=='exportEnquiryReportsExcel' || @$_GET['export']==='enquiry_reports_excel'){
+    if(!isset($_SESSION['user_id']) || ((int)@$_SESSION['user_type'] !== 1 && (int)@$_SESSION['user_type'] !== 2)){ header('HTTP/1.0 403 Forbidden'); exit; }
+    $flow_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_flow_status'")) ? 'COALESCE(e.st_enquiry_flow_status,1)' : '1';
+    $source_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_source'")) ? 'e.st_enquiry_source' : '0';
+    $base_where = " FROM student_enquiry e WHERE e.st_enquiry_status = 0 ";
+    $total_enquiries = (int)mysqli_fetch_row(mysqli_query($connection, "SELECT COUNT(*)" . $base_where))[0];
+    $converted_count = (int)mysqli_fetch_row(mysqli_query($connection, "SELECT COUNT(*) FROM student_enquiry e WHERE e.st_enquiry_status=0 AND e.st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '' AND st_enquiry_id IS NOT NULL)"))[0];
+    $conversion_rate = $total_enquiries > 0 ? round(($converted_count / $total_enquiries) * 100, 1) : 0;
+    $by_course = array(); $cq = mysqli_query($connection, "SELECT c.course_id, c.course_sname, c.course_name, COUNT(*) AS cnt FROM student_enquiry e INNER JOIN courses c ON (e.st_course LIKE CONCAT('%', c.course_id, '%')) AND c.course_status != 1 WHERE e.st_enquiry_status = 0 GROUP BY c.course_id, c.course_sname, c.course_name ORDER BY cnt DESC");
+    while($r = mysqli_fetch_assoc($cq)) $by_course[] = array('course'=>$r['course_sname'].' - '.$r['course_name'], 'count'=>(int)$r['cnt']);
+    $sources = array('','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads','Agent / referral');
+    $by_source = array(); $sq = mysqli_query($connection, "SELECT $source_col AS src, COUNT(*) AS cnt FROM student_enquiry e WHERE e.st_enquiry_status = 0 GROUP BY $source_col");
+    while($r = mysqli_fetch_assoc($sq)){ $idx = (int)$r['src']; $by_source[] = array('source'=> isset($sources[$idx]) ? $sources[$idx] : ('Source '.$idx), 'count'=>(int)$r['cnt']); }
+    $counsellor_perf = array(); $cpq = mysqli_query($connection, "SELECT c.counsil_mem_name AS name, COUNT(DISTINCT c.st_enquiry_id) AS enquiries, COUNT(DISTINCT CASE WHEN e.st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '' AND st_enquiry_id IS NOT NULL) THEN e.st_enquiry_id END) AS converted FROM counseling_details c INNER JOIN student_enquiry e ON e.st_enquiry_id = c.st_enquiry_id AND e.st_enquiry_status = 0 AND c.counsil_enquiry_status = 0 GROUP BY c.counsil_mem_name ORDER BY enquiries DESC");
+    while($r = mysqli_fetch_assoc($cpq)) $counsellor_perf[] = array('counsellor'=>$r['name'], 'enquiries'=>(int)$r['enquiries'], 'converted'=>(int)$r['converted'], 'rate'=> $r['enquiries'] > 0 ? round(((int)$r['converted']/$r['enquiries'])*100,1) : 0);
+    $followup_effect = array('with_followup'=>0, 'converted_with_followup'=>0);
+    $next_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM followup_calls LIKE 'flw_next_followup_date'"));
+    if($next_col){ $fq = mysqli_query($connection, "SELECT COUNT(DISTINCT e.st_id) AS with_fup FROM student_enquiry e INNER JOIN followup_calls f ON f.enquiry_id = e.st_enquiry_id WHERE e.st_enquiry_status = 0"); if($fq && $fr = mysqli_fetch_assoc($fq)) $followup_effect['with_followup'] = (int)$fr['with_fup']; $fq2 = mysqli_query($connection, "SELECT COUNT(DISTINCT e.st_id) AS cnt FROM student_enquiry e INNER JOIN followup_calls f ON f.enquiry_id = e.st_enquiry_id WHERE e.st_enquiry_status = 0 AND e.st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '' AND st_enquiry_id IS NOT NULL)"); if($fq2 && $fr2 = mysqli_fetch_assoc($fq2)) $followup_effect['converted_with_followup'] = (int)$fr2['cnt']; }
+    $lost_count = 0; if($flow_col !== '1') $lost_count = (int)mysqli_fetch_row(mysqli_query($connection, "SELECT COUNT(*) FROM student_enquiry WHERE st_enquiry_status = 0 AND COALESCE(st_enquiry_flow_status,1) = 7"))[0];
+    if(!class_exists('PhpOffice\PhpSpreadsheet\Spreadsheet')){ if(file_exists(__DIR__.'/vendor/autoload.php')) require_once __DIR__.'/vendor/autoload.php'; elseif(file_exists(__DIR__.'/../vendor/autoload.php')) require_once __DIR__.'/../vendor/autoload.php'; }
+    if(!class_exists('PhpOffice\PhpSpreadsheet\Spreadsheet')){ header('Content-Type: text/plain'); echo 'PhpSpreadsheet not available'; exit; }
+    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->setTitle('Summary');
+    $sheet->setCellValue('A1','Enquiry Reports - Summary');
+    $sheet->setCellValue('A2','Total Enquiries'); $sheet->setCellValue('B2',$total_enquiries);
+    $sheet->setCellValue('A3','Converted (Enrolled)'); $sheet->setCellValue('B3',$converted_count);
+    $sheet->setCellValue('A4','Conversion Rate %'); $sheet->setCellValue('B4',$conversion_rate);
+    $sheet->setCellValue('A5','Lost (Not Interested)'); $sheet->setCellValue('B5',$lost_count);
+    $sheet->setCellValue('A7','By Course'); $sheet->setCellValue('A8','Course'); $sheet->setCellValue('B8','Count');
+    $row=9; foreach($by_course as $x){ $sheet->setCellValue('A'.$row,$x['course']); $sheet->setCellValue('B'.$row,$x['count']); $row++; }
+    $row++; $sheet->setCellValue('A'.$row,'By Source'); $row++; $sheet->setCellValue('A'.$row,'Source'); $sheet->setCellValue('B'.$row,'Count'); $row++;
+    foreach($by_source as $x){ $sheet->setCellValue('A'.$row,$x['source']); $sheet->setCellValue('B'.$row,$x['count']); $row++; }
+    $row++; $sheet->setCellValue('A'.$row,'Counsellor Performance'); $row++; $sheet->setCellValue('A'.$row,'Counsellor'); $sheet->setCellValue('B'.$row,'Enquiries'); $sheet->setCellValue('C'.$row,'Converted'); $sheet->setCellValue('D'.$row,'Rate %'); $row++;
+    foreach($counsellor_perf as $x){ $sheet->setCellValue('A'.$row,$x['counsellor']); $sheet->setCellValue('B'.$row,$x['enquiries']); $sheet->setCellValue('C'.$row,$x['converted']); $sheet->setCellValue('D'.$row,$x['rate']); $row++; }
+    $sheet->setCellValue('A'.($row+1),'Follow-up: Enquiries with follow-up'); $sheet->setCellValue('B'.($row+1),$followup_effect['with_followup']);
+    $sheet->setCellValue('A'.($row+2),'Converted among those with follow-up'); $sheet->setCellValue('B'.($row+2),$followup_effect['converted_with_followup']);
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="enquiry_reports_'.date('Y-m-d').'.xlsx"');
+    $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+    $writer->save('php://output');
+    exit;
+}
+
+// Export Enquiry Reports as PDF
+if(@$_POST['formName']=='exportEnquiryReportsPdf' || @$_GET['export']==='enquiry_reports_pdf'){
+    if(!isset($_SESSION['user_id']) || ((int)@$_SESSION['user_type'] !== 1 && (int)@$_SESSION['user_type'] !== 2)){ header('HTTP/1.0 403 Forbidden'); exit; }
+    $flow_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_flow_status'")) ? 'COALESCE(e.st_enquiry_flow_status,1)' : '1';
+    $source_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_source'")) ? 'e.st_enquiry_source' : '0';
+    $base_where = " FROM student_enquiry e WHERE e.st_enquiry_status = 0 ";
+    $total_enquiries = (int)mysqli_fetch_row(mysqli_query($connection, "SELECT COUNT(*)" . $base_where))[0];
+    $converted_count = (int)mysqli_fetch_row(mysqli_query($connection, "SELECT COUNT(*) FROM student_enquiry e WHERE e.st_enquiry_status=0 AND e.st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '' AND st_enquiry_id IS NOT NULL)"))[0];
+    $conversion_rate = $total_enquiries > 0 ? round(($converted_count / $total_enquiries) * 100, 1) : 0;
+    $by_course = array(); $cq = mysqli_query($connection, "SELECT c.course_id, c.course_sname, c.course_name, COUNT(*) AS cnt FROM student_enquiry e INNER JOIN courses c ON (e.st_course LIKE CONCAT('%', c.course_id, '%')) AND c.course_status != 1 WHERE e.st_enquiry_status = 0 GROUP BY c.course_id, c.course_sname, c.course_name ORDER BY cnt DESC");
+    while($r = mysqli_fetch_assoc($cq)) $by_course[] = array('course'=>$r['course_sname'].' - '.$r['course_name'], 'count'=>(int)$r['cnt']);
+    $sources = array('','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads','Agent / referral');
+    $by_source = array(); $sq = mysqli_query($connection, "SELECT $source_col AS src, COUNT(*) AS cnt FROM student_enquiry e WHERE e.st_enquiry_status = 0 GROUP BY $source_col");
+    while($r = mysqli_fetch_assoc($sq)){ $idx = (int)$r['src']; $by_source[] = array('source'=> isset($sources[$idx]) ? $sources[$idx] : ('Source '.$idx), 'count'=>(int)$r['cnt']); }
+    $counsellor_perf = array(); $cpq = mysqli_query($connection, "SELECT c.counsil_mem_name AS name, COUNT(DISTINCT c.st_enquiry_id) AS enquiries, COUNT(DISTINCT CASE WHEN e.st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '' AND st_enquiry_id IS NOT NULL) THEN e.st_enquiry_id END) AS converted FROM counseling_details c INNER JOIN student_enquiry e ON e.st_enquiry_id = c.st_enquiry_id AND e.st_enquiry_status = 0 AND c.counsil_enquiry_status = 0 GROUP BY c.counsil_mem_name ORDER BY enquiries DESC");
+    while($r = mysqli_fetch_assoc($cpq)) $counsellor_perf[] = array('counsellor'=>$r['name'], 'enquiries'=>(int)$r['enquiries'], 'converted'=>(int)$r['converted'], 'rate'=> $r['enquiries'] > 0 ? round(((int)$r['converted']/$r['enquiries'])*100,1) : 0);
+    $followup_effect = array('with_followup'=>0, 'converted_with_followup'=>0);
+    $next_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM followup_calls LIKE 'flw_next_followup_date'"));
+    if($next_col){ $fq = mysqli_query($connection, "SELECT COUNT(DISTINCT e.st_id) AS with_fup FROM student_enquiry e INNER JOIN followup_calls f ON f.enquiry_id = e.st_enquiry_id WHERE e.st_enquiry_status = 0"); if($fq && $fr = mysqli_fetch_assoc($fq)) $followup_effect['with_followup'] = (int)$fr['with_fup']; $fq2 = mysqli_query($connection, "SELECT COUNT(DISTINCT e.st_id) AS cnt FROM student_enquiry e INNER JOIN followup_calls f ON f.enquiry_id = e.st_enquiry_id WHERE e.st_enquiry_status = 0 AND e.st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '' AND st_enquiry_id IS NOT NULL)"); if($fq2 && $fr2 = mysqli_fetch_assoc($fq2)) $followup_effect['converted_with_followup'] = (int)$fr2['cnt']; }
+    $lost_count = 0; if($flow_col !== '1') $lost_count = (int)mysqli_fetch_row(mysqli_query($connection, "SELECT COUNT(*) FROM student_enquiry WHERE st_enquiry_status = 0 AND COALESCE(st_enquiry_flow_status,1) = 7"))[0];
+    $pdf = new TCPDF('P','mm','A4',true,'UTF-8');
+    $pdf->SetCreator('Auz Training');
+    $pdf->SetTitle('Enquiry Reports');
+    $pdf->AddPage();
+    $pdf->SetFont('helvetica','B',14);
+    $pdf->Cell(0,8,'Enquiry Reports - Summary',0,1);
+    $pdf->SetFont('helvetica','',10);
+    $pdf->Cell(0,6,'Total Enquiries: '.$total_enquiries,0,1);
+    $pdf->Cell(0,6,'Converted (Enrolled): '.$converted_count,0,1);
+    $pdf->Cell(0,6,'Conversion Rate: '.$conversion_rate.'%',0,1);
+    $pdf->Cell(0,6,'Lost (Not Interested): '.$lost_count,0,1);
+    $pdf->Ln(4);
+    $pdf->SetFont('helvetica','B',11);
+    $pdf->Cell(0,6,'By Course',0,1);
+    $pdf->SetFont('helvetica','',9);
+    $pdf->Cell(100,6,'Course',1,0); $pdf->Cell(30,6,'Count',1,1);
+    foreach($by_course as $x){ $pdf->Cell(100,6,$x['course'],1,0); $pdf->Cell(30,6,$x['count'],1,1); }
+    $pdf->Ln(4);
+    $pdf->SetFont('helvetica','B',11);
+    $pdf->Cell(0,6,'By Source',0,1);
+    $pdf->SetFont('helvetica','',9);
+    $pdf->Cell(100,6,'Source',1,0); $pdf->Cell(30,6,'Count',1,1);
+    foreach($by_source as $x){ $pdf->Cell(100,6,$x['source'],1,0); $pdf->Cell(30,6,$x['count'],1,1); }
+    $pdf->Ln(4);
+    $pdf->SetFont('helvetica','B',11);
+    $pdf->Cell(0,6,'Counsellor Performance',0,1);
+    $pdf->Cell(60,6,'Counsellor',1,0); $pdf->Cell(30,6,'Enquiries',1,0); $pdf->Cell(30,6,'Converted',1,0); $pdf->Cell(30,6,'Rate %',1,1);
+    foreach($counsellor_perf as $x){ $pdf->Cell(60,6,$x['counsellor'],1,0); $pdf->Cell(30,6,$x['enquiries'],1,0); $pdf->Cell(30,6,$x['converted'],1,0); $pdf->Cell(30,6,$x['rate'],1,1); }
+    $pdf->Ln(4);
+    $pdf->Cell(0,6,'Follow-up: Enquiries with follow-up: '.$followup_effect['with_followup'],0,1);
+    $pdf->Cell(0,6,'Converted among those with follow-up: '.$followup_effect['converted_with_followup'],0,1);
+    $pdf->Output('enquiry_reports_'.date('Y-m-d').'.pdf','D');
+    exit;
+}
+
 if(@$_POST['formName']=='fetchEnquiries'){    
 
     $where='';

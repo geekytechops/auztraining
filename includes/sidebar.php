@@ -42,7 +42,9 @@ $sidebar_home_url = $is_student_sidebar ? 'student_docs.php' : 'dashboard.php';
                                     <a href="javascript:void(0);"><i class="ti ti-file-text"></i><span>Enquiries</span><span class="menu-arrow"></span></a>
                                     <ul>
                                         <li><a href="student_enquiry.php">Create Enquiry</a></li>
-                                        <li><a href="student_enquiry.php?view=list">View Enquiry</a></li>
+                                        <li><a href="view_enquiries.php">View Enquiries</a></li>
+                                        <li><a href="enquiry_reports.php">Enquiry Reports</a></li>
+                                        <li><a href="student_enquiry.php?view=list">View Enquiry (Legacy)</a></li>
                                         <li><a href="enquiry_email_templates.php">Enquiry Email Templates</a></li>
                                         <li><a href="google_calendar_settings.php">Google Calendar (Follow-up reminders)</a></li>
                                     </ul>

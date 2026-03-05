@@ -1240,18 +1240,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                             </form>
                     </div></div></div>
             <?php if (!$is_student_portal): ?>
-            <!-- Accordion 2: Counseling (admin only) -->
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="headingCounseling">
-                    <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCounseling" aria-expanded="false" aria-controls="collapseCounseling">Counseling</button>
-                </h2>
-                <div id="collapseCounseling" class="accordion-collapse collapse" aria-labelledby="headingCounseling" data-bs-parent="#enquiryMainAccordion">
-                    <div class="accordion-body">
-                        <?php include('includes/counselling_accordion_form.php'); ?>
-                    </div>
-                </div>
-            </div>
-            <!-- Accordion 3: Follow Up Call (admin only) -->
+            <!-- Accordion 2: Follow Up Call (admin only) -->
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingFollowup">
                     <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFollowup" aria-expanded="false" aria-controls="collapseFollowup">Follow Up Call</button>
@@ -1259,6 +1248,17 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 <div id="collapseFollowup" class="accordion-collapse collapse" aria-labelledby="headingFollowup" data-bs-parent="#enquiryMainAccordion">
                     <div class="accordion-body">
                         <?php include('includes/followup_accordion_form.php'); ?>
+                    </div>
+                </div>
+            </div>
+            <!-- Accordion 3: Counseling (admin only) -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingCounseling">
+                    <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCounseling" aria-expanded="false" aria-controls="collapseCounseling">Counseling</button>
+                </h2>
+                <div id="collapseCounseling" class="accordion-collapse collapse" aria-labelledby="headingCounseling" data-bs-parent="#enquiryMainAccordion">
+                    <div class="accordion-body">
+                        <?php include('includes/counselling_accordion_form.php'); ?>
                     </div>
                 </div>
             </div>

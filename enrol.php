@@ -12,7 +12,7 @@ define('DB_HOST', 'localhost');           // CRM database host (or IP if DB is o
 define('DB_USER', 'root');                // CRM database username
 define('DB_PASS', '');                    // CRM database password
 define('DB_NAME', 'auztraining');         // CRM database name
-define('SITE_NAME', 'National College Australia');
+define('SITE_NAME', 'National College Australia');http://localhost/auztraining/student_enquiry.php
 define('FROM_EMAIL', 'noreply@yoursite.com');  // From address for confirmation email
 define('ADMIN_EMAIL', 'info@nca.edu.au');      // Optional: notify this email on new enquiry
 define('CRM_REGISTER_URL', 'https://your-crm-domain.com/student_register.php');  // Link shown after submit

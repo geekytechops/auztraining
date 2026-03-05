@@ -3,7 +3,9 @@ ini_set('display_errors', '0');
 session_start(); ?>
 <?php 
 $CRM_ASSET_BASE = 'crm/html/template/assets';
-$header_home_url = (isset($_SESSION['user_type']) && ($_SESSION['user_type'] === 0 || $_SESSION['user_type'] === 'student')) ? 'student_docs.php' : 'dashboard.php';
+$is_student = (isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'student');
+$header_home_url = ($is_student || (isset($_SESSION['user_type']) && $_SESSION['user_type'] === 0)) ? 'student_docs.php' : 'dashboard.php';
+$logout_url = $is_student ? 'student_logout.php' : 'index.php?name=logout';
 ?>
 <header class="navbar-header">
     <div class="page-container topbar-menu">
@@ -62,7 +64,7 @@ $header_home_url = (isset($_SESSION['user_type']) && ($_SESSION['user_type'] ===
                     </a>
                     <div class="dropdown-menu dropdown-menu-end">
                         <div class="pt-2 mt-2 border-top">
-                            <a href="index.php?name=logout" class="dropdown-item text-danger">
+                            <a href="<?php echo $logout_url; ?>" class="dropdown-item text-danger">
                                 <i class="ti ti-logout me-1 fs-17 align-middle"></i>
                                 <span class="align-middle">Sign Out</span>
                             </a>

@@ -1,6 +1,10 @@
 <?php include('includes/dbconnect.php'); ?>
 <?php 
 session_start();
+if(!isset($_SESSION['user_id']) || $_SESSION['user_id'] === ''){
+    header('Location: index.php');
+    exit;
+}
 if(@$_SESSION['user_type']!=''){
     $users = mysqli_query($connection, "SELECT * FROM users WHERE user_status != 1 ORDER BY user_name");
 ?>
@@ -19,21 +23,16 @@ if(@$_SESSION['user_type']!=''){
         <?php include('includes/app_includes.php'); ?>
     </head>
 
-    <body data-topbar="colored">
+    <body>
 
-        <!-- Begin page -->
-        <div id="layout-wrapper">
+        <!-- Begin page (same structure as dashboard for correct sidebar width) -->
+        <div class="main-wrapper">
 
-            
             <?php include('includes/header.php'); ?>
             <?php include('includes/sidebar.php'); ?>
             
-            <!-- ============================================================== -->
-            <!-- Start right Content here -->
-            <!-- ============================================================== -->
-            <div class="main-content">
-
-                <div class="page-content">
+            <div class="page-wrapper">
+                <div class="content pb-0">
                     <div class="container-fluid">
 
                         <!-- start page title -->
@@ -138,15 +137,10 @@ if(@$_SESSION['user_type']!=''){
                         <!-- end row -->
                     </div> <!-- container-fluid -->
                 </div>
-                <!-- End Page-content -->                            
-                
             </div>
-            <!-- end main content-->
-
         </div>
-        <!-- END layout-wrapper -->
+        <!-- END main-wrapper -->
 
-        <!-- Right bar overlay-->
         <div class="rightbar-overlay"></div>
 
         <?php include('includes/footer_includes.php'); ?>

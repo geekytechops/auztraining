@@ -1695,6 +1695,59 @@ if(@$_POST['formName'] == 'get_user'){
     echo json_encode(mysqli_fetch_assoc($result));
 }
 
+// Update logged-in user's own profile (Settings page)
+if(@$_POST['formName'] == 'update_profile'){
+    if(!isset($_SESSION['user_id']) || $_SESSION['user_id'] === ''){
+        echo 0;
+        exit;
+    }
+    $id = (int)$_SESSION['user_id'];
+    $name = mysqli_real_escape_string($connection, $_POST['user_name']);
+    $email = mysqli_real_escape_string($connection, $_POST['user_email']);
+    $phone = isset($_POST['user_phone']) ? mysqli_real_escape_string($connection, $_POST['user_phone']) : '';
+    $address = isset($_POST['user_address']) ? mysqli_real_escape_string($connection, $_POST['user_address']) : '';
+    $modified = date('Y-m-d H:i:s');
+
+    $hasPhoneColumn = mysqli_query($connection, "SHOW COLUMNS FROM users LIKE 'user_phone'");
+    if($hasPhoneColumn && mysqli_num_rows($hasPhoneColumn)){
+        $update = mysqli_query($connection, "UPDATE users SET user_name='$name', user_email='$email', user_phone='$phone', user_address='$address', modified_date='$modified' WHERE user_id=$id");
+    }else{
+        $update = mysqli_query($connection, "UPDATE users SET user_name='$name', user_email='$email', modified_date='$modified' WHERE user_id=$id");
+    }
+
+    if($update){
+        $_SESSION['user_name'] = $name;
+        echo 1;
+    }else{
+        echo 0;
+    }
+}
+
+// Change password for logged-in user (Settings page)
+if(@$_POST['formName'] == 'change_password'){
+    if(!isset($_SESSION['user_id']) || $_SESSION['user_id'] === ''){
+        echo 0;
+        exit;
+    }
+    $id = (int)$_SESSION['user_id'];
+    $current = isset($_POST['current_password']) ? $_POST['current_password'] : '';
+    $new = isset($_POST['new_password']) ? $_POST['new_password'] : '';
+    if($new === ''){
+        echo 0;
+        exit;
+    }
+    $res = mysqli_query($connection, "SELECT user_password FROM users WHERE user_id=$id LIMIT 1");
+    $row = $res ? mysqli_fetch_assoc($res) : null;
+    if(!$row || $row['user_password'] !== $current){
+        echo 'INVALID';
+        exit;
+    }
+    $modified = date('Y-m-d H:i:s');
+    $newEsc = mysqli_real_escape_string($connection, $new);
+    $ok = mysqli_query($connection, "UPDATE users SET user_password='$newEsc', modified_date='$modified' WHERE user_id=$id");
+    echo $ok ? '1' : '0';
+}
+
 // EDIT USER
 if(@$_POST['formName'] == 'edit_user'){
     $id = $_POST['user_id'];

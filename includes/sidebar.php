@@ -3,6 +3,20 @@
 $CRM_ASSET_BASE = 'crm/html/template/assets';
 $is_student_sidebar = (isset($_SESSION['user_type']) && ($_SESSION['user_type'] === 0 || $_SESSION['user_type'] === 'student'));
 $sidebar_home_url = $is_student_sidebar ? 'student_docs.php' : 'dashboard.php';
+
+// Determine current page for active highlighting
+$current_page = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+$current_query = $_GET ?? array();
+
+$enquiries_pages    = array('student_enquiry.php','view_enquiries.php','enquiry_reports.php','google_calendar_settings.php');
+$enrolment_pages    = array('enrolment.php','enrolment_online.php');
+$appointments_pages = array('appointment_booking.php','appointment_blocks.php','appointment_calendar.php','appointment_reports.php');
+$course_forms_pages = array('course_cancellations_list.php','course_extensions_list.php');
+
+$is_enquiries_active    = in_array($current_page, $enquiries_pages, true);
+$is_enrolment_active    = in_array($current_page, $enrolment_pages, true);
+$is_appointments_active = in_array($current_page, $appointments_pages, true);
+$is_course_forms_active = in_array($current_page, $course_forms_pages, true);
 ?>
         <div class="sidebar" id="sidebar">
             <div class="sidebar-logo">
@@ -33,57 +47,57 @@ $sidebar_home_url = $is_student_sidebar ? 'student_docs.php' : 'dashboard.php';
                             <ul>
                                 <?php if(@$_SESSION['user_type']==1 || @$_SESSION['user_type']==2){ ?>
                                 <li>
-                                    <a href="dashboard.php"><i class="ti ti-dashboard"></i><span>Dashboard</span></a>
+                                    <a href="dashboard.php" class="<?php echo $current_page === 'dashboard.php' ? 'active' : ''; ?>"><i class="ti ti-dashboard"></i><span>Dashboard</span></a>
                                 </li>
                                 <?php } ?>
 
                                 <?php if(@$_SESSION['user_type']==1 || @$_SESSION['user_type']==2){ ?>
                                 <li class="submenu">
-                                    <a href="javascript:void(0);"><i class="ti ti-file-text"></i><span>Enquiries</span><span class="menu-arrow"></span></a>
+                                    <a href="javascript:void(0);" class="<?php echo $is_enquiries_active ? 'active' : ''; ?>"><i class="ti ti-file-text"></i><span>Enquiries</span><span class="menu-arrow"></span></a>
                                     <ul>
-                                        <li><a href="student_enquiry.php">Create Enquiry</a></li>
-                                        <li><a href="view_enquiries.php">View Enquiries</a></li>
-                                        <li><a href="enquiry_reports.php">Enquiry Reports</a></li>
-                                        <li><a href="student_enquiry.php?view=list">View Enquiry (Legacy)</a></li>
-                                        <li><a href="google_calendar_settings.php">Google Calendar (Follow-up reminders)</a></li>
+                                        <li><a href="student_enquiry.php" class="<?php echo ($current_page === 'student_enquiry.php' && (!isset($current_query['view']) || $current_query['view'] !== 'list')) ? 'active' : ''; ?>">Create Enquiry</a></li>
+                                        <li><a href="view_enquiries.php" class="<?php echo $current_page === 'view_enquiries.php' ? 'active' : ''; ?>">View Enquiries</a></li>
+                                        <li><a href="enquiry_reports.php" class="<?php echo $current_page === 'enquiry_reports.php' ? 'active' : ''; ?>">Enquiry Reports</a></li>
+                                        <li><a href="student_enquiry.php?view=list" class="<?php echo ($current_page === 'student_enquiry.php' && isset($current_query['view']) && $current_query['view'] === 'list') ? 'active' : ''; ?>">View Enquiry (Legacy)</a></li>
+                                        <li><a href="google_calendar_settings.php" class="<?php echo $current_page === 'google_calendar_settings.php' ? 'active' : ''; ?>">Google Calendar (Follow-up reminders)</a></li>
                                     </ul>
                                 </li>
                                 <?php } ?>
 
                                 <?php if(@$_SESSION['user_type']==1 || @$_SESSION['user_type']==2){ ?>
                                 <li class="submenu">
-                                    <a href="javascript:void(0);"><i class="ti ti-user-plus"></i><span>Enrolment</span><span class="menu-arrow"></span></a>
+                                    <a href="javascript:void(0);" class="<?php echo $is_enrolment_active ? 'active' : ''; ?>"><i class="ti ti-user-plus"></i><span>Enrolment</span><span class="menu-arrow"></span></a>
                                     <ul>
-                                        <li><a href="enrolment.php">Enrolment (Legacy)</a></li>
-                                        <li><a href="enrolment_online.php">Enrolment Form (Online)</a></li>
+                                        <li><a href="enrolment.php" class="<?php echo $current_page === 'enrolment.php' ? 'active' : ''; ?>">Enrolment (Legacy)</a></li>
+                                        <li><a href="enrolment_online.php" class="<?php echo $current_page === 'enrolment_online.php' ? 'active' : ''; ?>">Enrolment Form (Online)</a></li>
                                     </ul>
                                 </li>
                                 <?php } ?>
 
                                 <?php if(@$_SESSION['user_type']==1){ ?>
                                 <li>
-                                    <a href="create_user.php"><i class="ti ti-users"></i><span>Staff Management</span></a>
+                                    <a href="create_user.php" class="<?php echo $current_page === 'create_user.php' ? 'active' : ''; ?>"><i class="ti ti-users"></i><span>Staff Management</span></a>
                                 </li>
                                 <?php } ?>
 
                                 <?php if(@$_SESSION['user_type']==1 || @$_SESSION['user_type']==2){ ?>
                                 <li class="submenu">
-                                    <a href="javascript:void(0);"><i class="ti ti-calendar"></i><span>Appointments</span><span class="menu-arrow"></span></a>
+                                    <a href="javascript:void(0);" class="<?php echo $is_appointments_active ? 'active' : ''; ?>"><i class="ti ti-calendar"></i><span>Appointments</span><span class="menu-arrow"></span></a>
                                     <ul>
-                                        <li><a href="appointment_booking.php">Book Appointment</a></li>
-                                        <li><a href="appointment_blocks.php">Block Slots</a></li>
-                                        <li><a href="appointment_calendar.php">Calendar View</a></li>
-                                        <li><a href="appointment_reports.php">List View</a></li>
+                                        <li><a href="appointment_booking.php" class="<?php echo $current_page === 'appointment_booking.php' ? 'active' : ''; ?>">Book Appointment</a></li>
+                                        <li><a href="appointment_blocks.php" class="<?php echo $current_page === 'appointment_blocks.php' ? 'active' : ''; ?>">Block Slots</a></li>
+                                        <li><a href="appointment_calendar.php" class="<?php echo $current_page === 'appointment_calendar.php' ? 'active' : ''; ?>">Calendar View</a></li>
+                                        <li><a href="appointment_reports.php" class="<?php echo $current_page === 'appointment_reports.php' ? 'active' : ''; ?>">List View</a></li>
                                     </ul>
                                 </li>
                                 <?php } ?>
 
                                 <?php if(@$_SESSION['user_type']==0 || @$_SESSION['user_type']==='student'){ ?>
                                 <li>
-                                    <a href="student_docs.php"><i class="ti ti-file-upload"></i><span>Documents</span></a>
+                                    <a href="student_docs.php" class="<?php echo $current_page === 'student_docs.php' ? 'active' : ''; ?>"><i class="ti ti-file-upload"></i><span>Documents</span></a>
                                 </li>
                                 <li>
-                                    <a href="student_enquiry_form.php"><i class="ti ti-file-text"></i><span>My Enquiry</span></a>
+                                    <a href="student_enquiry_form.php" class="<?php echo $current_page === 'student_enquiry_form.php' ? 'active' : ''; ?>"><i class="ti ti-file-text"></i><span>My Enquiry</span></a>
                                 </li>
                                 <?php } ?>
 
@@ -98,16 +112,16 @@ $sidebar_home_url = $is_student_sidebar ? 'student_docs.php' : 'dashboard.php';
 
                                 <?php if(@$_SESSION['user_type']==1 || @$_SESSION['user_type']==2){ ?>
                                 <li>
-                                    <a href="invoices1.php"><i class="ti ti-file-invoice"></i><span>Invoices</span></a>
+                                    <a href="invoices1.php" class="<?php echo $current_page === 'invoices1.php' ? 'active' : ''; ?>"><i class="ti ti-file-invoice"></i><span>Invoices</span></a>
                                 </li>
                                 <?php } ?>
 
                                 <?php if(@$_SESSION['user_type']==1 || @$_SESSION['user_type']==2){ ?>
                                 <li class="submenu">
-                                    <a href="javascript:void(0);"><i class="ti ti-file-off"></i><span>Course Forms</span><span class="menu-arrow"></span></a>
+                                    <a href="javascript:void(0);" class="<?php echo $is_course_forms_active ? 'active' : ''; ?>"><i class="ti ti-file-off"></i><span>Course Forms</span><span class="menu-arrow"></span></a>
                                     <ul>
-                                        <li><a href="course_cancellations_list.php">Course Cancellations</a></li>
-                                        <li><a href="course_extensions_list.php">Course Extensions</a></li>
+                                        <li><a href="course_cancellations_list.php" class="<?php echo $current_page === 'course_cancellations_list.php' ? 'active' : ''; ?>">Course Cancellations</a></li>
+                                        <li><a href="course_extensions_list.php" class="<?php echo $current_page === 'course_extensions_list.php' ? 'active' : ''; ?>">Course Extensions</a></li>
                                     </ul>
                                 </li>
                                 <?php } ?>

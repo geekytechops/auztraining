@@ -981,6 +981,19 @@ Author URL: https://themeforest.net/user/dreamstechnologies
 .sidebar .sidebar-menu > ul > li > ul > li > a:hover .menu-arrow::before {
   border-color: var(--white);
 }
+
+/* Active state for submenu links (same as hover) */
+.sidebar .sidebar-menu > ul > li > ul > li > a.active {
+  background: var(--menu-item-active-bg);
+  color: var(--primary);
+}
+.sidebar .sidebar-menu > ul > li > ul > li > a.active i {
+  color: #fff;
+  background-color: var(--primary);
+}
+.sidebar .sidebar-menu > ul > li > ul > li > a.active .menu-arrow::before {
+  border-color: var(--white);
+}
 .sidebar .sidebar-menu > ul > li:last-child ul {
   margin-bottom: 0;
 }

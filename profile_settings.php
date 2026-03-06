@@ -6,22 +6,48 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_id'] === '') {
     exit;
 }
 
+$session_user_type = $_SESSION['user_type'] ?? null;
 $user_id = (int)$_SESSION['user_id'];
-$userRes = mysqli_query($connection, "SELECT * FROM users WHERE user_id = $user_id LIMIT 1");
-$user = $userRes ? mysqli_fetch_assoc($userRes) : null;
-
-$name = $user ? $user['user_name'] : '';
-$email = $user ? $user['user_email'] : '';
-$phone = $user && isset($user['user_phone']) ? $user['user_phone'] : '';
-$address = $user && isset($user['user_address']) ? $user['user_address'] : '';
+$user = null;
+$name = '';
+$email = '';
+$phone = '';
+$address = '';
 $roleLabel = 'User';
-if ($user) {
-    if ((int)$user['user_type'] === 1) $roleLabel = 'Admin';
-    elseif ((int)$user['user_type'] === 2) $roleLabel = 'Staff';
+$is_admin = false;
+
+if ($session_user_type === 'student') {
+    // Self-registered student – use student_users table
+    $stuRes = mysqli_query($connection, "SELECT * FROM student_users WHERE id = $user_id LIMIT 1");
+    $stu = $stuRes ? mysqli_fetch_assoc($stuRes) : null;
+    if ($stu) {
+        $user = $stu;
+        $name = $stu['full_name'];
+        $email = $stu['email'];
+        $phone = isset($stu['phone']) ? $stu['phone'] : '';
+        $roleLabel = 'Student';
+    }
+} else {
+    // Admin / staff / admin-created student (users table)
+    $userRes = mysqli_query($connection, "SELECT * FROM users WHERE user_id = $user_id LIMIT 1");
+    $user = $userRes ? mysqli_fetch_assoc($userRes) : null;
+    if ($user) {
+        $name = $user['user_name'];
+        $email = $user['user_email'];
+        $phone = isset($user['user_phone']) ? $user['user_phone'] : '';
+        $address = isset($user['user_address']) ? $user['user_address'] : '';
+        if ((int)$user['user_type'] === 1) {
+            $roleLabel = 'Admin';
+            $is_admin = true;
+        } elseif ((int)$user['user_type'] === 2) {
+            $roleLabel = 'Staff';
+        } elseif ((int)$user['user_type'] === 0) {
+            $roleLabel = 'Student';
+        }
+    }
 }
 
 // Load enquiry email templates data for admin users (for Settings → Enquiry Email Templates)
-$is_admin = isset($user['user_type']) && (int)$user['user_type'] === 1;
 $status_labels = array(
     1 => 'New',
     2 => 'Contacted',
@@ -91,11 +117,13 @@ if ($is_admin) {
                                             <i class="ti ti-lock me-2"></i>Security
                                         </a>
                                     </li>
+                                    <?php if($is_admin){ ?>
                                     <li class="nav-item me-3">
                                         <a href="javascript:void(0);" class="nav-link p-2 settings-main-tab" data-target="#settings_email_section">
                                             <i class="ti ti-mail me-2"></i>Enquiry Email Templates
                                         </a>
                                     </li>
+                                    <?php } ?>
                                 </ul>
                             </div>
                         </div>
@@ -104,14 +132,16 @@ if ($is_admin) {
                             <div class="col-xl-3 col-lg-12">
                                 <div class="card mb-3 mb-xl-0">
                                     <div class="card-body">
-                                        <div class="settings-sidebar">
-                                            <h5 class="mb-3 fs-17">Profile Settings</h5>
-                                            <div class="list-group list-group-flush settings-sidebar">
-                                                <a href="javascript:void(0);" class="d-block p-2 fw-medium settings-side-link active" data-target="#settings_profile_section">Profile</a>
-                                                <a href="javascript:void(0);" class="d-block p-2 fw-medium settings-side-link" data-target="#settings_security_section">Change Password</a>
-                                                <a href="javascript:void(0);" class="d-block p-2 fw-medium settings-side-link" data-target="#settings_email_section">Enquiry Email Templates</a>
+                                            <div class="settings-sidebar">
+                                                <h5 class="mb-3 fs-17">Profile Settings</h5>
+                                                <div class="list-group list-group-flush settings-sidebar">
+                                                    <a href="javascript:void(0);" class="d-block p-2 fw-medium settings-side-link active" data-target="#settings_profile_section">Profile</a>
+                                                    <a href="javascript:void(0);" class="d-block p-2 fw-medium settings-side-link" data-target="#settings_security_section">Change Password</a>
+                                                    <?php if($is_admin){ ?>
+                                                    <a href="javascript:void(0);" class="d-block p-2 fw-medium settings-side-link" data-target="#settings_email_section">Enquiry Email Templates</a>
+                                                    <?php } ?>
+                                                </div>
                                             </div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -148,6 +178,7 @@ if ($is_admin) {
                                                     <div class="mb-3">
                                                         <label class="form-label">Mobile</label>
                                                         <input type="text" id="profile_phone" class="form-control" value="<?php echo htmlspecialchars($phone); ?>">
+                                                        <div class="error-feedback">Please enter a valid mobile number.</div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
@@ -175,22 +206,26 @@ if ($is_admin) {
                                                     <div class="mb-3">
                                                         <label class="form-label">Current Password <span class="text-danger">*</span></label>
                                                         <input type="password" id="current_password" class="form-control">
+                                                        <div class="error-feedback" id="current_password_error">Please enter your current password.</div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="mb-3">
                                                         <label class="form-label">New Password <span class="text-danger">*</span></label>
                                                         <input type="password" id="new_password" class="form-control">
+                                                        <div class="error-feedback" id="new_password_error">Password must be at least 6 characters.</div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="mb-3">
                                                         <label class="form-label">Confirm New Password <span class="text-danger">*</span></label>
                                                         <input type="password" id="confirm_password" class="form-control">
+                                                        <div class="error-feedback" id="confirm_password_error">New password and confirm password do not match.</div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="d-flex justify-content-end gap-2">
+                                            <div class="d-flex justify-content-end align-items-center gap-2">
+                                                <span class="text-success d-none" id="password_success_message">Password updated successfully.</span>
                                                 <button type="button" class="btn btn-sm btn-primary" id="change_password_btn">Update Password</button>
                                             </div>
                                         </div>
@@ -279,13 +314,35 @@ if ($is_admin) {
                 var email = $('#profile_email').val().trim();
                 var phone = $('#profile_phone').val().trim();
                 var address = $('#profile_address').val().trim();
+
+                // Clear previous validation states
                 $('.error-feedback').hide();
+                $('#profile_name, #profile_email, #profile_phone').removeClass('is-invalid');
+
+                var hasError = false;
                 if(!name){
-                    $('#profile_name').closest('.mb-3').find('.error-feedback').show();
-                    return;
+                    $('#profile_name').addClass('is-invalid')
+                        .closest('.mb-3').find('.error-feedback').show();
+                    hasError = true;
                 }
-                if(!email){
-                    $('#profile_email').closest('.mb-3').find('.error-feedback').show();
+
+                var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if(!email || !emailPattern.test(email)){
+                    $('#profile_email').addClass('is-invalid')
+                        .closest('.mb-3').find('.error-feedback').show();
+                    hasError = true;
+                }
+
+                if(phone){
+                    var phonePattern = /^[0-9]{8,15}$/;
+                    if(!phonePattern.test(phone)){
+                        $('#profile_phone').addClass('is-invalid')
+                            .closest('.mb-3').find('.error-feedback').show();
+                        hasError = true;
+                    }
+                }
+
+                if(hasError){
                     return;
                 }
                 $.post('includes/datacontrol.php', {
@@ -295,7 +352,7 @@ if ($is_admin) {
                     user_phone: phone,
                     user_address: address
                 }, function(resp){
-                    if(resp === '1'){
+                    if(resp == 1){
                         $('#toast-text').html('Profile updated successfully');
                         $('#borderedToast1Btn').trigger('click');
                     }else{
@@ -309,14 +366,31 @@ if ($is_admin) {
                 var current = $('#current_password').val().trim();
                 var nw = $('#new_password').val().trim();
                 var confirm = $('#confirm_password').val().trim();
-                if(!current || !nw || !confirm){
-                    $('.toast-text2').html('Please fill all password fields.');
-                    $('#borderedToast2Btn').trigger('click');
-                    return;
+
+                // Clear previous validation states
+                $('#current_password, #new_password, #confirm_password').removeClass('is-invalid');
+                $('#current_password_error, #new_password_error, #confirm_password_error')
+                    .hide()
+                    .text(function(i, t){ return t; }); // reset to default text
+                $('#password_success_message').addClass('d-none');
+
+                var hasError = false;
+                if(!current){
+                    $('#current_password').addClass('is-invalid');
+                    $('#current_password_error').text('Please enter your current password.').show();
+                    hasError = true;
                 }
-                if(nw !== confirm){
-                    $('.toast-text2').html('New password and confirm password do not match.');
-                    $('#borderedToast2Btn').trigger('click');
+                if(!nw || nw.length < 6){
+                    $('#new_password').addClass('is-invalid');
+                    $('#new_password_error').show();
+                    hasError = true;
+                }
+                if(!confirm || nw !== confirm){
+                    $('#confirm_password').addClass('is-invalid');
+                    $('#confirm_password_error').show();
+                    hasError = true;
+                }
+                if(hasError){
                     return;
                 }
                 $.post('includes/datacontrol.php', {
@@ -324,13 +398,14 @@ if ($is_admin) {
                     current_password: current,
                     new_password: nw
                 }, function(resp){
-                    if(resp === '1'){
+                    if(resp == 1){
                         $('#toast-text').html('Password updated successfully');
                         $('#borderedToast1Btn').trigger('click');
                         $('#current_password, #new_password, #confirm_password').val('');
+                        $('#password_success_message').removeClass('d-none');
                     }else if(resp === 'INVALID'){
-                        $('.toast-text2').html('Current password is incorrect.');
-                        $('#borderedToast2Btn').trigger('click');
+                        $('#current_password').addClass('is-invalid');
+                        $('#current_password_error').text('Current password is incorrect.').show();
                     }else{
                         $('.toast-text2').html('Unable to update password. Please try again.');
                         $('#borderedToast2Btn').trigger('click');
@@ -345,13 +420,23 @@ if ($is_admin) {
                 var body = $('.template-body[data-status="'+status+'"]').val().trim();
                 var $btn = $(this).prop('disabled', true).text('Saving...');
                 var $fb = $('.save-feedback[data-status="'+status+'"]').removeClass('text-success text-danger').text('');
+
+                if(!subject || !body){
+                    $btn.prop('disabled', false).text('Save template');
+                    $fb.addClass('text-danger').text('Subject and body are required.');
+                    return;
+                }
                 $.post('includes/datacontrol.php', { save_enquiry_status_template: 1, status_code: status, subject: subject, body: body }, function(data){
                     $btn.prop('disabled', false).text('Save template');
                     if (data == '1') {
                         $fb.addClass('text-success').text('Saved.');
+                        $('#toast-text').html('Email template updated successfully');
+                        $('#borderedToast1Btn').trigger('click');
                         setTimeout(function(){ $fb.text(''); }, 3000);
                     } else {
                         $fb.addClass('text-danger').text('Failed to save.');
+                        $('.toast-text2').html('Unable to save email template. Please try again.');
+                        $('#borderedToast2Btn').trigger('click');
                     }
                 });
             });

@@ -1702,24 +1702,38 @@ if(@$_POST['formName'] == 'update_profile'){
         exit;
     }
     $id = (int)$_SESSION['user_id'];
+    $sessionType = $_SESSION['user_type'] ?? null;
     $name = mysqli_real_escape_string($connection, $_POST['user_name']);
     $email = mysqli_real_escape_string($connection, $_POST['user_email']);
     $phone = isset($_POST['user_phone']) ? mysqli_real_escape_string($connection, $_POST['user_phone']) : '';
     $address = isset($_POST['user_address']) ? mysqli_real_escape_string($connection, $_POST['user_address']) : '';
     $modified = date('Y-m-d H:i:s');
 
-    $hasPhoneColumn = mysqli_query($connection, "SHOW COLUMNS FROM users LIKE 'user_phone'");
-    if($hasPhoneColumn && mysqli_num_rows($hasPhoneColumn)){
-        $update = mysqli_query($connection, "UPDATE users SET user_name='$name', user_email='$email', user_phone='$phone', user_address='$address', modified_date='$modified' WHERE user_id=$id");
+    if($sessionType === 'student'){
+        // Self-registered student: update student_users
+        $update = mysqli_query($connection, "UPDATE student_users SET full_name='$name', email='$email', phone='$phone' WHERE id=$id");
+        if($update){
+            $_SESSION['user_name'] = $name;
+            $_SESSION['student_email'] = $email;
+            echo 1;
+        }else{
+            echo 0;
+        }
     }else{
-        $update = mysqli_query($connection, "UPDATE users SET user_name='$name', user_email='$email', modified_date='$modified' WHERE user_id=$id");
-    }
+        // Admin / staff / admin-created student: update users table
+        $hasPhoneColumn = mysqli_query($connection, "SHOW COLUMNS FROM users LIKE 'user_phone'");
+        if($hasPhoneColumn && mysqli_num_rows($hasPhoneColumn)){
+            $update = mysqli_query($connection, "UPDATE users SET user_name='$name', user_email='$email', user_phone='$phone', user_address='$address', modified_date='$modified' WHERE user_id=$id");
+        }else{
+            $update = mysqli_query($connection, "UPDATE users SET user_name='$name', user_email='$email', modified_date='$modified' WHERE user_id=$id");
+        }
 
-    if($update){
-        $_SESSION['user_name'] = $name;
-        echo 1;
-    }else{
-        echo 0;
+        if($update){
+            $_SESSION['user_name'] = $name;
+            echo 1;
+        }else{
+            echo 0;
+        }
     }
 }
 
@@ -1730,22 +1744,38 @@ if(@$_POST['formName'] == 'change_password'){
         exit;
     }
     $id = (int)$_SESSION['user_id'];
+    $sessionType = $_SESSION['user_type'] ?? null;
     $current = isset($_POST['current_password']) ? $_POST['current_password'] : '';
     $new = isset($_POST['new_password']) ? $_POST['new_password'] : '';
     if($new === ''){
         echo 0;
         exit;
     }
-    $res = mysqli_query($connection, "SELECT user_password FROM users WHERE user_id=$id LIMIT 1");
-    $row = $res ? mysqli_fetch_assoc($res) : null;
-    if(!$row || $row['user_password'] !== $current){
-        echo 'INVALID';
-        exit;
+
+    if($sessionType === 'student'){
+        // Self-registered student: password stored as hash in student_users
+        $res = mysqli_query($connection, "SELECT password_hash FROM student_users WHERE id=$id LIMIT 1");
+        $row = $res ? mysqli_fetch_assoc($res) : null;
+        if(!$row || !password_verify($current, $row['password_hash'])){
+            echo 'INVALID';
+            exit;
+        }
+        $newHash = password_hash($new, PASSWORD_DEFAULT);
+        $ok = mysqli_query($connection, "UPDATE student_users SET password_hash='".mysqli_real_escape_string($connection,$newHash)."' WHERE id=$id");
+        echo $ok ? '1' : '0';
+    }else{
+        // Users table: plain password as used elsewhere
+        $res = mysqli_query($connection, "SELECT user_password FROM users WHERE user_id=$id LIMIT 1");
+        $row = $res ? mysqli_fetch_assoc($res) : null;
+        if(!$row || $row['user_password'] !== $current){
+            echo 'INVALID';
+            exit;
+        }
+        $modified = date('Y-m-d H:i:s');
+        $newEsc = mysqli_real_escape_string($connection, $new);
+        $ok = mysqli_query($connection, "UPDATE users SET user_password='$newEsc', modified_date='$modified' WHERE user_id=$id");
+        echo $ok ? '1' : '0';
     }
-    $modified = date('Y-m-d H:i:s');
-    $newEsc = mysqli_real_escape_string($connection, $new);
-    $ok = mysqli_query($connection, "UPDATE users SET user_password='$newEsc', modified_date='$modified' WHERE user_id=$id");
-    echo $ok ? '1' : '0';
 }
 
 // EDIT USER

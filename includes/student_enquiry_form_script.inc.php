@@ -1,4 +1,4 @@
-﻿        <script>
+        <script>
 
             var checkPhone=0;
             function PhoneCheck(number){
@@ -484,7 +484,7 @@
             })
 
 
-            function genQR(){                
+            /* function genQR(){                
 
                 // $.ajax({
                 //     url:'includes/datacontrol.php',
@@ -494,3 +494,186 @@
                         
                         var qrcodeContainer = document.getElementById('qrcode');
                         var updatedURL = removeLastSegmentFromURL(window.location.href)+'/common_enquiry.php';
+            */
+
+            var rpl_array = <?php echo $rpl_arrays; ?>;
+            var short_grp = <?php echo $short_grps; ?>;
+            var slot_book = <?php echo $slot_books; ?>;
+
+            function submitRpl(){
+               var rpl_exp=$('#rpl_exp').val()==0 ? '' : $('#rpl_exp').val();
+               var exp_in=$('#exp_in').val()==0 ? '' : $('#exp_in').val();
+               var exp_docs=$('#exp_docs').val()==0 ? '' : $('#exp_docs').val();
+               var exp_prev=$('#exp_prev').val()==0 ? '' : $('#exp_prev').val();
+               var exp_name=$('#exp_name').val();
+               var exp_years=$('#exp_years').val();
+               var exp_prev_name=$('#exp_prev_name').val();
+
+
+               if(rpl_exp=='' || ( rpl_exp!='' && rpl_exp==1 ) && ( exp_in=='' ||  exp_docs=='' || exp_prev=='' || exp_name=='' || exp_years=='' ) || ( rpl_exp!='' && rpl_exp==1 ) && ( exp_prev==1 && exp_prev_name=='' ) ) {
+
+
+
+                    if(rpl_exp==''){
+                            $('#rpl_exp').addClass('invalid-div');
+                            $('#rpl_exp').removeClass('valid-div');
+                    }else{
+                            $('#rpl_exp').addClass('valid-div');
+                            $('#rpl_exp').removeClass('invalid-div');
+                    }
+
+                    if(rpl_exp!='' && ( exp_in=='' ||  exp_docs=='' || exp_prev=='' || exp_name=='' || exp_years=='' )){
+
+
+                        if(exp_in==''){
+                            $('#exp_in').addClass('invalid-div');
+                            $('#exp_in').removeClass('valid-div');
+                        }else{
+                                $('#exp_in').addClass('valid-div');
+                                $('#exp_in').removeClass('invalid-div');
+                        }
+
+                        if(exp_docs==''){
+                            $('#exp_docs').addClass('invalid-div');
+                            $('#exp_docs').removeClass('valid-div');
+                        }else{
+                            $('#exp_docs').addClass('valid-div');
+                            $('#exp_docs').removeClass('invalid-div');
+                        }
+
+                        if(exp_prev==''){
+                            $('#exp_prev').addClass('invalid-div');
+                            $('#exp_prev').removeClass('valid-div');
+                        }else{
+                            $('#exp_prev').addClass('valid-div');
+                            $('#exp_prev').removeClass('invalid-div');
+                        }
+
+                        if(exp_name==''){
+                            $('#exp_name').addClass('invalid-div');
+                            $('#exp_name').removeClass('valid-div');
+                        }else{
+                            $('#exp_name').addClass('valid-div');
+                            $('#exp_name').removeClass('invalid-div');
+                        }
+
+                        if(exp_years==''){
+                            $('#exp_years').addClass('invalid-div');
+                            $('#exp_years').removeClass('valid-div');
+                        }else{
+                            $('#exp_years').addClass('valid-div');
+                            $('#exp_years').removeClass('invalid-div');
+                        }
+
+                    }
+
+                    if( exp_prev==1 && exp_prev_name=='' ){
+
+                        if(exp_prev_name==''){
+                            $('#exp_prev_name').addClass('invalid-div');
+                            $('#exp_prev_name').removeClass('valid-div');
+                        }else{
+                            $('#exp_prev_name').addClass('valid-div');
+                            $('#exp_prev_name').removeClass('invalid-div');
+                        }
+
+                    }
+
+                    return false;
+
+                }else{
+
+                    rpl_array={"rpl_exp":rpl_exp,"exp_in":exp_in,"exp_docs":exp_docs,"exp_prev":exp_prev,"exp_name":exp_name,"exp_years":exp_years,"exp_prev_name":exp_prev_name};
+                    return true;
+                    
+                }
+
+            }
+
+            function submitShortGroup(){
+                var short_grp_org_name=$('#short_grp_org_name').val();
+                var short_grp_date=$('#short_grp_date').val();
+                var short_grp_num_std=$('#short_grp_num_std').val();
+                var short_grp_ind_exp=$('#short_grp_ind_exp').val()==0 ? '' : $('#short_grp_ind_exp').val();
+                var short_grp_con_type=$('#short_grp_con_type').val();
+                var short_grp_con_num=$('#short_grp_con_num').val();
+                var short_grp_con_name=$('#short_grp_con_name').val();
+                var short_grp_con_email=$('#short_grp_con_email').val();
+                var emailregexp = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
+                var short_grp_org_type=$('#short_grp_org_type').val()==0 ? '' : $('#short_grp_org_type').val();
+                var short_grp_campus=$('#short_grp_campus').val()==0 ? '' : $('#short_grp_campus').val();
+                var short_grp_before=$('#short_grp_before').val()==0 ? '' : $('#short_grp_before').val();
+
+                short_grp={"short_grp_org_name":short_grp_org_name,"short_grp_org_type":short_grp_org_type,"short_grp_campus":short_grp_campus,"short_grp_date":short_grp_date,"short_grp_num_std":short_grp_num_std,"short_grp_ind_exp":short_grp_ind_exp,"short_grp_con_type":short_grp_con_type,"short_grp_con_num":short_grp_con_num,"short_grp_con_name":short_grp_con_name, "short_grp_con_email":short_grp_con_email,"short_grp_before":short_grp_before};
+                return true;
+            // }
+
+            }
+
+            function submitSlot(){
+                var slot_book_time=$('#slot_book_time').val(); 
+                var slot_book_purpose=$('#slot_book_purpose').val(); 
+                var slot_book_date=$('#slot_book_date').val(); 
+                var slot_book_by=$('#slot_book_by').val(); 
+                var slot_book_link=$('#slot_book_link').val()==0 ? '' : $('#slot_book_link').val(); 
+
+                if(slot_book_time=='' || slot_book_purpose=='' || slot_book_date=='' || slot_book_by=='' || slot_book_link==''){
+
+                    if(slot_book_time==''){
+
+                        $('#slot_book_time').addClass('invalid-div');
+                        $('#slot_book_time').removeClass('valid-div');
+                    }else{
+                        $('#slot_book_time').addClass('valid-div');
+                        $('#slot_book_time').removeClass('invalid-div');
+
+                    }
+                    if(slot_book_purpose==''){
+
+                        $('#slot_book_purpose').addClass('invalid-div');
+                        $('#slot_book_purpose').removeClass('valid-div');
+                    }else{
+                        $('#slot_book_purpose').addClass('valid-div');
+                        $('#slot_book_purpose').removeClass('invalid-div');
+
+                    }
+                    if(slot_book_date==''){
+
+                        $('#slot_book_date').addClass('invalid-div');
+                        $('#slot_book_date').removeClass('valid-div');
+                    }else{
+                        $('#slot_book_date').addClass('valid-div');
+                        $('#slot_book_date').removeClass('invalid-div');
+
+                    }
+                    if(slot_book_by==''){
+
+                        $('#slot_book_by').addClass('invalid-div');
+                        $('#slot_book_by').removeClass('valid-div');
+                    }else{
+                        $('#slot_book_by').addClass('valid-div');
+                        $('#slot_book_by').removeClass('invalid-div');
+
+                    }
+                    if(slot_book_link==''){
+
+                        $('#slot_book_link').addClass('invalid-div');
+                        $('#slot_book_link').removeClass('valid-div');
+                    }else{
+                        $('#slot_book_link').addClass('valid-div');
+                        $('#slot_book_link').removeClass('invalid-div');
+
+                    }
+
+                    return false;
+
+                }else{
+
+                    slot_book={"slot_book_time":slot_book_time,"slot_book_purpose":slot_book_purpose,"slot_book_date":slot_book_date,"slot_book_by":slot_book_by,"slot_book_link":slot_book_link};
+                    return true;
+
+                }
+
+            }
+
+        </script>

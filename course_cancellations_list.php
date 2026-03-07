@@ -20,6 +20,21 @@ if(@$_SESSION['user_type']!=''){
             .asterisk {
                 color: red;
             }
+            /* Pagination prev/next and page numbers visible */
+            .dataTables_paginate .page-link,
+            .dataTables_paginate .page-item.previous .page-link,
+            .dataTables_paginate .page-item.next .page-link {
+                color: #405189 !important;
+            }
+            .dataTables_paginate .page-item.disabled .page-link {
+                color: #878a99 !important;
+            }
+            .dataTables_paginate .page-item.active .page-link {
+                color: #fff !important;
+            }
+            .dataTables_paginate .page-link i {
+                color: inherit;
+            }
         </style>
     </head>
 
@@ -185,8 +200,8 @@ if(@$_SESSION['user_type']!=''){
                     lengthMenu: [10, 25, 50, 100],
                     language:{
                         paginate:{
-                            previous:"<i class='mdi mdi-chevron-left'>",
-                            next:"<i class='mdi mdi-chevron-right'>"
+                            previous: "<i class='ti ti-chevron-left'></i>",
+                            next: "<i class='ti ti-chevron-right'></i>"
                         }
                     },
                     drawCallback:function(){

@@ -22,7 +22,7 @@ function send_mail($to, $subject, $body) {
     $transport = Transport::fromDsn('smtp://noreply@nationalcollege.edu.au:Noreply@2026mail@smtp.hostinger.com?encryption=ssl');
     $mailer = new Mailer($transport);
     $email = (new Email())
-        ->from('Auztraining <noreply@nationalcollege.edu.au>')
+        ->from('National College of Australia <noreply@nationalcollege.edu.au>')
         ->to($to)
         ->subject($subject)
         ->html($body);

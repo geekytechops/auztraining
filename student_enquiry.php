@@ -356,12 +356,44 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
     // When editing a specific enquiry, pre-fill counselling & follow-up context from that enquiry
     if(!empty($queryRes) && !empty($queryRes['st_enquiry_id'])){
         $current_enquiry_code = $queryRes['st_enquiry_id'];
-        $counsilEqId = $eqId;
-        $followupEqId = $eqId;
+        $followupEqId = 0; // always "new" follow-up when submitting from this page
         $counsil_Query['st_enquiry_id'] = $current_enquiry_code;
         $followup_Query['enquiry_id'] = $current_enquiry_code;
         $followup_Query['flw_name'] = $queryRes['st_name'] ?: $queryRes['st_member_name'];
         $followup_Query['flw_phone'] = $queryRes['st_phno'];
+        // Load latest counselling record for this enquiry so we UPDATE it if it exists, else INSERT
+        $eid = mysqli_real_escape_string($connection, $current_enquiry_code);
+        $counsel_q = mysqli_query($connection, "SELECT * FROM counseling_details WHERE st_enquiry_id = '$eid' AND counsil_enquiry_status = 0 ORDER BY counsil_id DESC LIMIT 1");
+        if($counsel_q && mysqli_num_rows($counsel_q) > 0){
+            $crow = mysqli_fetch_assoc($counsel_q);
+            $counsilEqId = (int)$crow['counsil_id'];
+            $counsil_Query = array_merge($counsil_Query, array(
+                'counsil_timing' => $crow['counsil_timing'] ?? '',
+                'counsil_end_time' => $crow['counsil_end_time'] ?? '',
+                'counsil_type' => $crow['counsil_type'] ?? '',
+                'counsil_mem_name' => $crow['counsil_mem_name'] ?? '',
+                'counsil_preferred_intake_date' => $crow['counsil_preferred_intake_date'] ?? '',
+                'counsil_mode_of_study' => $crow['counsil_mode_of_study'] ?? '',
+                'counsil_aus_stay_time' => $crow['counsil_aus_stay_time'] ?? '',
+                'counsil_work_status' => $crow['counsil_work_status'] ?? '',
+                'counsil_visa_condition' => $crow['counsil_visa_condition'] ?? '',
+                'counsil_education' => $crow['counsil_education'] ?? '',
+                'counsil_aus_study_status' => $crow['counsil_aus_study_status'] ?? '',
+                'counsil_course' => $crow['counsil_course'] ?? '',
+                'counsil_university' => $crow['counsil_university'] ?? '',
+                'counsil_qualification' => $crow['counsil_qualification'] ?? '',
+                'counsil_eng_rate' => $crow['counsil_eng_rate'] ?? '',
+                'counsil_migration_test' => $crow['counsil_migration_test'] ?? '',
+                'counsil_overall_result' => $crow['counsil_overall_result'] ?? '',
+                'counsil_module_result' => $crow['counsil_module_result'] ?? '',
+                'counsil_job_nature' => $crow['counsil_job_nature'] ?? '',
+                'counsil_vaccine_status' => $crow['counsil_vaccine_status'] ?? '',
+                'counsil_pref_comments' => $crow['counsil_pref_comments'] ?? '',
+                'counsil_remarks' => $crow['counsil_remarks'] ?? ''
+            ));
+        } else {
+            $counsilEqId = 0; // no existing counselling -> INSERT on submit
+        }
     }
 
 ?>
@@ -1141,7 +1173,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6">
+                                                <div class="col-md-6 d-none">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="remarks">Remarks</label>
                                                         <?php  
@@ -1749,7 +1781,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                             }else{
                                 // $( "#student_enquiry_form_parent" ).load(window.location.href + " #student_enquiry_form" );
                                 document.getElementById('student_enquiry_form').reset();
-                                $('#toast-text').html('New Enquiry Added');
+                                $('#toast-text').html('Enquiry saved successfully');
                                 $('#borderedToast1Btn').trigger('click');
 
                                 $('#myModalLabel').html('Enquiry ID Created:');
@@ -2084,6 +2116,9 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             });
             $(document).on('click','#counseling_submit',function(){
                 var $f=$('#counselling_form');
+                // reset previous validation state on each submit click
+                $f.find('.invalid-div').removeClass('invalid-div');
+                $f.find('.error-feedback').hide();
                 var enquiry_id=($('#counselling_enquiry_id').length ? $('#counselling_enquiry_id').val() : '').toString().trim();
                 var counseling_timing=$('#counseling_timing').val().trim();
                 var counseling_type=$f.find('.counseling_type:checked').val();
@@ -2105,7 +2140,49 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var mig_test_error=1;
                 if(mig_test==1){if($('#counselling_overall_result').val()==''||$('#counselling_module_result').val()==''||$('#counselling_job_nature').val()=='')mig_test_error=0;}
                 if(!enquiry_id||!counseling_timing||!counseling_type||!member_name||!aus_duration||!work_status||!visa_condition||!education||eng_rate==''||!vaccine_status||!qualification||aus_study_error==0||mig_test_error==0){
-                    if(!enquiry_id)$('#counselling_enquiry_id').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                    if(!enquiry_id){
+                        $('#counselling_enquiry_id').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                    }
+                    if(!counseling_timing){
+                        $('#counseling_timing').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                    }
+                    if(!member_name){
+                        $('#counselling_member_name').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                    }
+                    if(!aus_duration){
+                        $('#aus_duration').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                    }
+                    if(!visa_condition){
+                        $('#counselling_visa_condition').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                    }
+                    if(aus_study_error==0){
+                        if(!$('#counselling_course').val()){
+                            $('#counselling_course').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                        }
+                        if(!$('#counselling_university_name').val()){
+                            $('#counselling_university_name').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                        }
+                    }
+                    if(mig_test_error==0){
+                        if(!$('#counselling_overall_result').val()){
+                            $('#counselling_overall_result').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                        }
+                        if(!$('#counselling_module_result').val()){
+                            $('#counselling_module_result').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                        }
+                        if(!$('#counselling_job_nature').val()){
+                            $('#counselling_job_nature').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                        }
+                    }
+                    if(!education){
+                        $('#counselling_education').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                    }
+                    if(eng_rate===''){
+                        $('#counselling_eng_rate').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                    }
+                    if(!qualification){
+                        $('#counselling_qualification').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                    }
                     return;
                 }
                 var details={formName:'counseling_form',vaccine_status:vaccine_status,job_nature:$('#counselling_job_nature').val(),module_result:$('#counselling_module_result').val(),pref_comment:$('#counselling_pref_comment').val(),eng_rate:eng_rate,mig_test:mig_test,overall_result:$('#counselling_overall_result').val(),course:$('#counselling_course').val(),university_name:$('#counselling_university_name').val(),qualification:qualification,counseling_timing:counseling_timing,counseling_end_timing:$('#counseling_end_timing').val(),enquiry_id:enquiry_id,counseling_type:counseling_type,member_name:member_name,preferred_intake_date:$('#counselling_preferred_intake_date').val(),mode_of_study:$('#counselling_mode_of_study').val(),aus_duration:aus_duration,work_status:work_status,visa_condition:visa_condition,education:education,remarks:remarks,aus_study:aus_study,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
@@ -2113,6 +2190,14 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     if(data==1){$('#toast-text').html('Record Added Successfully');$('#borderedToast1Btn').trigger('click');setTimeout(function(){location.reload();},400);}
                     else{$('.toast-text2').html('Cannot add record. Please try again later');$('#borderedToast2Btn').trigger('click');}
                 }});
+            });
+            // live clear validation when user fixes counselling fields
+            $(document).on('input change','#counselling_form input, #counselling_form select',function(){
+                var $field=$(this);
+                if($field.hasClass('invalid-div') && $field.val().toString().trim()!==''){
+                    $field.removeClass('invalid-div');
+                    $field.closest('.mb-3').find('.error-feedback').hide();
+                }
             });
             function loadFollowupTemplateForCurrentStatus(){
                 var status=$('#followup_enquiry_flow_status').val();
@@ -2173,8 +2258,8 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 if(!date) date = contacted_time ? contacted_time.slice(0,10) : '';
                 var details={formName:'followup_call',student_name:student_name,date:date,contacted_person:contacted_person,contacted_time:contacted_time,contactMode:contactMode||followupType,followup_type:followupType,enquiry_flow_status:enquiry_flow_status,follow_up_notes:follow_up_notes,next_followup_date:next_followup_date,follow_up_outcome:follow_up_outcome,contact_num:contact_num,enquiry_id:enquiry_id,remarks:remarks,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
                 $.ajax({type:'post',url:'includes/datacontrol.php',data:details,success:function(data){
-                    if(data==1){$('#toast-text').html('Record Added Successfully');$('#borderedToast1Btn').trigger('click');setTimeout(function(){location.reload();},400);}
-                    else{$('.toast-text2').html('Cannot add record. Please try again later');$('#borderedToast2Btn').trigger('click');}
+                    if(data==1 || data=='1'){$('#toast-text').html('Follow-up saved successfully');$('#borderedToast1Btn').trigger('click');setTimeout(function(){location.reload();},600);}
+                    else{$('.toast-text2').html(data && data.trim() ? data : 'Cannot save follow-up. Please try again.');$('#borderedToast2Btn').trigger('click');}
                 }});
             });
 

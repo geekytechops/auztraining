@@ -18,10 +18,11 @@ use Symfony\Component\Mime\Email;
 
 $email = '';
 function send_mail($to, $subject, $body) {
-    $transport = Transport::fromDsn('smtp://auztraining@nationalcollege.edu.au:2025@Nationalcollege.edu.au@smtp.hostinger.com?encryption=ssl');
+    // $transport = Transport::fromDsn('smtp://auztraining@nationalcollege.edu.au:2025@Nationalcollege.edu.au@smtp.hostinger.com?encryption=ssl');
+    $transport = Transport::fromDsn('smtp://noreply@nationalcollege.edu.au:Noreply@2026mail@smtp.hostinger.com?encryption=ssl');
     $mailer = new Mailer($transport);
     $email = (new Email())
-        ->from('auztraining@nationalcollege.edu.au')
+        ->from('Auztraining <noreply@nationalcollege.edu.au>')
         ->to($to)
         ->subject($subject)
         ->html($body);

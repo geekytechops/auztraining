@@ -2,6 +2,7 @@
 <?php $CRM_ASSET_BASE = 'crm/html/template/assets'; ?>
 <script src="<?php echo $CRM_ASSET_BASE; ?>/js/jquery-3.7.1.min.js"></script>
 <script src="<?php echo $CRM_ASSET_BASE; ?>/js/bootstrap.bundle.min.js"></script>
+<script src="assets/js/pages/bootstrap-toasts.init.js"></script>
 <script src="<?php echo $CRM_ASSET_BASE; ?>/js/moment.min.js"></script>
 <script src="<?php echo $CRM_ASSET_BASE; ?>/plugins/daterangepicker/daterangepicker.js"></script>
 <script src="<?php echo $CRM_ASSET_BASE; ?>/plugins/datatables/js/jquery.dataTables.min.js"></script>

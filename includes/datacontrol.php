@@ -794,7 +794,7 @@ if(@$_POST['formName']=='counseling_form'){
         $overall_result=$_POST['overall_result'];
         $course=$_POST['course'];
         $university_name=$_POST['university_name'];
-        $enquiry_id=$_POST['enquiry_id'];
+        $enquiry_id=trim($_POST['enquiry_id']);
         $qualification=$_POST['qualification'];
         $counseling_type=$_POST['counseling_type'];
         $member_name=$_POST['member_name'];
@@ -807,6 +807,20 @@ if(@$_POST['formName']=='counseling_form'){
         $work_status=$_POST['work_status'];
         $checkId=$_POST['checkId'];       
 
+        // Normalise enquiry_id: if a numeric st_id was posted instead of st_enquiry_id (e.g. EQ00033),
+        // look up the proper st_enquiry_id so counseling_details always stores the canonical code.
+        if($enquiry_id !== ''){
+            if(stripos($enquiry_id, 'EQ') !== 0){
+                $tmp_id = (int)$enquiry_id;
+                if($tmp_id > 0){
+                    $tmp_row = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT st_enquiry_id FROM student_enquiry WHERE st_id=$tmp_id LIMIT 1"));
+                    if($tmp_row && !empty($tmp_row['st_enquiry_id'])){
+                        $enquiry_id = $tmp_row['st_enquiry_id'];
+                    }
+                }
+            }
+        }
+
 
         if(@$_POST['remarks'] && $_POST['remarks']!=''){
         $remarks=json_encode($_POST['remarks']);
@@ -817,33 +831,33 @@ if(@$_POST['formName']=='counseling_form'){
         $admin_id=$_POST['admin_id'];
 
 
-    if($checkId==0){
+    $do_insert = ($checkId == 0);
+    if (!$do_insert) {
+        $checkId = (int)$checkId;
+        $exists = mysqli_fetch_row(mysqli_query($connection, "SELECT 1 FROM counseling_details WHERE counsil_id = $checkId AND counsil_enquiry_status = 0 LIMIT 1"));
+        if (!$exists) {
+            $do_insert = true; // no such counselling record -> INSERT (e.g. checkId was enquiry st_id by mistake)
+        }
+    }
 
+    if ($do_insert) {
         $mode_of_study_sql = $mode_of_study !== null ? $mode_of_study : 'NULL';
         $preferred_intake_sql = $preferred_intake_date !== '' ? "'$preferred_intake_date'" : 'NULL';
         $query=mysqli_query($connection,"INSERT INTO counseling_details(`st_enquiry_id`,`counsil_mem_name`,`counsil_preferred_intake_date`,`counsil_mode_of_study`,`counsil_vaccine_status`,`counsil_job_nature`,`counsil_module_result`,`counsil_timing`,`counsil_end_time`,`counsil_pref_comments`,`counsil_eng_rate`,`counsil_migration_test`,`counsil_overall_result`,`counsil_course`,`counsil_university`,`counsil_qualification`,`counsil_type`,`counsil_aus_stay_time`,`counsil_visa_condition`,`counsil_education`,`counsil_aus_study_status`,`counsil_work_status`,`counsil_remarks`,`counsil_createdby`)VALUES('$enquiry_id','$member_name',$preferred_intake_sql,$mode_of_study_sql,$vaccine_status,'$job_nature','$module_result','$counseling_timing','$counseling_end_timing','$pref_comment','$eng_rate',$mig_test,'$overall_result','$course','$university_name','$qualification',$counseling_type,'$aus_duration',$visa_condition,'$education',$aus_study,$work_status,'$remarks',$admin_id)");
         $lastId=mysqli_insert_id($connection);
-
         if($lastId!=''){
             echo "1";
         }else{
             echo "0";
         }
-
-
-    }else{
-
-
+    } else {
         $mod_date=date('Y-m-d');
-
-        $query=mysqli_query($connection,"UPDATE counseling_details SET `counsil_mem_name`='$member_name',`counsil_preferred_intake_date`=".($preferred_intake_date!='' ? "'$preferred_intake_date'" : 'NULL').",`counsil_mode_of_study`=".($mode_of_study!==null ? $mode_of_study : 'NULL').",`counsil_vaccine_status`=$vaccine_status,`counsil_job_nature`='$job_nature',`counsil_module_result`='$module_result',`counsil_timing`='$counseling_timing',`counsil_end_time`='$counseling_end_timing',`counsil_pref_comments`='$pref_comment',`counsil_eng_rate`='$eng_rate',`counsil_migration_test`=$mig_test,`counsil_overall_result`='$overall_result',`counsil_course`='$course',`counsil_university`='$university_name',`counsil_qualification`='$qualification',`counsil_type`=$counseling_type,`counsil_aus_stay_time`='$aus_duration',`counsil_visa_condition`=$visa_condition,`counsil_education`='$education',`counsil_aus_study_status`=$aus_study,`counsil_work_status`=$work_status,`counsil_remarks`='$remarks',`counsil_modified_date`='$mod_date',`counsil_modified_by`=$admin_id WHERE `st_enquiry_id`='$enquiry_id'" );
-
+        $query=mysqli_query($connection,"UPDATE counseling_details SET `counsil_mem_name`='$member_name',`counsil_preferred_intake_date`=".($preferred_intake_date!='' ? "'$preferred_intake_date'" : 'NULL').",`counsil_mode_of_study`=".($mode_of_study!==null ? $mode_of_study : 'NULL').",`counsil_vaccine_status`=$vaccine_status,`counsil_job_nature`='$job_nature',`counsil_module_result`='$module_result',`counsil_timing`='$counseling_timing',`counsil_end_time`='$counseling_end_timing',`counsil_pref_comments`='$pref_comment',`counsil_eng_rate`='$eng_rate',`counsil_migration_test`=$mig_test,`counsil_overall_result`='$overall_result',`counsil_course`='$course',`counsil_university`='$university_name',`counsil_qualification`='$qualification',`counsil_type`=$counseling_type,`counsil_aus_stay_time`='$aus_duration',`counsil_visa_condition`=$visa_condition,`counsil_education`='$education',`counsil_aus_study_status`=$aus_study,`counsil_work_status`=$work_status,`counsil_remarks`='$remarks',`counsil_modified_date`='$mod_date',`counsil_modified_by`=$admin_id WHERE `counsil_id`=".(int)$checkId);
         if($query){
             echo "1";
         }else{
             echo "0";
         }
-
     }
 
 

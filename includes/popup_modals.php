@@ -1,25 +1,21 @@
-<div id="borderedToast1" class="toast-container position-fixed p-3 top-0 end-0 fade hide" role="alert" aria-live="assertive" aria-atomic="true">
-<div class="align-items-center text-white btn-primary border-0">
-    <div class="d-flex">
-        <div class="toast-body" id="toast-text">
-            
-        </div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+<!-- Success toast: single id="toast-text" -->
+<div id="borderedToast1" class="toast position-fixed top-0 end-0 m-3" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header text-white bg-primary border-0">
+        <strong class="me-auto">Success</strong>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
     </div>
+    <div class="toast-body" id="toast-text"></div>
 </div>
-</div>
-<button type="button" class="btn btn-primary d-none" id="borderedToast1Btn"></button>
-<div id="borderedToast2" class="toast-container position-fixed p-3 top-0 end-0 fade hide" role="alert" aria-live="assertive" aria-atomic="true">
-<div class="align-items-center text-white bg-danger border-0">
-    <div class="d-flex">
-        <div class="toast-body toast-text2" id="toast-text">
-            
-        </div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+<button type="button" class="d-none" id="borderedToast1Btn" data-bs-toggle="toast" data-bs-target="#borderedToast1"></button>
+<!-- Error toast: single id="toast-text2" -->
+<div id="borderedToast2" class="toast position-fixed top-0 end-0 m-3" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header text-white bg-danger border-0">
+        <strong class="me-auto">Notice</strong>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
     </div>
+    <div class="toast-body toast-text2" id="toast-text2"></div>
 </div>
-</div>
-<button type="button" class="btn bg-danger d-none" id="borderedToast2Btn"></button>
+<button type="button" class="d-none" id="borderedToast2Btn" data-bs-toggle="toast" data-bs-target="#borderedToast2"></button>
 
 <!-- modal bootstrap -->
 <button type="button" class="d-none btn btn-primary btn-sm waves-effect waves-light" data-bs-toggle="modal" id="model_trigger" data-bs-target="#myModal"></button>

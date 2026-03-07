@@ -450,29 +450,26 @@
                         data:details,
                         success:function(data){
                             if(data==0){
-                                $('.toast-text2').html('Cannot add record. Please try again later');
-                                $('#borderedToast2Btn').trigger('click');
+                                $('#toast-text2').html('Cannot add record. Please try again later');
+                                var t2 = document.getElementById('borderedToast2');
+                                if (t2 && window.bootstrap) { new bootstrap.Toast(t2).show(); } else { $('#borderedToast2Btn').trigger('click'); }
                             }else if(data==2){
-                                // $( "#student_enquiry_form_parent" ).load(window.location.href + " #student_enquiry_form" );
                                 document.getElementById('student_enquiry_form').reset();
                                 $('#toast-text').html('Record Updated Successfully');
-                                $('#borderedToast1Btn').trigger('click');
-                                // $('#jelly_loader').hide();
+                                var t1 = document.getElementById('borderedToast1');
+                                if (t1 && window.bootstrap) { new bootstrap.Toast(t1).show(); } else { $('#borderedToast1Btn').trigger('click'); }
                                 $('#loader-container').hide();
                                 $('#student_enquiry_form').css('opacity','');
                                 setTimeout(() => {location.reload();}, 500); 
-                                // window.location.href="dashboard.php";
                             }else{
-                                // $( "#student_enquiry_form_parent" ).load(window.location.href + " #student_enquiry_form" );
                                 document.getElementById('student_enquiry_form').reset();
                                 $('#toast-text').html('New Enquiry Added');
-                                $('#borderedToast1Btn').trigger('click');
-
+                                var t1 = document.getElementById('borderedToast1');
+                                if (t1 && window.bootstrap) { new bootstrap.Toast(t1).show(); } else { $('#borderedToast1Btn').trigger('click'); }
                                 $('#myModalLabel').html('Enquiry ID Created:');
                                 $('.modal-body').html(data);
                                 $('#model_trigger').trigger('click');
                                 $('#loader-container').hide();
-                                // $('#jelly_loader').hide();
                                 $('#student_enquiry_form').css('opacity','');
                                 setTimeout(() => {location.reload();}, 500); 
                             }

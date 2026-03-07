@@ -25,8 +25,8 @@ $counselling_enquiry_code = isset($counsil_Query['st_enquiry_id']) ? $counsil_Qu
 <div class="col-md-6"><div class="mb-3"><label class="form-label">Counseling Type<span class="asterisk">*</span></label><br>
 <input type="radio" id="counseling_type1" name="counseling_type" class="form-check-input counseling_type" value="1" <?php echo $counsil_Query['counsil_type']==''||$counsil_Query['counsil_type']==1 ? 'checked' : ''; ?>><label for="counseling_type1">Face to Face</label>
 <input type="radio" id="counseling_type2" name="counseling_type" class="form-check-input counseling_type" value="2" <?php echo $counsil_Query['counsil_type']==2 ? 'checked' : ''; ?>><label for="counseling_type2">Video</label></div></div>
-<div class="col-md-6"><div class="mb-3"><label class="form-label" for="member_name">Counsellor's Name<span class="asterisk">*</span></label>
-<input type="text" class="form-control" id="member_name" placeholder="Counsellor Name" value="<?php echo $counsil_Query['counsil_mem_name']; ?>">
+<div class="col-md-6"><div class="mb-3"><label class="form-label" for="counselling_member_name">Counsellor's Name<span class="asterisk">*</span></label>
+<input type="text" class="form-control" id="counselling_member_name" placeholder="Counsellor Name" value="<?php echo $counsil_Query['counsil_mem_name']; ?>">
 <div class="error-feedback">Please enter the Counsellor Name</div></div></div>
 <div class="col-md-6"><div class="mb-3"><label class="form-label" for="counselling_preferred_intake_date">Preferred Intake Date</label>
 <input type="date" class="form-control" id="counselling_preferred_intake_date" value="<?php echo !empty($counsil_Query['counsil_preferred_intake_date']) ? date('Y-m-d', strtotime($counsil_Query['counsil_preferred_intake_date'])) : ''; ?>"></div></div>
@@ -43,8 +43,8 @@ $counselling_enquiry_code = isset($counsil_Query['st_enquiry_id']) ? $counsil_Qu
 <div class="col-md-6"><div class="mb-3"><label class="form-label">Currently Working<span class="asterisk">*</span></label><br>
 <input type="radio" id="work_status1" name="work_status" class="form-check-input work_status" value="1" <?php echo $counsil_Query['counsil_work_status']==''||$counsil_Query['counsil_work_status']==1 ? 'checked' : ''; ?>><label>Yes</label>
 <input type="radio" id="work_status2" name="work_status" class="form-check-input work_status" value="2" <?php echo $counsil_Query['counsil_work_status']==2 ? 'checked' : ''; ?>><label for="work_status2">No</label></div></div>
-<div class="col-md-6"><div class="mb-3"><label class="form-label" for="visa_condition">Visa Condition<span class="asterisk">*</span></label>
-<select name="visa_condition" class="form-select" id="visa_condition">
+<div class="col-md-6"><div class="mb-3"><label class="form-label" for="counselling_visa_condition">Visa Condition<span class="asterisk">*</span></label>
+<select name="visa_condition" class="form-select" id="counselling_visa_condition">
 <?php if(isset($visaStatus) && $visaStatus){ mysqli_data_seek($visaStatus,0);
 while($visaRes=mysqli_fetch_array($visaStatus)){
 if($visaRes['visa_id']==1) echo "<option value='0'>--select--</option><optgroup label='Subclass 500 main applicant'>";

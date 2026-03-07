@@ -55,6 +55,8 @@ if($followupUsers){
 </div></div></div>
 <div class="col-12"><div class="mb-3"><label class="form-label" for="followup_follow_up_notes">Follow-Up Notes</label>
 <textarea class="form-control" id="followup_follow_up_notes" rows="3" placeholder="Free text notes"><?php echo htmlspecialchars(isset($followup_Query['flw_follow_up_notes']) ? $followup_Query['flw_follow_up_notes'] : ''); ?></textarea></div></div>
+<div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_next_followup_date">Next Follow-up Date</label>
+<input type="datetime-local" class="form-control" id="followup_next_followup_date" value="<?php echo (isset($followup_Query['flw_next_followup_date']) && $followup_Query['flw_next_followup_date'] !== '' && $followup_Query['flw_next_followup_date'] !== null) ? date('Y-m-d\TH:i', strtotime($followup_Query['flw_next_followup_date'])) : ''; ?>" placeholder="When to follow up next"></div></div>
 <div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_follow_up_outcome">Follow-Up Outcome</label>
 <select class="form-select" id="followup_follow_up_outcome">
 <?php foreach($follow_up_outcomes as $k=>$v) echo '<option value="'.htmlspecialchars($k).'" '.((isset($followup_Query['flw_follow_up_outcome']) && $followup_Query['flw_follow_up_outcome']==$k) ? 'selected' : '').'>'.htmlspecialchars($v).'</option>'; ?>

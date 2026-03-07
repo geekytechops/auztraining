@@ -1158,12 +1158,18 @@ if (@$_POST['formName'] == 'student_enrols_online') {
     $d = function($key, $def = '') use ($raw) {
         return isset($raw[$key]) && $raw[$key] !== '' ? $raw[$key] : $def;
     };
-    $uploadDir = __DIR__ . '/../uploads/';
+    $uploadDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR;
+    if (!is_dir($uploadDir)) {
+        @mkdir($uploadDir, 0755, true);
+    }
     $photo = '[]';
     if (!empty($_FILES['image']['name'][0])) {
         $uploadedFiles = array();
         foreach ($_FILES['image']['name'] as $key => $fileName) {
             $tmpName = $_FILES['image']['tmp_name'][$key];
+            if (!is_uploaded_file($tmpName)) {
+                continue;
+            }
             $fileExt = pathinfo($fileName, PATHINFO_EXTENSION);
             $uniqueName = rand(1000, 999999) . '_' . time() . '.' . strtolower($fileExt);
             $targetPath = $uploadDir . $uniqueName;

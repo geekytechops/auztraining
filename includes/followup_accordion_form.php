@@ -46,7 +46,7 @@ if($followupUsers){
 <?php foreach($enquiry_flow_statuses as $k=>$v) echo '<option value="'.$k.'" '.((isset($followup_Query['enquiry_flow_status']) && $followup_Query['enquiry_flow_status']==$k) ? 'selected' : '').'>'.$v.'</option>'; ?>
 </select><small class="text-muted">Default: New for first-time enquiries</small></div></div>
 <div class="col-12 mb-3" id="followup_email_template_section">
-<div class="card border-primary"><div class="card-header bg-light">Send status email to student</div><div class="card-body">
+<div class="card border-primary" id="followup_send_email_card"><div class="card-header bg-light">Send status email to student</div><div class="card-body">
 <p class="text-muted small">When you change Enquiry Status, the matching email template is loaded. Review, edit if needed, and send.</p>
 <label class="form-label">Subject</label><input type="text" class="form-control mb-2" id="followup_email_subject" placeholder="Email subject">
 <label class="form-label">Message</label><textarea class="form-control mb-2" id="followup_email_body" rows="4" placeholder="Email body"></textarea>

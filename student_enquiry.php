@@ -394,6 +394,35 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
         } else {
             $counsilEqId = 0; // no existing counselling -> INSERT on submit
         }
+        // Load latest follow-up for this enquiry so form is prefilled (and we UPDATE on submit if exists)
+        $flw_q = mysqli_query($connection, "SELECT * FROM followup_calls WHERE enquiry_id = '" . mysqli_real_escape_string($connection, $current_enquiry_code) . "' AND flw_enquiry_status = 0 ORDER BY flw_id DESC LIMIT 1");
+        if ($flw_q && mysqli_num_rows($flw_q) > 0) {
+            $frow = mysqli_fetch_assoc($flw_q);
+            $followupEqId = (int)$frow['flw_id'];
+            $followup_Query = array_merge($followup_Query, array(
+                'enquiry_id' => $frow['enquiry_id'] ?? $current_enquiry_code,
+                'flw_name' => $frow['flw_name'] ?? $followup_Query['flw_name'],
+                'flw_phone' => $frow['flw_phone'] ?? $followup_Query['flw_phone'],
+                'flw_contacted_person' => $frow['flw_contacted_person'] ?? '',
+                'flw_contacted_time' => $frow['flw_contacted_time'] ?? '',
+                'flw_date' => $frow['flw_date'] ?? '',
+                'flw_mode_contact' => $frow['flw_mode_contact'] ?? '',
+                'flw_followup_type' => $frow['flw_followup_type'] ?? '',
+                'flw_follow_up_notes' => $frow['flw_follow_up_notes'] ?? '',
+                'flw_next_followup_date' => isset($frow['flw_next_followup_date']) && $frow['flw_next_followup_date'] !== null && $frow['flw_next_followup_date'] !== '' ? $frow['flw_next_followup_date'] : '',
+                'flw_follow_up_outcome' => $frow['flw_follow_up_outcome'] ?? '',
+                'flw_comments' => $frow['flw_comments'] ?? '',
+                'flw_progress_state' => $frow['flw_progress_state'] ?? '',
+                'flw_remarks' => $frow['flw_remarks'] ?? '',
+                'enquiry_flow_status' => isset($frow['flw_progress_state']) && $frow['flw_progress_state'] !== '' ? $frow['flw_progress_state'] : (isset($queryRes['st_enquiry_flow_status']) ? $queryRes['st_enquiry_flow_status'] : '')
+            ));
+        } else {
+            $followupEqId = 0;
+            // Keep enquiry_id, flw_name, flw_phone from main enquiry; use enquiry's flow status for dropdown if available
+            if (isset($queryRes['st_enquiry_flow_status']) && $queryRes['st_enquiry_flow_status'] !== '') {
+                $followup_Query['enquiry_flow_status'] = $queryRes['st_enquiry_flow_status'];
+            }
+        }
     }
 
 ?>
@@ -2226,9 +2255,14 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var save_as_default = $('#followup_save_template_default').is(':checked') ? 1 : 0;
                 var $btn=$('#followup_send_status_email').prop('disabled',true).text('Sending...');
                 $.post('includes/datacontrol.php',{ send_enquiry_status_email: 1, enquiry_id: enquiry_id, status_code: status_code, subject: subject, body: body, save_as_default: save_as_default },function(data){
-                    $btn.prop('disabled',false).text('Send email');
-                    if(data=='1'){ $('#toast-text').html('Email sent successfully'); $('#borderedToast1Btn').trigger('click'); }
-                    else{ $('.toast-text2').html(data||'Failed to send email'); $('#borderedToast2Btn').trigger('click'); }
+                    if(data=='1'){
+                        $('#toast-text').html('Email sent successfully'); $('#borderedToast1Btn').trigger('click');
+                        // Replace send-email block with "Mail sent" state (stays until page reload)
+                        $('#followup_send_email_card').removeClass('border-primary').addClass('border-success').html('<div class="card-body py-3"><p class="text-success mb-0"><i class="ti ti-circle-check me-1"></i> Mail sent</p></div>');
+                    } else {
+                        $btn.prop('disabled',false).text('Send email');
+                        $('.toast-text2').html(data||'Failed to send email'); $('#borderedToast2Btn').trigger('click');
+                    }
                 });
             });
             // Load default email template once when form is ready (for current status)

@@ -705,6 +705,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <?php if (!$is_student_portal): ?>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="appointment_booked">Appointment booked for counseling or not?</label>
@@ -723,6 +724,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <?php endif; ?>
                                                 <?php if (!$is_student_portal): ?>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
@@ -761,8 +763,8 @@
             </div>
 
 
-                                <!-- appointment form  -->
-
+                                <?php if (!$is_student_portal): ?>
+                                <!-- appointment form (admin only) -->
                                 <div class="row" id="appointment_form" style="display:<?php echo $queryRes['st_appoint_book']==1 ? 'block' : 'none' ?>"> 
                                    <div class="col-xl-12">
                                         <div class="card">
@@ -803,6 +805,7 @@
                                         </div>
                                     </div>
                                 </div>
+                                <?php endif; ?>
 
                                 <div class="row">
                                    <div class="col-xl-12">

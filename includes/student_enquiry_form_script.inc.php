@@ -104,14 +104,16 @@
                         $('.rpl_prev_child').show();
                     }
                 })
-                $('#appointment_booked').on("change",function(){
-                    var value=$(this).val();
-                    if( value==1){
-                        $('#appointment_form').show();
-                    }else{
-                        $('#appointment_form').hide();
-                    }
-                })
+                if($('#appointment_booked').length){
+                    $('#appointment_booked').on("change",function(){
+                        var value=$(this).val();
+                        if( value==1){
+                            $('#appointment_form').show();
+                        }else{
+                            $('#appointment_form').hide();
+                        }
+                    });
+                }
 
                 $('#enquiry_for').on('change',function(){
                     var value=$(this).val();
@@ -152,7 +154,7 @@
                 var shore=$('#shore').val();
                 var comments=$('#comments').val();
                 var remarks=[];
-                var appointment_booked=$('#appointment_booked').val();
+                var appointment_booked=$('#appointment_booked').length ? $('#appointment_booked').val() : 0;
 
                 $('.remarks_check:checkbox:checked').each(function() {
                     remarks.push(this.value);

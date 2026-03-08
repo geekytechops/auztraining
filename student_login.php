@@ -1,8 +1,8 @@
 <?php
 session_start();
 if(isset($_SESSION['user_type'])){
-    if((int)$_SESSION['user_type'] === 0) { header('Location: student_docs.php'); exit; }
-    if($_SESSION['user_type'] === 'student') { header('Location: student_portal.php'); exit; }
+    if((int)$_SESSION['user_type'] === 0) { header('Location: index.php'); exit; } // staff use admin login
+    if($_SESSION['user_type'] === 'student') { header('Location: student_enquiry_form.php'); exit; }
 }
 $asset_base = 'crm/html/template/assets';
 ?>

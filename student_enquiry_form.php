@@ -8,21 +8,15 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_id'] === '') {
     header('Location: student_login.php');
     exit;
 }
-$ut = @$_SESSION['user_type'];
-if ($ut !== 0 && $ut !== 'student') {
+// Students only from student_users (user_type = 'student'). user_type=0 is staff, not students.
+if (@$_SESSION['user_type'] !== 'student') {
     header('Location: dashboard.php');
     exit;
 }
 include('includes/dbconnect.php');
 
 $student_user_id = (int)$_SESSION['user_id'];
-$student_email = '';
-if ($ut === 0 && $student_user_id) {
-    $u = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT user_email FROM users WHERE user_id=$student_user_id LIMIT 1"));
-    if ($u && !empty($u['user_email'])) $student_email = $u['user_email'];
-} elseif ($ut === 'student' && !empty($_SESSION['student_email'])) {
-    $student_email = $_SESSION['student_email'];
-}
+$student_email = !empty($_SESSION['student_email']) ? $_SESSION['student_email'] : '';
 
 $eq_from_get = isset($_GET['eq']) ? (int)base64_decode($_GET['eq']) : 0;
 $existing_st_id = null;
@@ -33,12 +27,11 @@ if ($student_email !== '') {
         $existing_st_id = (int)mysqli_fetch_assoc($q)['st_id'];
     }
 }
-// If student has existing enquiry but no eq in URL, redirect to same page with eq (clean URL with eq for existing)
-if ($eq_from_get <= 0 && $existing_st_id > 0) {
-    header('Location: student_enquiry_form.php?eq=' . base64_encode($existing_st_id));
-    exit;
+// Enquiry to load: from ?eq=, or from session (set at login), or existing_st_id
+$st_id_to_load = $eq_from_get > 0 ? $eq_from_get : (isset($_SESSION['student_eq_id']) && (int)$_SESSION['student_eq_id'] > 0 ? (int)$_SESSION['student_eq_id'] : 0);
+if ($st_id_to_load <= 0 && $existing_st_id > 0) {
+    $st_id_to_load = $existing_st_id;
 }
-
 $eqId = 0;
 $queryRes = array();
 $form_id = 0;
@@ -48,22 +41,20 @@ $slot_book = ['slot_book_time'=>'','slot_book_purpose'=>'','slot_book_date'=>'',
 $reg_grp = '';
 $rpl_status = $short_grp_status = $reg_grp_status = $slot_book_status = 0;
 
-$st_id_to_load = ($eq_from_get > 0) ? $eq_from_get : 0;
 if ($st_id_to_load > 0) {
     $queryRes = mysqli_fetch_array(mysqli_query($connection, "SELECT * FROM student_enquiry WHERE st_enquiry_status!=1 AND st_id=$st_id_to_load"));
     if (!$queryRes) {
+        unset($_SESSION['student_eq_id']);
         header('Location: student_enquiry_form.php');
         exit;
     }
-    $own = (int)($queryRes['student_user_id']??0) === $student_user_id;
-    if (!$own && $ut === 0) {
-        $u = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT user_email FROM users WHERE user_id=$student_user_id LIMIT 1"));
-        $own = $u && !empty($u['user_email']) && trim(strtolower($queryRes['st_email']??'')) === trim(strtolower($u['user_email']));
-    }
+    $own = (int)($queryRes['student_user_id']??0) === $student_user_id || trim(strtolower($queryRes['st_email']??'')) === trim(strtolower($student_email));
     if (!$own) {
+        unset($_SESSION['student_eq_id']);
         header('Location: student_enquiry_form.php');
         exit;
     }
+    $_SESSION['student_eq_id'] = (int)$queryRes['st_id'];
     $eqId = (int)$queryRes['st_id'];
     $form_id = $eqId;
     $queryRes_rpl = mysqli_query($connection, "SELECT * FROM rpl_enquries WHERE enq_form_id=$form_id");

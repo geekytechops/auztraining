@@ -1671,7 +1671,7 @@ if(@$_POST['formName']=='student_register'){
     exit;
 }
 
-// Student login: try admin-created student (users table, user_type=0) first, then self-registered (student_users)
+// Student login (student_login.php): students only from student_users. user_type=0 = staff (admin login).
 if(@$_POST['formName']=='student_login'){
     $email = mysqli_real_escape_string($connection, trim($_POST['email'] ?? ''));
     $password = $_POST['password'] ?? '';
@@ -1679,18 +1679,6 @@ if(@$_POST['formName']=='student_login'){
         echo json_encode(array('success' => false, 'message' => 'Email and password required.'));
         exit;
     }
-    // 1) Admin-created student (users table, user_type=0) – same layout as staff, only Documents + My Enquiry
-    $uq = mysqli_query($connection, "SELECT user_id, user_type, user_name, user_log_id FROM users WHERE user_email='$email' AND user_password='$password' AND user_type=0 AND user_status=0");
-    if($uq && mysqli_num_rows($uq) > 0){
-        $urow = mysqli_fetch_assoc($uq);
-        $_SESSION['user_id'] = $urow['user_id'];
-        $_SESSION['user_type'] = 0;
-        $_SESSION['user_name'] = $urow['user_name'];
-        $_SESSION['user_log_id'] = $urow['user_log_id'];
-        echo json_encode(array('success' => true, 'redirect' => 'student_docs.php'));
-        exit;
-    }
-    // 2) Self-registered student (student_users)
     $q = mysqli_query($connection, "SELECT id, full_name, password_hash, email FROM student_users WHERE email='$email' AND status=1");
     if($q && mysqli_num_rows($q) > 0){
         $row = mysqli_fetch_assoc($q);
@@ -1702,7 +1690,10 @@ if(@$_POST['formName']=='student_login'){
         $_SESSION['user_type'] = 'student';
         $_SESSION['user_name'] = $row['full_name'];
         $_SESSION['student_email'] = $row['email'];
-        echo json_encode(array('success' => true, 'redirect' => 'student_portal.php'));
+        $em = mysqli_real_escape_string($connection, $row['email']);
+        $eq = mysqli_query($connection, "SELECT st_id FROM student_enquiry WHERE st_email='$em' AND st_enquiry_status!=1 ORDER BY st_id DESC LIMIT 1");
+        $_SESSION['student_eq_id'] = ($eq && mysqli_num_rows($eq) > 0) ? (int)mysqli_fetch_assoc($eq)['st_id'] : 0;
+        echo json_encode(array('success' => true, 'redirect' => 'student_enquiry_form.php'));
         exit;
     }
     echo json_encode(array('success' => false, 'message' => 'Invalid email or password.'));

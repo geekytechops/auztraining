@@ -5,8 +5,8 @@ if(!isset($_SESSION['user_id']) || $_SESSION['user_id'] === ''){
     header('Location: index.php');
     exit;
 }
-// Students (user_type=0) use student area only
-if(isset($_SESSION['user_type']) && (int)$_SESSION['user_type']===0){
+// Students (user_type=0 or 'student') use student area only – admin login is index.php
+if(isset($_SESSION['user_type']) && ((int)$_SESSION['user_type']===0 || $_SESSION['user_type']==='student')){
     header('Location: student_docs.php');
     exit;
 }

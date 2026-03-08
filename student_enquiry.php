@@ -395,11 +395,12 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 'counsil_module_result' => $crow['counsil_module_result'] ?? '',
                 'counsil_job_nature' => $crow['counsil_job_nature'] ?? '',
                 'counsil_vaccine_status' => $crow['counsil_vaccine_status'] ?? '',
-                'counsil_pref_comments' => $crow['counsil_pref_comments'] ?? '',
-                'counsil_remarks' => $crow['counsil_remarks'] ?? ''
+                'counsil_remarks' => $crow['counsil_remarks'] ?? '',
+                'counsil_notes' => $crow['counsil_notes'] ?? ''
             ));
         } else {
             $counsilEqId = 0; // no existing counselling -> INSERT on submit
+            $counsil_Query['counsil_visa_condition'] = $queryRes['st_visa_status'] ?? '';
         }
         // Load latest follow-up for this enquiry so form is prefilled (and we UPDATE on submit if exists)
         $flw_q = mysqli_query($connection, "SELECT * FROM followup_calls WHERE enquiry_id = '" . mysqli_real_escape_string($connection, $current_enquiry_code) . "' AND flw_enquiry_status = 0 ORDER BY flw_id DESC LIMIT 1");
@@ -2059,9 +2060,14 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 $f.find('.invalid-div').removeClass('invalid-div');
                 $f.find('.error-feedback').hide();
                 var enquiry_id=($('#counselling_enquiry_id').length ? $('#counselling_enquiry_id').val() : '').toString().trim();
-                var counseling_timing=$('#counseling_timing').val().trim();
+                var counselling_date=$('#counselling_date').val().trim();
+                var start_time=$('#counseling_timing').val().trim();
+                var end_time=$('#counseling_end_timing').val().trim();
+                var counseling_timing=(counselling_date && start_time) ? (counselling_date+' '+start_time) : '';
+                var counseling_end_timing=(counselling_date && end_time) ? (counselling_date+' '+end_time) : (counselling_date && start_time ? counselling_date+' '+start_time : '');
                 var counseling_type=$f.find('.counseling_type:checked').val();
-                var member_name=$('#member_name').val().trim();
+                var member_name=$('#counselling_member_name').val();
+                if(member_name) member_name=member_name.trim();
                 var aus_duration=$('#aus_duration').val().trim();
                 var work_status=$f.find('.work_status:checked').val();
                 var visa_condition=$('#counselling_visa_condition').val();
@@ -2083,7 +2089,8 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                         $('#counselling_enquiry_id').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
                     }
                     if(!counseling_timing){
-                        $('#counseling_timing').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                        if(!start_time) $('#counseling_timing').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                        if(!counselling_date) $('#counselling_date').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
                     }
                     if(!member_name){
                         $('#counselling_member_name').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
@@ -2124,7 +2131,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     }
                     return;
                 }
-                var details={formName:'counseling_form',vaccine_status:vaccine_status,job_nature:$('#counselling_job_nature').val(),module_result:$('#counselling_module_result').val(),pref_comment:$('#counselling_pref_comment').val(),eng_rate:eng_rate,mig_test:mig_test,overall_result:$('#counselling_overall_result').val(),course:$('#counselling_course').val(),university_name:$('#counselling_university_name').val(),qualification:qualification,counseling_timing:counseling_timing,counseling_end_timing:$('#counseling_end_timing').val(),enquiry_id:enquiry_id,counseling_type:counseling_type,member_name:member_name,preferred_intake_date:$('#counselling_preferred_intake_date').val(),mode_of_study:$('#counselling_mode_of_study').val(),aus_duration:aus_duration,work_status:work_status,visa_condition:visa_condition,education:education,remarks:remarks,aus_study:aus_study,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
+                var details={formName:'counseling_form',vaccine_status:vaccine_status,job_nature:$('#counselling_job_nature').val(),module_result:$('#counselling_module_result').val(),eng_rate:eng_rate,mig_test:mig_test,overall_result:$('#counselling_overall_result').val(),course:$('#counselling_course').val(),university_name:$('#counselling_university_name').val(),qualification:qualification,counseling_timing:counseling_timing,counseling_end_timing:counseling_end_timing,enquiry_id:enquiry_id,counseling_type:counseling_type,member_name:member_name,preferred_intake_date:$('#counselling_preferred_intake_date').val(),mode_of_study:$('#counselling_mode_of_study').val(),aus_duration:aus_duration,work_status:work_status,visa_condition:visa_condition,education:education,remarks:remarks,aus_study:aus_study,counselling_notes:($('#counselling_notes').val()||'').trim(),checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
                 $.ajax({type:'post',url:'includes/datacontrol.php',data:details,success:function(data){
                     if(data==1){$('#toast-text').html('Record Added Successfully');$('#borderedToast1Btn').trigger('click');setTimeout(function(){location.reload();},400);}
                     else{$('.toast-text2').html('Cannot add record. Please try again later');$('#borderedToast2Btn').trigger('click');}
@@ -2266,8 +2273,8 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var contact_num=$('#contact_num').val().trim();
                 var contacted_person=$('#followup_contacted_person').val().trim();
                 var contacted_time=$('#followup_contacted_time').val().trim();
-                var date=$('#followup_date').val().trim();
-                var contactMode=$('#followup_mode_contacted').val();
+                var date = ($('#followup_date').val() || '').trim();
+                var contactMode = $('#followup_mode_contacted').val();
                 var followupType=$('#followup_followup_type').val();
                 var enquiry_flow_status=$('#followup_enquiry_flow_status').val();
                 var follow_up_notes=$('#followup_follow_up_notes').val().trim();

@@ -80,11 +80,7 @@ if($followupUsers){
 <textarea class="form-control" id="followup_follow_up_notes" rows="3" placeholder="Free text notes"><?php echo htmlspecialchars(isset($followup_Query['flw_follow_up_notes']) ? $followup_Query['flw_follow_up_notes'] : ''); ?></textarea></div></div>
 <div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_next_followup_date">Next Follow-up Date</label>
 <input type="datetime-local" class="form-control" id="followup_next_followup_date" value="<?php echo (isset($followup_Query['flw_next_followup_date']) && $followup_Query['flw_next_followup_date'] !== '' && $followup_Query['flw_next_followup_date'] !== null) ? date('Y-m-d\TH:i', strtotime($followup_Query['flw_next_followup_date'])) : ''; ?>" placeholder="When to follow up next"></div></div>
-<div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_date">Date</label>
-<input type="date" class="form-control" id="followup_date" value="<?php echo $followup_Query['flw_date']=='' ? '' : date('Y-m-d',strtotime($followup_Query['flw_date'])); ?>"></div></div>
-<div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_mode_contacted">Mode of Contact</label>
-<input type="text" class="form-control" id="followup_mode_contacted" value="<?php echo $followup_Query['flw_mode_contact']; ?>" placeholder="e.g. Phone, 3cx"></div></div>
-<div class="col-12 mb-3" id="followup_email_template_section" style="display:none;">
+<div class="col-12 mb-3" id="followup_email_template_section_dup" style="display:none;">
 <div class="card border-primary"><div class="card-header bg-light">Send status email to student</div><div class="card-body">
 <p class="text-muted small">When you change Enquiry Status, the matching email template is loaded. Review, edit if needed, and send.</p>
 <label class="form-label">Subject</label><input type="text" class="form-control mb-2" id="followup_email_subject" placeholder="Email subject">
@@ -92,15 +88,28 @@ if($followupUsers){
 <div class="form-check mb-2"><input type="checkbox" class="form-check-input" id="followup_save_template_default" value="1"><label class="form-check-label" for="followup_save_template_default">Save as default template for this status</label></div>
 <button type="button" class="btn btn-success btn-sm" id="followup_send_status_email">Send email</button>
 </div></div></div>
-<div class="col-md-6"><div class="mb-3"><label class="form-label" for="remarks">Remarks</label>
+<div class="col-12"><div class="mb-3"><label class="form-label d-block">Remarks</label>
+<div class="row">
 <?php
 $st_remarks=['Seems to be interested to do course and need to contact asap','Good with communication skills','Sent enrollement form online/ hard copies','Want to do the course asap','Looking for government funding','Have done counselling before but wants to get more info','Counseling is done but enrolment is due','Have done the counselling before','Seems like having attitude','Want to book an appointment for counselling','Planning to relocate to other state','Wants to get COE for visa purpose'];
 $remarksSel=($followup_Query['flw_remarks']!='') ? json_decode($followup_Query['flw_remarks']) : array();
-for($i=1;$i<count($st_remarks);$i++){
+$total_remarks = count($st_remarks);
+$half = (int)ceil(($total_remarks - 1) / 2); // indices 1 to count-1, so (count-1) items
+?>
+<div class="col-md-6">
+<?php for($i=1;$i<=$half;$i++){
 $checked=in_array($i,$remarksSel) ? 'checked' : '';
 echo '<div class="form-check"><input type="checkbox" class="remarks_check form-check-input followup_remarks" id="flw_remark_'.$i.'" value="'.$i.'" '.$checked.'><label for="flw_remark_'.$i.'">'.$st_remarks[$i].'</label></div>';
-}
-?><div class="error-feedback">Please select atleast one option</div></div></div>
+} ?>
+</div>
+<div class="col-md-6">
+<?php for($i=$half+1;$i<$total_remarks;$i++){
+$checked=in_array($i,$remarksSel) ? 'checked' : '';
+echo '<div class="form-check"><input type="checkbox" class="remarks_check form-check-input followup_remarks" id="flw_remark_'.$i.'" value="'.$i.'" '.$checked.'><label for="flw_remark_'.$i.'">'.$st_remarks[$i].'</label></div>';
+} ?>
+</div>
+</div>
+<div class="error-feedback">Please select atleast one option</div></div></div>
 </div>
 <button class="btn btn-primary" type="button" id="followup_check">Submit Follow Up</button>
 <input type="hidden" value="<?php echo $followupEqId; ?>" id="followup_check_update">

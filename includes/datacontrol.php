@@ -878,7 +878,8 @@ if(@$_POST['formName']=='counseling_form'){
         $module_result=$_POST['module_result'];
         $counseling_timing=date('Y-m-d H:i:s',strtotime($_POST['counseling_timing']));
         $counseling_end_timing= $_POST['counseling_end_timing']!='' ? date('Y-m-d H:i:s',strtotime($_POST['counseling_end_timing'])) : '';
-        $pref_comment=$_POST['pref_comment'];
+        $pref_comment=isset($_POST['pref_comment']) ? mysqli_real_escape_string($connection,$_POST['pref_comment']) : '';
+        $counselling_notes=isset($_POST['counselling_notes']) ? mysqli_real_escape_string($connection,$_POST['counselling_notes']) : '';
         $eng_rate=$_POST['eng_rate'];
         $mig_test=$_POST['mig_test'];
         $overall_result=$_POST['overall_result'];
@@ -933,7 +934,7 @@ if(@$_POST['formName']=='counseling_form'){
     if ($do_insert) {
         $mode_of_study_sql = $mode_of_study !== null ? $mode_of_study : 'NULL';
         $preferred_intake_sql = $preferred_intake_date !== '' ? "'$preferred_intake_date'" : 'NULL';
-        $query=mysqli_query($connection,"INSERT INTO counseling_details(`st_enquiry_id`,`counsil_mem_name`,`counsil_preferred_intake_date`,`counsil_mode_of_study`,`counsil_vaccine_status`,`counsil_job_nature`,`counsil_module_result`,`counsil_timing`,`counsil_end_time`,`counsil_pref_comments`,`counsil_eng_rate`,`counsil_migration_test`,`counsil_overall_result`,`counsil_course`,`counsil_university`,`counsil_qualification`,`counsil_type`,`counsil_aus_stay_time`,`counsil_visa_condition`,`counsil_education`,`counsil_aus_study_status`,`counsil_work_status`,`counsil_remarks`,`counsil_createdby`)VALUES('$enquiry_id','$member_name',$preferred_intake_sql,$mode_of_study_sql,$vaccine_status,'$job_nature','$module_result','$counseling_timing','$counseling_end_timing','$pref_comment','$eng_rate',$mig_test,'$overall_result','$course','$university_name','$qualification',$counseling_type,'$aus_duration',$visa_condition,'$education',$aus_study,$work_status,'$remarks',$admin_id)");
+        $query=mysqli_query($connection,"INSERT INTO counseling_details(`st_enquiry_id`,`counsil_mem_name`,`counsil_preferred_intake_date`,`counsil_mode_of_study`,`counsil_vaccine_status`,`counsil_job_nature`,`counsil_module_result`,`counsil_timing`,`counsil_end_time`,`counsil_pref_comments`,`counsil_eng_rate`,`counsil_migration_test`,`counsil_overall_result`,`counsil_course`,`counsil_university`,`counsil_qualification`,`counsil_type`,`counsil_aus_stay_time`,`counsil_visa_condition`,`counsil_education`,`counsil_aus_study_status`,`counsil_work_status`,`counsil_remarks`,`counsil_notes`,`counsil_createdby`)VALUES('$enquiry_id','$member_name',$preferred_intake_sql,$mode_of_study_sql,$vaccine_status,'$job_nature','$module_result','$counseling_timing','$counseling_end_timing','$pref_comment','$eng_rate',$mig_test,'$overall_result','$course','$university_name','$qualification',$counseling_type,'$aus_duration',$visa_condition,'$education',$aus_study,$work_status,'$remarks','$counselling_notes',$admin_id)");
         $lastId=mysqli_insert_id($connection);
         if($lastId!=''){
             echo "1";
@@ -942,7 +943,7 @@ if(@$_POST['formName']=='counseling_form'){
         }
     } else {
         $mod_date=date('Y-m-d');
-        $query=mysqli_query($connection,"UPDATE counseling_details SET `counsil_mem_name`='$member_name',`counsil_preferred_intake_date`=".($preferred_intake_date!='' ? "'$preferred_intake_date'" : 'NULL').",`counsil_mode_of_study`=".($mode_of_study!==null ? $mode_of_study : 'NULL').",`counsil_vaccine_status`=$vaccine_status,`counsil_job_nature`='$job_nature',`counsil_module_result`='$module_result',`counsil_timing`='$counseling_timing',`counsil_end_time`='$counseling_end_timing',`counsil_pref_comments`='$pref_comment',`counsil_eng_rate`='$eng_rate',`counsil_migration_test`=$mig_test,`counsil_overall_result`='$overall_result',`counsil_course`='$course',`counsil_university`='$university_name',`counsil_qualification`='$qualification',`counsil_type`=$counseling_type,`counsil_aus_stay_time`='$aus_duration',`counsil_visa_condition`=$visa_condition,`counsil_education`='$education',`counsil_aus_study_status`=$aus_study,`counsil_work_status`=$work_status,`counsil_remarks`='$remarks',`counsil_modified_date`='$mod_date',`counsil_modified_by`=$admin_id WHERE `counsil_id`=".(int)$checkId);
+        $query=mysqli_query($connection,"UPDATE counseling_details SET `counsil_mem_name`='$member_name',`counsil_preferred_intake_date`=".($preferred_intake_date!='' ? "'$preferred_intake_date'" : 'NULL').",`counsil_mode_of_study`=".($mode_of_study!==null ? $mode_of_study : 'NULL').",`counsil_vaccine_status`=$vaccine_status,`counsil_job_nature`='$job_nature',`counsil_module_result`='$module_result',`counsil_timing`='$counseling_timing',`counsil_end_time`='$counseling_end_timing',`counsil_pref_comments`='$pref_comment',`counsil_eng_rate`='$eng_rate',`counsil_migration_test`=$mig_test,`counsil_overall_result`='$overall_result',`counsil_course`='$course',`counsil_university`='$university_name',`counsil_qualification`='$qualification',`counsil_type`=$counseling_type,`counsil_aus_stay_time`='$aus_duration',`counsil_visa_condition`=$visa_condition,`counsil_education`='$education',`counsil_aus_study_status`=$aus_study,`counsil_work_status`=$work_status,`counsil_remarks`='$remarks',`counsil_notes`='$counselling_notes',`counsil_modified_date`='$mod_date',`counsil_modified_by`=$admin_id WHERE `counsil_id`=".(int)$checkId);
         if($query){
             echo "1";
         }else{

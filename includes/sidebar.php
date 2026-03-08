@@ -8,7 +8,7 @@ $sidebar_home_url = $is_student_sidebar ? 'student_docs.php' : 'dashboard.php';
 $current_page = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
 $current_query = $_GET ?? array();
 
-$enquiries_pages    = array('student_enquiry.php','view_enquiries.php','enquiry_reports.php','google_calendar_settings.php');
+$enquiries_pages    = array('student_enquiry.php','view_enquiries.php','enquiry_reports.php');
 $enrolment_pages    = array('enrolment.php','enrolment_online.php');
 $appointments_pages = array('appointment_booking.php','appointment_blocks.php','appointment_calendar.php','appointment_reports.php');
 $course_forms_pages = array('course_cancellations_list.php','course_extensions_list.php');
@@ -58,8 +58,6 @@ $is_course_forms_active = in_array($current_page, $course_forms_pages, true);
                                         <li><a href="student_enquiry.php" class="<?php echo ($current_page === 'student_enquiry.php' && (!isset($current_query['view']) || $current_query['view'] !== 'list')) ? 'active' : ''; ?>">Create Enquiry</a></li>
                                         <li><a href="view_enquiries.php" class="<?php echo $current_page === 'view_enquiries.php' ? 'active' : ''; ?>">View Enquiries</a></li>
                                         <li><a href="enquiry_reports.php" class="<?php echo $current_page === 'enquiry_reports.php' ? 'active' : ''; ?>">Enquiry Reports</a></li>
-                                        <li><a href="student_enquiry.php?view=list" class="<?php echo ($current_page === 'student_enquiry.php' && isset($current_query['view']) && $current_query['view'] === 'list') ? 'active' : ''; ?>">View Enquiry (Legacy)</a></li>
-                                        <li><a href="google_calendar_settings.php" class="<?php echo $current_page === 'google_calendar_settings.php' ? 'active' : ''; ?>">Google Calendar (Follow-up reminders)</a></li>
                                     </ul>
                                 </li>
                                 <?php } ?>
@@ -71,12 +69,6 @@ $is_course_forms_active = in_array($current_page, $course_forms_pages, true);
                                         <li><a href="enrolment.php" class="<?php echo $current_page === 'enrolment.php' ? 'active' : ''; ?>">Enrolment (Legacy)</a></li>
                                         <li><a href="enrolment_online.php" class="<?php echo $current_page === 'enrolment_online.php' ? 'active' : ''; ?>">Enrolment Form (Online)</a></li>
                                     </ul>
-                                </li>
-                                <?php } ?>
-
-                                <?php if(@$_SESSION['user_type']==1){ ?>
-                                <li>
-                                    <a href="create_user.php" class="<?php echo $current_page === 'create_user.php' ? 'active' : ''; ?>"><i class="ti ti-users"></i><span>Staff Management</span></a>
                                 </li>
                                 <?php } ?>
 
@@ -123,6 +115,12 @@ $is_course_forms_active = in_array($current_page, $course_forms_pages, true);
                                         <li><a href="course_cancellations_list.php" class="<?php echo $current_page === 'course_cancellations_list.php' ? 'active' : ''; ?>">Course Cancellations</a></li>
                                         <li><a href="course_extensions_list.php" class="<?php echo $current_page === 'course_extensions_list.php' ? 'active' : ''; ?>">Course Extensions</a></li>
                                     </ul>
+                                </li>
+                                <?php } ?>
+
+                                <?php if(@$_SESSION['user_type']==1){ ?>
+                                <li>
+                                    <a href="create_user.php" class="<?php echo $current_page === 'create_user.php' ? 'active' : ''; ?>"><i class="ti ti-users"></i><span>Staff Management</span></a>
                                 </li>
                                 <?php } ?>
                             </ul>

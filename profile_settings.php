@@ -73,6 +73,42 @@ if ($is_admin) {
         }
     }
 }
+
+// Google Calendar (admin only): save credentials from form POST
+$google_message = '';
+$google_error = '';
+$google_config = array('client_id' => '', 'client_secret' => '', 'redirect_uri' => '');
+$google_auth_url = '';
+$google_redirect_uri_used = '';
+$google_connected = false;
+
+if ($is_admin) {
+    require_once __DIR__ . '/includes/google_calendar_helper.php';
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_google_config'])) {
+        $cid = isset($_POST['google_client_id']) ? trim($_POST['google_client_id']) : '';
+        $csec = isset($_POST['google_client_secret']) ? trim($_POST['google_client_secret']) : '';
+        $redirect_uri = isset($_POST['google_redirect_uri']) ? trim($_POST['google_redirect_uri']) : '';
+        $cid_esc = mysqli_real_escape_string($connection, $cid);
+        $csec_esc = mysqli_real_escape_string($connection, $csec);
+        $redirect_esc = mysqli_real_escape_string($connection, $redirect_uri);
+        $tableExists = mysqli_fetch_row(mysqli_query($connection, "SHOW TABLES LIKE 'site_settings'"));
+        if ($tableExists) {
+            mysqli_query($connection, "INSERT INTO site_settings (setting_key, setting_value) VALUES ('google_calendar_client_id','$cid_esc'), ('google_calendar_client_secret','$csec_esc'), ('google_calendar_redirect_uri','$redirect_esc') ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)");
+            header('Location: profile_settings.php?tab=google&saved_google=1');
+            exit;
+        }
+        $google_error = 'Run the database migration first: sql/google_calendar_migration.sql (creates site_settings and google_calendar_tokens tables).';
+    }
+    $google_config = google_calendar_get_config($connection);
+    $google_auth_url = google_calendar_get_auth_url($connection);
+    $google_redirect_uri_used = !empty(trim($google_config['redirect_uri'])) ? trim($google_config['redirect_uri']) : google_calendar_build_redirect_uri();
+    $tbl = @mysqli_query($connection, "SHOW TABLES LIKE 'google_calendar_tokens'");
+    $google_connected = $tbl && mysqli_num_rows($tbl) && mysqli_fetch_row(mysqli_query($connection, "SELECT 1 FROM google_calendar_tokens WHERE id=1 AND refresh_token IS NOT NULL AND refresh_token != ''"));
+    if (!empty($_GET['saved_google'])) $google_message = 'Credentials saved. Copy the Redirect URI below into Google Console if you haven\'t already, then connect your Google account.';
+    if (!empty($_GET['connected'])) $google_message = 'Google Calendar connected. When any staff sets a Next Follow-Up Date, an event is created and all dashboard staff are added as attendees so everyone gets it on their calendar.';
+    if (!empty($_GET['disconnected'])) $google_message = 'Google Calendar disconnected.';
+    if (!empty($_GET['google_error'])) $google_error = trim((string) $_GET['google_error']);
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -124,6 +160,11 @@ if ($is_admin) {
                                             <i class="ti ti-mail me-2"></i>Enquiry Email Templates
                                         </a>
                                     </li>
+                                    <li class="nav-item me-3">
+                                        <a href="javascript:void(0);" class="nav-link p-2 settings-main-tab" data-target="#settings_google_section">
+                                            <i class="ti ti-calendar me-2"></i>Google Calendar
+                                        </a>
+                                    </li>
                                     <?php } ?>
                                 </ul>
                             </div>
@@ -140,6 +181,7 @@ if ($is_admin) {
                                                     <a href="javascript:void(0);" class="d-block p-2 fw-medium settings-side-link" data-target="#settings_security_section">Change Password</a>
                                                     <?php if($is_admin){ ?>
                                                     <a href="javascript:void(0);" class="d-block p-2 fw-medium settings-side-link" data-target="#settings_email_section">Enquiry Email Templates</a>
+                                                    <a href="javascript:void(0);" class="d-block p-2 fw-medium settings-side-link" data-target="#settings_google_section">Google Calendar</a>
                                                     <?php } ?>
                                                 </div>
                                             </div>
@@ -281,6 +323,72 @@ if ($is_admin) {
                                             <?php } ?>
                                         </div>
 
+                                        <?php if ($is_admin) { ?>
+                                        <div id="settings_google_section" class="d-none">
+                                            <div class="border-bottom mb-3 pb-3">
+                                                <h5 class="mb-0 fs-17">Google Calendar – Follow-up reminders</h5>
+                                            </div>
+                                            <?php if ($google_message): ?>
+                                            <div class="alert alert-success alert-dismissible fade show" role="alert"><?php echo htmlspecialchars($google_message); ?>
+                                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                            </div>
+                                            <?php endif; ?>
+                                            <?php if ($google_error): ?>
+                                            <div class="alert alert-danger alert-dismissible fade show" role="alert"><?php echo htmlspecialchars($google_error); ?>
+                                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                            </div>
+                                            <?php endif; ?>
+                                            <div class="card mb-3">
+                                                <div class="card-header">
+                                                    <h6 class="card-title mb-0">1. Prerequisites (one-time setup)</h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <p class="text-muted small">One admin connects a single Google account here. When <strong>any</strong> staff sets a <strong>Next Follow-Up Date</strong>, an event is created and <strong>all dashboard staff</strong> are added as attendees. Create OAuth credentials in Google Cloud and save them below.</p>
+                                                    <ol class="small mb-3">
+                                                        <li>Go to <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">Google Cloud Console</a> and create/select a project.</li>
+                                                        <li>Enable <strong>Google Calendar API</strong>: APIs &amp; Services → Library → search “Calendar API” → Enable.</li>
+                                                        <li>Create <strong>OAuth 2.0 Client ID</strong>: Web application. Under <strong>Authorized redirect URIs</strong>, add the exact URL shown in “Redirect URI” below.</li>
+                                                        <li>Copy <strong>Client ID</strong> and <strong>Client Secret</strong> from Google and paste below.</li>
+                                                    </ol>
+                                                    <form method="post" action="profile_settings.php" class="mb-0">
+                                                        <div class="mb-2">
+                                                            <label class="form-label">Redirect URI <span class="text-muted">(copy into Google Console → Authorized redirect URIs)</span></label>
+                                                            <input type="text" name="google_redirect_uri" class="form-control font-monospace small" placeholder="Leave blank to use auto-detected URL" value="<?php echo htmlspecialchars($google_config['redirect_uri']); ?>">
+                                                            <small class="text-muted">If blank we use: <code><?php echo htmlspecialchars($google_redirect_uri_used); ?></code></small>
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <label class="form-label">Client ID</label>
+                                                            <input type="text" name="google_client_id" class="form-control" placeholder="xxxxx.apps.googleusercontent.com" value="<?php echo htmlspecialchars($google_config['client_id']); ?>">
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <label class="form-label">Client Secret</label>
+                                                            <input type="password" name="google_client_secret" class="form-control" placeholder="GOCSPX-..." value="<?php echo htmlspecialchars($google_config['client_secret']); ?>">
+                                                        </div>
+                                                        <button type="submit" name="save_google_config" class="btn btn-outline-primary btn-sm">Save credentials</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                            <div class="card mb-0">
+                                                <div class="card-header">
+                                                    <h6 class="card-title mb-0">2. Connect one Google account (admin)</h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <?php if ($google_connected): ?>
+                                                        <p class="text-success mb-2">A Google account is connected. When any staff sets a Next Follow-Up Date, an event is created and all dashboard users are added as attendees.</p>
+                                                        <a href="google_calendar_settings.php?action=disconnect" class="btn btn-outline-danger btn-sm">Disconnect Google Calendar</a>
+                                                    <?php else: ?>
+                                                        <?php if (empty($google_config['client_id']) || empty($google_config['client_secret'])): ?>
+                                                            <p class="text-warning mb-0">Save your Client ID and Client Secret above first, then click the button below.</p>
+                                                        <?php else: ?>
+                                                            <p class="mb-2">Connect <strong>one</strong> Google account. Events will be created from this account and all staff added as attendees.</p>
+                                                            <a href="<?php echo htmlspecialchars($google_auth_url); ?>" class="btn btn-primary btn-sm"><i class="ti ti-calendar"></i> Connect Google Calendar</a>
+                                                        <?php endif; ?>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <?php } ?>
+
                                     </div>
                                 </div>
                             </div>
@@ -295,11 +403,16 @@ if ($is_admin) {
         <script>
         $(function(){
             function showSection(target){
-                $('#settings_profile_section, #settings_security_section, #settings_email_section').addClass('d-none');
+                $('#settings_profile_section, #settings_security_section, #settings_email_section, #settings_google_section').addClass('d-none');
                 $(target).removeClass('d-none');
                 $('.settings-main-tab, .settings-side-link').removeClass('active');
                 $('.settings-main-tab[data-target="'+target+'"]').addClass('active');
                 $('.settings-side-link[data-target="'+target+'"]').addClass('active');
+            }
+
+            var tab = (new URLSearchParams(window.location.search)).get('tab');
+            if (tab === 'google') {
+                showSection('#settings_google_section');
             }
 
             $(document).on('click','.settings-main-tab, .settings-side-link',function(e){

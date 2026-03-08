@@ -29,6 +29,8 @@ $followup_enquiry_code = isset($followup_Query['enquiry_id']) ? $followup_Query[
 <input type="text" readonly class="form-control-plaintext fw-semibold" value="<?php echo $followup_enquiry_code ? $followup_enquiry_code : 'Save enquiry first'; ?>">
 <input type="hidden" name="enquiry_id" id="followup_enquiry_id" value="<?php echo htmlspecialchars($followup_enquiry_code); ?>">
 <div class="error-feedback">Please Select the Enquiry ID</div></div></div>
+<div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_contacted_time">Follow-up Date &amp; Time<span class="asterisk">*</span></label>
+<input type="datetime-local" class="form-control" id="followup_contacted_time" value="<?php echo $followup_Query['flw_contacted_time']=='' ? '' : date('Y-m-d\TH:i',strtotime($followup_Query['flw_contacted_time'])); ?>"><div class="error-feedback">Please select the follow-up date and time</div></div></div>
 <div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_contacted_person">Responsible Staff<span class="asterisk">*</span></label>
 <select class="form-select" id="followup_contacted_person">
 <option value="">--select--</option>
@@ -44,6 +46,12 @@ if($followupUsers){
 ?>
 </select>
 <div class="error-feedback">Please select the Responsible Staff</div></div></div>
+<div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_followup_type">Follow-up Type<span class="asterisk">*</span></label>
+<select class="form-select" id="followup_followup_type">
+<option value="">--select--</option>
+<option value="Call" <?php echo (isset($followup_Query['flw_followup_type']) && $followup_Query['flw_followup_type']=='Call') ? 'selected' : ''; ?>>Call</option>
+<option value="Email" <?php echo (isset($followup_Query['flw_followup_type']) && $followup_Query['flw_followup_type']=='Email') ? 'selected' : ''; ?>>Email</option>
+</select><div class="error-feedback">Please select Follow-up Type</div></div></div>
 <div class="col-12"><div class="mb-3"><label class="form-label" for="followup_follow_up_outcome">Follow Up Outcome</label>
 <select class="form-select" id="followup_follow_up_outcome">
 <?php foreach($follow_up_outcomes as $k=>$v) echo '<option value="'.htmlspecialchars($k).'" '.((isset($followup_Query['flw_follow_up_outcome']) && $followup_Query['flw_follow_up_outcome']==$k) ? 'selected' : '').'>'.htmlspecialchars($v).'</option>'; ?>
@@ -52,7 +60,7 @@ if($followupUsers){
 <div class="col-12 mb-2" id="followup_calendar_btn_wrap" style="display:none;">
 <button type="button" class="btn btn-outline-primary" id="followup_open_calendar_btn"><i class="ti ti-calendar"></i> Calendar</button>
 <small class="text-muted ms-2">Opens New Appointment with this enquiry’s student details pre-filled.</small></div>
-<div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_enquiry_flow_status">Enquiry Status</label>
+<div class="col-12"><div class="mb-3"><label class="form-label" for="followup_enquiry_flow_status">Enquiry Status</label>
 <select class="form-select" id="followup_enquiry_flow_status">
 <?php foreach($enquiry_flow_statuses as $k=>$v) {
     $sel = (isset($followup_Query['enquiry_flow_status']) && $followup_Query['enquiry_flow_status']==$k) ? 'selected' : '';
@@ -60,14 +68,6 @@ if($followupUsers){
     echo '<option value="'.$k.'" '.$sel.$dis.'>'.$v.'</option>';
 } ?>
 </select><small class="text-muted">Default: New for first-time enquiries. &quot;Booked Counselling&quot; is enabled after you book an appointment via the Calendar button above.</small></div></div>
-<div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_contacted_time">Follow-up Date &amp; Time<span class="asterisk">*</span></label>
-<input type="datetime-local" class="form-control" id="followup_contacted_time" value="<?php echo $followup_Query['flw_contacted_time']=='' ? '' : date('Y-m-d\TH:i',strtotime($followup_Query['flw_contacted_time'])); ?>"><div class="error-feedback">Please select the follow-up date and time</div></div></div>
-<div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_followup_type">Follow-up Type<span class="asterisk">*</span></label>
-<select class="form-select" id="followup_followup_type">
-<option value="">--select--</option>
-<option value="Call" <?php echo (isset($followup_Query['flw_followup_type']) && $followup_Query['flw_followup_type']=='Call') ? 'selected' : ''; ?>>Call</option>
-<option value="Email" <?php echo (isset($followup_Query['flw_followup_type']) && $followup_Query['flw_followup_type']=='Email') ? 'selected' : ''; ?>>Email</option>
-</select><div class="error-feedback">Please select Follow-up Type</div></div></div>
 <div class="col-12 mb-3" id="followup_email_template_section">
 <div class="card border-primary" id="followup_send_email_card"><div class="card-header bg-light">Send status email to student</div><div class="card-body">
 <p class="text-muted small">When you change Enquiry Status, the matching email template is loaded. Review, edit if needed, and send.</p>

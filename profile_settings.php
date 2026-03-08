@@ -56,7 +56,8 @@ $status_labels = array(
     5 => 'Documents Collected',
     6 => 'Enrolled',
     7 => 'Not Interested',
-    8 => 'Invalid / Duplicate'
+    8 => 'Invalid / Duplicate',
+    9 => 'Booked Counselling'
 );
 $templates = array();
 if ($is_admin) {
@@ -66,7 +67,7 @@ if ($is_admin) {
             $templates[$row['status_code']] = $row;
         }
     }
-    for ($i = 1; $i <= 8; $i++) {
+    for ($i = 1; $i <= 9; $i++) {
         if (!isset($templates[$i])) {
             $templates[$i] = array('id' => '', 'status_code' => $i, 'subject' => '', 'body' => '', 'updated_at' => null);
         }
@@ -238,10 +239,10 @@ if ($is_admin) {
                                             <p class="text-muted">
                                                 Manage the default email templates used for each enquiry status (New, Contacted, Follow-up Required, etc.).
                                                 These templates are used in the Follow-up section when sending status emails to students.
-                                                You can use placeholders: <code>{{FirstName}}</code>, <code>{{CourseName}}</code>, <code>{{OfficerName}}</code> (and legacy <code>{{student_name}}</code>).
+                                                You can use placeholders: <code>{{FirstName}}</code>, <code>{{CourseName}}</code>, <code>{{OfficerName}}</code> (and legacy <code>{{student_name}}</code>). For <strong>Booked Counselling</strong> (Status 9): <code>{{CounsellingDate}}</code> and <code>{{CounsellingTime}}</code> are filled from the linked appointment.
                                             </p>
                                             <div class="accordion" id="templatesAccordion">
-                                                <?php for ($i = 1; $i <= 8; $i++) {
+                                                <?php for ($i = 1; $i <= 9; $i++) {
                                                     $t = $templates[$i];
                                                     $sid = (int)$t['status_code'];
                                                     $subj = htmlspecialchars($t['subject'] ?? '');

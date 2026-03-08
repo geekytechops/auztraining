@@ -117,24 +117,17 @@
 
                 $('#enquiry_for').on('change',function(){
                     var value=$(this).val();
-                    if( value==1){
-                        $('#member_name').val($('#student_name').val());
-                        $('#member_name').prop('readonly',true);
-                    }else{
-                        $('#member_name').prop('readonly',false);
-                        $('#member_name').val('');
-                    }
-                })
-
-                $('#student_name').keyup(function(){
-                    if($('#enquiry_for').val()==1){
-                        $('#member_name').val($('#student_name').val());
+                    if(value==1){
+                        $('#student_name_wrap').hide();
+                    }else if(value==2){
+                        $('#student_name_wrap').show();
                     }
                 })
             })
 
             $(document).on('click','#enquiry_form',async() =>{
-                var studentName=$('#student_name').val().trim();
+                var enquiryForVal = ($('#enquiry_for').val()||'0').toString();
+                var studentName = enquiryForVal === '1' ? $('#member_name').val().trim() : $('#student_name').val().trim();
                 var contactName=$('#contact_num').val().trim();
                 var emailAddress=$('#email_address').val().trim();
                 var enquiryDate=$('#enquiry_date').val();
@@ -144,17 +137,17 @@
                 var stuState=$('#stu_state').val() == 0 ? '' : $('#stu_state').val();
                 var postCode=$('#post_code').val();
                 var visit_before=$('#visit_before').val()==0 ? '' :$('#visit_before').val();
-                var hear_about=$('#hear_about').val();
-                // var hearedby=$('#hearedby').val();
-                var hearedby=0;
+                var hear_about='';
+                var hearedby='';
                 var plan_to_start_date=$('#plan_to_start_date').val();
                 var refer_select=$('#refer_select').val();
                 var referer_name=$('#referer_name').val();
                 var refer_alumni=$('#refer_alumni').val();
                 var shore=$('#shore').val();
-                var comments=$('#comments').val();
+                var comments=$('#comments').length ? $('#comments').val() : '';
                 var remarks=[];
                 var appointment_booked=$('#appointment_booked').length ? $('#appointment_booked').val() : 0;
+                var memberName=$('#member_name').val().trim();
 
                 $('.remarks_check:checkbox:checked').each(function() {
                     remarks.push(this.value);
@@ -175,7 +168,6 @@
                 });
 
                 var payment=$('#payment_fee').val().trim();
-                var memberName=$('#member_name').val().trim();
                 var visaStatus=$('#visa_condition').val();
                 var visaNote=$('#visa_note').val();
                 var visaCondition=$('.visa_status').val();
@@ -202,25 +194,7 @@
                     refer_select_error=1;
                 }
 
-                // if(hear_about.length==0){
-                //     hear_about_error=0;
-                // }else if(hear_about.includes('9')){
-
-                //     if(hearedby==''){
-                //         hear_about_error=0;
-                //     }else{
-                //         hear_about_error=1;
-                //     }
-
-                // }else{
-                //     hear_about_error=1;
-                // }
-
-                if(hear_about==''){
-                    hear_about_error=0;
-                }else{
-                    hear_about_error=1;
-                }
+                var hear_about_error=1;
                 
                 // checkPhone=0;            
                 // var error_ph=await getData(contactName).split('||')[0];
@@ -231,7 +205,7 @@
                     var phoneChecks=0;
                 }
 
-                if(studentName==''|| phoneChecks==1 ||emailAddress==''|| (emailAddress!='' && !emailAddress.match(emailregexp)==true ) ||courses.length==0||payment=='' || enquiryDate=='' || refer_select_error==0 || hear_about_error==0 || surname=='' || enquiryFor==''|| postCode=='' || visit_before=='' || memberName=='' || visaNoteStatus==1 ){
+                if(studentName==''|| phoneChecks==1 ||emailAddress==''|| (emailAddress!='' && !emailAddress.match(emailregexp)==true ) ||courses.length==0|| enquiryDate=='' || refer_select_error==0 || surname=='' || enquiryFor==''|| postCode=='' || visit_before=='' || memberName=='' || visaNoteStatus==1 ){
 
                     if(refer_select_error==0){
                         if(refer_select==0){
@@ -257,42 +231,25 @@
                         }
                     }
 
-                    if(hear_about_error==0){
-                        if(hear_about.length==0){
-                            $('#hear_about').addClass('invalid-div');
-                            $('#hear_about').removeClass('valid-div');
-                            $('#hear_about').closest('div').find('.error-feedback').show();
-                        }else if(hear_about.includes('9')){
-
-                            if(hearedby==''){
-                                $('#hearedby').addClass('invalid-div');
-                                $('#hearedby').removeClass('valid-div');
-                                $('#hearedby').closest('div').find('.error-feedback').show();
-                            }else{
-                                $('#hearedby').addClass('valid-div');
-                                $('#hearedby').removeClass('invalid-div');
-                                $('#hearedby').closest('div').find('.error-feedback').hide();
-                            }
-
-                        }else{
-                            $('#hear_about').addClass('valid-div');
-                            $('#hear_about').removeClass('invalid-div');
-                            $('#hear_about').closest('div').find('.error-feedback').hide();
-                        }   
-                    }                 
-
-
                     if(studentName==''){
-                        $('#student_name').addClass('invalid-div');
-                        $('#student_name').removeClass('valid-div');
-                        $('#student_name').closest('div').find('.error-feedback').show();
+                        if(enquiryForVal==='1'){
+                            $('#member_name').addClass('invalid-div');
+                            $('#member_name').removeClass('valid-div');
+                            $('#member_name').closest('div').find('.error-feedback').show();
+                        }else{
+                            $('#student_name').addClass('invalid-div');
+                            $('#student_name').removeClass('valid-div');
+                            $('#student_name').closest('div').find('.error-feedback').show();
+                        }
                     }else{
+                        $('#member_name').addClass('valid-div');
+                        $('#member_name').removeClass('invalid-div');
+                        $('#member_name').closest('div').find('.error-feedback').hide();
                         $('#student_name').addClass('valid-div');
                         $('#student_name').removeClass('invalid-div');
                         $('#student_name').closest('div').find('.error-feedback').hide();
                     }
 
-                    
                     if(contactName=='' || contactName.length!=10 ){
                         $('#contact_num').addClass('invalid-div');
                         $('#contact_num').removeClass('valid-div');
@@ -345,16 +302,6 @@
                         $('#visa_note').removeClass('invalid-div');
                         $('#visa_note').closest('div').find('.error-feedback').hide();
                     }
-                    if(payment==''){
-                        $('#payment_fee').addClass('invalid-div');
-                        $('#payment_fee').removeClass('valid-div');
-                        $('#payment_fee').closest('div').find('.error-feedback').show();
-                    }else{
-                        $('#payment_fee').addClass('valid-div');
-                        $('#payment_fee').removeClass('invalid-div');
-                        $('#payment_fee').closest('div').find('.error-feedback').hide();
-                    }
-
                     if(enquiryDate==''){
                         $('#enquiry_date').addClass('invalid-div');
                         $('#enquiry_date').removeClass('valid-div');

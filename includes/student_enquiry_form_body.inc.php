@@ -51,15 +51,6 @@
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="student_name">First Name<span class="asterisk">*</span></label>
-                                                        <input type="text" class="form-control" id="student_name" placeholder="Student Name" value="<?php echo $queryRes['st_enquiry_for']==1 ? $queryRes['st_name']: $queryRes['st_member_name'] ; ?>" >
-                                                        <div class="error-feedback">
-                                                            Please enter the First name
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
                                                         <label class="form-label" for="enquiry_for">Enquiring For<span class="asterisk">*</span></label>
                                                         <select name="enquiry_for" class="form-select" id="enquiry_for">
                                                         <?php  
@@ -78,9 +69,18 @@
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="member_name">Name<span class="asterisk">*</span></label>
-                                                        <input type="text" class="form-control" id="member_name" placeholder="Name" value="<?php echo $queryRes['st_enquiry_for']==1 ? $queryRes['st_member_name'] : $queryRes['st_name']; ?>" <?php echo $queryRes['st_enquiry_for']==1 ? 'readonly' : ''  ?> >
+                                                        <input type="text" class="form-control" id="member_name" placeholder="Name" value="<?php echo $queryRes['st_enquiry_for']==1 ? $queryRes['st_name'] : $queryRes['st_member_name']; ?>">
                                                         <div class="error-feedback">
                                                             Please enter the Name
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6" id="student_name_wrap" style="display:<?php echo $queryRes['st_enquiry_for']==2 ? 'block' : 'none' ?>">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="student_name">Student name / Family member name<span class="asterisk">*</span></label>
+                                                        <input type="text" class="form-control" id="student_name" placeholder="Student name" value="<?php echo $queryRes['st_name']; ?>">
+                                                        <div class="error-feedback">
+                                                            Please enter the Student name
                                                         </div>
                                                     </div>
                                                 </div>
@@ -374,7 +374,7 @@
                                                                     <div class="col-md-6">
                                                                         <div class="mb-3">
                                                                             <label class="form-label" for="suburb">Suburb</label>
-                                                                            <input type="text" class="form-control suburb" id="suburb" placeholder="Sub Urb" value="<?php echo $queryRes['st_suburb']; ?>" >
+                                                                            <input type="text" class="form-control suburb" id="suburb" placeholder="Suburb" value="<?php echo $queryRes['st_suburb']; ?>" >
                                                                             <div class="error-feedback">
                                                                                 Please enter the Suburb
                                                                             </div>
@@ -447,52 +447,6 @@
                                                                     <div class="accordion-body">
                                                                     <div class="row">
                                                             <div class="col-sm">
-                                                                <div class="col-md-12">
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label" for="hear_about">How did you hear about us?<span class="asterisk">*</span></label><br>
-                                                                        <input type="text" name="hear_about" id="hear_about" class="form-control" value="<?= $heared_about=$queryRes['st_heared']=='' ? '' : $queryRes['st_heared'];?>">
-                                                                        <!-- <select name="hear_about" class="selectpicker hear_about" data-selected-text-format="count" multiple id="hear_about" title="Heared From"> -->
-                                                                        <?php  
-                                                                            // $st_heared=['Word of Mouth','Family or Friends','Website','Gumtree','Facebook','Instagram','Linkedin','Mail outs','Migration Agency','Other:'];
-                                                                            // $hear_select_opt='';                                                            
-                                                                            // echo $heared_about=$queryRes['st_heared']=='' ? '' : $queryRes['st_heared'];
-                                                                            // $heared_about=$queryRes['st_heared']=='' ? array() : json_decode($queryRes['st_heared']);
-                                                                            // for($i=0;$i<count($st_heared);$i++){
-
-                                                                            //     if(in_array($i,$heared_about) && count($heared_about)!=0){
-                                                                            //         $checked="selected";
-                                                                            //     }else{
-                                                                            //         $checked= "";
-                                                                            //     }                                                            
-
-                                                                            //     $hear_select_opt.= '<option value="'.$i.'" '.$checked.'>'.$st_heared[$i].'</option>';
-                                                                            //     if($i==4){
-                                                                            //         $hear_select_opt.='<optgroup Label="Social Media">';
-                                                                            //     }else if($i==7){
-                                                                            //         $hear_select_opt.='</optgroup>';
-                                                                            //     }
-                                                                            // }
-                                                                            // echo $hear_select_opt;
-                                                                        ?>
-                                                                        <!-- <optgroup label="Social Media"> -->
-                                                                            <!-- <option value="2">test</option> -->
-                                                                        <!-- </optgroup> -->
-                                                                            <!-- </select> -->
-                                                                        <div class="error-feedback">
-                                                                            Please select atleast one option
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <!-- <div class="col-md-12 hear_about_child" style="display:">
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label" for="hearedby">Specify How you heared about us</label>
-                                                                        <input type="text" class="form-control" id="hearedby" value="" >
-                                                                        <div class="error-feedback">
-                                                                            Please enter the source heared
-                                                                        </div>
-                                                                    </div>
-                                                                </div> -->
-                                                                
                                                                 <div class="col-md-12">
                                                                     <div class="mb-3">
                                                                         <label class="form-label" for="plan_to_start_date">When do you plan to start?</label>
@@ -689,19 +643,10 @@
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="payment_fee">Fees mentioned<span class="asterisk">*</span></label>
+                                                        <label class="form-label" for="payment_fee">Fees mentioned</label>
                                                         <input type="text" class="form-control" maxlength="255" id="payment_fee" placeholder="0.00" value="<?php echo $queryRes['st_fee']; ?>" >
                                                         <div class="error-feedback">
                                                             Please enter the Mentioned Fee
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="comments">Comments</label>
-                                                        <input type="text" class="form-control" id="comments" placeholder="Comments" value="<?php echo $queryRes['st_comments']; ?>">
-                                                        <div class="error-feedback">
-                                                            Please enter the Comments
                                                         </div>
                                                     </div>
                                                 </div>

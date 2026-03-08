@@ -276,7 +276,7 @@ if(isset($_SESSION['user_type'])){
                                                                     <th>Contact Number</th>
                                                                     <th>Email</th>
                                                                     <th>Street</th>
-                                                                    <th>Sub Urb</th>
+                                                                    <th>Suburb</th>
                                                                     <th>Post Code</th>
                                                                     <th>Course</th>
                                                                     <th>Plan to Start</th>

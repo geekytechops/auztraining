@@ -165,10 +165,10 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="sub_urb">Sub Urb</label>
-                                                        <input type="text" class="form-control" id="sub_urb" placeholder="Sub Urb" value="<?php echo $queryRes['st_sub_urb'] ?>" >
+                                                        <label class="form-label" for="sub_urb">Suburb</label>
+                                                        <input type="text" class="form-control" id="sub_urb" placeholder="Suburb" value="<?php echo $queryRes['st_sub_urb'] ?>" >
                                                         <div class="error-feedback">
-                                                            Please enter the Sub Urb
+                                                            Please enter the Suburb
                                                         </div>
                                                     </div>
                                                 </div>

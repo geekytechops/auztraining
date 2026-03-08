@@ -26,6 +26,21 @@ if(@$_SESSION['user_type']!=''){
         }
     }
 
+    // From Follow-up: prefill Student attendee with enquiry details and hide Link to Enquiry/Enrolment/Counselling
+    $fromFollowupEnquiry = null;
+    if(!$editMode && !empty($_GET['from_followup']) && !empty($_GET['enquiry_id'])){
+        $enq_id_esc = mysqli_real_escape_string($connection, $_GET['enquiry_id']);
+        $enqRow = @mysqli_fetch_array(mysqli_query($connection, "SELECT st_enquiry_id, st_name, st_surname, st_phno, st_email FROM student_enquiry WHERE st_enquiry_id = '$enq_id_esc' AND st_enquiry_status != 1 LIMIT 1"));
+        if($enqRow){
+            $fromFollowupEnquiry = array(
+                'enquiry_id' => $enqRow['st_enquiry_id'],
+                'student_name' => trim($enqRow['st_name'] . ' ' . $enqRow['st_surname']),
+                'student_phone' => $enqRow['st_phno'] ?? '',
+                'student_email' => $enqRow['st_email'] ?? ''
+            );
+        }
+    }
+
 ?>
 <!doctype html>
 <html lang="en">
@@ -294,7 +309,7 @@ if(@$_SESSION['user_type']!=''){
                                                                 <?php 
                                                                 mysqli_data_seek($attendeeTypes, 0);
                                                                 while($type = mysqli_fetch_array($attendeeTypes)){
-                                                                    $selected = $editMode && $appointmentData['attendee_type_id'] == $type['type_id'] ? 'selected' : '';
+                                                                    $selected = ($editMode && $appointmentData['attendee_type_id'] == $type['type_id']) || ($fromFollowupEnquiry && $type['type_id'] == 1) ? 'selected' : '';
                                                                     echo "<option value='{$type['type_id']}' {$selected}>{$type['type_name']}</option>";
                                                                 }
                                                                 ?>
@@ -314,7 +329,7 @@ if(@$_SESSION['user_type']!=''){
                                                     <div class="mb-3">
                                                         <label class="form-label">Student Name <span class="asterisk">*</span></label>
                                                         <input type="text" class="form-control" id="student_name" name="student_name" 
-                                                               value="<?php echo $editMode ? $appointmentData['student_name'] : ''; ?>">
+                                                               value="<?php echo $editMode ? $appointmentData['student_name'] : ($fromFollowupEnquiry ? htmlspecialchars($fromFollowupEnquiry['student_name']) : ''); ?>">
                                                         <div class="error-feedback">Please enter student name</div>
                                                     </div>
                                                 </div>
@@ -322,7 +337,7 @@ if(@$_SESSION['user_type']!=''){
                                                     <div class="mb-3">
                                                         <label class="form-label">Student Phone <span class="asterisk">*</span></label>
                                                         <input type="text" class="form-control" id="student_phone" name="student_phone" 
-                                                               value="<?php echo $editMode ? $appointmentData['student_phone'] : ''; ?>">
+                                                               value="<?php echo $editMode ? $appointmentData['student_phone'] : ($fromFollowupEnquiry ? htmlspecialchars($fromFollowupEnquiry['student_phone']) : ''); ?>">
                                                         <div class="error-feedback">Please enter student phone</div>
                                                     </div>
                                                 </div>
@@ -330,16 +345,18 @@ if(@$_SESSION['user_type']!=''){
                                                     <div class="mb-3">
                                                         <label class="form-label">Student Email <span class="asterisk">*</span></label>
                                                         <input type="email" class="form-control" id="student_email" name="student_email" 
-                                                               value="<?php echo $editMode ? $appointmentData['student_email'] : ''; ?>">
+                                                               value="<?php echo $editMode ? $appointmentData['student_email'] : ($fromFollowupEnquiry ? htmlspecialchars($fromFollowupEnquiry['student_email']) : ''); ?>">
                                                         <div class="error-feedback">Please enter student email</div>
                                                     </div>
                                                 </div>
+                                                <div id="attendee_link_section" class="row"<?php echo $fromFollowupEnquiry ? ' style="display:none;"' : ''; ?>>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label">Link to Enquiry</label>
                                                         <select class="selectpicker" data-live-search="true" id="connected_enquiry_id" name="connected_enquiry_id" title="-- Select Enquiry --">
                                                             <option value="">-- None --</option>
                                                             <?php 
+                                                            mysqli_data_seek($enquiries, 0);
                                                             while($enq = mysqli_fetch_array($enquiries)){
                                                                 $selected = $editMode && $appointmentData['connected_enquiry_id'] == $enq['st_enquiry_id'] ? 'selected' : '';
                                                                 echo "<option value='{$enq['st_enquiry_id']}' {$selected}>{$enq['st_enquiry_id']} - {$enq['st_name']} {$enq['st_surname']}</option>";
@@ -354,6 +371,7 @@ if(@$_SESSION['user_type']!=''){
                                                         <select class="selectpicker" data-live-search="true" id="connected_enrolment_id" name="connected_enrolment_id" title="-- Select Enrolment --">
                                                             <option value="">-- None --</option>
                                                             <?php 
+                                                            mysqli_data_seek($enrolments, 0);
                                                             while($enrol = mysqli_fetch_array($enrolments)){
                                                                 $selected = $editMode && $appointmentData['connected_enrolment_id'] == $enrol['st_unique_id'] ? 'selected' : '';
                                                                 echo "<option value='{$enrol['st_unique_id']}' {$selected}>{$enrol['st_unique_id']} - {$enrol['st_given_name']} {$enrol['st_surname']}</option>";
@@ -368,6 +386,7 @@ if(@$_SESSION['user_type']!=''){
                                                         <select class="selectpicker" data-live-search="true" id="connected_counselling_id" name="connected_counselling_id" title="-- Select Counselling --">
                                                             <option value="">-- None --</option>
                                                             <?php 
+                                                            mysqli_data_seek($counsellings, 0);
                                                             while($couns = mysqli_fetch_array($counsellings)){
                                                                 $selected = $editMode && $appointmentData['connected_counselling_id'] == $couns['counsil_id'] ? 'selected' : '';
                                                                 echo "<option value='{$couns['counsil_id']}' {$selected}>Counselling #{$couns['counsil_id']} - {$couns['st_enquiry_id']}</option>";
@@ -375,6 +394,7 @@ if(@$_SESSION['user_type']!=''){
                                                             ?>
                                                         </select>
                                                     </div>
+                                                </div>
                                                 </div>
                                             </div>
 
@@ -638,8 +658,8 @@ if(@$_SESSION['user_type']!=''){
                     }
                 });
                 
-                // Trigger on page load if editing
-                <?php if($editMode): ?>
+                // Trigger on page load if editing or opened from follow-up (Student pre-selected)
+                <?php if($editMode || $fromFollowupEnquiry): ?>
                 setTimeout(function() {
                     $('#attendee_type_id').trigger('change');
                     $('#meeting_type').trigger('change');

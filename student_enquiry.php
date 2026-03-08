@@ -261,6 +261,13 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
     
             $courses=mysqli_query($connection,"SELECT * from courses where course_status!=1");
         $visaStatus=mysqli_query($connection,"SELECT * from visa_statuses where visa_state_status!=1");
+        // Appointment popup (Follow-up Calendar): dropdown data
+        $fp_purposes = mysqli_query($connection, "SELECT * FROM appointment_purposes WHERE purpose_status != 1 ORDER BY purpose_name");
+        $fp_users = mysqli_query($connection, "SELECT * FROM users WHERE user_status != 1 ORDER BY user_name");
+        $fp_attendeeTypes = mysqli_query($connection, "SELECT * FROM appointment_attendee_types WHERE type_status != 1 ORDER BY type_name");
+        $fp_locations = mysqli_query($connection, "SELECT * FROM appointment_locations WHERE location_status != 1 ORDER BY location_name");
+        $fp_platforms = mysqli_query($connection, "SELECT * FROM appointment_platforms WHERE platform_status != 1 ORDER BY platform_name");
+        $fp_usersForShare = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE user_status != 1 ORDER BY user_name");
 
     if(isset($_GET['eq'])){
         $Updatestatus=1;
@@ -530,15 +537,6 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="student_name">First Name<span class="asterisk">*</span></label>
-                                                        <input type="text" class="form-control" id="student_name" placeholder="Student Name" value="<?php echo $queryRes['st_enquiry_for']==1 ? $queryRes['st_name']: $queryRes['st_member_name'] ; ?>" >
-                                                        <div class="error-feedback">
-                                                            Please enter the First name
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
                                                         <label class="form-label" for="enquiry_for">Enquiring For<span class="asterisk">*</span></label>
                                                         <select name="enquiry_for" class="form-select" id="enquiry_for">
                                                         <?php  
@@ -557,9 +555,18 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="member_name">Name<span class="asterisk">*</span></label>
-                                                        <input type="text" class="form-control" id="member_name" placeholder="Name" value="<?php echo $queryRes['st_enquiry_for']==1 ? $queryRes['st_member_name'] : $queryRes['st_name']; ?>" <?php echo $queryRes['st_enquiry_for']==1 ? 'readonly' : ''  ?> >
+                                                        <input type="text" class="form-control" id="member_name" placeholder="Name" value="<?php echo $queryRes['st_enquiry_for']==1 ? $queryRes['st_name'] : $queryRes['st_member_name']; ?>">
                                                         <div class="error-feedback">
                                                             Please enter the Name
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6" id="student_name_wrap" style="display:<?php echo $queryRes['st_enquiry_for']==2 ? 'block' : 'none' ?>">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="student_name">Student name / Family member name<span class="asterisk">*</span></label>
+                                                        <input type="text" class="form-control" id="student_name" placeholder="Student name" value="<?php echo $queryRes['st_name']; ?>">
+                                                        <div class="error-feedback">
+                                                            Please enter the Student name
                                                         </div>
                                                     </div>
                                                 </div>
@@ -853,7 +860,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                                     <div class="col-md-6">
                                                                         <div class="mb-3">
                                                                             <label class="form-label" for="suburb">Suburb</label>
-                                                                            <input type="text" class="form-control suburb" id="suburb" placeholder="Sub Urb" value="<?php echo $queryRes['st_suburb']; ?>" >
+                                                                            <input type="text" class="form-control suburb" id="suburb" placeholder="Suburb" value="<?php echo $queryRes['st_suburb']; ?>" >
                                                                             <div class="error-feedback">
                                                                                 Please enter the Suburb
                                                                             </div>
@@ -926,52 +933,6 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                                     <div class="accordion-body">
                                                                     <div class="row">
                                                             <div class="col-sm">
-                                                                <div class="col-md-12">
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label" for="hear_about">How did you hear about us?<span class="asterisk">*</span></label><br>
-                                                                        <input type="text" name="hear_about" id="hear_about" class="form-control" value="<?= $heared_about=$queryRes['st_heared']=='' ? '' : $queryRes['st_heared'];?>">
-                                                                        <!-- <select name="hear_about" class="selectpicker hear_about" data-selected-text-format="count" multiple id="hear_about" title="Heared From"> -->
-                                                                        <?php  
-                                                                            // $st_heared=['Word of Mouth','Family or Friends','Website','Gumtree','Facebook','Instagram','Linkedin','Mail outs','Migration Agency','Other:'];
-                                                                            // $hear_select_opt='';                                                            
-                                                                            // echo $heared_about=$queryRes['st_heared']=='' ? '' : $queryRes['st_heared'];
-                                                                            // $heared_about=$queryRes['st_heared']=='' ? array() : json_decode($queryRes['st_heared']);
-                                                                            // for($i=0;$i<count($st_heared);$i++){
-
-                                                                            //     if(in_array($i,$heared_about) && count($heared_about)!=0){
-                                                                            //         $checked="selected";
-                                                                            //     }else{
-                                                                            //         $checked= "";
-                                                                            //     }                                                            
-
-                                                                            //     $hear_select_opt.= '<option value="'.$i.'" '.$checked.'>'.$st_heared[$i].'</option>';
-                                                                            //     if($i==4){
-                                                                            //         $hear_select_opt.='<optgroup Label="Social Media">';
-                                                                            //     }else if($i==7){
-                                                                            //         $hear_select_opt.='</optgroup>';
-                                                                            //     }
-                                                                            // }
-                                                                            // echo $hear_select_opt;
-                                                                        ?>
-                                                                        <!-- <optgroup label="Social Media"> -->
-                                                                            <!-- <option value="2">test</option> -->
-                                                                        <!-- </optgroup> -->
-                                                                            <!-- </select> -->
-                                                                        <div class="error-feedback">
-                                                                            Please select atleast one option
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <!-- <div class="col-md-12 hear_about_child" style="display:">
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label" for="hearedby">Specify How you heared about us</label>
-                                                                        <input type="text" class="form-control" id="hearedby" value="" >
-                                                                        <div class="error-feedback">
-                                                                            Please enter the source heared
-                                                                        </div>
-                                                                    </div>
-                                                                </div> -->
-                                                                
                                                                 <div class="col-md-12">
                                                                     <div class="mb-3">
                                                                         <label class="form-label" for="plan_to_start_date">When do you plan to start?</label>
@@ -1168,19 +1129,10 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="payment_fee">Fees mentioned<span class="asterisk">*</span></label>
+                                                        <label class="form-label" for="payment_fee">Fees mentioned</label>
                                                         <input type="text" class="form-control" maxlength="255" id="payment_fee" placeholder="0.00" value="<?php echo $queryRes['st_fee']; ?>" >
                                                         <div class="error-feedback">
                                                             Please enter the Mentioned Fee
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="comments">Comments</label>
-                                                        <input type="text" class="form-control" id="comments" placeholder="Comments" value="<?php echo $queryRes['st_comments']; ?>">
-                                                        <div class="error-feedback">
-                                                            Please enter the Comments
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1319,7 +1271,15 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 </h2>
                 <div id="collapseFollowup" class="accordion-collapse collapse" aria-labelledby="headingFollowup" data-bs-parent="#enquiryMainAccordion">
                     <div class="accordion-body">
-                        <?php include('includes/followup_accordion_form.php'); ?>
+                        <?php
+                        $has_counselling_appointment = false;
+                        if(!empty($queryRes['st_enquiry_id'])){
+                            $eid = mysqli_real_escape_string($connection, $queryRes['st_enquiry_id']);
+                            $chk = @mysqli_fetch_row(mysqli_query($connection, "SELECT 1 FROM appointments WHERE connected_enquiry_id='$eid' AND delete_status!=1 LIMIT 1"));
+                            $has_counselling_appointment = (bool)$chk;
+                        }
+                        include('includes/followup_accordion_form.php');
+                        ?>
                     </div>
                 </div>
             </div>
@@ -1342,6 +1302,9 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
         </div>
         <!-- END main-wrapper -->
         <div class="rightbar-overlay"></div>
+
+        <?php include('includes/followup_appointment_modal.inc.php'); ?>
+
         <?php include('includes/footer_includes.php'); ?>
         <script>
 
@@ -1460,24 +1423,17 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
 
                 $('#enquiry_for').on('change',function(){
                     var value=$(this).val();
-                    if( value==1){
-                        $('#member_name').val($('#student_name').val());
-                        $('#member_name').prop('readonly',true);
-                    }else{
-                        $('#member_name').prop('readonly',false);
-                        $('#member_name').val('');
-                    }
-                })
-
-                $('#student_name').keyup(function(){
-                    if($('#enquiry_for').val()==1){
-                        $('#member_name').val($('#student_name').val());
+                    if(value==1){
+                        $('#student_name_wrap').hide();
+                    }else if(value==2){
+                        $('#student_name_wrap').show();
                     }
                 })
             })
 
             $(document).on('click','#enquiry_form',async() =>{
-                var studentName=$('#student_name').val().trim();
+                var enquiryForVal = ($('#enquiry_for').val()||'0').toString();
+                var studentName = enquiryForVal === '1' ? $('#member_name').val().trim() : $('#student_name').val().trim();
                 var contactName=$('#contact_num').val().trim();
                 var emailAddress=$('#email_address').val().trim();
                 var enquiryDate=$('#enquiry_date').val();
@@ -1487,15 +1443,14 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var stuState=$('#stu_state').val() == 0 ? '' : $('#stu_state').val();
                 var postCode=$('#post_code').val();
                 var visit_before=$('#visit_before').val()==0 ? '' :$('#visit_before').val();
-                var hear_about=$('#hear_about').val();
-                // var hearedby=$('#hearedby').val();
-                var hearedby=0;
+                var hear_about='';
+                var hearedby='';
                 var plan_to_start_date=$('#plan_to_start_date').val();
                 var refer_select=$('#refer_select').val();
                 var referer_name=$('#referer_name').val();
                 var refer_alumni=$('#refer_alumni').val();
                 var shore=$('#shore').val();
-                var comments=$('#comments').val();
+                var comments=$('#comments').length ? $('#comments').val() : '';
                 var remarks=[];
                 var appointment_booked=$('#appointment_booked').val();
 
@@ -1545,25 +1500,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     refer_select_error=1;
                 }
 
-                // if(hear_about.length==0){
-                //     hear_about_error=0;
-                // }else if(hear_about.includes('9')){
-
-                //     if(hearedby==''){
-                //         hear_about_error=0;
-                //     }else{
-                //         hear_about_error=1;
-                //     }
-
-                // }else{
-                //     hear_about_error=1;
-                // }
-
-                if(hear_about==''){
-                    hear_about_error=0;
-                }else{
-                    hear_about_error=1;
-                }
+                var hear_about_error=1;
                 
                 // checkPhone=0;            
                 // var error_ph=await getData(contactName).split('||')[0];
@@ -1574,7 +1511,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     var phoneChecks=0;
                 }
 
-                if(studentName==''|| phoneChecks==1 ||emailAddress==''|| (emailAddress!='' && !emailAddress.match(emailregexp)==true ) ||courses.length==0||payment=='' || enquiryDate=='' || refer_select_error==0 || hear_about_error==0 || surname=='' || enquiryFor==''|| postCode=='' || visit_before=='' || memberName=='' || visaNoteStatus==1 ){
+                if(studentName==''|| phoneChecks==1 ||emailAddress==''|| (emailAddress!='' && !emailAddress.match(emailregexp)==true ) ||courses.length==0|| enquiryDate=='' || refer_select_error==0 || surname=='' || enquiryFor==''|| postCode=='' || visit_before=='' || memberName=='' || visaNoteStatus==1 ){
 
                     if(refer_select_error==0){
                         if(refer_select==0){
@@ -1600,42 +1537,25 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                         }
                     }
 
-                    if(hear_about_error==0){
-                        if(hear_about.length==0){
-                            $('#hear_about').addClass('invalid-div');
-                            $('#hear_about').removeClass('valid-div');
-                            $('#hear_about').closest('div').find('.error-feedback').show();
-                        }else if(hear_about.includes('9')){
-
-                            if(hearedby==''){
-                                $('#hearedby').addClass('invalid-div');
-                                $('#hearedby').removeClass('valid-div');
-                                $('#hearedby').closest('div').find('.error-feedback').show();
-                            }else{
-                                $('#hearedby').addClass('valid-div');
-                                $('#hearedby').removeClass('invalid-div');
-                                $('#hearedby').closest('div').find('.error-feedback').hide();
-                            }
-
-                        }else{
-                            $('#hear_about').addClass('valid-div');
-                            $('#hear_about').removeClass('invalid-div');
-                            $('#hear_about').closest('div').find('.error-feedback').hide();
-                        }   
-                    }                 
-
-
                     if(studentName==''){
-                        $('#student_name').addClass('invalid-div');
-                        $('#student_name').removeClass('valid-div');
-                        $('#student_name').closest('div').find('.error-feedback').show();
+                        if(enquiryForVal==='1'){
+                            $('#member_name').addClass('invalid-div');
+                            $('#member_name').removeClass('valid-div');
+                            $('#member_name').closest('div').find('.error-feedback').show();
+                        }else{
+                            $('#student_name').addClass('invalid-div');
+                            $('#student_name').removeClass('valid-div');
+                            $('#student_name').closest('div').find('.error-feedback').show();
+                        }
                     }else{
+                        $('#member_name').addClass('valid-div');
+                        $('#member_name').removeClass('invalid-div');
+                        $('#member_name').closest('div').find('.error-feedback').hide();
                         $('#student_name').addClass('valid-div');
                         $('#student_name').removeClass('invalid-div');
                         $('#student_name').closest('div').find('.error-feedback').hide();
                     }
 
-                    
                     if(contactName=='' || contactName.length!=10 ){
                         $('#contact_num').addClass('invalid-div');
                         $('#contact_num').removeClass('valid-div');
@@ -1688,16 +1608,6 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                         $('#visa_note').removeClass('invalid-div');
                         $('#visa_note').closest('div').find('.error-feedback').hide();
                     }
-                    if(payment==''){
-                        $('#payment_fee').addClass('invalid-div');
-                        $('#payment_fee').removeClass('valid-div');
-                        $('#payment_fee').closest('div').find('.error-feedback').show();
-                    }else{
-                        $('#payment_fee').addClass('valid-div');
-                        $('#payment_fee').removeClass('invalid-div');
-                        $('#payment_fee').closest('div').find('.error-feedback').hide();
-                    }
-
                     if(enquiryDate==''){
                         $('#enquiry_date').addClass('invalid-div');
                         $('#enquiry_date').removeClass('valid-div');
@@ -2245,6 +2155,88 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             $(document).on('change','#followup_enquiry_flow_status',function(){
                 loadFollowupTemplateForCurrentStatus();
             });
+            function toggleFollowupCalendarBtn(){
+                var outcome = ($('#followup_follow_up_outcome').val() || '').toString();
+                var show = (outcome === 'No Answer' || outcome === 'Call Back Later' || outcome === 'Booked Counselling');
+                $('#followup_calendar_btn_wrap').toggle(!!show);
+            }
+            $(document).on('change','#followup_follow_up_outcome',function(){ toggleFollowupCalendarBtn(); });
+            $(document).on('click','#followup_open_calendar_btn',function(){
+                var enquiryId = ($('#followup_enquiry_id').val() || '').toString().trim();
+                if(!enquiryId){ $('.toast-text2').html('Save the enquiry first to open Calendar.'); $('#borderedToast2Btn').trigger('click'); return; }
+                $('#fp_connected_enquiry_id').val(enquiryId);
+                var enquiryForVal = ($('#enquiry_for').val()||'0').toString();
+                var studentName = enquiryForVal === '1' ? ($('#member_name').val()||'').trim() : ($('#student_name').val()||'').trim();
+                var studentPhone = ($('#contact_num').val()||'').trim();
+                var studentEmail = ($('#email_address').val()||'').trim();
+                $('#fp_student_name').val(studentName);
+                $('#fp_student_phone').val(studentPhone);
+                $('#fp_student_email').val(studentEmail);
+                $('#fp_attendee_type_id').val('1');
+                $('#fp_student_info_section').show();
+                $('#fp_business_info_section').hide();
+                var modal = new bootstrap.Modal(document.getElementById('followupAppointmentModal'));
+                modal.show();
+            });
+            // Follow-up appointment popup: attendee type toggle
+            $(document).on('change','#fp_attendee_type_id',function(){
+                var v = $(this).val();
+                if(v=='1'){ $('#fp_student_info_section').show(); $('#fp_business_info_section').hide(); $('#fp_student_name,#fp_student_phone,#fp_student_email').prop('required',true); $('#fp_business_name,#fp_business_contact').prop('required',false); }
+                else if(v=='2'){ $('#fp_student_info_section').hide(); $('#fp_business_info_section').show(); $('#fp_student_name,#fp_student_phone,#fp_student_email').prop('required',false); $('#fp_business_name,#fp_business_contact').prop('required',true); }
+                else { $('#fp_student_info_section').hide(); $('#fp_business_info_section').hide(); $('#fp_student_name,#fp_student_phone,#fp_student_email,#fp_business_name,#fp_business_contact').prop('required',false); }
+            });
+            $(document).on('change','#fp_meeting_type',function(){
+                var v = $(this).val();
+                if(v=='Online'){ $('#fp_platform_section,#fp_meeting_link_section').show(); $('#fp_location_section').hide(); $('#fp_platform_id').prop('required',true); $('#fp_location_id').prop('required',false); }
+                else if(v=='Face to Face'){ $('#fp_location_section').show(); $('#fp_platform_section,#fp_meeting_link_section').hide(); $('#fp_location_id').prop('required',true); $('#fp_platform_id').prop('required',false); }
+                else { $('#fp_location_section,#fp_platform_section,#fp_meeting_link_section').hide(); $('#fp_location_id,#fp_platform_id').prop('required',false); }
+            });
+            $('#fp_share_all').on('change',function(){ var c=$(this).is(':checked'); $('.fp-share-with-item').prop('checked',c); });
+            $('.fp-share-with-item').on('change',function(){ if(!$(this).is(':checked')) $('#fp_share_all').prop('checked',false); });
+            $(document).on('submit','#fp_appointment_form',function(e){
+                e.preventDefault();
+                var $f = $(this);
+                $f.find('.error-feedback').hide();
+                var date = $('#fp_appointment_date').val();
+                var time = $('#fp_appointment_time').val();
+                var state = $('#fp_timezone_state').val();
+                if(date && time && state){
+                    var stateDt = date + ' ' + time;
+                    $('#fp_appointment_time_state').val(stateDt);
+                    $('#fp_appointment_time_adelaide').val(stateDt);
+                    $('#fp_appointment_time_india').val(stateDt);
+                    $('#fp_appointment_time_philippines').val(stateDt);
+                }
+                var valid = true;
+                $f.find('[required]').each(function(){ if(!$(this).val()){ valid=false; $(this).closest('.mb-3').find('.error-feedback').show(); } });
+                if(!valid) return;
+                var formData = new FormData(this);
+                $('#fp_appointment_submit_btn').prop('disabled',true);
+                $.ajax({ type:'POST', url:'includes/datacontrol.php', data:formData, contentType:false, processData:false,
+                    success:function(res){
+                        var r = (res||'').toString().trim();
+                        if(r==='1'){
+                            $('#followupAppointmentModal').modal('hide');
+                            $('#toast-text').html('Appointment saved successfully!');
+                            $('#borderedToast1Btn').trigger('click');
+                            $f[0].reset();
+                            $('#fp_appointment_submit_btn').prop('disabled',false);
+                            $('#followup_enquiry_flow_status option[value="9"]').prop('disabled', false);
+                        } else if(r==='2'){
+                            $('.toast-text2').html('Time slot already booked for this person. Choose a different time.');
+                            $('#borderedToast2Btn').trigger('click');
+                            $('#fp_appointment_submit_btn').prop('disabled',false);
+                        } else {
+                            $('.toast-text2').html('Cannot save appointment. Please try again.');
+                            $('#borderedToast2Btn').trigger('click');
+                            $('#fp_appointment_submit_btn').prop('disabled',false);
+                        }
+                    },
+                    error:function(){ $('.toast-text2').html('An error occurred.'); $('#borderedToast2Btn').trigger('click'); $('#fp_appointment_submit_btn').prop('disabled',false); }
+                });
+            });
+            $('#followupAppointmentModal').on('shown.bs.modal',function(){ $('#fp_attendee_type_id').trigger('change'); $('#fp_meeting_type').trigger('change'); });
+            $(document).ready(function(){ toggleFollowupCalendarBtn(); });
             $(document).on('click','#followup_send_status_email',function(){
                 var enquiry_id=$('#followup_enquiry_id').val();
                 var status_code=$('#followup_enquiry_flow_status').val();
@@ -2269,7 +2261,8 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             loadFollowupTemplateForCurrentStatus();
 
             $(document).on('click','#followup_check',function(){
-                var student_name=$('#student_name').val().trim();
+                var enquiryForVal = ($('#enquiry_for').val()||'0').toString();
+                var student_name = enquiryForVal === '1' ? $('#member_name').val().trim() : $('#student_name').val().trim();
                 var contact_num=$('#contact_num').val().trim();
                 var contacted_person=$('#followup_contacted_person').val().trim();
                 var contacted_time=$('#followup_contacted_time').val().trim();
@@ -2286,7 +2279,10 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 if(!contacted_person||!student_name||!contacted_time||!contact_num||contact_num.length!=10){
                     if(!contact_num||contact_num.length!=10)$('#contact_num').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
                     if(!contacted_time)$('#followup_contacted_time').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
-                    if(!student_name)$('#student_name').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                    if(!student_name){
+                        if(enquiryForVal==='1') $('#member_name').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                        else $('#student_name').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
+                    }
                     return;
                 }
                 if(!date) date = contacted_time ? contacted_time.slice(0,10) : '';

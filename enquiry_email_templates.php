@@ -24,7 +24,8 @@ $status_labels = array(
     5 => 'Documents Collected',
     6 => 'Enrolled',
     7 => 'Not Interested',
-    8 => 'Invalid / Duplicate'
+    8 => 'Invalid / Duplicate',
+    9 => 'Booked Counselling'
 );
 
 $templates = array();
@@ -35,7 +36,7 @@ if ($q && mysqli_num_rows($q)) {
     }
 }
 // Ensure we have a row for each status (use defaults if table empty)
-for ($i = 1; $i <= 8; $i++) {
+for ($i = 1; $i <= 9; $i++) {
     if (!isset($templates[$i])) {
         $templates[$i] = array('id' => '', 'status_code' => $i, 'subject' => '', 'body' => '', 'updated_at' => null);
     }
@@ -76,9 +77,10 @@ for ($i = 1; $i <= 8; $i++) {
                         Edit the default email templates used when staff send emails from the Follow-up section. Each template is linked to an enquiry status.
                         You can use placeholders:
                         <code>{{FirstName}}</code>, <code>{{CourseName}}</code>, <code>{{OfficerName}}</code> (and legacy <code>{{student_name}}</code>).
+                        For <strong>Booked Counselling</strong> (Status 9): <code>{{CounsellingDate}}</code> and <code>{{CounsellingTime}}</code> are filled from the linked appointment.
                     </p>
                     <div class="accordion" id="templatesAccordion">
-                        <?php for ($i = 1; $i <= 8; $i++) {
+                        <?php for ($i = 1; $i <= 9; $i++) {
                             $t = $templates[$i];
                             $sid = (int)$t['status_code'];
                             $subj = htmlspecialchars($t['subject'] ?? '');

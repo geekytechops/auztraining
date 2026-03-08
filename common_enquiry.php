@@ -150,7 +150,7 @@
                                                 <div class="col-md-12">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="suburb">Suburb</label>
-                                                        <input type="text" class="form-control suburb" id="suburb" placeholder="Sub Urb" value="" >
+                                                        <input type="text" class="form-control suburb" id="suburb" placeholder="Suburb" value="" >
                                                         <div class="error-feedback">
                                                             Please enter the Suburb
                                                         </div>
@@ -203,7 +203,7 @@
                                                                     
                                                                 // for($i=1;$i<count($st_remarks);$i++){                                            
 
-                                                                    if(in_array($i,$coursesSel)){
+                                                                    if(in_array($counts,$coursesSel)){
                                                                         $checked='checked';
                                                                     }else{
                                                                         $checked='';

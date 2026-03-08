@@ -126,7 +126,7 @@ echo '<div class="form-check"><input type="checkbox" class="remarks_check form-c
 </div>
 <div class="error-feedback">Please select atleast one option</div></div></div>
 <div class="col-12"><div class="mb-3"><label class="form-label" for="counselling_notes">Notes</label>
-<textarea class="form-control" id="counselling_notes" rows="3" placeholder="Counselling notes (like appointment notes)"><?php echo htmlspecialchars($counsil_Query['counsil_notes'] ?? ''); ?></textarea></div></div>
+<textarea class="form-control" id="counselling_notes" rows="3" placeholder="Counselling notes"><?php echo htmlspecialchars($counsil_Query['counsil_notes'] ?? ''); ?></textarea></div></div>
 </div>
 <button class="btn btn-primary" type="button" id="counseling_submit">Submit Counseling</button>
 <input type="hidden" value="<?php echo $counsilEqId; ?>" id="counselling_check_update">

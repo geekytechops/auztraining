@@ -686,7 +686,7 @@ $reportUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users W
                     if(appt.date_raw === today){
                         any = true;
                         var row = '<tr>' +
-                            '<td>'+escapeHtml(appt.datetime.split(" ")[0])+'</td>' +
+                            '<td>'+escapeHtml(appt.date_display || appt.datetime)+'</td>' +
                             '<td>'+escapeHtml(appt.time_slot)+'</td>' +
                             '<td>'+escapeHtml(appt.purpose)+'</td>' +
                             '<td>'+escapeHtml(appt.attendee)+'</td>' +
@@ -716,7 +716,7 @@ $reportUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users W
                     if(appt.date_raw > today && appt.status !== 'cancelled'){
                         any = true;
                         var row = '<tr>' +
-                            '<td>'+escapeHtml(appt.datetime.split(" ")[0])+'</td>' +
+                            '<td>'+escapeHtml(appt.date_display || appt.datetime)+'</td>' +
                             '<td>'+escapeHtml(appt.time_slot)+'</td>' +
                             '<td>'+escapeHtml(appt.purpose)+'</td>' +
                             '<td>'+escapeHtml(appt.attendee)+'</td>' +
@@ -747,7 +747,7 @@ $reportUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users W
                     var statusText = formatStatus(apt.status);
                     
                     var row = '<tr>' +
-                        '<td>' + escapeHtml(apt.datetime.split(" ")[0]) + '</td>' +
+                        '<td>' + escapeHtml(apt.date_display || apt.datetime) + '</td>' +
                         '<td>' + escapeHtml(apt.time_slot) + '</td>' +
                         '<td>' + escapeHtml(apt.purpose) + '</td>' +
                         '<td>' + escapeHtml(apt.attendee) + '</td>' +

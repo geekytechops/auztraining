@@ -25,9 +25,22 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
     <style>
         .enquiry-card{ transition: transform .15s ease; }
         .enquiry-card:hover{ transform: translateY(-2px); }
-        .table-next-fup{ min-width: 120px; }
+        .table-next-fup{ min-width: 140px; }
         .table-enquiry-list thead th{ white-space: nowrap; }
         #enquiry_list_body tr td:first-child{ font-weight: 500; }
+        .view-enq-filters .form-control,
+        .view-enq-filters .form-select{ box-shadow: none; }
+        /* Follow-up Outcome: date buttons (No Answer, Call Back Later, Booked Counselling) */
+        .btn-fup-date{ cursor: pointer; border: none; padding: 5px 12px; border-radius: 6px; font-size: 0.875rem; display: inline-block; font-weight: 500; }
+        .btn-fup-date.btn-fup-no-answer{ background: #fd7e14; color: #fff; }
+        .btn-fup-date.btn-fup-callback{ background: #0d6efd; color: #fff; border: 2px double rgba(255,255,255,0.4); }
+        .btn-fup-date.btn-fup-booked{ background: #e6a800; color: #fff; }
+        /* Follow-up Outcome: direct labels (Progressing, Converted, Provide Info., Lost) */
+        .btn-fup-outcome{ display: inline-block; padding: 5px 12px; border-radius: 6px; font-size: 0.875rem; font-weight: 500; color: #fff; border: none; }
+        .btn-fup-outcome.btn-fup-progressing{ background: #0d6efd; }
+        .btn-fup-outcome.btn-fup-converted{ background: #198754; }
+        .btn-fup-outcome.btn-fup-provide-info{ background: #495057; border: 1px solid #fd7e14; }
+        .btn-fup-outcome.btn-fup-lost{ background: #dc3545; }
     </style>
 </head>
 <body>
@@ -136,8 +149,8 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
                 <!-- Filters & List -->
                 <div class="card">
                     <div class="card-body">
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-3">
+                        <div class="row g-3 mb-3 view-enq-filters">
+                            <div class="col-md-2">
                                 <label class="form-label small">Search (name, phone, email)</label>
                                 <input type="text" id="filter_search" class="form-control form-control-sm" placeholder="Search...">
                             </div>
@@ -208,7 +221,7 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
                             <table class="table table-hover table-bordered table-enquiry-list mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th class="table-next-fup">Next Follow-up</th>
+                                        <th class="table-next-fup">Follow-up Outcome</th>
                                         <th>Name</th>
                                         <th>Mobile</th>
                                         <th>Course</th>
@@ -227,9 +240,122 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
         </div>
     </div>
 </div>
+<!-- Appointment Details modal (for date-click from Follow-up Outcome column) -->
+<div class="modal fade" id="viewEnqAppointmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Appointment Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="viewEnq_appointment_details_content">
+                <p class="text-muted">Loading...</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="viewEnq_edit_appointment_btn">Edit</button>
+                <button type="button" class="btn btn-success" id="viewEnq_mark_completed_btn" style="display:none;">Mark as Completed</button>
+                <button type="button" class="btn btn-warning" id="viewEnq_mark_no_show_btn" style="display:none;">Mark as No-Show</button>
+                <button type="button" class="btn btn-danger" id="viewEnq_cancel_appointment_btn" style="display:none;">Cancel</button>
+                <button type="button" class="btn btn-info" id="viewEnq_time_in_btn" style="display:none;">Time In</button>
+                <button type="button" class="btn btn-info" id="viewEnq_time_out_btn" style="display:none;">Time Out</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Cancel appointment confirmation -->
+<div class="modal fade" id="viewEnqCancelConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cancel Appointment?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">Are you sure you want to cancel this appointment?</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                <button type="button" class="btn btn-danger" id="viewEnq_confirm_cancel_btn">Yes, cancel it</button>
+            </div>
+        </div>
+    </div>
+</div>
 <?php include('includes/footer_includes.php'); ?>
 <script>
 $(function(){
+    var viewEnqCurrentAppointmentId = null;
+
+    $(document).on('click', '.btn-fup-date[data-appointment-id]', function(){
+        var id = $(this).data('appointment-id');
+        if(!id) return;
+        viewEnqCurrentAppointmentId = id;
+        $('#viewEnq_appointment_details_content').html('<p class="text-muted">Loading...</p>');
+        $('#viewEnq_mark_completed_btn, #viewEnq_mark_no_show_btn, #viewEnq_cancel_appointment_btn, #viewEnq_time_in_btn, #viewEnq_time_out_btn').hide();
+        $('#viewEnqAppointmentModal').modal('show');
+        $.post('includes/datacontrol.php', { formName: 'get_appointment_details', appointment_id: id }, function(html){
+            $('#viewEnq_appointment_details_content').html(html && html.trim() ? html : '<p class="text-muted">No details found.</p>');
+            var status = $('#viewEnq_appointment_details_content #appointment_status_hidden').val();
+            if(status == 'scheduled'){
+                $('#viewEnq_mark_completed_btn').show();
+                $('#viewEnq_mark_no_show_btn').show();
+                $('#viewEnq_cancel_appointment_btn').show();
+                $('#viewEnq_time_in_btn').show();
+            }
+        });
+    });
+
+    $('#viewEnq_edit_appointment_btn').on('click', function(){
+        if(viewEnqCurrentAppointmentId) window.location.href = 'appointment_booking.php?id=' + btoa(viewEnqCurrentAppointmentId);
+    });
+    $('#viewEnq_mark_completed_btn').on('click', function(){ viewEnqUpdateStatus('completed'); });
+    $('#viewEnq_mark_no_show_btn').on('click', function(){ viewEnqUpdateStatus('no-show'); });
+    $('#viewEnq_cancel_appointment_btn').on('click', function(){ $('#viewEnqCancelConfirmModal').modal('show'); });
+    $('#viewEnq_time_in_btn').on('click', function(){ viewEnqRecordTimeInOut('in'); });
+    $('#viewEnq_time_out_btn').on('click', function(){ viewEnqRecordTimeInOut('out'); });
+    $('#viewEnq_confirm_cancel_btn').on('click', function(){
+        $('#viewEnqCancelConfirmModal').modal('hide');
+        viewEnqUpdateStatus('cancelled');
+    });
+
+    function viewEnqUpdateStatus(status){
+        if(!viewEnqCurrentAppointmentId) return;
+        $.post('includes/datacontrol.php', { formName: 'update_appointment_status', appointment_id: viewEnqCurrentAppointmentId, status: status }, function(res){
+            if(res == '1'){
+                $('#toast-text').html('Appointment status updated successfully');
+                if(document.getElementById('borderedToast1Btn')) $('#borderedToast1Btn').trigger('click');
+                $('#viewEnqAppointmentModal').modal('hide');
+                loadList();
+            } else {
+                $('#toast-text2').html('Cannot update appointment status');
+                if(document.getElementById('borderedToast2Btn')) $('#borderedToast2Btn').trigger('click');
+            }
+        });
+    }
+    function viewEnqRecordTimeInOut(type){
+        if(!viewEnqCurrentAppointmentId) return;
+        $.post('includes/datacontrol.php', { formName: 'record_time_in_out', appointment_id: viewEnqCurrentAppointmentId, type: type }, function(res){
+            if(res == '1'){
+                $('#toast-text').html('Time recorded successfully');
+                if(document.getElementById('borderedToast1Btn')) $('#borderedToast1Btn').trigger('click');
+                $.post('includes/datacontrol.php', { formName: 'get_appointment_details', appointment_id: viewEnqCurrentAppointmentId }, function(html){
+                    $('#viewEnq_appointment_details_content').html(html && html.trim() ? html : '');
+                    var status = $('#viewEnq_appointment_details_content #appointment_status_hidden').val();
+                    if(status == 'scheduled'){
+                        $('#viewEnq_mark_completed_btn').show();
+                        $('#viewEnq_mark_no_show_btn').show();
+                        $('#viewEnq_cancel_appointment_btn').show();
+                        $('#viewEnq_time_in_btn').show();
+                        $('#viewEnq_time_out_btn').hide();
+                    } else {
+                        $('#viewEnq_mark_completed_btn, #viewEnq_mark_no_show_btn, #viewEnq_cancel_appointment_btn, #viewEnq_time_in_btn, #viewEnq_time_out_btn').hide();
+                    }
+                });
+                loadList();
+            } else {
+                $('#toast-text2').html('Cannot record time');
+                if(document.getElementById('borderedToast2Btn')) $('#borderedToast2Btn').trigger('click');
+            }
+        });
+    }
     function loadDashboard(){
         $.post('includes/datacontrol.php', { formName: 'fetchEnquiryDashboard' }, function(data){
             try {

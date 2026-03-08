@@ -754,6 +754,8 @@ if(@$_POST['formName']=='followup_call'){
         $contactMode=isset($_POST['contactMode']) ? mysqli_real_escape_string($connection,$_POST['contactMode']) : '';
         $followup_type=isset($_POST['followup_type']) ? mysqli_real_escape_string($connection,$_POST['followup_type']) : '';
         $enquiry_flow_status=isset($_POST['enquiry_flow_status']) && $_POST['enquiry_flow_status']!='' ? (int)$_POST['enquiry_flow_status'] : null;
+        // When Follow Up Outcome is Booked Counselling, set enquiry status to 9 so Status column shows correctly
+        if(isset($_POST['follow_up_outcome']) && trim($_POST['follow_up_outcome']) === 'Booked Counselling') $enquiry_flow_status = 9;
         $follow_up_notes=isset($_POST['follow_up_notes']) ? mysqli_real_escape_string($connection,$_POST['follow_up_notes']) : '';
         $next_followup_date=isset($_POST['next_followup_date']) && $_POST['next_followup_date']!='' ? date('Y-m-d H:i:s',strtotime($_POST['next_followup_date'])) : null;
         $follow_up_outcome=isset($_POST['follow_up_outcome']) ? mysqli_real_escape_string($connection,$_POST['follow_up_outcome']) : '';
@@ -2794,8 +2796,8 @@ if(@$_POST['formName']=='fetchEnquiryList'){
         $order_sql = " ORDER BY $flow_col ASC, e.st_id DESC ";
     }
     $q = mysqli_query($connection, "SELECT e.st_id, e.st_enquiry_id, e.st_name, e.st_phno, e.st_email, e.st_course, e.st_course_type, e.st_enquiry_date, e.created_date, $flow_col AS flow_status FROM student_enquiry e WHERE $where $order_sql");
-    $status_labels = array(1=>'New',2=>'Contacted',3=>'Follow-up Required',4=>'Interested',5=>'Documents Collected',6=>'Enrolled',7=>'Not Interested',8=>'Invalid/Duplicate');
-    $status_classes = array(1=>'secondary',2=>'info',3=>'warning',4=>'primary',5=>'info',6=>'success',7=>'danger',8=>'secondary');
+    $status_labels = array(1=>'New',2=>'Contacted',3=>'Follow-up Required',4=>'Interested',5=>'Documents Collected',6=>'Enrolled',7=>'Not Interested',8=>'Invalid/Duplicate',9=>'Booked Counselling');
+    $status_classes = array(1=>'secondary',2=>'info',3=>'warning',4=>'primary',5=>'info',6=>'success',7=>'danger',8=>'secondary',9=>'warning');
     // Canonical outcome keys (same as Follow Up Outcome in followup_accordion_form.php) for normalising DB values
     $outcome_keys_canonical = array('No Answer','Call Back Later','Booked Counselling','Application Started','Enrolled','Requested More Information','Not Interested');
     $outcome_normalize = array();

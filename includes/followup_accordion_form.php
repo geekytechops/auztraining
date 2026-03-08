@@ -78,8 +78,6 @@ if($followupUsers){
 </div></div></div>
 <div class="col-12"><div class="mb-3"><label class="form-label" for="followup_follow_up_notes">Follow-Up Notes</label>
 <textarea class="form-control" id="followup_follow_up_notes" rows="3" placeholder="Free text notes"><?php echo htmlspecialchars(isset($followup_Query['flw_follow_up_notes']) ? $followup_Query['flw_follow_up_notes'] : ''); ?></textarea></div></div>
-<div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_next_followup_date">Next Follow-up Date</label>
-<input type="datetime-local" class="form-control" id="followup_next_followup_date" value="<?php echo (isset($followup_Query['flw_next_followup_date']) && $followup_Query['flw_next_followup_date'] !== '' && $followup_Query['flw_next_followup_date'] !== null) ? date('Y-m-d\TH:i', strtotime($followup_Query['flw_next_followup_date'])) : ''; ?>" placeholder="When to follow up next"></div></div>
 <div class="col-12 mb-3" id="followup_email_template_section_dup" style="display:none;">
 <div class="card border-primary"><div class="card-header bg-light">Send status email to student</div><div class="card-body">
 <p class="text-muted small">When you change Enquiry Status, the matching email template is loaded. Review, edit if needed, and send.</p>

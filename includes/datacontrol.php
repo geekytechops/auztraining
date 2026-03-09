@@ -299,13 +299,11 @@ if(@$_POST['formName']=='student_enquiry_common'){
         echo 0;
     }else{
         echo $uniqueId;
-
-        $mail_to=$emailAddress;
-        $mail_subject="Your Enquiry Successfully Created";
-        $mail_body="Please keep your enquiry ID noted for future uses<br><b>Enquiry ID: </b>".$uniqueId;
-        send_mail($mail_to,$mail_subject,$mail_body);
-
-
+        // Email acknowledgement for this enquiry is disabled for now.
+        // $mail_to=$emailAddress;
+        // $mail_subject="Your Enquiry Successfully Created";
+        // $mail_body="Please keep your enquiry ID noted for future uses<br><b>Enquiry ID: </b>".$uniqueId;
+        // send_mail($mail_to,$mail_subject,$mail_body);
     }
 
 }
@@ -452,20 +450,19 @@ $query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_member_n
         echo 0;
     }else{
         echo $uniqueId;
-
-        $mail_to = $emailAddress;
-        $mail_subject = "Enquiry received – Ref: " . $uniqueId;
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $script_path = dirname(dirname($_SERVER['SCRIPT_NAME'] ?? ''));
-        $crm_base = rtrim($protocol . '://' . $host . $script_path, '/') . '/';
-        $eq_token = base64_encode((string)$lastId);
-        $enquiry_form_url = $crm_base . 'student_enquiry.php?eq=' . $eq_token;
-        $register_url = $crm_base . 'student_register.php';
-        $login_url = $crm_base . 'student_login.php';
-        $mail_body = enquiry_ack_email_body($studentName, $uniqueId, $enquiry_form_url, $register_url, $login_url);
-        send_mail($mail_to, $mail_subject, $mail_body);
-
+        // Automatic enquiry acknowledgement email disabled for now (handled manually from Follow-up section).
+        // $mail_to = $emailAddress;
+        // $mail_subject = "Enquiry received – Ref: " . $uniqueId;
+        // $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        // $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        // $script_path = dirname(dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+        // $crm_base = rtrim($protocol . '://' . $host . $script_path, '/') . '/';
+        // $eq_token = base64_encode((string)$lastId);
+        // $enquiry_form_url = $crm_base . 'student_enquiry.php?eq=' . $eq_token;
+        // $register_url = $crm_base . 'student_register.php';
+        // $login_url = $crm_base . 'student_login.php';
+        // $mail_body = enquiry_ack_email_body($studentName, $uniqueId, $enquiry_form_url, $register_url, $login_url);
+        // send_mail($mail_to, $mail_subject, $mail_body);
         // insert course Type data
         if($courseType==1){
 
@@ -778,39 +775,40 @@ if(@$_POST['formName']=='followup_call'){
             $lastId=mysqli_insert_id($connection);
             if($lastId!=''){
                 if($enquiry_flow_status!==null) mysqli_query($connection,"UPDATE student_enquiry SET st_enquiry_flow_status=$enquiry_flow_status WHERE st_enquiry_id='$enquiry_id'");
-                if($enquiry_flow_status === 9){
-                    $eid = mysqli_real_escape_string($connection, $enquiry_id);
-                    $apt = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT appointment_date, appointment_time FROM appointments WHERE connected_enquiry_id='$eid' AND delete_status!=1 ORDER BY appointment_datetime DESC LIMIT 1"));
-                    if($apt){
-                        $er = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT st_email, st_name, st_course FROM student_enquiry WHERE st_enquiry_id='$eid' AND st_enquiry_status!=1 LIMIT 1"));
-                        if($er && !empty(trim($er['st_email']))){
-                            $tpl = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT subject, body FROM enquiry_status_email_templates WHERE status_code=9 LIMIT 1"));
-                            if($tpl){
-                                $first_name = trim(strtok($er['st_name'], ' '));
-                                $course_name = '';
-                                if(!empty($er['st_course'])){
-                                    $ids = json_decode($er['st_course'], true);
-                                    if(is_array($ids) && count($ids)){
-                                        $cid = (int)$ids[0];
-                                        $cr = @mysqli_fetch_array(mysqli_query($connection, "SELECT CONCAT(course_sname,' ',course_name) AS nm FROM courses WHERE course_id=$cid AND course_status!=1 LIMIT 1"));
-                                        if($cr && !empty($cr['nm'])) $course_name = $cr['nm'];
-                                    }
-                                }
-                                $repl = array(
-                                    '{{student_name}}' => $er['st_name'],
-                                    '{{FirstName}}' => $first_name ?: $er['st_name'],
-                                    '{{CourseName}}' => $course_name,
-                                    '{{CounsellingDate}}' => date('l, j F Y', strtotime($apt['appointment_date'])),
-                                    '{{CounsellingTime}}' => date('g:i A', strtotime($apt['appointment_time'])) . ' – ' . ((isset($apt['appointment_end_time']) && $apt['appointment_end_time'] !== '') ? date('g:i A', strtotime($apt['appointment_end_time'])) : date('g:i A', strtotime($apt['appointment_time'])))
-                                );
-                                $body = strtr($tpl['body'], $repl);
-                                if(!function_exists('send_mail')) require_once(__DIR__ . '/mail_function.php');
-                                $body_html = '<div style="font-family:Segoe UI,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#333;">' . nl2br(htmlspecialchars($body, ENT_QUOTES, 'UTF-8')) . '</div>';
-                                @send_mail(trim($er['st_email']), $tpl['subject'], $body_html);
-                            }
-                        }
-                    }
-                }
+                // Automatic counselling email for Status 9 disabled; use explicit Send Email in Follow-up section instead.
+                // if($enquiry_flow_status === 9){
+                //     $eid = mysqli_real_escape_string($connection, $enquiry_id);
+                //     $apt = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT appointment_date, appointment_time FROM appointments WHERE connected_enquiry_id='$eid' AND delete_status!=1 ORDER BY appointment_datetime DESC LIMIT 1"));
+                //     if($apt){
+                //         $er = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT st_email, st_name, st_course FROM student_enquiry WHERE st_enquiry_id='$eid' AND st_enquiry_status!=1 LIMIT 1"));
+                //         if($er && !empty(trim($er['st_email']))){
+                //             $tpl = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT subject, body FROM enquiry_status_email_templates WHERE status_code=9 LIMIT 1"));
+                //             if($tpl){
+                //                 $first_name = trim(strtok($er['st_name'], ' '));
+                //                 $course_name = '';
+                //                 if(!empty($er['st_course'])){
+                //                     $ids = json_decode($er['st_course'], true);
+                //                     if(is_array($ids) && count($ids)){
+                //                         $cid = (int)$ids[0];
+                //                         $cr = @mysqli_fetch_array(mysqli_query($connection, "SELECT CONCAT(course_sname,' ',course_name) AS nm FROM courses WHERE course_id=$cid AND course_status!=1 LIMIT 1"));
+                //                         if($cr && !empty($cr['nm'])) $course_name = $cr['nm'];
+                //                     }
+                //                 }
+                //                 $repl = array(
+                //                     '{{student_name}}' => $er['st_name'],
+                //                     '{{FirstName}}' => $first_name ?: $er['st_name'],
+                //                     '{{CourseName}}' => $course_name,
+                //                     '{{CounsellingDate}}' => date('l, j F Y', strtotime($apt['appointment_date'])),
+                //                     '{{CounsellingTime}}' => date('g:i A', strtotime($apt['appointment_time'])) . ' – ' . ((isset($apt['appointment_end_time']) && $apt['appointment_end_time'] !== '') ? date('g:i A', strtotime($apt['appointment_end_time'])) : date('g:i A', strtotime($apt['appointment_time'])))
+                //                 );
+                //                 $body = strtr($tpl['body'], $repl);
+                //                 if(!function_exists('send_mail')) require_once(__DIR__ . '/mail_function.php');
+                //                 $body_html = '<div style="font-family:Segoe UI,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#333;">' . nl2br(htmlspecialchars($body, ENT_QUOTES, 'UTF-8')) . '</div>';
+                //                 @send_mail(trim($er['st_email']), $tpl['subject'], $body_html);
+                //             }
+                //         }
+                //     }
+                // }
                 if($next_followup_date !== null){
                     if(!function_exists('google_calendar_create_event')) require_once(__DIR__ . '/google_calendar_helper.php');
                     $title = 'Follow-up: ' . $enquiry_id . ' – ' . $student_name;
@@ -828,39 +826,40 @@ if(@$_POST['formName']=='followup_call'){
             $query=mysqli_query($connection,"UPDATE followup_calls SET `enquiry_id`='$enquiry_id',`flw_progress_state`='$progress_status',`flw_name`='$student_name',`flw_phone`='$contact_num',`flw_contacted_person`='$contacted_person',`flw_contacted_time`='$contacted_time',`flw_date`='$date',`flw_remarks`='$remarks',`flw_comments`='$comments',`flw_mode_contact`='$mode_contact_val',`flw_followup_type`='$followup_type',`flw_follow_up_notes`='$follow_up_notes',`flw_next_followup_date`=$next_sql,`flw_follow_up_outcome`='$follow_up_outcome',`flw_modified_date`='$dates',`flw_modifiedby`=$admin_id WHERE `flw_id`=$checkId");
             if($query){
                 if($enquiry_flow_status!==null) mysqli_query($connection,"UPDATE student_enquiry SET st_enquiry_flow_status=$enquiry_flow_status WHERE st_enquiry_id='$enquiry_id'");
-                if($enquiry_flow_status === 9){
-                    $eid = mysqli_real_escape_string($connection, $enquiry_id);
-                    $apt = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT appointment_date, appointment_time FROM appointments WHERE connected_enquiry_id='$eid' AND delete_status!=1 ORDER BY appointment_datetime DESC LIMIT 1"));
-                    if($apt){
-                        $er = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT st_email, st_name, st_course FROM student_enquiry WHERE st_enquiry_id='$eid' AND st_enquiry_status!=1 LIMIT 1"));
-                        if($er && !empty(trim($er['st_email']))){
-                            $tpl = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT subject, body FROM enquiry_status_email_templates WHERE status_code=9 LIMIT 1"));
-                            if($tpl){
-                                $first_name = trim(strtok($er['st_name'], ' '));
-                                $course_name = '';
-                                if(!empty($er['st_course'])){
-                                    $ids = json_decode($er['st_course'], true);
-                                    if(is_array($ids) && count($ids)){
-                                        $cid = (int)$ids[0];
-                                        $cr = @mysqli_fetch_array(mysqli_query($connection, "SELECT CONCAT(course_sname,' ',course_name) AS nm FROM courses WHERE course_id=$cid AND course_status!=1 LIMIT 1"));
-                                        if($cr && !empty($cr['nm'])) $course_name = $cr['nm'];
-                                    }
-                                }
-                                $repl = array(
-                                    '{{student_name}}' => $er['st_name'],
-                                    '{{FirstName}}' => $first_name ?: $er['st_name'],
-                                    '{{CourseName}}' => $course_name,
-                                    '{{CounsellingDate}}' => date('l, j F Y', strtotime($apt['appointment_date'])),
-                                    '{{CounsellingTime}}' => date('g:i A', strtotime($apt['appointment_time'])) . ' – ' . ((isset($apt['appointment_end_time']) && $apt['appointment_end_time'] !== '') ? date('g:i A', strtotime($apt['appointment_end_time'])) : date('g:i A', strtotime($apt['appointment_time'])))
-                                );
-                                $body = strtr($tpl['body'], $repl);
-                                if(!function_exists('send_mail')) require_once(__DIR__ . '/mail_function.php');
-                                $body_html = '<div style="font-family:Segoe UI,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#333;">' . nl2br(htmlspecialchars($body, ENT_QUOTES, 'UTF-8')) . '</div>';
-                                @send_mail(trim($er['st_email']), $tpl['subject'], $body_html);
-                            }
-                        }
-                    }
-                }
+                // Automatic counselling email for Status 9 disabled; use explicit Send Email in Follow-up section instead.
+                // if($enquiry_flow_status === 9){
+                //     $eid = mysqli_real_escape_string($connection, $enquiry_id);
+                //     $apt = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT appointment_date, appointment_time FROM appointments WHERE connected_enquiry_id='$eid' AND delete_status!=1 ORDER BY appointment_datetime DESC LIMIT 1"));
+                //     if($apt){
+                //         $er = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT st_email, st_name, st_course FROM student_enquiry WHERE st_enquiry_id='$eid' AND st_enquiry_status!=1 LIMIT 1"));
+                //         if($er && !empty(trim($er['st_email']))){
+                //             $tpl = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT subject, body FROM enquiry_status_email_templates WHERE status_code=9 LIMIT 1"));
+                //             if($tpl){
+                //                 $first_name = trim(strtok($er['st_name'], ' '));
+                //                 $course_name = '';
+                //                 if(!empty($er['st_course'])){
+                //                     $ids = json_decode($er['st_course'], true);
+                //                     if(is_array($ids) && count($ids)){
+                //                         $cid = (int)$ids[0];
+                //                         $cr = @mysqli_fetch_array(mysqli_query($connection, "SELECT CONCAT(course_sname,' ',course_name) AS nm FROM courses WHERE course_id=$cid AND course_status!=1 LIMIT 1"));
+                //                         if($cr && !empty($cr['nm'])) $course_name = $cr['nm'];
+                //                     }
+                //                 }
+                //                 $repl = array(
+                //                     '{{student_name}}' => $er['st_name'],
+                //                     '{{FirstName}}' => $first_name ?: $er['st_name'],
+                //                     '{{CourseName}}' => $course_name,
+                //                     '{{CounsellingDate}}' => date('l, j F Y', strtotime($apt['appointment_date'])),
+                //                     '{{CounsellingTime}}' => date('g:i A', strtotime($apt['appointment_time'])) . ' – ' . ((isset($apt['appointment_end_time']) && $apt['appointment_end_time'] !== '') ? date('g:i A', strtotime($apt['appointment_end_time'])) : date('g:i A', strtotime($apt['appointment_time'])))
+                //                 );
+                //                 $body = strtr($tpl['body'], $repl);
+                //                 if(!function_exists('send_mail')) require_once(__DIR__ . '/mail_function.php');
+                //                 $body_html = '<div style="font-family:Segoe UI,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#333;">' . nl2br(htmlspecialchars($body, ENT_QUOTES, 'UTF-8')) . '</div>';
+                //                 @send_mail(trim($er['st_email']), $tpl['subject'], $body_html);
+                //             }
+                //         }
+                //     }
+                // }
                 if($next_followup_date !== null){
                     if(!function_exists('google_calendar_create_event')) require_once(__DIR__ . '/google_calendar_helper.php');
                     $title = 'Follow-up: ' . $enquiry_id . ' – ' . $student_name;

@@ -576,7 +576,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                         <label class="form-label" for="course_type">Course Type</label>
                                                         <select name="course_type" class="form-select" id="course_type">
                                                         <?php  
-                                                        $st_course_type=['--select--','Rpl','Regular','Regular - Group','Short courses','Short course - Group'];
+                                                        $st_course_type=['--select--','Need exemption','Regular','Regular - Group','Short courses','Short course - Group'];
                                                         $selectedCourseType=$queryRes['st_course_type']!='' ? $queryRes['st_course_type'] : 0;
                                                         for($i=0;$i<count($st_course_type);$i++){
                                                             $checked= $i==$queryRes['st_course_type'] ? 'selected' : '';
@@ -728,7 +728,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                    <div class="col-xl-12">
                                         <div class="card">
                                             <div class="card-body">
-                                                <b><p class="card-title">RPL Form</p></b>
+                                                <b><p class="card-title">Need exemption Form</p></b>
                                                 <div class="row">
 
                                                 <div class="col-md-6">

@@ -482,7 +482,7 @@ if(isset($_SESSION['user_type'])){
                                                 <input type="text" id="column_35" placeholder="value" class="column_value form-control">
                                                 <select name="column_8" class="column_value form-select" title="Course Type" id="column_8" style="width:auto;">
                                                         <?php  
-                                                        $st_course_type=['-- select --','Rpl','Regular','Regular - Group','Short courses','Short course - Group'];
+                                                        $st_course_type=['-- select --','Need exemption','Regular','Regular - Group','Short courses','Short course - Group'];
                                                         for($i=0;$i<count($st_course_type);$i++){     
                                                             $count=$i;                                                       
                                                             echo '<option value="'.$count.'" data="'.$st_course_type[$i].'">'.$st_course_type[$i].'</option>';
@@ -648,7 +648,7 @@ if(isset($_SESSION['user_type'])){
 
                                                     <select name="course_type_select" class="selectpicker change_select" title="Course Type" id="course_type_select" style="width:auto;">
                                                         <?php  
-                                                        $st_course_type=['Rpl','Regular','Regular - Group','Short courses','Short course - Group'];
+                                                        $st_course_type=['Need exemption','Regular','Regular - Group','Short courses','Short course - Group'];
                                                         for($i=0;$i<count($st_course_type);$i++){     
                                                             $count=$i+1;                                                       
                                                             echo '<option value="'.$count.'" data="'.$st_course_type[$i].'">'.$st_course_type[$i].'</option>';
@@ -748,7 +748,7 @@ if(isset($_SESSION['user_type'])){
                                                         <td><?php echo $coursesName; ?></td>
                                                         <td><?php echo $startPlanDate=date('d M Y',strtotime($LoadqueryqueryRes['st_startplan_date'])); ?></td>
                                                         <td><?php 
-                                                            $st_course_type=['-','Rpl','Regular','Regular - Group','Short courses','Short course - Group'];
+                                                            $st_course_type=['-','Need exemption','Regular','Regular - Group','Short courses','Short course - Group'];
                                                             $courseTypeId=$LoadqueryqueryRes['st_course_type'];
                                                             echo $st_course_type[$courseTypeId];
                                                         ?></td>

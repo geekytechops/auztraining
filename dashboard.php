@@ -519,7 +519,7 @@ if(isset($_SESSION['user_type'])){
                                             <input type="text" id="column_35" placeholder="value" class="column_value form-control" style="min-width:220px;">
                                             <select name="column_8" class="column_value form-select" title="Course Type" id="column_8" style="min-width:220px;">
                                                 <?php  
-                                                $st_course_type=['-- select --','Rpl','Regular','Regular - Group','Short courses','Short course - Group'];
+                                                $st_course_type=['-- select --','Need exemption','Regular','Regular - Group','Short courses','Short course - Group'];
                                                 for($i=0;$i<count($st_course_type);$i++){     
                                                     $count=$i;                                                       
                                                     echo '<option value="'.$count.'" data="'.$st_course_type[$i].'">'.$st_course_type[$i].'</option>';

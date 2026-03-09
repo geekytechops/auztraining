@@ -44,7 +44,7 @@ if(!empty($enquiry['st_course'])){
         if($c) $courseNames[] = ($c['course_sname']??'').' - '.($c['course_name']??'');
     }
 }
-$course_type = array('','RPL','Regular','Regular - Group','Short courses','Short course - Group');
+$course_type = array('','Need exemption','Regular','Regular - Group','Short courses','Short course - Group');
 $enquiry_for = array('','Self','Family Member');
 $sources = array('','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads','Agent / referral');
 ?>

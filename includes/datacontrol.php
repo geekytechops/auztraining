@@ -655,7 +655,7 @@ if(mysqli_num_rows($filterQueryget)!=0){
         $st_states=['--select--','NSW - New South Wales','VIC - Victoria','ACT - Australian Capital Territory','NT - Northern Territoy','WA - Western Australia','QLD - Queensland','SA - South Australia','TAS - Tasmania'];
         $state_name= $st_states[$filterQueryRes['st_state']];
         
-        $st_course_type=['-','Rpl','Regular','Regular - Group','Short courses','Short course - Group'];
+        $st_course_type=['-','Need exemption','Regular','Regular - Group','Short courses','Short course - Group'];
         $courseTypeId=$filterQueryRes['st_course_type'];
     
         $coursesNamePos = strrpos($coursesName, ',');
@@ -997,7 +997,7 @@ if(mysqli_num_rows($filterQueryget)!=0){
         $st_states=['--select--','NSW - New South Wales','VIC - Victoria','ACT - Australian Capital Territory','NT - Northern Territoy','WA - Western Australia','QLD - Queensland','SA - South Australia','TAS - Tasmania'];
         $state_name= $st_states[$filterQueryRes['st_state']];
         
-        $st_course_type=['-','Rpl','Regular','Regular - Group','Short courses','Short course - Group'];
+        $st_course_type=['-','Need exemption','Regular','Regular - Group','Short courses','Short course - Group'];
         $courseTypeId=$filterQueryRes['st_course_type'];
     
         $coursesNamePos = strrpos($coursesName, ',');
@@ -1954,7 +1954,7 @@ if(@$_REQUEST['name']=='studentEnquiry'){
         $coursesName.= $courses['course_sname'].'-'.$courses['course_name']." , <br>"; 
     }
     
-    $st_course_type=['-','Rpl','Regular','Regular - Group','Short courses','Short course - Group'];
+    $st_course_type=['-','Need exemption','Regular','Regular - Group','Short courses','Short course - Group'];
     $courseTypeId=$queryRes['st_course_type'];
 
     $coursesNamePos = strrpos($coursesName, ',');
@@ -3178,7 +3178,7 @@ if(@$_POST['formName']=='fetchEnquiries'){
             $stateIndex = isset($selectDataQry['st_state']) ? (int)$selectDataQry['st_state'] : 0;
             $state_name = $st_states[$stateIndex] ?? '-';
             
-            $st_course_type=['-','Rpl','Regular','Regular - Group','Short courses','Short course - Group'];
+            $st_course_type=['-','Need exemption','Regular','Regular - Group','Short courses','Short course - Group'];
             $courseTypeId=$selectDataQry['st_course_type'];
         
             $visited=$selectDataQry['st_visited']==1 ? 'Visited' : ( $selectDataQry['st_visited']==2 ? 'Not Visited' : ' - ' ) ;

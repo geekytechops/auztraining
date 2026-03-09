@@ -3683,6 +3683,7 @@ if(@$_POST['formName']=='get_appointment_reports'){
     $end_date = '';
     $status_filter = isset($_POST['status_filter']) ? trim($_POST['status_filter']) : '';
     $staff_filter = isset($_POST['staff_filter']) ? (int)$_POST['staff_filter'] : 0;
+    $purpose_filter = isset($_POST['purpose_filter']) ? (int)$_POST['purpose_filter'] : 0;
     
     if($date_range == 'today'){
         $start_date = date('Y-m-d');
@@ -3714,6 +3715,9 @@ if(@$_POST['formName']=='get_appointment_reports'){
     }
     if($staff_filter > 0){
         $query .= " AND a.appointment_to_see = $staff_filter";
+    }
+    if($purpose_filter > 0){
+        $query .= " AND a.purpose_id = $purpose_filter";
     }
 
     // Apply Share With visibility rules (same as calendar): admins see all, others only shared/public

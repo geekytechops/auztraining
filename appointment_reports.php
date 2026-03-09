@@ -3,8 +3,9 @@
 session_start();
 if(@$_SESSION['user_type']!=''){
 
-// Fetch employees for filters
+// Fetch employees and appointment purposes for filters
 $reportUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE user_status != 1 ORDER BY user_name");
+$appointmentPurposes = mysqli_query($connection, "SELECT purpose_id, purpose_name FROM appointment_purposes WHERE purpose_status != 1 ORDER BY purpose_name");
 ?>
 <!doctype html>
 <html lang="en">
@@ -51,6 +52,10 @@ $reportUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users W
             .status-cancelled { background: #ff3d60; }
             .status-no-show  { background: #fcb92c; color: #000; }
             .status-missed   { background: #74788d; }
+            .view-enq-filters .form-control,
+            .view-enq-filters .form-select {
+                box-shadow: none;
+            }
         </style>
     </head>
 
@@ -95,10 +100,10 @@ $reportUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users W
                                 <div class="card">
                                     <div class="card-body">
                                         <h5 class="card-title mb-3">Filter Appointments</h5>
-                                        <div class="row g-3">
-                                            <div class="col-md-3">
-                                                <label class="form-label">Date Range</label>
-                                                <select class="form-select" id="date_range">
+                                        <div class="row g-3 mb-2 view-enq-filters">
+                                            <div class="col-md-2">
+                                                <label class="form-label small">Date Range</label>
+                                                <select class="form-select form-select-sm" id="date_range">
                                                     <option value="today">Today</option>
                                                     <option value="tomorrow">Tomorrow</option>
                                                     <option value="week">This Week</option>
@@ -106,23 +111,17 @@ $reportUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users W
                                                     <option value="custom">Custom Range</option>
                                                 </select>
                                             </div>
-                                            <div class="col-md-3" id="custom_date_section" style="display:none;">
-                                                <label class="form-label">Start Date</label>
-                                                <input type="date" class="form-control" id="start_date">
+                                            <div class="col-md-2" id="custom_date_section" style="display:none;">
+                                                <label class="form-label small">Start Date</label>
+                                                <input type="date" class="form-control form-control-sm" id="start_date">
                                             </div>
-                                            <div class="col-md-3" id="custom_date_section2" style="display:none;">
-                                                <label class="form-label">End Date</label>
-                                                <input type="date" class="form-control" id="end_date">
+                                            <div class="col-md-2" id="custom_date_section2" style="display:none;">
+                                                <label class="form-label small">End Date</label>
+                                                <input type="date" class="form-control form-control-sm" id="end_date">
                                             </div>
-                                            <div class="col-md-3">
-                                                <label class="form-label">&nbsp;</label><br>
-                                                <button type="button" class="btn btn-primary" onclick="loadReports()">Generate Report</button>
-                                            </div>
-                                        </div>
-                                        <div class="row g-3 mt-1">
-                                            <div class="col-md-3">
-                                                <label class="form-label">Status</label>
-                                                <select class="form-select" id="status_filter">
+                                            <div class="col-md-2">
+                                                <label class="form-label small">Status</label>
+                                                <select class="form-select form-select-sm" id="status_filter">
                                                     <option value="">All</option>
                                                     <option value="scheduled">Pending</option>
                                                     <option value="completed">Completed</option>
@@ -131,17 +130,37 @@ $reportUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users W
                                                     <option value="missed">Missed</option>
                                                 </select>
                                             </div>
-                                            <div class="col-md-3">
-                                                <label class="form-label">Employee</label>
-                                                <select class="form-select" id="staff_filter">
-                                                    <option value="0">All Employees</option>
+                                            <div class="col-md-2">
+                                                <label class="form-label small">Purpose</label>
+                                                <select class="form-select form-select-sm" id="purpose_filter">
+                                                    <option value="0">All</option>
                                                     <?php 
-                                                    mysqli_data_seek($reportUsers, 0);
-                                                    while($u = mysqli_fetch_array($reportUsers)){
-                                                        echo '<option value="'.$u['user_id'].'">'.htmlspecialchars($u['user_name']).'</option>';
+                                                    if($appointmentPurposes){
+                                                        mysqli_data_seek($appointmentPurposes, 0);
+                                                        while($p = mysqli_fetch_assoc($appointmentPurposes)){
+                                                            echo '<option value="'.(int)$p['purpose_id'].'">'.htmlspecialchars($p['purpose_name']).'</option>';
+                                                        }
                                                     }
                                                     ?>
                                                 </select>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label small">Employee</label>
+                                                <select class="form-select form-select-sm" id="staff_filter">
+                                                    <option value="0">All Employees</option>
+                                                    <?php 
+                                                    mysqli_data_seek($reportUsers, 0);
+                                                    $currentUserId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
+                                                    while($u = mysqli_fetch_array($reportUsers)){
+                                                        $selected = ($currentUserId && $currentUserId == (int)$u['user_id']) ? ' selected' : '';
+                                                        echo '<option value="'.$u['user_id'].'"'.$selected.'">'.htmlspecialchars($u['user_name']).'</option>';
+                                                    }
+                                                    ?>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2 d-flex align-items-end">
+                                                <button type="button" id="btn_apply" class="btn btn-primary btn-sm me-1">Apply</button>
+                                                <button type="button" id="btn_reset" class="btn btn-outline-secondary btn-sm">Reset</button>
                                             </div>
                                         </div>
                                     </div>
@@ -365,6 +384,7 @@ $reportUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users W
         <script>
             var statusChart, purposeChart, staffChart, dailyTrendChart;
             var currentAppointmentId = null;
+            var loggedUserId = <?php echo isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0; ?>;
             
             $(document).ready(function() {
                 $('#date_range').on('change', function() {
@@ -375,6 +395,27 @@ $reportUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users W
                         $('#custom_date_section').hide();
                         $('#custom_date_section2').hide();
                     }
+                });
+
+                $('#btn_apply').on('click', function(){
+                    loadReports();
+                });
+
+                // Ensure Employee defaults to logged-in user if present in the list
+                if (loggedUserId && $('#staff_filter option[value="'+loggedUserId+'"]').length) {
+                    $('#staff_filter').val(String(loggedUserId));
+                }
+
+                $('#btn_reset').on('click', function(){
+                    $('#date_range').val('month');
+                    $('#start_date').val('');
+                    $('#end_date').val('');
+                    $('#status_filter').val('');
+                    $('#purpose_filter').val('0');
+                    $('#staff_filter').val('0');
+                    $('#custom_date_section').hide();
+                    $('#custom_date_section2').hide();
+                    loadReports();
                 });
                 
                 loadReports();
@@ -418,6 +459,7 @@ $reportUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users W
                 var endDate = '';
                 var statusFilter = $('#status_filter').val();
                 var staffFilter = $('#staff_filter').val();
+                var purposeFilter = $('#purpose_filter').val();
                 
                 if(dateRange == 'custom') {
                     startDate = $('#start_date').val();
@@ -431,9 +473,10 @@ $reportUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users W
                         formName: 'get_appointment_reports',
                         date_range: dateRange,
                         start_date: startDate,
-                            end_date: endDate,
-                            status_filter: statusFilter,
-                            staff_filter: staffFilter
+                        end_date: endDate,
+                        status_filter: statusFilter,
+                        staff_filter: staffFilter,
+                        purpose_filter: purposeFilter
                     },
                     success: function(response) {
                         try {

@@ -30,6 +30,17 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
         #enquiry_list_body tr td:first-child{ font-weight: 500; }
         .view-enq-filters .form-control,
         .view-enq-filters .form-select{ box-shadow: none; }
+        /* Make all filter controls same height & width */
+        .view-enq-filters .form-control-sm,
+        .view-enq-filters .form-select-sm{
+            height: 38px;
+            line-height: 1.4;
+            width: 100%;
+        }
+        .view-enq-filters input[type="date"].form-control-sm{
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+        }
         /* Follow-up Outcome: date buttons (No Answer, Call Back Later, Booked Counselling) */
         .btn-fup-date{ cursor: pointer; border: none; padding: 5px 12px; border-radius: 6px; font-size: 0.875rem; display: inline-block; font-weight: 500; }
         .btn-fup-date.btn-fup-no-answer{ background: #fd7e14; color: #fff; }

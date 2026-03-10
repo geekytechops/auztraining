@@ -30,6 +30,17 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
         .stat-big{ font-size: 1.5rem; font-weight: 600; }
         .view-enq-filters .form-control,
         .view-enq-filters .form-select{ box-shadow: none; }
+        /* Make all filter controls same height & width */
+        .view-enq-filters .form-control-sm,
+        .view-enq-filters .form-select-sm{
+            height: 38px;
+            line-height: 1.4;
+            width: 100%;
+        }
+        .view-enq-filters input[type="date"].form-control-sm{
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+        }
     </style>
 </head>
 <body>

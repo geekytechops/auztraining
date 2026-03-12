@@ -32,18 +32,31 @@ if(isset($_POST['get_enquiry_status_template']) && isset($_POST['status_code']))
     $course_name = '';
     if($enquiry_id){
         $r = @mysqli_fetch_array(mysqli_query($connection, "SELECT st_name, st_course FROM student_enquiry WHERE st_enquiry_id='$enquiry_id' AND st_enquiry_status!=1 LIMIT 1"));
-        if($r){
-            $student_name = $r['st_name'];
-            $first_name = trim(strtok($student_name, ' '));
-            if(!empty($r['st_course'])){
-                $ids = json_decode($r['st_course'], true);
-                if(is_array($ids) && count($ids)){
-                    $cid = (int)$ids[0];
-                    $cr = @mysqli_fetch_array(mysqli_query($connection, "SELECT CONCAT(course_sname,' ',course_name) AS nm FROM courses WHERE course_id=$cid AND course_status!=1 LIMIT 1"));
-                    if($cr && !empty($cr['nm'])) $course_name = $cr['nm'];
+            if($r){
+                $student_name = $r['st_name'];
+                $first_name = trim(strtok($student_name, ' '));
+                if(!empty($r['st_course'])){
+                    $ids = json_decode($r['st_course'], true);
+                    if(is_array($ids) && count($ids)){
+                        $intIds = array();
+                        foreach($ids as $cid_raw){
+                            $cid_i = (int)$cid_raw;
+                            if($cid_i > 0) $intIds[] = $cid_i;
+                        }
+                        if(count($intIds)){
+                            $idList = implode(',', $intIds);
+                            $crs = mysqli_query($connection, "SELECT CONCAT(course_sname,' ',course_name) AS nm FROM courses WHERE course_id IN ($idList) AND course_status!=1 ORDER BY course_sname, course_name");
+                            $names = array();
+                            if($crs){
+                                while($cr = mysqli_fetch_assoc($crs)){
+                                    if(!empty($cr['nm'])) $names[] = $cr['nm'];
+                                }
+                            }
+                            if(count($names)) $course_name = implode(', ', $names);
+                        }
+                    }
                 }
             }
-        }
     }
     $q = mysqli_query($connection, "SELECT subject, body FROM enquiry_status_email_templates WHERE status_code=$status_code LIMIT 1");
     if($q && mysqli_num_rows($q)){
@@ -89,9 +102,22 @@ if(isset($_POST['send_enquiry_status_email']) && isset($_POST['enquiry_id']) && 
         if(!empty($row['st_course'])){
             $ids = json_decode($row['st_course'], true);
             if(is_array($ids) && count($ids)){
-                $cid = (int)$ids[0];
-                $cr = @mysqli_fetch_array(mysqli_query($connection, "SELECT CONCAT(course_sname,' ',course_name) AS nm FROM courses WHERE course_id=$cid AND course_status!=1 LIMIT 1"));
-                if($cr && !empty($cr['nm'])) $course_name = $cr['nm'];
+                $intIds = array();
+                foreach($ids as $cid_raw){
+                    $cid_i = (int)$cid_raw;
+                    if($cid_i > 0) $intIds[] = $cid_i;
+                }
+                if(count($intIds)){
+                    $idList = implode(',', $intIds);
+                    $crs = mysqli_query($connection, "SELECT CONCAT(course_sname,' ',course_name) AS nm FROM courses WHERE course_id IN ($idList) AND course_status!=1 ORDER BY course_sname, course_name");
+                    $names = array();
+                    if($crs){
+                        while($cr = mysqli_fetch_assoc($crs)){
+                            if(!empty($cr['nm'])) $names[] = $cr['nm'];
+                        }
+                    }
+                    if(count($names)) $course_name = implode(', ', $names);
+                }
             }
         }
         $officer_name = '';
@@ -3034,6 +3060,8 @@ if(@$_POST['formName']=='exportEnquiryReportsExcel' || @$_GET['export']==='enqui
     $lost_count = 0; if($flow_col !== '1') $lost_count = (int)mysqli_fetch_row(mysqli_query($connection, "SELECT COUNT(*) FROM student_enquiry e WHERE $where AND COALESCE(e.st_enquiry_flow_status,1) = 7"))[0];
     if(!class_exists('PhpOffice\PhpSpreadsheet\Spreadsheet')){ if(file_exists(__DIR__.'/vendor/autoload.php')) require_once __DIR__.'/vendor/autoload.php'; elseif(file_exists(__DIR__.'/../vendor/autoload.php')) require_once __DIR__.'/../vendor/autoload.php'; }
     if(!class_exists('PhpOffice\PhpSpreadsheet\Spreadsheet')){ header('Content-Type: text/plain'); echo 'PhpSpreadsheet not available'; exit; }
+    // Ensure no previous output before sending Excel file
+    if(function_exists('ob_get_length') && ob_get_length()){ @ob_clean(); }
     $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
     $sheet->setTitle('Summary');
@@ -3050,6 +3078,8 @@ if(@$_POST['formName']=='exportEnquiryReportsExcel' || @$_GET['export']==='enqui
     foreach($counsellor_perf as $x){ $sheet->setCellValue('A'.$row,$x['counsellor']); $sheet->setCellValue('B'.$row,$x['enquiries']); $sheet->setCellValue('C'.$row,$x['converted']); $sheet->setCellValue('D'.$row,$x['rate']); $row++; }
     $sheet->setCellValue('A'.($row+1),'Follow-up: Enquiries with follow-up'); $sheet->setCellValue('B'.($row+1),$followup_effect['with_followup']);
     $sheet->setCellValue('A'.($row+2),'Converted among those with follow-up'); $sheet->setCellValue('B'.($row+2),$followup_effect['converted_with_followup']);
+    // Output Excel headers and content
+    if(function_exists('ob_get_length') && ob_get_length()){ @ob_clean(); }
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment; filename="enquiry_reports_'.date('Y-m-d').'.xlsx"');
     $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
@@ -3092,6 +3122,8 @@ if(@$_POST['formName']=='exportEnquiryReportsPdf' || @$_GET['export']==='enquiry
     $next_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM followup_calls LIKE 'flw_next_followup_date'"));
     if($next_col){ $fq = mysqli_query($connection, "SELECT COUNT(DISTINCT e.st_id) AS with_fup FROM student_enquiry e INNER JOIN followup_calls f ON f.enquiry_id = e.st_enquiry_id WHERE $where"); if($fq && $fr = mysqli_fetch_assoc($fq)) $followup_effect['with_followup'] = (int)$fr['with_fup']; $fq2 = mysqli_query($connection, "SELECT COUNT(DISTINCT e.st_id) AS cnt FROM student_enquiry e INNER JOIN followup_calls f ON f.enquiry_id = e.st_enquiry_id WHERE $where AND e.st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '' AND st_enquiry_id IS NOT NULL)"); if($fq2 && $fr2 = mysqli_fetch_assoc($fq2)) $followup_effect['converted_with_followup'] = (int)$fr2['cnt']; }
     $lost_count = 0; if($flow_col !== '1') $lost_count = (int)mysqli_fetch_row(mysqli_query($connection, "SELECT COUNT(*) FROM student_enquiry e WHERE $where AND COALESCE(e.st_enquiry_flow_status,1) = 7"))[0];
+    // Ensure no previous output before sending PDF file (TCPDF requirement)
+    if(function_exists('ob_get_length') && ob_get_length()){ @ob_clean(); }
     $pdf = new TCPDF('P','mm','A4',true,'UTF-8');
     $pdf->SetCreator('Auz Training');
     $pdf->SetTitle('Enquiry Reports');
@@ -3480,6 +3512,34 @@ if(@$_POST['formName']=='appointment_booking'){
             echo 2;
             exit;
         }
+    }
+
+    // Prevent booking inside blocked appointment slots for this staff (or all-staff blocks)
+    // Rules:
+    // - Rows with block_staff_member_id IS NULL are treated as "All Staff" blocks
+    // - Rows with a specific block_staff_member_id only block that particular staff
+    $staffId = (int)$appointment_to_see;
+    $blockDateEsc = mysqli_real_escape_string($connection, $appointment_date);
+    $startTimeEsc = mysqli_real_escape_string($connection, $appointment_time);
+    $endTimeEsc = mysqli_real_escape_string($connection, $appointment_time_to);
+    $blockCheckSql = "
+        SELECT COUNT(*) 
+        FROM appointment_blocks 
+        WHERE block_status != 1
+          AND block_date = '{$blockDateEsc}'
+          AND (
+                block_staff_member_id IS NULL
+                OR block_staff_member_id = {$staffId}
+              )
+          AND NOT (
+                block_end_time <= '{$startTimeEsc}'
+                OR block_start_time >= '{$endTimeEsc}'
+              )";
+    $blk_res = mysqli_query($connection, $blockCheckSql);
+    if($blk_res && ($br = mysqli_fetch_row($blk_res)) && (int)$br[0] > 0){
+        // Code 3: time slot falls in a blocked period
+        echo 3;
+        exit;
     }
 
     // Check if end-time columns exist (for backward compatibility)

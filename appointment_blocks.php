@@ -161,7 +161,7 @@ if(@$_SESSION['user_type']!=''){
                         contentType: false,
                         processData: false,
                         success: function(response) {
-                            if(response == '1') {
+                            if(response == 1) {
                                 $('#toast-text').html('Block added successfully');
                                 $('#borderedToast1Btn').trigger('click');
                                 resetBlockForm();

@@ -2172,6 +2172,27 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var enquiryId = ($('#followup_enquiry_id').val() || '').toString().trim();
                 if(!enquiryId){ $('.toast-text2').html('Save the enquiry first to open Calendar.'); $('#borderedToast2Btn').trigger('click'); return; }
                 $('#fp_connected_enquiry_id').val(enquiryId);
+                // Limit appointment date so it cannot be before enquiry date or before today
+                var enquiryDateStr = ($('#enquiry_date').val() || '').toString().trim();
+                var today = new Date();
+                var todayStr = today.toISOString().slice(0,10);
+                var minDate = todayStr;
+                if(enquiryDateStr && enquiryDateStr > minDate){
+                    minDate = enquiryDateStr;
+                }
+                $('#fp_appointment_date').attr('min', minDate);
+                var currentApptDate = ($('#fp_appointment_date').val() || '').toString().trim();
+                if(!currentApptDate || currentApptDate < minDate){
+                    $('#fp_appointment_date').val(minDate);
+                    currentApptDate = minDate;
+                }
+                // For same-day bookings, do not allow past times
+                var nowTimeStr = today.toTimeString().slice(0,5); // HH:MM
+                if(currentApptDate === todayStr){
+                    $('#fp_appointment_time,#fp_appointment_time_to').attr('min', nowTimeStr);
+                } else {
+                    $('#fp_appointment_time,#fp_appointment_time_to').removeAttr('min');
+                }
                 var enquiryForVal = ($('#enquiry_for').val()||'0').toString();
                 var studentName = enquiryForVal === '1' ? ($('#member_name').val()||'').trim() : ($('#student_name').val()||'').trim();
                 var studentPhone = ($('#contact_num').val()||'').trim();
@@ -2198,6 +2219,42 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 else if(v=='Face to Face'){ $('#fp_location_section').show(); $('#fp_platform_section,#fp_meeting_link_section').hide(); $('#fp_location_id').prop('required',true); $('#fp_platform_id').prop('required',false); }
                 else { $('#fp_location_section,#fp_platform_section,#fp_meeting_link_section').hide(); $('#fp_location_id,#fp_platform_id').prop('required',false); }
             });
+            // Adjust available times when appointment date changes (no past times for today)
+            $(document).on('change','#fp_appointment_date',function(){
+                var selectedDate = ($(this).val() || '').toString();
+                var today = new Date();
+                var todayStr = today.toISOString().slice(0,10);
+                var nowTimeStr = today.toTimeString().slice(0,5);
+                if(selectedDate === todayStr){
+                    $('#fp_appointment_time,#fp_appointment_time_to').attr('min', nowTimeStr);
+                } else {
+                    $('#fp_appointment_time,#fp_appointment_time_to').removeAttr('min');
+                }
+            });
+            // Keep follow-up appointment time slot consistent (To cannot be before From)
+            $(document).on('change','#fp_appointment_time',function(){
+                var start = ($(this).val() || '').toString();
+                if(!start) return;
+                var $end = $('#fp_appointment_time_to');
+                $end.attr('min', start);
+                var endVal = ($end.val() || '').toString();
+                if(endVal && endVal < start){
+                    $end.val(start);
+                }
+            });
+            $(document).on('change','#fp_appointment_time_to',function(){
+                var endVal = ($(this).val() || '').toString();
+                var start = ($('#fp_appointment_time').val() || '').toString();
+                if(!start || !endVal) return;
+                if(endVal < start){
+                    // Show inline error and reset to start
+                    var $wrapper = $(this).closest('.mb-3');
+                    $wrapper.find('.error-feedback').text('End time must be after start time.').show();
+                    $(this).val(start);
+                    $('.toast-text2').html('End time must be after start time.');
+                    $('#borderedToast2Btn').trigger('click');
+                }
+            });
             $('#fp_share_all').on('change',function(){ var c=$(this).is(':checked'); $('.fp-share-with-item').prop('checked',c); });
             $('.fp-share-with-item').on('change',function(){ if(!$(this).is(':checked')) $('#fp_share_all').prop('checked',false); });
             $(document).on('submit','#fp_appointment_form',function(e){
@@ -2206,7 +2263,42 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 $f.find('.error-feedback').hide();
                 var date = $('#fp_appointment_date').val();
                 var time = $('#fp_appointment_time').val();
+                var timeTo = $('#fp_appointment_time_to').val();
                 var state = $('#fp_timezone_state').val();
+                // Prevent booking an appointment before enquiry date or before today
+                var enquiryDateStr = ($('#enquiry_date').val() || '').toString().trim();
+                var today = new Date();
+                var todayStr = today.toISOString().slice(0,10);
+                var minDate = todayStr;
+                if(enquiryDateStr && enquiryDateStr > minDate){
+                    minDate = enquiryDateStr;
+                }
+                var valid = true;
+                if(date && date < minDate){
+                    valid = false;
+                    var $dateWrapper = $('#fp_appointment_date').closest('.mb-3');
+                    $dateWrapper.find('.error-feedback').text('Appointment date cannot be before '+ minDate +'.').show();
+                    $('.toast-text2').html('Appointment date cannot be in the past or before enquiry date.');
+                    $('#borderedToast2Btn').trigger('click');
+                }
+                // Prevent booking a time in the past for same-day appointments
+                var nowTimeStr = today.toTimeString().slice(0,5);
+                if(valid && date === todayStr && time && time < nowTimeStr){
+                    valid = false;
+                    var $timeWrapperStart = $('#fp_appointment_time').closest('.mb-3');
+                    $timeWrapperStart.find('.error-feedback').text('Start time cannot be in the past.').show();
+                    $('.toast-text2').html('Start time cannot be in the past.');
+                    $('#borderedToast2Btn').trigger('click');
+                }
+                // Prevent backwards time range (To earlier than From)
+                if(valid && time && timeTo && timeTo < time){
+                    valid = false;
+                    var $timeWrapper = $('#fp_appointment_time').closest('.mb-3');
+                    $timeWrapper.find('.error-feedback').text('End time must be after start time.').show();
+                    $('.toast-text2').html('End time must be after start time.');
+                    $('#borderedToast2Btn').trigger('click');
+                }
+                if(!valid) return;
                 if(date && time && state){
                     var stateDt = date + ' ' + time;
                     $('#fp_appointment_time_state').val(stateDt);
@@ -2214,7 +2306,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     $('#fp_appointment_time_india').val(stateDt);
                     $('#fp_appointment_time_philippines').val(stateDt);
                 }
-                var valid = true;
+                valid = true;
                 $f.find('[required]').each(function(){ if(!$(this).val()){ valid=false; $(this).closest('.mb-3').find('.error-feedback').show(); } });
                 if(!valid) return;
                 var formData = new FormData(this);

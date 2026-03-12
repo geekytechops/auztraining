@@ -86,6 +86,10 @@ if(@$_SESSION['user_type']!=''){
 
     <body>
 
+        <div id="loader-container" style="display:none;">
+            <div class="loader"></div>
+        </div>
+
         <!-- Begin page -->
         <div class="main-wrapper">
 
@@ -123,7 +127,7 @@ if(@$_SESSION['user_type']!=''){
                             <div class="col-xl-12">
                                 <div class="card">
                                     <div class="card-body">
-                                        <form id="appointment_form">
+                                        <form id="appointment_form" novalidate>
                                             <input type="hidden" name="formName" value="appointment_booking">
                                             <input type="hidden" name="appointment_id" id="appointment_id" value="<?php echo $editMode ? $appointmentData['appointment_id'] : '0'; ?>">
                                             <input type="hidden" name="created_by" value="<?php echo $_SESSION['user_id']; ?>">
@@ -744,6 +748,10 @@ if(@$_SESSION['user_type']!=''){
                     
                     var formData = new FormData(this);
                     
+                    // Show loader similar to Student Enquiry while saving (Google Calendar integration may take time)
+                    $('#loader-container').css('display','flex');
+                    $('#appointment_form').css('opacity','0.1');
+
                     $.ajax({
                         type: 'POST',
                         url: 'includes/datacontrol.php',
@@ -751,7 +759,11 @@ if(@$_SESSION['user_type']!=''){
                         contentType: false,
                         processData: false,
                         success: function(response) {
-                            // Backend echoes: 1 = success, 2 = double-booking conflict, 0 or others = failure
+                            // Backend echoes:
+                            // 1 = success
+                            // 2 = double-booking conflict for this attendee
+                            // 3 = falls inside a blocked slot for this staff/all staff
+                            // 0 or others = failure
                             var res = (response || '').toString().trim();
                             if(res === '1') {
                                 $('#toast-text').html('Appointment saved successfully!');
@@ -762,14 +774,21 @@ if(@$_SESSION['user_type']!=''){
                             } else if(res === '2') {
                                 $('.toast-text2').html('Time Slot Already Booked. This person is already booked for the selected time. Please choose a different time slot.');
                                 $('#borderedToast2Btn').trigger('click');
+                            } else if(res === '3') {
+                                $('.toast-text2').html('This time slot is blocked for the selected staff member. Please choose a different time or staff.');
+                                $('#borderedToast2Btn').trigger('click');
                             } else {
                                 $('.toast-text2').html('Cannot save appointment. Please try again.');
                                 $('#borderedToast2Btn').trigger('click');
                             }
+                            $('#loader-container').hide();
+                            $('#appointment_form').css('opacity','');
                         },
                         error: function() {
                             $('.toast-text2').html('An error occurred. Please try again.');
                             $('#borderedToast2Btn').trigger('click');
+                            $('#loader-container').hide();
+                            $('#appointment_form').css('opacity','');
                         }
                     });
                 });

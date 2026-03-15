@@ -139,7 +139,8 @@ if(@$_SESSION['user_type']!=''){
                                                     <div class="mb-3">
                                                         <label class="form-label">Appointment Date <span class="asterisk">*</span></label>
                                                         <input type="date" class="form-control" id="appointment_date" name="appointment_date" 
-                                                               value="<?php echo $editMode ? date('Y-m-d', strtotime($appointmentData['appointment_date'])) : ''; ?>" required>
+                                                               value="<?php echo $editMode ? date('Y-m-d', strtotime($appointmentData['appointment_date'])) : ''; ?>" 
+                                                               <?php if(!$editMode) echo ' min="'.date('Y-m-d').'"'; ?> required>
                                                         <div class="error-feedback">Please select appointment date</div>
                                                     </div>
                                                 </div>
@@ -698,6 +699,21 @@ if(@$_SESSION['user_type']!=''){
                 $('#meeting_type').trigger('change');
                 <?php endif; ?>
                 
+                // Disable previous dates (min = today) for new bookings; when date is today, disable past times
+                function applyAppointmentDateMin() {
+                    var today = new Date();
+                    var todayStr = today.toISOString().slice(0, 10);
+                    var selectedDate = ($('#appointment_date').val() || '').toString().trim();
+                    var nowTimeStr = today.toTimeString().slice(0, 5); // HH:MM
+                    if (selectedDate === todayStr) {
+                        $('#appointment_time, #appointment_time_to').attr('min', nowTimeStr);
+                    } else {
+                        $('#appointment_time, #appointment_time_to').removeAttr('min');
+                    }
+                }
+                $('#appointment_date').on('change', applyAppointmentDateMin);
+                applyAppointmentDateMin(); // run on load (e.g. when today is pre-selected or in edit mode)
+
                 // Calculate timezone conversions
                 $('#appointment_date, #appointment_time, #timezone_state').on('change', function() {
                     calculateTimezones();

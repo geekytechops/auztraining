@@ -485,6 +485,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                             </div>
                         </div>
                         <!-- end page title -->
+        <div id="enquiryAccordionGroup">
         <div class="accordion">
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingStudentEnquiry">
@@ -492,7 +493,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                         Student Enquiry
                     </button>
                 </h2>
-                <div id="collapseStudentEnquiry" class="accordion-collapse collapse show" aria-labelledby="headingStudentEnquiry">
+                <div id="collapseStudentEnquiry" class="accordion-collapse collapse show" aria-labelledby="headingStudentEnquiry" data-bs-parent="#enquiryAccordionGroup">
                     <div class="accordion-body p-0">
         <form class="student_enquiry_form" id="student_enquiry_form">
         <div class="row">
@@ -1244,7 +1245,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 <h2 class="accordion-header" id="headingFollowup">
                     <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFollowup" aria-expanded="false" aria-controls="collapseFollowup">Follow Up Call</button>
                 </h2>
-                <div id="collapseFollowup" class="accordion-collapse collapse" aria-labelledby="headingFollowup">
+                <div id="collapseFollowup" class="accordion-collapse collapse" aria-labelledby="headingFollowup" data-bs-parent="#enquiryAccordionGroup">
                     <div class="accordion-body">
                         <?php
                         $has_counselling_appointment = false;
@@ -1266,7 +1267,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 <h2 class="accordion-header" id="headingCounseling">
                     <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCounseling" aria-expanded="false" aria-controls="collapseCounseling">Counseling</button>
                 </h2>
-                <div id="collapseCounseling" class="accordion-collapse collapse" aria-labelledby="headingCounseling">
+                <div id="collapseCounseling" class="accordion-collapse collapse" aria-labelledby="headingCounseling" data-bs-parent="#enquiryAccordionGroup">
                     <div class="accordion-body">
                         <?php include('includes/counselling_accordion_form.php'); ?>
                     </div>
@@ -1274,6 +1275,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             </div>
         </div>
         <?php endif; ?>
+        </div>
                     </div> <!-- container-fluid -->
                 </div>
             </div>

@@ -3,7 +3,18 @@ if(!isset($enquiryIdsFollowup)) $enquiryIdsFollowup = $enquiryIds ?? null;
 if(!isset($followupEqId)) $followupEqId = 0;
 if(!isset($followup_Query)) $followup_Query = array();
 $followup_Query = array_merge(array('enquiry_id'=>'','flw_name'=>'','flw_phone'=>'','flw_contacted_person'=>'','flw_contacted_time'=>'','flw_date'=>'','flw_mode_contact'=>'','flw_followup_type'=>'','flw_follow_up_notes'=>'','flw_next_followup_date'=>'','flw_follow_up_outcome'=>'','flw_comments'=>'','flw_progress_state'=>'','flw_remarks'=>''), $followup_Query);
-$enquiry_flow_statuses = array(1=>'New',2=>'Contacted',3=>'Follow-up Required',4=>'Interested',5=>'Documents Collected',6=>'Enrolled',7=>'Not Interested',8=>'Invalid / Duplicate',9=>'Booked Counselling');
+$enquiry_flow_statuses = array(
+    1=>'New',
+    2=>'Contacted',
+    3=>'Follow-up Required',
+    4=>'Interested',
+    5=>'Documents Collected',
+    6=>'Enrolled',
+    7=>'Not Interested',
+    8=>'Invalid / Duplicate',
+    9=>'Booked Counselling',
+    10=>'Re-enquired'
+);
 if(!isset($has_counselling_appointment)) $has_counselling_appointment = false;
 // Follow Up Outcome: value => label (actions: No Answer/Call Back Later/Booked Counselling show Calendar button; others no action)
 $follow_up_outcomes = array(

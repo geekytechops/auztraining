@@ -150,7 +150,7 @@ if(isset($_POST['send_enquiry_status_email']) && isset($_POST['enquiry_id']) && 
         $body_html = '<div style="font-family:Segoe UI,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#333;">' . nl2br(htmlspecialchars($body_sent, ENT_QUOTES, 'UTF-8')) . '</div>';
         try {
             send_mail($to, $subject, $body_html);
-            if($save_as_default && $status_code>=1 && $status_code<=9){
+            if($save_as_default && $status_code>=1 && $status_code<=10){
                 $body_esc = mysqli_real_escape_string($connection, $body);
                 mysqli_query($connection, "UPDATE enquiry_status_email_templates SET subject='$subject', body='$body_esc', updated_at=NOW() WHERE status_code=$status_code");
             }
@@ -163,7 +163,7 @@ if(isset($_POST['send_enquiry_status_email']) && isset($_POST['enquiry_id']) && 
 }
 if(isset($_POST['save_enquiry_status_template']) && isset($_POST['status_code'])){
     $status_code = (int)$_POST['status_code'];
-    if($status_code>=1 && $status_code<=9){
+    if($status_code>=1 && $status_code<=10){
         $subject = mysqli_real_escape_string($connection, $_POST['subject']);
         $body = mysqli_real_escape_string($connection, $_POST['body']);
         $q = mysqli_query($connection, "UPDATE enquiry_status_email_templates SET subject='$subject', body='$body', updated_at=NOW() WHERE status_code=$status_code");
@@ -2822,8 +2822,30 @@ if(@$_POST['formName']=='fetchEnquiryList'){
         $order_sql = " ORDER BY $flow_col ASC, e.st_id DESC ";
     }
     $q = mysqli_query($connection, "SELECT e.st_id, e.st_enquiry_id, e.st_name, e.st_phno, e.st_email, e.st_course, e.st_course_type, e.st_enquiry_date, e.created_date, $flow_col AS flow_status FROM student_enquiry e WHERE $where $order_sql");
-    $status_labels = array(1=>'New',2=>'Contacted',3=>'Follow-up Required',4=>'Interested',5=>'Documents Collected',6=>'Enrolled',7=>'Not Interested',8=>'Invalid/Duplicate',9=>'Booked Counselling');
-    $status_classes = array(1=>'secondary',2=>'info',3=>'warning',4=>'primary',5=>'info',6=>'success',7=>'danger',8=>'secondary',9=>'warning');
+    $status_labels = array(
+        1=>'New',
+        2=>'Contacted',
+        3=>'Follow-up Required',
+        4=>'Interested',
+        5=>'Documents Collected',
+        6=>'Enrolled',
+        7=>'Not Interested',
+        8=>'Invalid/Duplicate',
+        9=>'Booked Counselling',
+        10=>'Re-enquired'
+    );
+    $status_classes = array(
+        1=>'secondary',
+        2=>'info',
+        3=>'warning',
+        4=>'primary',
+        5=>'info',
+        6=>'success',
+        7=>'danger',
+        8=>'secondary',
+        9=>'warning',
+        10=>'info'
+    );
     // Canonical outcome keys (same as Follow Up Outcome in followup_accordion_form.php) for normalising DB values
     $outcome_keys_canonical = array('No Answer','Call Back Later','Booked Counselling','Application Started','Enrolled','Requested More Information','Not Interested');
     $outcome_normalize = array();
@@ -2881,6 +2903,8 @@ if(@$_POST['formName']=='fetchEnquiryList'){
             }
         }
         $course_name = count($courseNames) ? htmlspecialchars($courseNames[0]) : '-';
+        $enquiry_dt_raw = !empty($r['created_date']) ? $r['created_date'] : $r['st_enquiry_date'];
+        $enquiry_date = $enquiry_dt_raw ? date('d/m/Y', strtotime($enquiry_dt_raw)) : '-';
         $flow_status = (int)($r['flow_status'] ?? 1);
         $status_label = $status_labels[$flow_status] ?? 'New';
         $status_class = $status_classes[$flow_status] ?? 'secondary';
@@ -2910,6 +2934,7 @@ if(@$_POST['formName']=='fetchEnquiryList'){
         $eq_enc = base64_encode($r['st_id']);
         $tbody .= '<tr>';
         $tbody .= '<td>'.$outcome_html.'</td>';
+        $tbody .= '<td>'.$enquiry_date.'</td>';
         $tbody .= '<td>'.htmlspecialchars($r['st_name']).'</td>';
         $tbody .= '<td>'.htmlspecialchars($r['st_phno']).'</td>';
         $tbody .= '<td>'.$course_name.'</td>';
@@ -2917,7 +2942,7 @@ if(@$_POST['formName']=='fetchEnquiryList'){
         $tbody .= '<td><a href="enquiry_details.php?eq='.$eq_enc.'" class="btn btn-sm btn-outline-primary">View Details</a></td>';
         $tbody .= '</tr>';
     }
-    echo $tbody ?: '<tr><td colspan="6">No records</td></tr>';
+    echo $tbody ?: '<tr><td colspan="7">No records</td></tr>';
     exit;
 }
 

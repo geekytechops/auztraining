@@ -233,6 +233,7 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
                                 <thead class="table-light">
                                     <tr>
                                         <th class="table-next-fup">Follow-up Outcome</th>
+                                        <th>Enquiry Date</th>
                                         <th>Name</th>
                                         <th>Mobile</th>
                                         <th>Course</th>
@@ -241,7 +242,7 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
                                     </tr>
                                 </thead>
                                 <tbody id="enquiry_list_body">
-                                    <tr><td colspan="6" class="text-center text-muted">Loading...</td></tr>
+                                    <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
                                 </tbody>
                             </table>
                         </div>

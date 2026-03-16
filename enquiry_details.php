@@ -33,8 +33,30 @@ if(!$enquiry){
     exit;
 }
 
-$status_labels = array(1=>'New',2=>'Contacted',3=>'Follow-up Required',4=>'Interested',5=>'Documents Collected',6=>'Enrolled',7=>'Not Interested',8=>'Invalid/Duplicate');
-$status_classes = array(1=>'secondary',2=>'info',3=>'warning',4=>'primary',5=>'info',6=>'success',7=>'danger',8=>'secondary');
+$status_labels = array(
+    1=>'New',
+    2=>'Contacted',
+    3=>'Follow-up Required',
+    4=>'Interested',
+    5=>'Documents Collected',
+    6=>'Enrolled',
+    7=>'Not Interested',
+    8=>'Invalid/Duplicate',
+    9=>'Booked Counselling',
+    10=>'Re-enquired'
+);
+$status_classes = array(
+    1=>'secondary',
+    2=>'info',
+    3=>'warning',
+    4=>'primary',
+    5=>'info',
+    6=>'success',
+    7=>'danger',
+    8=>'secondary',
+    9=>'warning',
+    10=>'info'
+);
 $flow_status = (int)(isset($enquiry['st_enquiry_flow_status']) ? $enquiry['st_enquiry_flow_status'] : 1);
 $courseNames = array();
 if(!empty($enquiry['st_course'])){

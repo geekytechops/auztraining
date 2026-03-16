@@ -34,12 +34,20 @@ if(!isset($fp_usersForShare)) $fp_usersForShare = null;
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label d-block">Time Slot:</label>
-                                <span class="me-2">From:</span>
-                                <input type="time" class="form-control d-inline-block w-auto" id="fp_appointment_time" name="appointment_time" required>
-                                <span class="ms-2">To:</span>
-                                <input type="time" class="form-control d-inline-block w-auto" id="fp_appointment_time_to" name="appointment_time_to">
-                                <div class="error-feedback">Please select appointment time</div>
+                                <!-- <label class="form-label">Time Slot <span class="asterisk">*</span></label> -->
+                                <div class="row g-2 align-items-end">
+                                    <div class="col">
+                                        <label class="form-label small text-muted mb-0">From</label>
+                                        <input type="time" class="form-control" id="fp_appointment_time" name="appointment_time" required>
+                                    </div>
+                                    <div class="col">
+                                        <label class="form-label small text-muted mb-0">To</label>
+                                        <input type="time" class="form-control" id="fp_appointment_time_to" name="appointment_time_to">
+                                    </div>
+                                </div>
+                                <small class="text-muted d-block mt-1">To is set to From + 1 minute when you pick From. You can change To to a later time.</small>
+                                <div class="error-feedback" style="display:none;">Please select appointment time</div>
+                                <div class="error-feedback" id="fp_time_slot_range_error" style="display:none;">To must be at least 1 minute after From.</div>
                             </div>
                         </div>
                         <div class="col-md-6">

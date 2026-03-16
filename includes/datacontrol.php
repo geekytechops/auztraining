@@ -389,7 +389,7 @@ if(@$_POST['formName']=='public_enquiry'){
 if(@$_POST['formName']=='student_enquiry'){
 
 
-    $enquiryFor=$_POST['enquiryFor'];
+    $enquiryFor=isset($_POST['enquiryFor']) && $_POST['enquiryFor'] !== '' ? (int)$_POST['enquiryFor'] : 1;
     if($enquiryFor==1){
         $studentName=$_POST['studentName'];
         $memberName=$_POST['memberName'];
@@ -406,13 +406,14 @@ $courses=json_encode($_POST['courses']);
 $payment=$_POST['payment'];
 $visaStatus=$_POST['visaStatus'];
 $checkId=$_POST['checkId'];
-$enquiryDate=$_POST['enquiryDate'];
+$enquiryDate=trim((string)($_POST['enquiryDate'] ?? ''));
+$enquiryDate=($enquiryDate === '') ? date('Y-m-d H:i:s') : $enquiryDate;
 
-$surname=$_POST['surname'];
-$suburb=$_POST['suburb'];
-$stuState=$_POST['stuState'];
-$postCode=$_POST['postCode'];
-$visit_before=$_POST['visit_before'];
+$surname=trim((string)($_POST['surname'] ?? ''));
+$suburb=trim((string)($_POST['suburb'] ?? ''));
+$stuState=isset($_POST['stuState']) && $_POST['stuState'] !== '' ? $_POST['stuState'] : '0';
+$postCode=isset($_POST['postCode']) && $_POST['postCode'] !== '' ? (int)$_POST['postCode'] : 0;
+$visit_before=isset($_POST['visit_before']) && $_POST['visit_before'] !== '' ? (int)$_POST['visit_before'] : 0;
 $hear_about=$_POST['hear_about'];
 $hearedby=$_POST['hearedby'];
 $plan_to_start_date=$_POST['plan_to_start_date'];

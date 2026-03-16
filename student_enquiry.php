@@ -71,7 +71,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                 <h2 class="accordion-header" id="headEnquiries">
                                     <button class="accordion-button fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEnquiries" aria-expanded="true" aria-controls="collapseEnquiries">Student Enquiries</button>
                                 </h2>
-                                <div id="collapseEnquiries" class="accordion-collapse collapse show" aria-labelledby="headEnquiries" data-bs-parent="#viewEnquiryAccordion">
+                                <div id="collapseEnquiries" class="accordion-collapse collapse show" aria-labelledby="headEnquiries">
                                     <div class="accordion-body">
                                         <div class="card">
                                             <div class="card-body">
@@ -95,7 +95,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                 <h2 class="accordion-header" id="headCounseling">
                                     <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCounseling" aria-expanded="false" aria-controls="collapseCounseling">Counseling</button>
                                 </h2>
-                                <div id="collapseCounseling" class="accordion-collapse collapse" aria-labelledby="headCounseling" data-bs-parent="#viewEnquiryAccordion">
+                                <div id="collapseCounseling" class="accordion-collapse collapse" aria-labelledby="headCounseling">
                                     <div class="accordion-body">
                                         <div class="card">
                                             <div class="card-body">
@@ -119,7 +119,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                 <h2 class="accordion-header" id="headFollowup">
                                     <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFollowupList" aria-expanded="false" aria-controls="collapseFollowupList">Follow Up Call</button>
                                 </h2>
-                                <div id="collapseFollowupList" class="accordion-collapse collapse" aria-labelledby="headFollowup" data-bs-parent="#viewEnquiryAccordion">
+                                <div id="collapseFollowupList" class="accordion-collapse collapse" aria-labelledby="headFollowup">
                                     <div class="accordion-body">
                                         <div class="card">
                                             <div class="card-body">
@@ -485,30 +485,59 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                             </div>
                         </div>
                         <!-- end page title -->
-        <div class="accordion mb-3" id="enquiryMainAccordion">
+        <div class="accordion">
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingStudentEnquiry">
                     <button class="accordion-button fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#collapseStudentEnquiry" aria-expanded="true" aria-controls="collapseStudentEnquiry">
                         Student Enquiry
                     </button>
                 </h2>
-                <div id="collapseStudentEnquiry" class="accordion-collapse collapse show" aria-labelledby="headingStudentEnquiry" data-bs-parent="#enquiryMainAccordion">
+                <div id="collapseStudentEnquiry" class="accordion-collapse collapse show" aria-labelledby="headingStudentEnquiry">
                     <div class="accordion-body p-0">
         <form class="student_enquiry_form" id="student_enquiry_form">
         <div class="row">
             <div class="col-xl-12">
                 <div class="card">
                     <div class="card-body" id="student_enquiry_form_parent">
-                        <div class="accordion" id="accordionExample">
+                        <div class="accordion" id="accordionBasicDetails">
                             <div class="accordion-item">
                                     <h2 class="accordion-header" id="headingOne">
                                         <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                        Personal Details
+                                        Basic Details
                                         </button>
                                     </h2>
-                                <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+                                <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionBasicDetails">
                                     <div class="accordion-body">
                                             <div class="row">
+                                                <!-- Enquiry Date: one line, 50% width only -->
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="enquiry_date">Enquiry Date<span class="asterisk">*</span></label>
+                                                        <input type="date" class="form-control" id="enquiry_date" value="<?php echo  $queryRes['st_enquiry_date']!='' ? date('Y-m-d',strtotime($queryRes['st_enquiry_date'])) : ''; ?>">
+                                                        <div class="error-feedback">
+                                                            Please select the Date
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6"></div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="member_name">Name<span class="asterisk">*</span></label>
+                                                        <input type="text" class="form-control" id="member_name" placeholder="Name" value="<?php echo $queryRes['st_enquiry_for']==1 ? $queryRes['st_name'] : $queryRes['st_member_name']; ?>">
+                                                        <div class="error-feedback">
+                                                            Please enter the Name
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="surname">Surname<span class="asterisk">*</span></label>
+                                                        <input type="text" class="form-control" id="surname" placeholder="Surname" value="<?php echo  $queryRes['st_surname']; ?>" >
+                                                        <div class="error-feedback">
+                                                            Please enter the Surname
+                                                        </div>
+                                                    </div>
+                                                </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="email_address">Email<span class="asterisk">*</span></label>
@@ -520,19 +549,41 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="enquiry_date">Date<span class="asterisk">*</span></label>
-                                                        <input type="date" class="form-control" id="enquiry_date" value="<?php echo  $queryRes['st_enquiry_date']!='' ? date('Y-m-d',strtotime($queryRes['st_enquiry_date'])) : ''; ?>">
+                                                        <label class="form-label" for="contact_num">Mobile<span class="asterisk">*</span></label>
+                                                        <input type="text" class="form-control number-field" maxlength="10" id="contact_num" placeholder="Contact Number" value="<?php echo $queryRes['st_phno']; ?>" >
                                                         <div class="error-feedback">
-                                                            Please select the Date
+                                                            Please enter the Contact Number
+                                                        </div>
+                                                        <div class="phone_error">
+                                                            Entered Number Already exist with Enquiry ID: <span id="phone_err_id"></span>
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <!-- Left: Course list only | Right: Enquiring For, Enquiry Source, Location (one below one) -->
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="surname">Surname<span class="asterisk">*</span></label>
-                                                        <input type="text" class="form-control" id="surname" placeholder="Surname" value="<?php echo  $queryRes['st_surname']; ?>" >
-                                                        <div class="error-feedback">
-                                                            Please enter the Surname
+                                                        <label class="form-label" for="courses">Course Interested In</label>
+                                                        <?php 
+                                                        $counts=1;
+                                                        mysqli_data_seek($courses, 0);
+                                                        while($coursesRes=mysqli_fetch_array($courses)){
+                                                            if($queryRes['st_course']!=''){
+                                                                $coursesSel=json_decode($queryRes['st_course']);
+                                                            }else{
+                                                                $coursesSel=[];   
+                                                            }
+                                                            if(in_array($counts,$coursesSel)){
+                                                                $checked='checked';
+                                                            }else{
+                                                                $checked='';
+                                                            }
+                                                            echo '<div class="form-check"><input type="checkbox" class="courses_check form-check-input" id="course_check_'.$counts.'" '.$checked.' value="'.$counts.'">';
+                                                            echo '<label for="course_check_'.$counts.'">'.$coursesRes["course_sname"].'-'.$coursesRes["course_name"].'</label></div>';
+                                                            $counts++;
+                                                        }
+                                                        ?>
+                                                        <div class="courses_error">
+                                                            Please select the Courses
                                                         </div>
                                                     </div>
                                                 </div>
@@ -552,44 +603,13 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                             Please select atleast one option
                                                         </div>
                                                     </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="member_name">Name<span class="asterisk">*</span></label>
-                                                        <input type="text" class="form-control" id="member_name" placeholder="Name" value="<?php echo $queryRes['st_enquiry_for']==1 ? $queryRes['st_name'] : $queryRes['st_member_name']; ?>">
-                                                        <div class="error-feedback">
-                                                            Please enter the Name
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6" id="student_name_wrap" style="display:<?php echo $queryRes['st_enquiry_for']==2 ? 'block' : 'none' ?>">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="student_name">Student name / Family member name<span class="asterisk">*</span></label>
+                                                    <div class="mb-3" id="student_name_wrap" style="display:<?php echo $queryRes['st_enquiry_for']==2 ? 'block' : 'none' ?>">
+                                                        <label class="form-label" for="student_name">Student name / Family member name</label>
                                                         <input type="text" class="form-control" id="student_name" placeholder="Student name" value="<?php echo $queryRes['st_name']; ?>">
                                                         <div class="error-feedback">
                                                             Please enter the Student name
                                                         </div>
                                                     </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="course_type">Course Type</label>
-                                                        <select name="course_type" class="form-select" id="course_type">
-                                                        <?php  
-                                                        $st_course_type=['--select--','Need exemption','Regular','Regular - Group','Short courses','Short course - Group'];
-                                                        $selectedCourseType=$queryRes['st_course_type']!='' ? $queryRes['st_course_type'] : 0;
-                                                        for($i=0;$i<count($st_course_type);$i++){
-                                                            $checked= $i==$queryRes['st_course_type'] ? 'selected' : '';
-                                                            echo '<option value="'.$i.'" data="'.$st_course_type[$i].'" '.$checked.'>'.$st_course_type[$i].'</option>';
-                                                        }
-                                                        ?>
-                                                        </select>  
-                                                        <div class="error-feedback">
-                                                            Please select atleast one option
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="enquiry_source">Enquiry Source</label>
                                                         <select name="enquiry_source" class="form-select" id="enquiry_source">
@@ -603,9 +623,12 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                         ?>
                                                         </select>
                                                     </div>
-                                                </div>
-                                                <?php if (!$is_student_portal): ?>
-                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="location">Location<span class="asterisk">*</span></label>
+                                                        <input type="text" class="form-control" id="location" name="location" placeholder="Location" value="<?php echo isset($queryRes['st_location']) ? htmlspecialchars($queryRes['st_location']) : ''; ?>">
+                                                        <div class="error-feedback">Please enter the Location</div>
+                                                    </div>
+                                                    <?php if (!$is_student_portal): ?>
                                                     <div class="mb-3">
                                                         <label class="form-label" for="enquiry_college">Received Enquiry for Which college</label>
                                                         <select name="enquiry_college" class="form-select" id="enquiry_college">
@@ -619,8 +642,8 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                         ?>
                                                         </select>
                                                     </div>
+                                                    <?php endif; ?>
                                                 </div>
-                                                <?php endif; ?>
                                             </div>
                                     </div>
                                 </div>
@@ -827,87 +850,77 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                     <div class="col-xl-12">
                                         <div class="card">
                                             <div class="card-body" id="student_enquiry_form_parent">
-                                            <div class="accordion" id="accordionExample">
+                                            <div class="accordion" id="accordionAddressDetails">
                                                 <div class="accordion-item">
                                                             <h2 class="accordion-header" id="headingTwo">
                                                                 <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
                                                                 Address Details
                                                                 </button>
                                                             </h2>                                                                
-                                                    <div id="collapseTwo" class="accordion-collapse collapse show" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
+                                                    <div id="collapseTwo" class="accordion-collapse collapse show" aria-labelledby="headingTwo" data-bs-parent="#accordionAddressDetails">
                                                         <div class="accordion-body">
                                                             <div class="row">
+                                                                <!-- Course Type: single line, 50% width only -->
                                                                 <div class="col-md-6">
-                                                                        <div class="mb-3">
-                                                                            <label class="form-label" for="contact_num">Mobile<span class="asterisk">*</span></label>
-                                                                            <input type="text" class="form-control number-field" maxlength="10" id="contact_num" placeholder="Contact Number" value="<?php echo $queryRes['st_phno']; ?>" >
-                                                                            <div class="error-feedback">
-                                                                                Please enter the Contact Number
-                                                                            </div>
-                                                                            <div class="phone_error">
-                                                                                Entered Number Already exist with Enquiry ID: <span id="phone_err_id"></span>
-                                                                            </div>
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label" for="course_type">Course Type</label>
+                                                                        <select name="course_type" class="form-select" id="course_type">
+                                                                        <?php  
+                                                                        $st_course_type=['--select--','Need exemption','Regular','Regular - Group','Short courses','Short course - Group'];
+                                                                        $selectedCourseType=$queryRes['st_course_type']!='' ? $queryRes['st_course_type'] : 0;
+                                                                        for($i=0;$i<count($st_course_type);$i++){
+                                                                            $checked= $i==$queryRes['st_course_type'] ? 'selected' : '';
+                                                                            echo '<option value="'.$i.'" data="'.$st_course_type[$i].'" '.$checked.'>'.$st_course_type[$i].'</option>';
+                                                                        }
+                                                                        ?>
+                                                                        </select>  
+                                                                        <div class="error-feedback">
+                                                                            Please select atleast one option
                                                                         </div>
                                                                     </div>
-                                                                    <div class="col-md-6">
-                                                                        <div class="mb-3">
-                                                                            <label class="form-label" for="street_no">Street No / Name</label>
-                                                                            <input type="text" class="form-control street_no" id="street_no" placeholder="Street No / Name" value="<?php echo $queryRes['st_street_details']; ?>" >
-                                                                            <div class="error-feedback">
-                                                                                Please enter the Street Details
-                                                                            </div>
+                                                                </div>
+                                                                <div class="col-md-6"></div>
+                                                                <div class="col-md-6">
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label" for="street_no">Street No / Name</label>
+                                                                        <input type="text" class="form-control street_no" id="street_no" placeholder="Street No / Name" value="<?php echo $queryRes['st_street_details']; ?>" >
+                                                                        <div class="error-feedback">
+                                                                            Please enter the Street Details
                                                                         </div>
                                                                     </div>
-                                                                    <div class="col-md-6">
-                                                                        <div class="mb-3">
-                                                                            <label class="form-label" for="suburb">Suburb</label>
-                                                                            <input type="text" class="form-control suburb" id="suburb" placeholder="Suburb" value="<?php echo $queryRes['st_suburb']; ?>" >
-                                                                            <div class="error-feedback">
-                                                                                Please enter the Suburb
-                                                                            </div>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label" for="suburb">Suburb</label>
+                                                                        <input type="text" class="form-control suburb" id="suburb" placeholder="Suburb" value="<?php echo $queryRes['st_suburb']; ?>" >
+                                                                        <div class="error-feedback">
+                                                                            Please enter the Suburb
                                                                         </div>
                                                                     </div>
-                                                                    <div class="col-md-6">
-                                                                        <div class="mb-3">
-                                                                            <label class="form-label" for="stu_state">State</label>
-                                                                            <select name="stu_state" id="stu_state" class="form-control">
-                                                                            <?php  
-                                                                            $st_states=['--select--','NSW - New South Wales','VIC - Victoria','ACT - Australian Capital Territory','NT - Northern Territoy','WA - Western Australia','QLD - Queensland','SA - South Australia','TAS - Tasmania'];
-                                                                            for($i=0;$i<count($st_states);$i++){
-                                                                                $checked= $i==$queryRes['st_state'] ? 'selected' : '';
-                                                                                echo '<option value="'.$i.'" '.$checked.'>'.$st_states[$i].'</option>';
-                                                                            }
-                                                                            ?>
-                                                                            </select>
-                                                                            <div class="error-feedback">
-                                                                                Please enter the State
-                                                                            </div>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label" for="stu_state">State</label>
+                                                                        <select name="stu_state" id="stu_state" class="form-control">
+                                                                        <?php  
+                                                                        $st_states=['--select--','NSW - New South Wales','VIC - Victoria','ACT - Australian Capital Territory','NT - Northern Territoy','WA - Western Australia','QLD - Queensland','SA - South Australia','TAS - Tasmania'];
+                                                                        for($i=0;$i<count($st_states);$i++){
+                                                                            $checked= $i==$queryRes['st_state'] ? 'selected' : '';
+                                                                            echo '<option value="'.$i.'" '.$checked.'>'.$st_states[$i].'</option>';
+                                                                        }
+                                                                        ?>
+                                                                        </select>
+                                                                        <div class="error-feedback">
+                                                                            Please enter the State
                                                                         </div>
                                                                     </div>
-                                                                    <div class="col-md-6">
-                                                                        <div class="mb-3">
-                                                                            <label class="form-label" for="post_code">Post Code<span class="asterisk">*</span></label>
-                                                                            <input type="tel" class="form-control number-field" maxlength="6" id="post_code" placeholder="Post Code" value="<?php echo $queryRes['st_post_code']; ?>" >
-                                                                            <div class="error-feedback">
-                                                                                Please enter the Post Code
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-md-6">
-                                                                        <div class="mb-3">
-                                                                            <label class="form-label" for="visit_before">Have you visited us before?<span class="asterisk">*</span></label>
-                                                                            <select name="visit_before" class="form-select" id="visit_before">
-                                                                            <?php  
-                                                                            $st_visited=['--select--','Yes','No'];
-                                                                            for($i=0;$i<count($st_visited);$i++){
-                                                                                $checked= $i==$queryRes['st_visited'] ? 'selected' : '';
-                                                                                echo '<option value="'.$i.'" '.$checked.'>'.$st_visited[$i].'</option>';
-                                                                            }
-                                                                            ?>
-                                                                            </select>  
-                                                                            <div class="error-feedback">
-                                                                                Please select atleast one option
-                                                                            </div>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label" for="post_code">Post Code</label>
+                                                                        <input type="tel" class="form-control number-field" maxlength="6" id="post_code" placeholder="Post Code" value="<?php echo $queryRes['st_post_code']; ?>" >
+                                                                        <div class="error-feedback">
+                                                                            Please enter the Post Code
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -923,18 +936,34 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                     <div class="col-xl-12">
                                         <div class="card">
                                             <div class="card-body" id="student_enquiry_form_parent">      
-                                                <div class="accordion" id="accordionExample">
+                                                <div class="accordion" id="accordionVisaStatus">
                                                     <div class="accordion-item">
                                                                 <h2 class="accordion-header" id="headingThree">
                                                                     <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse_counsel" aria-expanded="true" aria-controls="collapse_counsel">
-                                                                    Training Dependencies
+                                                                    Applicant Details & Visa Status
                                                                     </button>
                                                                 </h2>
-                                                                <div id="collapse_counsel" class="accordion-collapse collapse show" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
+                                                                <div id="collapse_counsel" class="accordion-collapse collapse show" aria-labelledby="headingThree" data-bs-parent="#accordionVisaStatus">
                                                                     <div class="accordion-body">
                                                                     <div class="row">
-                                                            <div class="col-sm">
-                                                                <div class="col-md-12">
+                                                                <div class="col-md-6">
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label" for="visit_before">Have you visited us before?</label>
+                                                                        <select name="visit_before" class="form-select" id="visit_before">
+                                                                        <?php  
+                                                                        $st_visited=['--select--','Yes','No'];
+                                                                        for($i=0;$i<count($st_visited);$i++){
+                                                                            $checked= $i==$queryRes['st_visited'] ? 'selected' : '';
+                                                                            echo '<option value="'.$i.'" '.$checked.'>'.$st_visited[$i].'</option>';
+                                                                        }
+                                                                        ?>
+                                                                        </select>  
+                                                                        <div class="error-feedback">
+                                                                            Please select atleast one option
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-6">
                                                                     <div class="mb-3">
                                                                         <label class="form-label" for="plan_to_start_date">When do you plan to start?</label>
                                                                         <input type="date" class="form-control" id="plan_to_start_date" value="<?php echo $queryRes['st_startplan_date']!='' ? date('Y-m-d',strtotime($queryRes['st_startplan_date'])) : '' ?>" >
@@ -943,7 +972,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                <div class="col-md-12">
+                                                                <div class="col-md-6">
                                                                     <div class="mb-3">
                                                                         <label class="form-label" for="refer_select">Have you been referred by someone?<span class="asterisk">*</span></label>
                                                                         <select name="refer_select" class="form-select refered" id="refer_select">
@@ -960,43 +989,12 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                <div class="col-md-12 refered_field" style="display:<?php echo $queryRes['st_refered']==1 ? '' : 'none'; ?>">
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label" for="referer_name">Please specify his / her name</label>
-                                                                        <input type="text" class="form-control" id="referer_name" value="<?php echo $queryRes['st_refer_name']; ?>" placeholder="name1,name2,name3">
-                                                                        <div class="alert alert-primary d-flex align-items-center mt-2" role="alert">
-                                                                        <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Info:"><use xlink:href="#info-fill"/></svg>
-                                                                        <div>
-                                                                        Multiple Names can be written with a Comma(,) in Between
-                                                                        </div>
-                                                                        </div>
-                                                                        <div class="error-feedback">
-                                                                            Please Enter his / her name
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-md-12 refered_field" style="display:<?php echo $queryRes['st_refered']==1 ? '' : 'none'; ?>">
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label" for="refer_alumni">Is he / she an alumni<span class="asterisk">*</span></label>
-                                                                        <select name="refer_alumni" class="form-select" id="refer_alumni">
-                                                                        <?php  
-                                                                        $st_refer_alumni=['--select--','Yes','No'];
-                                                                        for($i=0;$i<count($st_refer_alumni);$i++){
-                                                                            $checked= $i==$queryRes['st_refered'] ? 'selected' : '';
-                                                                            echo '<option value="'.$i.'" '.$checked.'>'.$st_refer_alumni[$i].'</option>';
-                                                                        }
-                                                                        ?>
-                                                                        </select>                                                          
-                                                                        <div class="error-feedback">
-                                                                            Please select atleast one option
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-md-12">
+                                                                <div class="col-md-6">
                                                                     <div class="mb-3">
                                                                         <label class="form-label" for="visa_condition">Visa Condition</label>
                                                                         <select name="visa_condition" class="form-select" id="visa_condition">
                                                                         <?php 
+                                                                        mysqli_data_seek($visaStatus, 0);
                                                                         while($visaRes=mysqli_fetch_array($visaStatus)){
                                                                             if($visaRes['visa_id']==1){
                                                                                 echo "<option value='0'>--select--</option><optgroup label='Subclass 500 main applicant'>";
@@ -1007,7 +1005,6 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                                         if($visaRes['visa_id']==4){
                                                                             echo '</optgroup>';
                                                                         }
-
                                                                         } ?>
                                                                         </select> 
                                                                         <div class="error-feedback">
@@ -1015,7 +1012,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                <div class="col-md-12 visa_note" style="display:<?php echo $visaRes['visa_status_name']==7 ? '' : 'none'; ?>">
+                                                                <div class="col-md-12 visa_note" style="display:<?php echo (isset($queryRes['st_visa_status']) && $queryRes['st_visa_status']==7) ? '' : 'none'; ?>">
                                                                     <div class="mb-3">
                                                                         <label class="form-label" for="visa_note">Specify Visa Status</label>
                                                                         <input type="text" class="form-control" id="visa_note" value="<?php echo $queryRes['st_visa_note']; ?>" placeholder="Visa Note">
@@ -1024,33 +1021,15 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                <div class="col-md-12">
-                                                                    <div class="mb-3">
-                                                                    <div><label for="visa_status_label">Visa Status</label></div>
-                                                                    <div>
-                                                                        <input class="form-check-input visa_status" type="radio" value="1" name="visa_status" id="visa_status1" <?php echo $queryRes['st_visa_condition']=='' ? 'checked' :  ( $queryRes['st_visa_condition']==1 ? 'checked' : '' ) ; ?>>
-                                                                        <label class="form-check-label" for="visa_status1">
-                                                                            Approved
-                                                                        </label>
-                                                                        <input class="form-check-input visa_status" type="radio" value="2" name="visa_status" id="visa_status2" <?php echo $queryRes['st_visa_condition']==2 ? 'checked' : ''; ?>>
-                                                                        <label class="form-check-label" for="visa_status2" >
-                                                                            Not Approved
-                                                                        </label>
-                                                                        <div class="error-feedback">
-                                                                            Please select a visa status
-                                                                        </div>
-                                                                    </div>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div class="col-md-12">
+                                                                <div class="col-md-6">
                                                                     <div class="mb-3">
                                                                         <label class="form-label" for="shore">Are you Offshore or Onshore</label>
                                                                         <select name="shore" class="form-select" id="shore">
                                                                         <?php  
                                                                         $st_shore=['--select--','OffShore','OnShore'];
+                                                                        $shore_sel = isset($queryRes['st_shore']) ? (int)$queryRes['st_shore'] : 0;
                                                                         for($i=0;$i<count($st_shore);$i++){
-                                                                            $checked= $i==$queryRes['st_refered'] ? 'selected' : '';
+                                                                            $checked= $i==$shore_sel ? 'selected' : '';
                                                                             echo '<option value="'.$i.'" '.$checked.'>'.$st_shore[$i].'</option>';
                                                                         }
                                                                         ?>
@@ -1058,42 +1037,49 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                                         <div class="error-feedback">
                                                                             Please select atleast one option
                                                                         </div>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                            </div> <!-- col-sm-close div -->
-
-                                                                <div class="col-sm">
-
-                                                                    <div class="col-md-12">
-                                                                            <div class="mb-3">
-                                                                                <label class="form-label" for="courses">Which Course are you interested in?<span class="asterisk">*</span></label>
-                                                                                <?php 
-                                                                                $counts=1;
-                                                                                while($coursesRes=mysqli_fetch_array($courses)){
-
-                                                                                    if($queryRes['st_course']!=''){
-                                                                                        $coursesSel=json_decode($queryRes['st_course']);
-                                                                                    }else{
-                                                                                        $coursesSel=[];   
-                                                                                    }
-                                                                                                                                        
-                                                                                    if(in_array($counts,$coursesSel)){
-                                                                                        $checked='checked';
-                                                                                    }else{
-                                                                                        $checked='';
-                                                                                    }                                                            
-
-                                                                                    echo '<div class="form-check"><input type="checkbox" class="courses_check form-check-input" id="course_check_'.$counts.'" '.$checked.' value="'.$counts.'">';
-                                                                                    echo '<label for="course_check_'.$counts.'">'.$coursesRes["course_sname"].'-'.$coursesRes["course_name"].'</label></div>';
-                                                                                    $counts++;
-                                                                                }
-
-                                                                                ?>
-                                                                                <div class="courses_error">
-                                                                                    Please select the Courses
-                                                                                </div>
-                                                                            </div>
+                                                                <div class="col-md-6">
+                                                                    <div class="mb-3">
+                                                                        <div><label for="visa_status_label">Visa Status</label></div>
+                                                                        <div>
+                                                                            <input class="form-check-input visa_status" type="radio" value="1" name="visa_status" id="visa_status1" <?php echo $queryRes['st_visa_condition']=='' ? 'checked' :  ( $queryRes['st_visa_condition']==1 ? 'checked' : '' ) ; ?>>
+                                                                            <label class="form-check-label" for="visa_status1">Approved</label>
+                                                                            <input class="form-check-input visa_status" type="radio" value="2" name="visa_status" id="visa_status2" <?php echo $queryRes['st_visa_condition']==2 ? 'checked' : ''; ?>>
+                                                                            <label class="form-check-label" for="visa_status2">Not Approved</label>
+                                                                            <div class="error-feedback">Please select a visa status</div>
                                                                         </div>
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label" for="ethnicity">Ethnicity</label>
+                                                                        <input type="text" class="form-control" id="ethnicity" placeholder="Ethnicity" value="<?php echo $queryRes['st_ethnicity']; ?>">
+                                                                        <div class="error-feedback">Please enter the Ethnicity</div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-12 refered_field" style="display:<?php echo $queryRes['st_refered']==1 ? '' : 'none'; ?>">
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label" for="referer_name">Please specify his / her name</label>
+                                                                        <input type="text" class="form-control" id="referer_name" value="<?php echo $queryRes['st_refer_name']; ?>" placeholder="name1,name2,name3">
+                                                                        <div class="alert alert-primary d-flex align-items-center mt-2" role="alert">
+                                                                        <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Info:"><use xlink:href="#info-fill"/></svg>
+                                                                        <div>Multiple Names can be written with a Comma(,) in Between</div>
+                                                                        </div>
+                                                                        <div class="error-feedback">Please Enter his / her name</div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-12 refered_field" style="display:<?php echo $queryRes['st_refered']==1 ? '' : 'none'; ?>">
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label" for="refer_alumni">Is he / she an alumni</label>
+                                                                        <select name="refer_alumni" class="form-select" id="refer_alumni">
+                                                                        <?php  
+                                                                        $st_refer_alumni=['--select--','Yes','No'];
+                                                                        for($i=0;$i<count($st_refer_alumni);$i++){
+                                                                            $checked= $i==$queryRes['st_refer_alumni'] ? 'selected' : '';
+                                                                            echo '<option value="'.$i.'" '.$checked.'>'.$st_refer_alumni[$i].'</option>';
+                                                                        }
+                                                                        ?>
+                                                                        </select>                                                          
+                                                                        <div class="error-feedback">Please select atleast one option</div>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -1109,25 +1095,16 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                             <div class="col-xl-12">
                                 <div class="card">
                                     <div class="card-body" id="student_enquiry_form_parent">
-                                            <div class="accordion" id="accordionExample">
+                                            <div class="accordion" id="accordionCourseConsult">
                                             <div class="accordion-item">
                                                 <h2 class="accordion-header" id="headingfour">
                                                     <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsefour" aria-expanded="true" aria-controls="collapsefour">
-                                                    Additional Information
+                                                    Course & Consultation Details
                                                     </button>
                                                 </h2>
-                                                <div id="collapsefour" class="accordion-collapse collapse show" aria-labelledby="headingfour" data-bs-parent="#accordionExample">
+                                                <div id="collapsefour" class="accordion-collapse collapse show" aria-labelledby="headingfour" data-bs-parent="#accordionCourseConsult">
                                                     <div class="accordion-body">
                                                     <div class="row">
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="ethnicity">Ethnicity</label>
-                                                        <input type="text" class="form-control" id="ethnicity" placeholder="Ethnicity" value="<?php echo $queryRes['st_ethnicity']; ?>">
-                                                        <div class="error-feedback">
-                                                            Please enter the Ethnicity
-                                                        </div>
-                                                    </div>
-                                                </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="payment_fee">Fees mentioned</label>
@@ -1155,39 +1132,33 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <div class="col-md-12">
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="pref_comment">Any preferences or requirements or expectations regarding this course</label>
+                                                        <input type="text" class="form-control" id="pref_comment" placeholder="Requirements" value="<?php echo $queryRes['st_pref_comments']; ?>">
+                                                    </div>
+                                                </div>
                                                 <div class="col-md-6 d-none">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="remarks">Remarks</label>
                                                         <?php  
                                                         $st_remarks=['Seems to be interested to do course and need to contact asap','contacted and followed','Selected - Good with communication skills','Sent enrollement form online/ hard copies','Want to do the course asap','not interested much','Looking for government funding','Have done counselling before but wants to get more info','Counseling is done but enrolment is due','Have done the counselling before','Seems like having attitude','Want to book an appointment for counselling','Will callus back again','Planning to relocate to other state','Wants to get COE for visa purpose','Rejected - "Reasons mentioned in comments" or " ReCounseliing needed"'];
-
                                                         if($queryRes['st_remarks']!=''){
                                                             $remarksSel=json_decode($queryRes['st_remarks']);
                                                         }else{
                                                             $remarksSel=[];   
                                                         }
-
                                                         for($i=1;$i<count($st_remarks);$i++){                                            
-
                                                             if(in_array($i,$remarksSel)){
                                                                 $checked='checked';
                                                             }else{
                                                                 $checked='';
-                                                            }                                                            
-
+                                                            }                                            
                                                             echo '<div class="form-check"><input type="checkbox" class="remarks_check form-check-input" id="remark_check_"'.$i.' '.$checked.' value="'.$i.'">';
                                                             echo '<label for="remark_check_"'.$i.'>'.$st_remarks[$i].'</label></div>';
                                                         }
-                                                            ?>
-                                                        <div class="error-feedback">
-                                                            Please select atleast one option
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                         <label class="form-label" for="pref_comment">Any preferences or requirements or expectations regarding this course</label>
-                                                        <input type="text" class="form-control" id="pref_comment" placeholder="Requirements" value="<?php echo $queryRes['st_pref_comments']; ?>">
+                                                        ?>
+                                                        <div class="error-feedback">Please select atleast one option</div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1264,13 +1235,16 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                 </div>
                             </form>
                     </div></div></div>
-            <?php if (!$is_student_portal): ?>
-            <!-- Accordion 2: Follow Up Call (admin only) -->
+        </div>
+
+        <?php if (!$is_student_portal): ?>
+        <!-- Accordion 2: Follow Up Call (admin only) -->
+        <div class="accordion" id="followupMainAccordion">
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingFollowup">
                     <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFollowup" aria-expanded="false" aria-controls="collapseFollowup">Follow Up Call</button>
                 </h2>
-                <div id="collapseFollowup" class="accordion-collapse collapse" aria-labelledby="headingFollowup" data-bs-parent="#enquiryMainAccordion">
+                <div id="collapseFollowup" class="accordion-collapse collapse" aria-labelledby="headingFollowup">
                     <div class="accordion-body">
                         <?php
                         $has_counselling_appointment = false;
@@ -1284,19 +1258,22 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     </div>
                 </div>
             </div>
-            <!-- Accordion 3: Counseling (admin only) -->
+        </div>
+
+        <!-- Accordion 3: Counseling (admin only) -->
+        <div class="accordion" id="counsellingMainAccordion">
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingCounseling">
                     <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCounseling" aria-expanded="false" aria-controls="collapseCounseling">Counseling</button>
                 </h2>
-                <div id="collapseCounseling" class="accordion-collapse collapse" aria-labelledby="headingCounseling" data-bs-parent="#enquiryMainAccordion">
+                <div id="collapseCounseling" class="accordion-collapse collapse" aria-labelledby="headingCounseling">
                     <div class="accordion-body">
                         <?php include('includes/counselling_accordion_form.php'); ?>
                     </div>
                 </div>
             </div>
-            <?php endif; ?>
         </div>
+        <?php endif; ?>
                     </div> <!-- container-fluid -->
                 </div>
             </div>
@@ -1463,6 +1440,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var ethnicity=$('#ethnicity').val();                
                 var prefComment=$('#pref_comment').val();                
                 var enquiryFor=$('#enquiry_for').val()==0 ? '' : $('#enquiry_for').val();
+                var locationVal=($('#location').val()||'').trim();
                 var courseType=$('#course_type').val();
 
                 var emailregexp = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
@@ -1512,33 +1490,10 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     var phoneChecks=0;
                 }
 
-                if(studentName==''|| phoneChecks==1 ||emailAddress==''|| (emailAddress!='' && !emailAddress.match(emailregexp)==true ) ||courses.length==0|| enquiryDate=='' || refer_select_error==0 || surname=='' || enquiryFor==''|| postCode=='' || visit_before=='' || memberName=='' || visaNoteStatus==1 ){
+                // Mandatory: Name, Surname, Email, Mobile (10-digit), Location, Enquiring For
+                if(memberName=='' || surname=='' || emailAddress=='' || (emailAddress!='' && !emailAddress.match(emailregexp)) || contactName.length!=10 || phoneChecks==1 || locationVal=='' || enquiryFor=='' || enquiryFor==0 ){
 
-                    if(refer_select_error==0){
-                        if(refer_select==0){
-                            $('#refer_select').addClass('invalid-div');
-                            $('#refer_select').removeClass('valid-div');
-                            $('#refer_select').closest('div').find('.error-feedback').show();
-                        }else if(refer_select==1){
-
-                            if(refer_alumni==0){
-                                $('#refer_alumni').addClass('invalid-div');
-                                $('#refer_alumni').removeClass('valid-div');
-                                $('#refer_alumni').closest('div').find('.error-feedback').show();
-                            }else{
-                                $('#refer_alumni').addClass('valid-div');
-                                $('#refer_alumni').removeClass('invalid-div');
-                                $('#refer_alumni').closest('div').find('.error-feedback').hide();
-                            }
-
-                        }else{
-                            $('#refer_select').addClass('valid-div');
-                            $('#refer_select').removeClass('invalid-div');
-                            $('#refer_select').closest('div').find('.error-feedback').hide();
-                        }
-                    }
-
-                    if(studentName==''){
+                    if(memberName==''){
                         if(enquiryForVal==='1'){
                             $('#member_name').addClass('invalid-div');
                             $('#member_name').removeClass('valid-div');
@@ -1591,33 +1546,6 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                         $('#email_address').removeClass('invalid-div');
                         $('#email_address').closest('div').find('.error-feedback').hide();
                     }
-                    if(courses.length==0){
-                        // $('#courses').addClass('invalid-div');
-                        // $('#courses').removeClass('valid-div');
-                        $('.courses_error').show();
-                    }else{
-                        // $('#courses').addClass('valid-div');
-                        // $('#courses').removeClass('invalid-div');
-                        $('.courses_error').hide();
-                    }
-                    if(visaNoteStatus==1){
-                        $('#visa_note').addClass('invalid-div');
-                        $('#visa_note').removeClass('valid-div');
-                        $('#visa_note').closest('div').find('.error-feedback').show();
-                    }else{
-                        $('#visa_note').addClass('valid-div');
-                        $('#visa_note').removeClass('invalid-div');
-                        $('#visa_note').closest('div').find('.error-feedback').hide();
-                    }
-                    if(enquiryDate==''){
-                        $('#enquiry_date').addClass('invalid-div');
-                        $('#enquiry_date').removeClass('valid-div');
-                        $('#enquiry_date').closest('div').find('.error-feedback').show();
-                    }else{
-                        $('#enquiry_date').addClass('valid-div');
-                        $('#enquiry_date').removeClass('invalid-div');
-                        $('#enquiry_date').closest('div').find('.error-feedback').hide();
-                    }
 
                     if(surname==''){
                         $('#surname').addClass('invalid-div');
@@ -1629,43 +1557,50 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                         $('#surname').closest('div').find('.error-feedback').hide();
                     }
 
-                    if(enquiryFor==''){
+                    if(locationVal==''){
+                        $('#location').addClass('invalid-div');
+                        $('#location').removeClass('valid-div');
+                        $('#location').closest('.mb-3').find('.error-feedback').show().css('display','block');
+                    }else{
+                        $('#location').addClass('valid-div');
+                        $('#location').removeClass('invalid-div');
+                        $('#location').closest('.mb-3').find('.error-feedback').hide();
+                    }
+
+                    if(enquiryFor=='' || enquiryFor==0){
                         $('#enquiry_for').addClass('invalid-div');
                         $('#enquiry_for').removeClass('valid-div');
-                        $('#enquiry_for').closest('div').find('.error-feedback').show();
+                        $('#enquiry_for').closest('.mb-3').find('.error-feedback').show().css('display','block');
                     }else{
                         $('#enquiry_for').addClass('valid-div');
                         $('#enquiry_for').removeClass('invalid-div');
-                        $('#enquiry_for').closest('div').find('.error-feedback').hide();
+                        $('#enquiry_for').closest('.mb-3').find('.error-feedback').hide();
                     }
 
-                    if(postCode==''){
-                        $('#post_code').addClass('invalid-div');
-                        $('#post_code').removeClass('valid-div');
-                        $('#post_code').closest('div').find('.error-feedback').show();
-                    }else{
-                        $('#post_code').addClass('valid-div');
-                        $('#post_code').removeClass('invalid-div');
-                        $('#post_code').closest('div').find('.error-feedback').hide();
-                    }
-
-                    if(visit_before==''){
-                        $('#visit_before').addClass('invalid-div');
-                        $('#visit_before').removeClass('valid-div');
-                        $('#visit_before').closest('div').find('.error-feedback').show();
-                    }else{
-                        $('#visit_before').addClass('valid-div');
-                        $('#visit_before').removeClass('invalid-div');
-                        $('#visit_before').closest('div').find('.error-feedback').hide();
-                    }
+                    // Optional fields: hide their errors when validating (only mandatory fields block submit)
+                    $('.courses_error').hide();
+                    $('#enquiry_date').removeClass('invalid-div').addClass('valid-div').closest('div').find('.error-feedback').hide();
+                    $('#post_code').removeClass('invalid-div').addClass('valid-div').closest('div').find('.error-feedback').hide();
+                    $('#visit_before').removeClass('invalid-div').addClass('valid-div').closest('div').find('.error-feedback').hide();
+                    $('#refer_select').removeClass('invalid-div').addClass('valid-div').closest('div').find('.error-feedback').hide();
+                    $('#visa_note').removeClass('invalid-div').addClass('valid-div').closest('div').find('.error-feedback').hide();
 
                     // console.log($('.error-feedback:visible'));
                     // $('.collapse').collapse();
 
                     $('.error-feedback:visible').parent('.accordion-button').trigger('click');
+                    // Expand Basic Details if Location or Enquiring For errors are shown
+                    if($('#location').hasClass('invalid-div') || $('#enquiry_for').hasClass('invalid-div')){
+                        var collapseEl = document.getElementById('collapseOne');
+                        if(collapseEl && !$('#collapseOne').hasClass('show')){
+                            var bsCollapse = typeof bootstrap !== 'undefined' && bootstrap.Collapse ? bootstrap.Collapse.getOrCreateInstance(collapseEl) : null;
+                            if(bsCollapse) bsCollapse.show();
+                        }
+                    }
                     // if($('.error-feedback:visible').css('display')!='none'){
 
                     // }
+                    return false;
 
                 }else{
                     var checkId=$("#check_update").val();
@@ -2219,42 +2154,111 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 else if(v=='Face to Face'){ $('#fp_location_section').show(); $('#fp_platform_section,#fp_meeting_link_section').hide(); $('#fp_location_id').prop('required',true); $('#fp_platform_id').prop('required',false); }
                 else { $('#fp_location_section,#fp_platform_section,#fp_meeting_link_section').hide(); $('#fp_location_id,#fp_platform_id').prop('required',false); }
             });
-            // Adjust available times when appointment date changes (no past times for today)
-            $(document).on('change','#fp_appointment_date',function(){
-                var selectedDate = ($(this).val() || '').toString();
-                var today = new Date();
-                var todayStr = today.toISOString().slice(0,10);
-                var nowTimeStr = today.toTimeString().slice(0,5);
-                if(selectedDate === todayStr){
-                    $('#fp_appointment_time,#fp_appointment_time_to').attr('min', nowTimeStr);
-                } else {
-                    $('#fp_appointment_time,#fp_appointment_time_to').removeAttr('min');
+            // Follow-up appointment time helpers (match main appointment page behaviour)
+            var FP_MIN_GAP_MINUTES = 1;
+            function fpTimeToMinutes(hhmm){
+                if(!hhmm || typeof hhmm!=='string') return null;
+                var p = hhmm.trim().split(':'); if(p.length<2) return null;
+                var h=parseInt(p[0],10), m=parseInt(p[1],10);
+                if(isNaN(h)||isNaN(m)) return null;
+                return h*60+m;
+            }
+            function fpMinutesToTime(m){
+                m=Math.max(0,Math.min(m,24*60-1));
+                var h=Math.floor(m/60), mn=m%60;
+                return (h<10?'0':'')+h+':' + (mn<10?'0':'')+mn;
+            }
+            function fpAddMinutes(hhmm,mins){
+                var mm=fpTimeToMinutes(hhmm);
+                return mm==null?null:fpMinutesToTime(mm+mins);
+            }
+            function fpUpdateTimeSlotError(){
+                var fromVal=($('#fp_appointment_time').val()||'').toString().trim();
+                var toVal=($('#fp_appointment_time_to').val()||'').toString().trim();
+                var fromM=fpTimeToMinutes(fromVal), toM=fpTimeToMinutes(toVal);
+                var invalid=(fromVal && toVal && fromM!=null && toM!=null && fromM>=toM);
+                var $err=$('#fp_time_slot_range_error');
+                if(invalid){
+                    $err.show().css('display','block');
+                    $('#fp_appointment_time,#fp_appointment_time_to').addClass('invalid-div').removeClass('valid-div');
+                }else{
+                    $err.hide();
+                    $('#fp_appointment_time,#fp_appointment_time_to').removeClass('invalid-div');
                 }
-            });
-            // Keep follow-up appointment time slot consistent (To cannot be before From)
-            $(document).on('change','#fp_appointment_time',function(){
-                var start = ($(this).val() || '').toString();
-                if(!start) return;
-                var $end = $('#fp_appointment_time_to');
-                $end.attr('min', start);
-                var endVal = ($end.val() || '').toString();
-                if(endVal && endVal < start){
-                    $end.val(start);
+            }
+            function fpApplyAppointmentDateMin(){
+                var today=new Date();
+                var todayStr=today.toISOString().slice(0,10);
+                var selectedDate=($('#fp_appointment_date').val()||'').toString().trim();
+                var nowTimeStr=today.toTimeString().slice(0,5);
+                if(selectedDate===todayStr){
+                    $('#fp_appointment_time').attr('min',nowTimeStr);
+                }else{
+                    $('#fp_appointment_time').removeAttr('min');
                 }
-            });
-            $(document).on('change','#fp_appointment_time_to',function(){
-                var endVal = ($(this).val() || '').toString();
-                var start = ($('#fp_appointment_time').val() || '').toString();
-                if(!start || !endVal) return;
-                if(endVal < start){
-                    // Show inline error and reset to start
-                    var $wrapper = $(this).closest('.mb-3');
-                    $wrapper.find('.error-feedback').text('End time must be after start time.').show();
-                    $(this).val(start);
-                    $('.toast-text2').html('End time must be after start time.');
-                    $('#borderedToast2Btn').trigger('click');
+                fpUpdateToMin();
+            }
+            function fpUpdateToMin(){
+                var fromVal=($('#fp_appointment_time').val()||'').toString().trim();
+                if(fromVal){
+                    var minTo=fpAddMinutes(fromVal,1);
+                    if(minTo) $('#fp_appointment_time_to').attr('min',minTo);
+                }else{
+                    $('#fp_appointment_time_to').removeAttr('min');
                 }
-            });
+            }
+            function fpEnsureFromBeforeTo(){
+                var fromVal=($('#fp_appointment_time').val()||'').toString().trim();
+                var toVal=($('#fp_appointment_time_to').val()||'').toString().trim();
+                if(!fromVal && !toVal){ fpUpdateTimeSlotError(); return; }
+                if(fromVal && !toVal){
+                    var toNew=fpAddMinutes(fromVal,FP_MIN_GAP_MINUTES);
+                    if(toNew) $('#fp_appointment_time_to').val(toNew);
+                    fpUpdateTimeSlotError(); return;
+                }
+                if(toVal && !fromVal){
+                    var fromNew=fpAddMinutes(toVal,-FP_MIN_GAP_MINUTES);
+                    if(fromNew) $('#fp_appointment_time').val(fromNew);
+                    fpUpdateTimeSlotError(); return;
+                }
+                var fromM=fpTimeToMinutes(fromVal), toM=fpTimeToMinutes(toVal);
+                if(fromM==null||toM==null){ fpUpdateTimeSlotError(); return; }
+                if(fromM>=toM){
+                    var toNew=fpAddMinutes(fromVal,FP_MIN_GAP_MINUTES);
+                    if(toNew) $('#fp_appointment_time_to').val(toNew);
+                }
+                fpUpdateTimeSlotError();
+            }
+            function fpOnFromTimeUpdate(){
+                var val=($('#fp_appointment_time').val()||'').toString().trim();
+                if(!val){ fpUpdateTimeSlotError(); return; }
+                var toNew=fpAddMinutes(val,FP_MIN_GAP_MINUTES);
+                if(toNew) $('#fp_appointment_time_to').val(toNew);
+                fpEnsureFromBeforeTo();
+                fpUpdateToMin();
+                fpApplyAppointmentDateMin();
+            }
+            function fpOnToTimeUpdate(){
+                var val=($('#fp_appointment_time_to').val()||'').toString().trim();
+                var fromVal=($('#fp_appointment_time').val()||'').toString().trim();
+                if(val && fromVal){
+                    var fromM=fpTimeToMinutes(fromVal), toM=fpTimeToMinutes(val);
+                    if(fromM!=null && toM!=null && toM<=fromM){
+                        var toNew=fpAddMinutes(fromVal,FP_MIN_GAP_MINUTES);
+                        if(toNew) $('#fp_appointment_time_to').val(toNew);
+                    }
+                }
+                fpEnsureFromBeforeTo();
+                fpUpdateToMin();
+                fpApplyAppointmentDateMin();
+            }
+            // Wire up follow-up appointment time/date events
+            $(document).on('change','#fp_appointment_date',fpApplyAppointmentDateMin);
+            $(document).on('change input','#fp_appointment_time',fpOnFromTimeUpdate);
+            $(document).on('change input','#fp_appointment_time_to',fpOnToTimeUpdate);
+            // Initialise when modal opens (safe to call multiple times)
+            fpEnsureFromBeforeTo();
+            fpUpdateToMin();
             $('#fp_share_all').on('change',function(){ var c=$(this).is(':checked'); $('.fp-share-with-item').prop('checked',c); });
             $('.fp-share-with-item').on('change',function(){ if(!$(this).is(':checked')) $('#fp_share_all').prop('checked',false); });
             $(document).on('submit','#fp_appointment_form',function(e){

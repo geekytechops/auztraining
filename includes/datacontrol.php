@@ -2744,32 +2744,106 @@ if (@$_POST['formName'] == 'uploadEnrolmentExcel') {
 
 
 
-// Enquiry dashboard counts for counsellors (View Enquiries page)
+// Enquiry dashboard counts for counsellors (View Enquiries page) – now honour filters
 if(@$_POST['formName']=='fetchEnquiryDashboard'){
-    $base = "SELECT COUNT(*) FROM student_enquiry WHERE st_enquiry_status=0";
+    $search = isset($_POST['search']) ? mysqli_real_escape_string($connection, trim($_POST['search'])) : '';
+    $filter_course = isset($_POST['filter_course']) ? (int)$_POST['filter_course'] : 0;
+    $filter_status = isset($_POST['filter_status']) ? (int)$_POST['filter_status'] : -1;
+    $filter_date_from = isset($_POST['filter_date_from']) ? mysqli_real_escape_string($connection, $_POST['filter_date_from']) : '';
+    $filter_date_to = isset($_POST['filter_date_to']) ? mysqli_real_escape_string($connection, $_POST['filter_date_to']) : '';
+    $filter_counsellor = isset($_POST['filter_counsellor']) ? (int)$_POST['filter_counsellor'] : 0;
+    $filter_source = isset($_POST['filter_source']) ? (int)$_POST['filter_source'] : -1;
+
+    $flow_status_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_flow_status'")) ? 'COALESCE(e.st_enquiry_flow_status,1)' : '1';
+    $source_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_source'")) ? 'e.st_enquiry_source' : '0';
+
+    $where = " e.st_enquiry_status = 0 ";
+    if($search !== ''){
+        $where .= " AND (e.st_name LIKE '%$search%' OR e.st_phno LIKE '%$search%' OR e.st_email LIKE '%$search%' OR e.st_enquiry_id LIKE '%$search%') ";
+    }
+    if($filter_course > 0){
+        $where .= " AND (e.st_course LIKE '%\"$filter_course\"%' OR e.st_course LIKE '%$filter_course%') ";
+    }
+    if($filter_status >= 0 && $flow_status_col !== '1'){
+        $where .= " AND $flow_status_col = ".(int)$filter_status;
+    }
+    if($filter_date_from !== ''){
+        $where .= " AND DATE(COALESCE(e.created_date, e.st_enquiry_date)) >= '".date('Y-m-d', strtotime($filter_date_from))."' ";
+    }
+    if($filter_date_to !== ''){
+        $where .= " AND DATE(COALESCE(e.created_date, e.st_enquiry_date)) <= '".date('Y-m-d', strtotime($filter_date_to))."' ";
+    }
+    if($filter_counsellor > 0){
+        $where .= " AND EXISTS (
+            SELECT 1 FROM counseling_details c 
+            WHERE c.st_enquiry_id = e.st_enquiry_id 
+              AND c.counsil_enquiry_status=0 
+              AND (
+                    c.counsil_createdby = $filter_counsellor 
+                 OR c.counsil_mem_name IN (SELECT user_name FROM users WHERE user_id=$filter_counsellor)
+              )
+        ) ";
+    }
+    if($filter_source >= 0 && $source_col !== '0'){
+        $where .= " AND $source_col = ".(int)$filter_source;
+    }
+
+    $base_from = " FROM student_enquiry e WHERE $where ";
+
     $today_start = date('Y-m-d 00:00:00');
     $today_end = date('Y-m-d 23:59:59');
     $week_start = date('Y-m-d 00:00:00', strtotime('-7 days'));
     $month_start = date('Y-m-d 00:00:00', strtotime('-30 days'));
     $last_week_start = date('Y-m-d 00:00:00', strtotime('-7 days'));
-    $flow_status_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_flow_status'")) ? 'st_enquiry_flow_status' : null;
-    $total_today = (int)mysqli_fetch_row(mysqli_query($connection, "$base AND COALESCE(created_date, st_enquiry_date) >= '$today_start' AND COALESCE(created_date, st_enquiry_date) <= '$today_end'"))[0];
-    $total_week = (int)mysqli_fetch_row(mysqli_query($connection, "$base AND COALESCE(created_date, st_enquiry_date) >= '$week_start'"))[0];
-    $total_month = (int)mysqli_fetch_row(mysqli_query($connection, "$base AND COALESCE(created_date, st_enquiry_date) >= '$month_start'"))[0];
-    $new_last_week = (int)mysqli_fetch_row(mysqli_query($connection, "$base AND COALESCE(created_date, st_enquiry_date) >= '$last_week_start'"))[0];
+
+    $total_today = 0;
+    $total_week = 0;
+    $total_month = 0;
+    $new_last_week = 0;
+
+    $res_today = mysqli_query($connection, "SELECT COUNT(*)".$base_from." AND COALESCE(e.created_date, e.st_enquiry_date) >= '$today_start' AND COALESCE(e.created_date, e.st_enquiry_date) <= '$today_end'");
+    if($res_today && ($row = mysqli_fetch_row($res_today))){ $total_today = (int)$row[0]; }
+
+    $res_week = mysqli_query($connection, "SELECT COUNT(*)".$base_from." AND COALESCE(e.created_date, e.st_enquiry_date) >= '$week_start'");
+    if($res_week && ($row = mysqli_fetch_row($res_week))){ $total_week = (int)$row[0]; }
+
+    $res_month = mysqli_query($connection, "SELECT COUNT(*)".$base_from." AND COALESCE(e.created_date, e.st_enquiry_date) >= '$month_start'");
+    if($res_month && ($row = mysqli_fetch_row($res_month))){ $total_month = (int)$row[0]; }
+
+    $res_last_week = mysqli_query($connection, "SELECT COUNT(*)".$base_from." AND COALESCE(e.created_date, e.st_enquiry_date) >= '$last_week_start'");
+    if($res_last_week && ($row = mysqli_fetch_row($res_last_week))){ $new_last_week = (int)$row[0]; }
+
     $followups_due_today = 0;
     $next_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM followup_calls LIKE 'flw_next_followup_date'"));
     if($next_col){
         $today_d = date('Y-m-d');
-        $followups_due_today = (int)mysqli_fetch_row(mysqli_query($connection, "SELECT COUNT(DISTINCT e.st_id) FROM student_enquiry e INNER JOIN followup_calls f ON f.enquiry_id = e.st_enquiry_id AND e.st_enquiry_status=0 WHERE DATE(f.flw_next_followup_date) = '$today_d'"))[0];
+        $fq = mysqli_query($connection, "SELECT COUNT(DISTINCT e.st_id) 
+            FROM student_enquiry e 
+            INNER JOIN followup_calls f ON f.enquiry_id = e.st_enquiry_id 
+            WHERE $where AND DATE(f.flw_next_followup_date) = '$today_d'");
+        if($fq && ($row = mysqli_fetch_row($fq))){ $followups_due_today = (int)$row[0]; }
     }
-    $converted = (int)mysqli_fetch_row(mysqli_query($connection, "SELECT COUNT(*) FROM student_enquiry e WHERE e.st_enquiry_status=0 AND e.st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '' AND st_enquiry_id IS NOT NULL)"))[0];
+
+    $converted = 0;
+    $cq = mysqli_query($connection, "SELECT COUNT(*)".$base_from." AND e.st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '' AND st_enquiry_id IS NOT NULL)");
+    if($cq && ($row = mysqli_fetch_row($cq))){ $converted = (int)$row[0]; }
+
     $lost = 0;
-    if($flow_status_col){
-        $lost = (int)mysqli_fetch_row(mysqli_query($connection, "SELECT COUNT(*) FROM student_enquiry WHERE st_enquiry_status=0 AND COALESCE($flow_status_col,1)=7"))[0];
+    if($flow_status_col !== '1'){
+        $lq = mysqli_query($connection, "SELECT COUNT(*)".$base_from." AND $flow_status_col = 7");
+        if($lq && ($row = mysqli_fetch_row($lq))){ $lost = (int)$row[0]; }
     }
+
     header('Content-Type: application/json');
-    echo json_encode(array('total_today'=>$total_today,'total_week'=>$total_week,'total_month'=>$total_month,'new_last_week'=>$new_last_week,'followups_due_today'=>$followups_due_today,'converted'=>$converted,'lost'=>$lost));
+    echo json_encode(array(
+        'total_today'=>$total_today,
+        'total_week'=>$total_week,
+        'total_month'=>$total_month,
+        'new_last_week'=>$new_last_week,
+        'followups_due_today'=>$followups_due_today,
+        'converted'=>$converted,
+        'lost'=>$lost
+    ));
     exit;
 }
 
@@ -2899,10 +2973,24 @@ if(@$_POST['formName']=='fetchEnquiryList'){
             $ids = json_decode($r['st_course']);
             if(is_array($ids)) foreach($ids as $id){
                 $c = mysqli_fetch_array(mysqli_query($connection, "SELECT course_sname, course_name FROM courses WHERE course_status!=1 AND course_id=".(int)$id));
-                if($c) $courseNames[] = ($c['course_sname']??'').'-'.($c['course_name']??'');
+                if($c) $courseNames[] = trim(($c['course_sname']??'').'-'.($c['course_name']??''));
             }
         }
-        $course_name = count($courseNames) ? htmlspecialchars($courseNames[0]) : '-';
+        // Display first course and "+N more" if multiple; show all in tooltip
+        if(count($courseNames)){
+            $firstCourse = $courseNames[0];
+            $extraCount = count($courseNames) - 1;
+            $displayText = htmlspecialchars($firstCourse, ENT_QUOTES, 'UTF-8');
+            if($extraCount > 0){
+                $displayText .= ' +'.$extraCount.' more';
+            }
+            // Tooltip text as multiline list (each course on its own line)
+            $tooltipText = htmlspecialchars(implode("\n", $courseNames), ENT_QUOTES, 'UTF-8');
+            // Use Bootstrap tooltip on hover (HTML enabled via JS)
+            $course_name = '<span class="course-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="'.$tooltipText.'">'.$displayText.'</span>';
+        } else {
+            $course_name = '-';
+        }
         $enquiry_dt_raw = !empty($r['created_date']) ? $r['created_date'] : $r['st_enquiry_date'];
         $enquiry_date = $enquiry_dt_raw ? date('d/m/Y', strtotime($enquiry_dt_raw)) : '-';
         $flow_status = (int)($r['flow_status'] ?? 1);

@@ -42,16 +42,71 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
             padding-bottom: 0.25rem;
         }
         /* Follow-up Outcome: date buttons (No Answer, Call Back Later, Booked Counselling) */
-        .btn-fup-date{ cursor: pointer; border: none; padding: 5px 12px; border-radius: 6px; font-size: 0.875rem; display: inline-block; font-weight: 500; }
+        .btn-fup-date{
+            cursor: pointer;
+            border: none;
+            padding: 0 12px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            height: 34px;
+            box-sizing: border-box;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 140px;
+        }
         .btn-fup-date.btn-fup-no-answer{ background: #fd7e14; color: #fff; }
         .btn-fup-date.btn-fup-callback{ background: #0d6efd; color: #fff; border: 2px double rgba(255,255,255,0.4); }
         .btn-fup-date.btn-fup-booked{ background: #e6a800; color: #fff; }
         /* Follow-up Outcome: direct labels (Progressing, Converted, Provide Info., Lost) */
-        .btn-fup-outcome{ display: inline-block; padding: 5px 12px; border-radius: 6px; font-size: 0.875rem; font-weight: 500; color: #fff; border: none; }
+        .btn-fup-outcome{
+            display: inline-flex;
+            padding: 0 12px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #fff;
+            border: none;
+            align-items: center;
+            justify-content: center;
+            height: 34px;
+            box-sizing: border-box;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 140px;
+        }
         .btn-fup-outcome.btn-fup-progressing{ background: #0d6efd; }
         .btn-fup-outcome.btn-fup-converted{ background: #198754; }
         .btn-fup-outcome.btn-fup-provide-info{ background: #495057; border: 1px solid #fd7e14; }
         .btn-fup-outcome.btn-fup-lost{ background: #dc3545; }
+
+        /* Keep the "No follow-up yet" badge the same size */
+        table.table-enquiry-list td:first-child .badge{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 34px;
+            width: 140px;
+            box-sizing: border-box;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 12px;
+        }
+        /* Neat spacing for course list tooltip */
+        .tooltip.course-tooltip-popover .tooltip-inner{
+            text-align: left;
+            line-height: 1.6;
+            padding: 0.5rem 0.75rem;
+            white-space: normal;
+            max-width: 600px; /* wider tooltip for course list */
+            min-width: 260px;
+        }
     </style>
 </head>
 <body>
@@ -369,7 +424,17 @@ $(function(){
         });
     }
     function loadDashboard(){
-        $.post('includes/datacontrol.php', { formName: 'fetchEnquiryDashboard' }, function(data){
+        var d = {
+            formName: 'fetchEnquiryDashboard',
+            search: $('#filter_search').val(),
+            filter_course: $('#filter_course').val(),
+            filter_status: $('#filter_status').val(),
+            filter_date_from: $('#filter_date_from').val(),
+            filter_date_to: $('#filter_date_to').val(),
+            filter_counsellor: $('#filter_counsellor').val(),
+            filter_source: $('#filter_source').val()
+        };
+        $.post('includes/datacontrol.php', d, function(data){
             try {
                 var j = typeof data === 'string' ? JSON.parse(data) : data;
                 $('#card_today').text(j.total_today || 0);
@@ -400,7 +465,10 @@ $(function(){
     }
     loadDashboard();
     loadList();
-    $('#btn_apply').on('click', function(){ loadList(); });
+    $('#btn_apply').on('click', function(){
+        loadList();
+        loadDashboard();
+    });
     $('#btn_reset').on('click', function(){
         $('#filter_search').val('');
         $('#filter_counsellor').val('0');
@@ -409,8 +477,37 @@ $(function(){
         $('#filter_date_from,#filter_date_to').val('');
         $('#sort_by').val('latest');
         loadList();
+        loadDashboard();
     });
-    $('#filter_search').on('keypress', function(e){ if(e.which===13) loadList(); });
+    $('#filter_search').on('keypress', function(e){
+        if(e.which===13){
+            loadList();
+            loadDashboard();
+        }
+    });
+    // Initialise Bootstrap tooltips for dynamically loaded course cells (neat multiline list)
+    $(document).on('mouseenter', '.course-tooltip', function () {
+        var instance = bootstrap.Tooltip.getInstance(this);
+        if(!instance){
+            // Prepare HTML title once from newline-separated title
+            var raw = $(this).attr('title') || '';
+            var html = raw.replace(/\n/g, '<br><br>');
+            $(this).attr('data-bs-original-title', html);
+            instance = new bootstrap.Tooltip(this, {
+                html: true,
+                trigger: 'manual',
+                customClass: 'course-tooltip-popover'
+            });
+        }
+        instance.show();
+    });
+    // Hide tooltip when mouse leaves the course text
+    $(document).on('mouseleave', '.course-tooltip', function () {
+        var instance = bootstrap.Tooltip.getInstance(this);
+        if(instance){
+            instance.hide();
+        }
+    });
 });
 </script>
 </body>

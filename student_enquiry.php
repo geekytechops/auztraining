@@ -1,6 +1,9 @@
 <?php include('includes/dbconnect.php'); ?>
 <?php 
 session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 // Admin/staff only. Students use student_enquiry_form.php (separate page).
 $ut = @$_SESSION['user_type'];
 if (in_array($ut, [0, 'student'], true)) {
@@ -350,6 +353,55 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
         $rpl_status=0;
         $short_grp_status=0;
         $slot_book_status=0;
+        $reg_grp_status=0;
+    }
+
+    // Safe defaults so the form always renders (new enquiry, sparse DB rows, missing st_enquiry_id)
+    $student_enquiry_row_defaults = array(
+        'st_id' => 0,
+        'st_enquiry_id' => '',
+        'st_enquiry_date' => '',
+        'st_name' => '',
+        'st_member_name' => '',
+        'st_surname' => '',
+        'st_email' => '',
+        'st_phno' => '',
+        'st_course' => '',
+        'st_enquiry_for' => 1,
+        'st_enquiry_source' => 0,
+        'st_location' => '',
+        'st_enquiry_college' => 0,
+        'st_course_type' => 0,
+        'st_street_details' => '',
+        'st_suburb' => '',
+        'st_state' => '0',
+        'st_post_code' => '',
+        'st_visited' => 0,
+        'st_startplan_date' => '',
+        'st_refered' => 0,
+        'st_refer_name' => '',
+        'st_refer_alumni' => 0,
+        'st_visa_status' => 0,
+        'st_visa_note' => '',
+        'st_shore' => 0,
+        'st_visa_condition' => '',
+        'st_ethnicity' => '',
+        'st_comments' => '',
+        'st_pref_comments' => '',
+        'st_fee' => '',
+        'st_appoint_book' => 0,
+        'st_remarks' => '',
+        'st_enquiry_flow_status' => '',
+    );
+    $queryRes = array_merge($student_enquiry_row_defaults, is_array($queryRes) ? $queryRes : array());
+
+    /** Safe Y-m-d for date inputs (avoids warnings on empty/invalid DB values) */
+    if (!function_exists('student_enquiry_safe_date_ymd')) {
+        function student_enquiry_safe_date_ymd($val) {
+            if ($val === null || $val === '') return '';
+            $t = strtotime((string)$val);
+            return $t ? date('Y-m-d', $t) : '';
+        }
     }
 
     $enquiryIds=mysqli_query($connection,"SELECT st_enquiry_id,st_name,st_phno from student_enquiry where st_enquiry_status!=1");
@@ -361,8 +413,8 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
     $followup_Query=array('enquiry_id'=>'','flw_name'=>'','flw_phone'=>'','flw_contacted_person'=>'','flw_contacted_time'=>'','flw_date'=>'','flw_mode_contact'=>'','flw_followup_type'=>'','flw_follow_up_notes'=>'','flw_next_followup_date'=>'','flw_follow_up_outcome'=>'','flw_comments'=>'','flw_progress_state'=>'','flw_remarks'=>'');
 
     // When editing a specific enquiry, pre-fill counselling & follow-up context from that enquiry
-    if(!empty($queryRes) && !empty($queryRes['st_enquiry_id'])){
-        $current_enquiry_code = $queryRes['st_enquiry_id'];
+    if(!empty($queryRes['st_id'])){
+        $current_enquiry_code = !empty($queryRes['st_enquiry_id']) ? $queryRes['st_enquiry_id'] : sprintf('EQ%05d', (int)$queryRes['st_id']);
         $followupEqId = 0; // always "new" follow-up when submitting from this page
         $counsil_Query['st_enquiry_id'] = $current_enquiry_code;
         $followup_Query['enquiry_id'] = $current_enquiry_code;
@@ -526,7 +578,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="enquiry_date">Enquiry Date</label>
-                                                        <input type="date" class="form-control" id="enquiry_date" value="<?php echo  $queryRes['st_enquiry_date']!='' ? date('Y-m-d',strtotime($queryRes['st_enquiry_date'])) : ''; ?>">
+                                                        <input type="date" class="form-control" id="enquiry_date" value="<?php echo htmlspecialchars(student_enquiry_safe_date_ymd($queryRes['st_enquiry_date'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                                                         <div class="error-feedback">
                                                             Please select the Date
                                                         </div>
@@ -554,10 +606,13 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="email_address">Email</label>
-                                                        <input type="text" class="form-control" id="email_address" placeholder="Email Address" value="<?php echo $queryRes['st_email']; ?>" >
-                                                        <div class="error-feedback">
-                                                            Please enter the Email Address
-                                                        </div>
+                                                        <?php $is_edit_enquiry = isset($eqId) && (int)$eqId > 0; ?>
+                                                        <input type="email" class="form-control<?php echo $is_edit_enquiry ? ' bg-light' : ''; ?>" id="email_address" name="email_address" placeholder="<?php echo $is_edit_enquiry ? 'Email (locked)' : 'Email Address (required)'; ?>" <?php echo $is_edit_enquiry ? 'readonly aria-readonly="true"' : 'required'; ?> autocomplete="email" value="<?php echo htmlspecialchars((string)($queryRes['st_email'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" >
+                                                        <?php if ($is_edit_enquiry): ?>
+                                                        <div class="form-text text-muted small">Email cannot be changed for an existing enquiry.</div>
+                                                        <?php else: ?>
+                                                        <div class="error-feedback">Please enter the Email Address</div>
+                                                        <?php endif; ?>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
@@ -979,7 +1034,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                                 <div class="col-md-6">
                                                                     <div class="mb-3">
                                                                         <label class="form-label" for="plan_to_start_date">When do you plan to start?</label>
-                                                                        <input type="date" class="form-control" id="plan_to_start_date" value="<?php echo $queryRes['st_startplan_date']!='' ? date('Y-m-d',strtotime($queryRes['st_startplan_date'])) : '' ?>" >
+                                                                        <input type="date" class="form-control" id="plan_to_start_date" value="<?php echo htmlspecialchars(student_enquiry_safe_date_ymd($queryRes['st_startplan_date'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" >
                                                                         <div class="error-feedback">
                                                                             Please select the Plan to Start Date
                                                                         </div>
@@ -1156,7 +1211,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                         <label class="form-label" for="remarks">Remarks</label>
                                                         <?php  
                                                         $st_remarks=['Seems to be interested to do course and need to contact asap','contacted and followed','Selected - Good with communication skills','Sent enrollement form online/ hard copies','Want to do the course asap','not interested much','Looking for government funding','Have done counselling before but wants to get more info','Counseling is done but enrolment is due','Have done the counselling before','Seems like having attitude','Want to book an appointment for counselling','Will callus back again','Planning to relocate to other state','Wants to get COE for visa purpose','Rejected - "Reasons mentioned in comments" or " ReCounseliing needed"'];
-                                                        if($queryRes['st_remarks']!=''){
+                                                        if(($queryRes['st_remarks'] ?? '')!=''){
                                                             $remarksSel=json_decode($queryRes['st_remarks']);
                                                         }else{
                                                             $remarksSel=[];   
@@ -1261,8 +1316,8 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     <div class="accordion-body">
                         <?php
                         $has_counselling_appointment = false;
-                        if(!empty($queryRes['st_enquiry_id'])){
-                            $eid = mysqli_real_escape_string($connection, $queryRes['st_enquiry_id']);
+                        if(!empty($queryRes['st_id'])){
+                            $eid = mysqli_real_escape_string($connection, !empty($queryRes['st_enquiry_id']) ? $queryRes['st_enquiry_id'] : sprintf('EQ%05d', (int)$queryRes['st_id']));
                             $chk = @mysqli_fetch_row(mysqli_query($connection, "SELECT 1 FROM appointments WHERE connected_enquiry_id='$eid' AND delete_status!=1 LIMIT 1"));
                             $has_counselling_appointment = (bool)$chk;
                         }
@@ -1471,12 +1526,10 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var visaCondition=$('.visa_status').val();
                 var reg_grp_names=$('#reg_grp_names').val();
                 if(visaStatus==7 && visaNote==''){ window.visaNoteStatus=1; }else{ window.visaNoteStatus=0; }
-                var forms=true, appointForm=true;
-                if(courseType==1){ forms= submitRpl(); }
-                else if(courseType==5 || courseType==4){ forms= submitShortGroup(); }
+                if(courseType==1){ submitRpl(); }
+                else if(courseType==5 || courseType==4){ submitShortGroup(); }
                 else if(courseType==3){ $('#reg_grp_names').removeClass('invalid-div'); }
-                if(appointment_booked==1){ appointForm= submitSlot(); }
-                if(!forms || !appointForm) return null;
+                if(appointment_booked==1){ submitSlot(); }
                 courses=courses.filter(function(item){ return item !== '0'; });
                 remarks=remarks.filter(function(item){ return item !== '0'; });
                 var checkId=$("#check_update").val();
@@ -1485,10 +1538,25 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
 
             var enquiryAutoSaveTimer = null;
             var enquirySaveSeq = 0;
+            function studentEnquiryValidEmail(){
+                var em = ($('#email_address').val()||'').trim();
+                var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return em.length>0 && re.test(em);
+            }
             async function performStudentEnquirySave(silent){
                 silent = !!silent;
                 var checkId = $("#check_update").val();
-                if(!checkId || checkId==='0') return;
+                // Autosave only runs when editing an existing enquiry (checkId set). Manual submit must always reach the API for new enquiries (checkId 0).
+                if(silent && (!checkId || checkId==='0')) return;
+                if(!studentEnquiryValidEmail()){
+                    if(!silent){
+                        $('.toast-text2').html('Please enter a valid email address.');
+                        $('#borderedToast2Btn').trigger('click');
+                    } else {
+                        autosaveSetBadge('enquiry','Enquiry: need valid email','err');
+                    }
+                    return;
+                }
                 var seq = ++enquirySaveSeq;
                 if(!silent){
                     var enquiryIdRec = await getData($('#contact_num').val().trim());
@@ -1522,9 +1590,14 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                             }
                             return;
                         }
-                        if(data==0){
+                        if(data==0 || data==='0'){
                             $('.toast-text2').html('Cannot add record. Please try again later');
                             $('#borderedToast2Btn').trigger('click');
+                        }else if(data==='invalid_email' || data=='invalid_email'){
+                            $('.toast-text2').html('Please enter a valid email address.');
+                            $('#borderedToast2Btn').trigger('click');
+                            $('#loader-container').hide();
+                            $('#student_enquiry_form').css('opacity','');
                         }else if(data==2){
                             document.getElementById('student_enquiry_form').reset();
                             $('#toast-text').html('Record Updated Successfully');
@@ -1546,6 +1619,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     },
                     error:function(){
                         if(silent && seq === enquirySaveSeq){ autosaveSetBadge('enquiry','Enquiry: error','err'); }
+                        else if(!silent){ $('#loader-container').hide(); $('#student_enquiry_form').css('opacity',''); }
                     }
                 });
             }

@@ -1,5 +1,5 @@
 <?php
- error_reporting(0);     
+//  error_reporting(0);     
 ?>
         <?php $CRM_ASSET_BASE = 'crm/html/template/assets'; ?>
         <script>

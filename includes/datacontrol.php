@@ -388,68 +388,76 @@ if(@$_POST['formName']=='public_enquiry'){
 }
 if(@$_POST['formName']=='student_enquiry'){
 
+    // Only mandatory field: valid email. Everything else can be empty (partial save / draft).
+    $emailRaw = trim((string)($_POST['emailAddress'] ?? ''));
+    if($emailRaw === '' || !filter_var($emailRaw, FILTER_VALIDATE_EMAIL)){
+        echo 'invalid_email';
+        exit;
+    }
+    $emailAddress = mysqli_real_escape_string($connection, $emailRaw);
 
     $enquiryFor=isset($_POST['enquiryFor']) && $_POST['enquiryFor'] !== '' ? (int)$_POST['enquiryFor'] : 1;
     if($enquiryFor==1){
-        $studentName=$_POST['studentName'];
-        $memberName=$_POST['memberName'];
+        $studentName=mysqli_real_escape_string($connection, trim((string)($_POST['studentName'] ?? '')));
+        $memberName=mysqli_real_escape_string($connection, trim((string)($_POST['memberName'] ?? '')));
     }else{
-        $studentName=$_POST['memberName'];
-        $memberName=$_POST['studentName'];
+        $studentName=mysqli_real_escape_string($connection, trim((string)($_POST['memberName'] ?? '')));
+        $memberName=mysqli_real_escape_string($connection, trim((string)($_POST['studentName'] ?? '')));
     }
 
-
-
-$contactName=$_POST['contactName'];
-$emailAddress=$_POST['emailAddress'];
-$courses=json_encode($_POST['courses']);
-$payment=$_POST['payment'];
-$visaStatus=$_POST['visaStatus'];
-$checkId=$_POST['checkId'];
+$contactName=mysqli_real_escape_string($connection, trim((string)($_POST['contactName'] ?? '')));
+$courses_raw = isset($_POST['courses']) && is_array($_POST['courses']) ? $_POST['courses'] : array();
+$courses=mysqli_real_escape_string($connection, json_encode($courses_raw));
+$payment=mysqli_real_escape_string($connection, trim((string)($_POST['payment'] ?? '')));
+$visaStatus=isset($_POST['visaStatus']) && $_POST['visaStatus'] !== '' ? (int)$_POST['visaStatus'] : 0;
+$checkId=isset($_POST['checkId']) ? $_POST['checkId'] : 0;
 $enquiryDate=trim((string)($_POST['enquiryDate'] ?? ''));
 $enquiryDate=($enquiryDate === '') ? date('Y-m-d H:i:s') : $enquiryDate;
+$enquiryDate=mysqli_real_escape_string($connection, $enquiryDate);
 
-$surname=trim((string)($_POST['surname'] ?? ''));
-$suburb=trim((string)($_POST['suburb'] ?? ''));
-$stuState=isset($_POST['stuState']) && $_POST['stuState'] !== '' ? $_POST['stuState'] : '0';
+$surname=mysqli_real_escape_string($connection, trim((string)($_POST['surname'] ?? '')));
+$suburb=mysqli_real_escape_string($connection, trim((string)($_POST['suburb'] ?? '')));
+$stuState=isset($_POST['stuState']) && $_POST['stuState'] !== '' ? mysqli_real_escape_string($connection, (string)$_POST['stuState']) : '0';
 $postCode=isset($_POST['postCode']) && $_POST['postCode'] !== '' ? (int)$_POST['postCode'] : 0;
 $visit_before=isset($_POST['visit_before']) && $_POST['visit_before'] !== '' ? (int)$_POST['visit_before'] : 0;
-$hear_about=$_POST['hear_about'];
-$hearedby=$_POST['hearedby'];
-$plan_to_start_date=$_POST['plan_to_start_date'];
-$refer_select=$_POST['refer_select'];
-$referer_name=$_POST['referer_name'];
-$refer_alumni=$_POST['refer_alumni'];
-$visaCondition=$_POST['visaCondition'];
-$comments=$_POST['comments'];
-$prefComment=$_POST['prefComment'];
-$appointment_booked=$_POST['appointment_booked'];
-if(@$_POST['remarks'] && $_POST['remarks']!=''){
-    $remarks=json_encode($_POST['remarks']);
-    // echo $remarks;
+$hear_about=mysqli_real_escape_string($connection, trim((string)($_POST['hear_about'] ?? '')));
+$hearedby=mysqli_real_escape_string($connection, trim((string)($_POST['hearedby'] ?? '')));
+$plan_to_start_date=mysqli_real_escape_string($connection, trim((string)($_POST['plan_to_start_date'] ?? '')));
+$refer_select=isset($_POST['refer_select']) && $_POST['refer_select'] !== '' ? (int)$_POST['refer_select'] : 0;
+$referer_name=mysqli_real_escape_string($connection, trim((string)($_POST['referer_name'] ?? '')));
+$refer_alumni=isset($_POST['refer_alumni']) && $_POST['refer_alumni'] !== '' ? (int)$_POST['refer_alumni'] : 0;
+$visaCondition=isset($_POST['visaCondition']) && $_POST['visaCondition'] !== '' ? (int)$_POST['visaCondition'] : 1;
+$comments=mysqli_real_escape_string($connection, trim((string)($_POST['comments'] ?? '')));
+$prefComment=mysqli_real_escape_string($connection, trim((string)($_POST['prefComment'] ?? '')));
+$appointment_booked=isset($_POST['appointment_booked']) && $_POST['appointment_booked'] !== '' ? (int)$_POST['appointment_booked'] : 0;
+if(!empty($_POST['remarks']) && is_array($_POST['remarks'])){
+    $remarks=mysqli_real_escape_string($connection, json_encode($_POST['remarks']));
 }else{
     $remarks='';
 }
-$reg_grp_names=$_POST['reg_grp_names'];
-$streetDetails=$_POST['streetDetails'];
-$courseType=$_POST['courseType'];
-$shore=$_POST['shore'];
-$ethnicity=$_POST['ethnicity'];
-$visaNote=$_POST['visaNote'];
-$created_by=$_POST['admin_id'];
+$reg_grp_names=mysqli_real_escape_string($connection, trim((string)($_POST['reg_grp_names'] ?? '')));
+$streetDetails=mysqli_real_escape_string($connection, trim((string)($_POST['streetDetails'] ?? '')));
+$courseType=isset($_POST['courseType']) && $_POST['courseType'] !== '' ? (int)$_POST['courseType'] : 0;
+$shore=isset($_POST['shore']) && $_POST['shore'] !== '' ? (int)$_POST['shore'] : 0;
+$ethnicity=mysqli_real_escape_string($connection, trim((string)($_POST['ethnicity'] ?? '')));
+$visaNote=mysqli_real_escape_string($connection, trim((string)($_POST['visaNote'] ?? '')));
+$created_by=isset($_POST['admin_id']) ? (int)$_POST['admin_id'] : 0;
 $enquiry_source = isset($_POST['enquiry_source']) ? (int)$_POST['enquiry_source'] : 0;
 $location = mysqli_real_escape_string($connection, $_POST['location'] ?? '');
 $enquiry_college = isset($_POST['enquiry_college']) ? (int)$_POST['enquiry_college'] : 0;
-$formId=$_POST['formId'];
-$slot_book_status=$_POST['slot_book_status'];
-$short_grp_status=$_POST['short_grp_status'];
-$rpl_status=$_POST['rpl_status'];
-$reg_grp_status=$_POST['reg_grp_status'];
+$formId=isset($_POST['formId']) ? $_POST['formId'] : 0;
+$slot_book_status=isset($_POST['slot_book_status']) ? (int)$_POST['slot_book_status'] : 0;
+$short_grp_status=isset($_POST['short_grp_status']) ? (int)$_POST['short_grp_status'] : 0;
+$rpl_status=isset($_POST['rpl_status']) ? (int)$_POST['rpl_status'] : 0;
+$reg_grp_status=isset($_POST['reg_grp_status']) ? (int)$_POST['reg_grp_status'] : 0;
 $now=date('Y-m-d H:i:s');
 
-$rpl_arrays=json_decode($_POST['rpl_arrays']);
-$short_grps=json_decode($_POST['short_grps']);
-$slot_books=json_decode($_POST['slot_books']);
+$rpl_arrays=json_decode($_POST['rpl_arrays'] ?? '{}');
+if($rpl_arrays === null){ $rpl_arrays = (object)array('rpl_exp'=>'','exp_in'=>'','exp_docs'=>'','exp_prev'=>'','exp_name'=>'','exp_years'=>'','exp_prev_name'=>''); }
+$short_grps=json_decode($_POST['short_grps'] ?? '{}');
+if($short_grps === null){ $short_grps = (object)array(); }
+$slot_books=json_decode($_POST['slot_books'] ?? '{}');
+if($slot_books === null){ $slot_books = (object)array('slot_book_time'=>'','slot_book_purpose'=>'','slot_book_date'=>'','slot_book_by'=>'','slot_book_link'=>0); }
 
 // Student portal: allow update only for own enquiry
 if((int)$checkId > 0 && isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'student'){
@@ -460,6 +468,22 @@ if((int)$checkId > 0 && isset($_SESSION['user_type']) && $_SESSION['user_type'] 
         exit;
     }
     $created_by = 0; // student update: no staff modifier
+}
+
+// New enquiry (staff/admin only): if email already exists on an active enquiry, update that row instead of inserting
+if((int)$checkId === 0 && (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student')){
+    $dupQ = mysqli_query($connection, "SELECT st_id FROM student_enquiry WHERE st_enquiry_status=0 AND LOWER(TRIM(st_email))=LOWER('".$emailAddress."') ORDER BY st_id DESC LIMIT 1");
+    if($dupQ && ($dupRow = mysqli_fetch_assoc($dupQ))){
+        $existingId = (int)$dupRow['st_id'];
+        if($existingId > 0){
+            $checkId = $existingId;
+            $formId = $existingId;
+            $rpl_status = mysqli_num_rows(mysqli_query($connection, "SELECT 1 FROM rpl_enquries WHERE enq_form_id=".$existingId." LIMIT 1")) > 0 ? 1 : 0;
+            $short_grp_status = mysqli_num_rows(mysqli_query($connection, "SELECT 1 FROM short_group_form WHERE enq_form_id=".$existingId." LIMIT 1")) > 0 ? 1 : 0;
+            $reg_grp_status = mysqli_num_rows(mysqli_query($connection, "SELECT 1 FROM regular_group_form WHERE enq_form_id=".$existingId." LIMIT 1")) > 0 ? 1 : 0;
+            $slot_book_status = mysqli_num_rows(mysqli_query($connection, "SELECT 1 FROM slot_book WHERE enq_form_id=".$existingId." LIMIT 1")) > 0 ? 1 : 0;
+        }
+    }
 }
 
 if($checkId==0){
@@ -520,7 +544,15 @@ $query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_member_n
     }
 
 }else{
-    
+    // Email is locked on edit — ignore POST tampering; always keep stored address
+    $cidUp = (int)$checkId;
+    if($cidUp > 0){
+        $emR = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT st_email FROM student_enquiry WHERE st_id=".$cidUp." LIMIT 1"));
+        if($emR && array_key_exists('st_email', $emR)){
+            $emailAddress = mysqli_real_escape_string($connection, (string)$emR['st_email']);
+        }
+    }
+
     $enquiry_source_update = $enquiry_source > 0 ? $enquiry_source : 'NULL';
 $enquiry_college_update = $enquiry_college > 0 ? $enquiry_college : 'NULL';
 if(mysqli_query($connection,"UPDATE student_enquiry SET `st_name`='$studentName',`st_member_name`='$memberName' ,`st_phno`='$contactName',`st_email`='$emailAddress',`st_course`='$courses',`st_fee`='$payment',`st_visa_status`=$visaStatus,`st_visa_condition`=$visaCondition ,`st_visa_note`='$visaNote', `st_surname`='$surname' , `st_suburb`= '$suburb' , `st_state`='$stuState',`st_post_code`= $postCode,`st_visited`=$visit_before,`st_heared`='$hear_about',`st_hearedby`='$hearedby',`st_startplan_date`='$plan_to_start_date',`st_refered`=$refer_select,`st_refer_name`='$referer_name',`st_refer_alumni`=$refer_alumni,`st_comments`='$comments',`st_pref_comments`='$prefComment',`st_appoint_book`= $appointment_booked,`st_remarks`='$remarks',`st_street_details`= '$streetDetails' , `st_enquiry_for`= $enquiryFor , `st_enquiry_date`='$enquiryDate' ,`st_course_type`=$courseType , `st_shore`=$shore,`st_ethnicity`='$ethnicity',`st_modified_by`= $created_by , `st_modified_date`='$now', `st_enquiry_source`=$enquiry_source_update, `st_location`='$location', `st_enquiry_college`=$enquiry_college_update WHERE `st_id`=$checkId")){        

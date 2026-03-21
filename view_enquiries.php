@@ -10,6 +10,8 @@ if($ut !== 1 && $ut !== 2){
     header('Location: dashboard.php');
     exit;
 }
+/** View Enquiries: bulk + row delete — admins (user_type 1) only */
+$view_enq_can_delete = ($ut === 1);
 $courses_q = mysqli_query($connection, "SELECT course_id, course_sname, course_name FROM courses WHERE course_status!=1 ORDER BY course_sname");
 $sources = array('','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads','Agent / referral');
 $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE user_status!=1 ORDER BY user_name");
@@ -111,8 +113,9 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
         .btn-fup-outcome.btn-fup-provide-info{ background: #495057; border: 1px solid #fd7e14; }
         .btn-fup-outcome.btn-fup-lost{ background: #dc3545; }
 
-        /* Follow-up Outcome column (2nd col after checkbox) */
-        table.table-enquiry-list td:nth-child(2) .badge{
+        /* Follow-up Outcome: col 2 when checkbox present, col 1 for staff (no checkbox) */
+        table.table-enquiry-list td:nth-child(2) .badge,
+        table.table-enquiry-list.enq-list-staff td:nth-child(1) .badge{
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -313,17 +316,21 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
                                 <div class="btn-toolbar-actions d-flex flex-wrap align-items-center gap-1 w-100">
                                     <button type="button" id="btn_apply" class="btn btn-primary btn-sm">Apply</button>
                                     <button type="button" id="btn_reset" class="btn btn-outline-secondary btn-sm">Reset</button>
+                                    <?php if(!empty($view_enq_can_delete)){ ?>
                                     <button type="button" id="btn_bulk_delete_enquiries" class="btn btn-outline-danger btn-sm" title="Delete selected enquiries">
                                         <i class="ti ti-trash me-1"></i>Delete selected
                                     </button>
+                                    <?php } ?>
                                 </div>
                             </div>
                         </div>
                         <div class="table-responsive">
-                            <table id="enquiry_table" class="table table-hover table-bordered table-enquiry-list mb-0 w-100">
+                            <table id="enquiry_table" class="table table-hover table-bordered table-enquiry-list mb-0 w-100<?php echo empty($view_enq_can_delete) ? ' enq-list-staff' : ''; ?>">
                                 <thead class="table-light">
                                     <tr>
+                                        <?php if(!empty($view_enq_can_delete)){ ?>
                                         <th class="enq-col-select"><input type="checkbox" id="enq_select_all" class="form-check-input" title="Select all on this page" aria-label="Select all on this page"></th>
+                                        <?php } ?>
                                         <th class="table-next-fup">Follow-up Outcome</th>
                                         <th>Enquiry Date</th>
                                         <th>Name</th>
@@ -384,6 +391,7 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
 <?php include('includes/footer_includes.php'); ?>
 <script>
 $(function(){
+    var VIEW_ENQ_CAN_DELETE = <?php echo !empty($view_enq_can_delete) ? 'true' : 'false'; ?>;
     var viewEnqCurrentAppointmentId = null;
     var enquiryTable = null;
 
@@ -510,7 +518,7 @@ $(function(){
                 d.sort_by = $('#sort_by').val();
             }
         },
-        columns: [
+        columns: VIEW_ENQ_CAN_DELETE ? [
             { data: 0, className: 'col-enq-select', render: function(x){ return x; } },
             { data: 1, render: function(x){ return x; } },
             { data: 2, render: function(x){ return x; } },
@@ -519,6 +527,14 @@ $(function(){
             { data: 5, render: function(x){ return x; } },
             { data: 6, render: function(x){ return x; } },
             { data: 7, render: function(x){ return x; } }
+        ] : [
+            { data: 0, render: function(x){ return x; } },
+            { data: 1, render: function(x){ return x; } },
+            { data: 2, render: function(x){ return x; } },
+            { data: 3, render: function(x){ return x; } },
+            { data: 4, render: function(x){ return x; } },
+            { data: 5, render: function(x){ return x; } },
+            { data: 6, render: function(x){ return x; } }
         ],
         language: {
             processing: 'Loading...',
@@ -530,7 +546,9 @@ $(function(){
             paginate: { previous: '&laquo;', next: '&raquo;' }
         },
         drawCallback: function(){
-            $('#enq_select_all').prop('checked', false);
+            if(VIEW_ENQ_CAN_DELETE && document.getElementById('enq_select_all')){
+                $('#enq_select_all').prop('checked', false);
+            }
             $('.dataTables_paginate > .pagination').addClass('pagination-rounded mb-0');
             document.querySelectorAll('#enquiry_table .course-tooltip').forEach(function(el){
                 var t = bootstrap.Tooltip.getInstance(el);
@@ -540,6 +558,7 @@ $(function(){
     });
 
     function viewEnqDeleteSingle(stId){
+        if(!VIEW_ENQ_CAN_DELETE) return;
         if(!stId) return;
         if(typeof Swal === 'undefined'){
             alert('Delete requires SweetAlert2.');
@@ -582,9 +601,11 @@ $(function(){
 
     $(document).on('click', '.btn-enq-delete', function(e){
         e.preventDefault();
+        if(!VIEW_ENQ_CAN_DELETE) return;
         viewEnqDeleteSingle($(this).data('st-id'));
     });
 
+    if(VIEW_ENQ_CAN_DELETE){
     $('#enq_select_all').on('change', function(){
         var on = $(this).prop('checked');
         $('#enquiry_table tbody .enq-row-cb').prop('checked', on);
@@ -646,6 +667,7 @@ $(function(){
             });
         });
     });
+    }
 
     loadDashboard();
     $('#btn_apply').on('click', function(){

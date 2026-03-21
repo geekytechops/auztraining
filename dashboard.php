@@ -183,7 +183,8 @@ if(isset($_SESSION['user_type'])){
                         </div>
                         <!-- end page title -->
                         <?php 
-                        if($_SESSION['user_type']==1){
+                        /* Admin (1) and Staff (2): same dashboard. Students redirected above. */
+                        if((int)$_SESSION['user_type'] === 1 || (int)$_SESSION['user_type'] === 2){
                         ?>
 
                         <div class="row">
@@ -855,10 +856,6 @@ $(document).on('change','#counsel_select',function(){
 
 counsel_fetch('');
 </script>
-<?php }else{ ?>
-    <script>
-
-    </script>
 <?php } ?>
 </body>
 </html>

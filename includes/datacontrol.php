@@ -815,9 +815,14 @@ if(mysqli_query($connection,"UPDATE student_enquiry SET `st_name`='$studentName'
 }
 
 if(@$_POST['formName']=='delete_enq'){
+    $tableName = isset($_POST['tableName']) ? $_POST['tableName'] : '';
+    // Enquiry soft-delete: admins only (staff cannot delete enquiries)
+    if($tableName === 'student_enquiry' && (int)@$_SESSION['user_type'] !== 1){
+        echo 0;
+        exit;
+    }
     $enq_id=$_POST['eq_id'];
     $note=$_POST['note'];
-    $tableName=$_POST['tableName'];
     $primId=$_POST['colPrefix'].'_id';
     $delColName=$_POST['colPrefix'].'_delete_note';
     $colPrefix=$_POST['colPrefix'].'_enquiry_status';
@@ -831,9 +836,13 @@ if($query){
 }
 }
 
-// Bulk soft-delete enquiries (View Enquiries list) — same fields as delete_enq for student_enquiry
+// Bulk soft-delete enquiries (View Enquiries list) — same fields as delete_enq for student_enquiry (admins only)
 if(@$_POST['formName']=='bulk_delete_enquiry'){
     header('Content-Type: application/json; charset=utf-8');
+    if(!isset($_SESSION['user_id']) || (int)@$_SESSION['user_type'] !== 1){
+        echo json_encode(array('ok'=>0, 'error'=>'forbidden'));
+        exit;
+    }
     $note = isset($_POST['note']) ? mysqli_real_escape_string($connection, trim((string)$_POST['note'])) : '';
     $ids_raw = isset($_POST['ids']) ? $_POST['ids'] : '';
     $ids = array();
@@ -874,6 +883,8 @@ if($query){
 }
 
 if(@$_POST['formName']=='student_filter'){
+
+    $crm_enquiry_delete_allowed = isset($_SESSION['user_id']) && (int)@$_SESSION['user_type'] === 1;
 
     $visa_status=$_POST['visa_status'];
     $appointment_status=$_POST['appointment_status'];
@@ -979,7 +990,10 @@ if(mysqli_num_rows($filterQueryget)!=0){
         $dateCreated=date('d M Y',strtotime($filterQueryRes['st_enquiry_date']));
         
     
-            $view='<a class="btn btn-outline-primary btn-sm edit_enq" style="margin-right:10px;" href="student_enquiry.php?eq='.base64_encode($filterQueryRes['st_id']).'">Edit</a><button onclick="delete_enq(\'student_enquiry\',\'st\','.$filterQueryRes['st_id'].')" type="button" class="btn btn-outline-danger btn-sm">Delete</button>';
+            $view='<a class="btn btn-outline-primary btn-sm edit_enq" style="margin-right:10px;" href="student_enquiry.php?eq='.base64_encode($filterQueryRes['st_id']).'">Edit</a>';
+            if(!empty($crm_enquiry_delete_allowed)){
+                $view.='<button onclick="delete_enq(\'student_enquiry\',\'st\','.$filterQueryRes['st_id'].')" type="button" class="btn btn-outline-danger btn-sm">Delete</button>';
+            }
 
 
             $tbody.='<td>'.$filterQueryRes['st_enquiry_id'].'</td>
@@ -1230,6 +1244,8 @@ if(@$_POST['formName']=='counseling_form'){
 
 if(@$_POST['formName']=='date_filter'){
 
+    $crm_enquiry_delete_allowed = isset($_SESSION['user_id']) && (int)@$_SESSION['user_type'] === 1;
+
     if($_POST['from_date']>$_POST['to_date']){
         $from_date=$_POST['to_date'];
         $to_date=$_POST['from_date'];
@@ -1323,7 +1339,10 @@ if(mysqli_num_rows($filterQueryget)!=0){
         $dateCreated=date('d M Y',strtotime($filterQueryRes['st_enquiry_date']));
         
     
-            $view='<a class="btn btn-outline-primary btn-sm edit_enq" style="margin-right:10px;" href="student_enquiry.php?eq='.base64_encode($filterQueryRes['st_id']).'">Edit</a><button onclick="delete_enq(\'student_enquiry\',\'st\','.$filterQueryRes['st_id'].')" type="button" class="btn btn-outline-danger btn-sm">Delete</button>';
+            $view='<a class="btn btn-outline-primary btn-sm edit_enq" style="margin-right:10px;" href="student_enquiry.php?eq='.base64_encode($filterQueryRes['st_id']).'">Edit</a>';
+            if(!empty($crm_enquiry_delete_allowed)){
+                $view.='<button onclick="delete_enq(\'student_enquiry\',\'st\','.$filterQueryRes['st_id'].')" type="button" class="btn btn-outline-danger btn-sm">Delete</button>';
+            }
 
 
             $tbody.='<td>'.$filterQueryRes['st_enquiry_id'].'</td>
@@ -2151,8 +2170,12 @@ if(@$_POST['formName'] == 'change_password'){
     }
 }
 
-// EDIT USER
+// EDIT USER (admins only)
 if(@$_POST['formName'] == 'edit_user'){
+    if((int)@$_SESSION['user_type'] !== 1){
+        echo 0;
+        exit;
+    }
     $id = $_POST['user_id'];
     $name = $_POST['user_name'];
     $email = $_POST['user_email'];
@@ -2177,6 +2200,10 @@ if(@$_POST['formName'] == 'edit_user'){
 }
 
 if(@$_POST['formName'] == 'create_user'){
+    if((int)@$_SESSION['user_type'] !== 1){
+        echo 0;
+        exit;
+    }
     $name = $_POST['user_name'];
     $email = $_POST['user_email'];
     $password = $_POST['user_password'];
@@ -2212,6 +2239,7 @@ if(@$_REQUEST['name']=='singleinvoice'){
 
 
 if(@$_REQUEST['name']=='studentEnquiry'){
+    $crm_enquiry_delete_allowed = isset($_SESSION['user_id']) && (int)@$_SESSION['user_type'] === 1;
     $enquiries['data']=[];
     $query=mysqli_query($connection,"SELECT * from student_enquiry where st_enquiry_status!=1");
     while($queryRes=mysqli_fetch_array($query)){
@@ -2276,7 +2304,10 @@ if(@$_REQUEST['name']=='studentEnquiry'){
     }
     
 
-        $view='<a class="btn btn-outline-primary btn-sm edit_enq" style="margin-right:10px;" href="student_enquiry.php?eq='.base64_encode($queryRes['st_id']).'">Edit</a><button onclick="delete_enq(\'student_enquiry\',\'st\','.$queryRes['st_id'].')" type="button" class="btn btn-outline-danger btn-sm">Delete</button>';
+        $view='<a class="btn btn-outline-primary btn-sm edit_enq" style="margin-right:10px;" href="student_enquiry.php?eq='.base64_encode($queryRes['st_id']).'">Edit</a>';
+        if(!empty($crm_enquiry_delete_allowed)){
+            $view.='<button onclick="delete_enq(\'student_enquiry\',\'st\','.$queryRes['st_id'].')" type="button" class="btn btn-outline-danger btn-sm">Delete</button>';
+        }
 
         array_push($enquiries['data'],array('st_enquiry_id'=>$queryRes['st_enquiry_id'],'std_name'=>$queryRes['st_name'], 'std_phno'=>$queryRes['st_phno'],'std_email'=>$queryRes['st_email'],'street'=>$street,'suburb'=>$suburb,'post_code'=>$post_code,'std_course'=>$coursesName,'startplan_date'=>$startPlanDate,'referedby'=>$refered_names,'visited'=>$visited,'st_coursetype'=>$st_course_type[$courseTypeId],'std_fee'=>$queryRes['st_fee'],'appointment'=>$appointment,'Visa_condition'=>$visacCond,'std_visa_status'=>$visastatus,'staffComments'=>$staff_comments,'preferences'=>$preference,'remarksNotes'=>$remarksNotes,'action'=>$view));
         
@@ -3109,6 +3140,9 @@ if(@$_POST['formName']=='fetchEnquiryList'){
     if($length <= 0){ $length = 10; }
     if($length > 500){ $length = 500; }
 
+    // View Enquiries: checkboxes + row delete — admins only (user_type 1). Staff see View only.
+    $view_enq_list_admin = isset($_SESSION['user_id']) && (int)@$_SESSION['user_type'] === 1;
+
     $flow_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_flow_status'")) ? 'COALESCE(e.st_enquiry_flow_status,1)' : '1';
     $source_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_source'")) ? 'e.st_enquiry_source' : '0';
     $where = " e.st_enquiry_status = 0 ";
@@ -3317,21 +3351,35 @@ if(@$_POST['formName']=='fetchEnquiryList'){
         }
         $eq_enc = base64_encode($r['st_id']);
         $st_id = (int)$r['st_id'];
-        $cb_html = '<input type="checkbox" class="enq-row-cb form-check-input" value="'.$st_id.'">';
+        $cb_html = $view_enq_list_admin ? '<input type="checkbox" class="enq-row-cb form-check-input" value="'.$st_id.'">' : '';
         $action_html = '<div class="d-inline-flex align-items-center gap-1 flex-wrap view-enq-actions">'
-            .'<a href="student_enquiry.php?eq='.$eq_enc.'&amp;view=1" class="btn btn-sm btn-outline-primary view-enq-btn" title="View enquiry" aria-label="View enquiry"><i class="ti ti-eye"></i></a>'
-            .'<button type="button" class="btn btn-sm btn-outline-danger btn-enq-delete view-enq-btn" data-st-id="'.$st_id.'" title="Delete" aria-label="Delete"><i class="ti ti-trash"></i></button>'
-            .'</div>';
-        $cells = array(
-            $cb_html,
-            $outcome_html,
-            $enquiry_date,
-            htmlspecialchars($r['st_name']),
-            htmlspecialchars($r['st_phno']),
-            $course_name,
-            '<span class="badge bg-'.$status_class.'">'.$status_label.'</span>',
-            $action_html
-        );
+            .'<a href="student_enquiry.php?eq='.$eq_enc.'&amp;view=1" class="btn btn-sm btn-outline-primary view-enq-btn" title="View enquiry" aria-label="View enquiry"><i class="ti ti-eye"></i></a>';
+        if($view_enq_list_admin){
+            $action_html .= '<button type="button" class="btn btn-sm btn-outline-danger btn-enq-delete view-enq-btn" data-st-id="'.$st_id.'" title="Delete" aria-label="Delete"><i class="ti ti-trash"></i></button>';
+        }
+        $action_html .= '</div>';
+        if($view_enq_list_admin){
+            $cells = array(
+                $cb_html,
+                $outcome_html,
+                $enquiry_date,
+                htmlspecialchars($r['st_name']),
+                htmlspecialchars($r['st_phno']),
+                $course_name,
+                '<span class="badge bg-'.$status_class.'">'.$status_label.'</span>',
+                $action_html
+            );
+        } else {
+            $cells = array(
+                $outcome_html,
+                $enquiry_date,
+                htmlspecialchars($r['st_name']),
+                htmlspecialchars($r['st_phno']),
+                $course_name,
+                '<span class="badge bg-'.$status_class.'">'.$status_label.'</span>',
+                $action_html
+            );
+        }
         if($is_datatable){
             $dt_data[] = $cells;
         } else {
@@ -3353,7 +3401,8 @@ if(@$_POST['formName']=='fetchEnquiryList'){
         ));
         exit;
     }
-    echo $tbody ?: '<tr><td colspan="8">No records</td></tr>';
+    $empty_colspan = $view_enq_list_admin ? 8 : 7;
+    echo $tbody ?: '<tr><td colspan="'.$empty_colspan.'">No records</td></tr>';
     exit;
 }
 

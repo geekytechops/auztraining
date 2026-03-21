@@ -5,8 +5,11 @@ if(!isset($_SESSION['user_id']) || $_SESSION['user_id'] === ''){
     header('Location: index.php');
     exit;
 }
-if(@$_SESSION['user_type']==1 || @$_SESSION['user_type']==2){
-    $users=mysqli_query($connection,"SELECT * FROM users WHERE user_type IN (1,2) ORDER BY user_id DESC");
+if((int)@$_SESSION['user_type'] !== 1){
+    header('Location: dashboard.php');
+    exit;
+}
+$users=mysqli_query($connection,"SELECT * FROM users WHERE user_type IN (1,2) ORDER BY user_id DESC");
 ?>
 <!doctype html>
 <html lang="en">
@@ -221,9 +224,3 @@ if(@$_SESSION['user_type']==1 || @$_SESSION['user_type']==2){
 
 </body>
 </html>
-
-<?php 
-}else{ 
-    header("Location: index.php");
-}
-?>

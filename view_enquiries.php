@@ -27,7 +27,27 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
         .enquiry-card:hover{ transform: translateY(-2px); }
         .table-next-fup{ min-width: 140px; }
         .table-enquiry-list thead th{ white-space: nowrap; }
-        #enquiry_list_body tr td:first-child{ font-weight: 500;text-align: center; }
+        #enquiry_table tbody tr td.col-enq-select{ text-align: center; vertical-align: middle; }
+        .enq-col-select{ width: 42px; }
+        /* Action column: icon-only View + Delete — equal square buttons */
+        .view-enq-actions .view-enq-btn{
+            width: 2.125rem;
+            min-width: 2.125rem;
+            height: 2.125rem;
+            min-height: 2.125rem;
+            padding: 0;
+            box-sizing: border-box;
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+        }
+        .view-enq-actions .view-enq-btn i.ti{
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+        .view-enq-filters .btn-toolbar-actions .btn.btn-sm{
+            min-height: 31px;
+        }
         .view-enq-filters .form-control,
         .view-enq-filters .form-select{ box-shadow: none; }
         /* Make all filter controls same height & width */
@@ -91,8 +111,8 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
         .btn-fup-outcome.btn-fup-provide-info{ background: #495057; border: 1px solid #fd7e14; }
         .btn-fup-outcome.btn-fup-lost{ background: #dc3545; }
 
-        /* Keep the "No follow-up yet" badge the same size */
-        table.table-enquiry-list td:first-child .badge{
+        /* Follow-up Outcome column (2nd col after checkbox) */
+        table.table-enquiry-list td:nth-child(2) .badge{
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -289,22 +309,28 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
                                     <option value="status">Status</option>
                                 </select>
                             </div>
-                            <div class="col-md-2 d-flex align-items-end">
-                                <button type="button" id="btn_apply" class="btn btn-primary btn-sm me-1">Apply</button>
-                                <button type="button" id="btn_reset" class="btn btn-outline-secondary btn-sm">Reset</button>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <div class="btn-toolbar-actions d-flex flex-wrap align-items-center gap-1 w-100">
+                                    <button type="button" id="btn_apply" class="btn btn-primary btn-sm">Apply</button>
+                                    <button type="button" id="btn_reset" class="btn btn-outline-secondary btn-sm">Reset</button>
+                                    <button type="button" id="btn_bulk_delete_enquiries" class="btn btn-outline-danger btn-sm" title="Delete selected enquiries">
+                                        <i class="ti ti-trash me-1"></i>Delete selected
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div class="table-responsive">
                             <table id="enquiry_table" class="table table-hover table-bordered table-enquiry-list mb-0 w-100">
                                 <thead class="table-light">
                                     <tr>
+                                        <th class="enq-col-select"><input type="checkbox" id="enq_select_all" class="form-check-input" title="Select all on this page" aria-label="Select all on this page"></th>
                                         <th class="table-next-fup">Follow-up Outcome</th>
                                         <th>Enquiry Date</th>
                                         <th>Name</th>
                                         <th>Mobile</th>
                                         <th>Course</th>
                                         <th>Status</th>
-                                        <th style="width:120px">Action</th>
+                                        <th style="min-width:96px">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody></tbody>
@@ -485,13 +511,14 @@ $(function(){
             }
         },
         columns: [
-            { data: 0, render: function(x){ return x; } },
+            { data: 0, className: 'col-enq-select', render: function(x){ return x; } },
             { data: 1, render: function(x){ return x; } },
             { data: 2, render: function(x){ return x; } },
             { data: 3, render: function(x){ return x; } },
             { data: 4, render: function(x){ return x; } },
             { data: 5, render: function(x){ return x; } },
-            { data: 6, render: function(x){ return x; } }
+            { data: 6, render: function(x){ return x; } },
+            { data: 7, render: function(x){ return x; } }
         ],
         language: {
             processing: 'Loading...',
@@ -503,12 +530,121 @@ $(function(){
             paginate: { previous: '&laquo;', next: '&raquo;' }
         },
         drawCallback: function(){
+            $('#enq_select_all').prop('checked', false);
             $('.dataTables_paginate > .pagination').addClass('pagination-rounded mb-0');
             document.querySelectorAll('#enquiry_table .course-tooltip').forEach(function(el){
                 var t = bootstrap.Tooltip.getInstance(el);
                 if(t){ t.dispose(); }
             });
         }
+    });
+
+    function viewEnqDeleteSingle(stId){
+        if(!stId) return;
+        if(typeof Swal === 'undefined'){
+            alert('Delete requires SweetAlert2.');
+            return;
+        }
+        Swal.fire({
+            icon: 'warning',
+            title: 'Delete this enquiry?',
+            text: 'The enquiry will be removed from the list (soft delete).',
+            input: 'text',
+            inputPlaceholder: 'Reason to delete',
+            showCancelButton: true,
+            confirmButtonText: 'Delete',
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            inputValidator: function(value){
+                if(!value || !String(value).trim()) return 'Please enter a reason';
+            }
+        }).then(function(result){
+            if(!result.isConfirmed) return;
+            $.post('includes/datacontrol.php', {
+                formName: 'delete_enq',
+                eq_id: stId,
+                tableName: 'student_enquiry',
+                colPrefix: 'st',
+                note: result.value
+            }, function(data){
+                if(String(data).trim() === '1'){
+                    $('#toast-text').html('Enquiry deleted');
+                    if(document.getElementById('borderedToast1Btn')) $('#borderedToast1Btn').trigger('click');
+                    reloadEnquiryTable(false);
+                    loadDashboard();
+                } else {
+                    $('#toast-text2').html('Could not delete enquiry');
+                    if(document.getElementById('borderedToast2Btn')) $('#borderedToast2Btn').trigger('click');
+                }
+            });
+        });
+    }
+
+    $(document).on('click', '.btn-enq-delete', function(e){
+        e.preventDefault();
+        viewEnqDeleteSingle($(this).data('st-id'));
+    });
+
+    $('#enq_select_all').on('change', function(){
+        var on = $(this).prop('checked');
+        $('#enquiry_table tbody .enq-row-cb').prop('checked', on);
+    });
+
+    $(document).on('change', '#enquiry_table tbody .enq-row-cb', function(){
+        var $rows = $('#enquiry_table tbody .enq-row-cb');
+        var total = $rows.length;
+        var checked = $rows.filter(':checked').length;
+        $('#enq_select_all').prop('checked', total > 0 && checked === total);
+    });
+
+    $('#btn_bulk_delete_enquiries').on('click', function(){
+        var ids = [];
+        $('#enquiry_table tbody .enq-row-cb:checked').each(function(){ ids.push($(this).val()); });
+        if(!ids.length){
+            if(typeof Swal !== 'undefined'){
+                Swal.fire({ icon: 'info', title: 'No selection', text: 'Select one or more enquiries using the checkboxes.' });
+            } else {
+                alert('Select one or more enquiries first.');
+            }
+            return;
+        }
+        if(typeof Swal === 'undefined'){
+            alert('Bulk delete requires SweetAlert2.');
+            return;
+        }
+        Swal.fire({
+            icon: 'warning',
+            title: 'Delete ' + ids.length + ' enquiry(s)?',
+            text: 'These enquiries will be removed from the list (soft delete).',
+            input: 'text',
+            inputPlaceholder: 'Reason to delete',
+            showCancelButton: true,
+            confirmButtonText: 'Delete all',
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            inputValidator: function(value){
+                if(!value || !String(value).trim()) return 'Please enter a reason';
+            }
+        }).then(function(result){
+            if(!result.isConfirmed) return;
+            $.post('includes/datacontrol.php', {
+                formName: 'bulk_delete_enquiry',
+                ids: JSON.stringify(ids),
+                note: result.value
+            }, function(res){
+                var j = typeof res === 'string' ? (function(){ try { return JSON.parse(res); } catch(e){ return {}; } })() : res;
+                if(j && j.ok){
+                    $('#toast-text').html('Selected enquiries deleted');
+                    if(document.getElementById('borderedToast1Btn')) $('#borderedToast1Btn').trigger('click');
+                    reloadEnquiryTable(false);
+                    loadDashboard();
+                    $('#enq_select_all').prop('checked', false);
+                } else {
+                    $('#toast-text2').html('Could not delete selected enquiries');
+                    if(document.getElementById('borderedToast2Btn')) $('#borderedToast2Btn').trigger('click');
+                }
+            });
+        });
     });
 
     loadDashboard();

@@ -652,6 +652,38 @@ if($query){
 }
 }
 
+// Bulk soft-delete enquiries (View Enquiries list) — same fields as delete_enq for student_enquiry
+if(@$_POST['formName']=='bulk_delete_enquiry'){
+    header('Content-Type: application/json; charset=utf-8');
+    $note = isset($_POST['note']) ? mysqli_real_escape_string($connection, trim((string)$_POST['note'])) : '';
+    $ids_raw = isset($_POST['ids']) ? $_POST['ids'] : '';
+    $ids = array();
+    if(is_string($ids_raw) && $ids_raw !== ''){
+        $decoded = json_decode($ids_raw, true);
+        if(is_array($decoded)){
+            foreach($decoded as $id){ $ids[] = (int)$id; }
+        } else {
+            foreach(explode(',', $ids_raw) as $id){
+                $id = (int)trim($id);
+                if($id > 0) $ids[] = $id;
+            }
+        }
+    }
+    $ids = array_values(array_unique(array_filter($ids)));
+    if($note === '' || empty($ids)){
+        echo json_encode(array('ok'=>0, 'error'=>'invalid'));
+        exit;
+    }
+    $in = implode(',', $ids);
+    $query = mysqli_query($connection, "UPDATE student_enquiry SET st_delete_note='$note', st_enquiry_status=1 WHERE st_id IN ($in) AND st_enquiry_status=0");
+    if($query){
+        echo json_encode(array('ok'=>1, 'affected'=>(int)mysqli_affected_rows($connection)));
+    } else {
+        echo json_encode(array('ok'=>0, 'error'=>'db'));
+    }
+    exit;
+}
+
 if(@$_POST['formName']=='delete_enrol'){
     $enrol_id=$_POST['enrol_id'];
     $query=mysqli_query($connection,"UPDATE `student_enrolment` SET `st_enrol_status`=1 WHERE `st_enrol_id`=$enrol_id");
@@ -3105,14 +3137,21 @@ if(@$_POST['formName']=='fetchEnquiryList'){
             $outcome_html = '<span class="text-muted">'.date('d/m/Y', $next_ts).'</span>';
         }
         $eq_enc = base64_encode($r['st_id']);
+        $st_id = (int)$r['st_id'];
+        $cb_html = '<input type="checkbox" class="enq-row-cb form-check-input" value="'.$st_id.'">';
+        $action_html = '<div class="d-inline-flex align-items-center gap-1 flex-wrap view-enq-actions">'
+            .'<a href="student_enquiry.php?eq='.$eq_enc.'&amp;view=1" class="btn btn-sm btn-outline-primary view-enq-btn" title="View enquiry" aria-label="View enquiry"><i class="ti ti-eye"></i></a>'
+            .'<button type="button" class="btn btn-sm btn-outline-danger btn-enq-delete view-enq-btn" data-st-id="'.$st_id.'" title="Delete" aria-label="Delete"><i class="ti ti-trash"></i></button>'
+            .'</div>';
         $cells = array(
+            $cb_html,
             $outcome_html,
             $enquiry_date,
             htmlspecialchars($r['st_name']),
             htmlspecialchars($r['st_phno']),
             $course_name,
             '<span class="badge bg-'.$status_class.'">'.$status_label.'</span>',
-            '<a href="student_enquiry.php?eq='.$eq_enc.'&amp;view=1" class="btn btn-sm btn-outline-primary">View Enquiry</a>'
+            $action_html
         );
         if($is_datatable){
             $dt_data[] = $cells;
@@ -3135,7 +3174,7 @@ if(@$_POST['formName']=='fetchEnquiryList'){
         ));
         exit;
     }
-    echo $tbody ?: '<tr><td colspan="7">No records</td></tr>';
+    echo $tbody ?: '<tr><td colspan="8">No records</td></tr>';
     exit;
 }
 

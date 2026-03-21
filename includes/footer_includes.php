@@ -9,8 +9,8 @@
 <script src="<?php echo $CRM_ASSET_BASE; ?>/plugins/datatables/js/dataTables.bootstrap5.min.js"></script>
 <script src="<?php echo $CRM_ASSET_BASE; ?>/plugins/simplebar/simplebar.min.js"></script>
 <script src="<?php echo $CRM_ASSET_BASE; ?>/plugins/select2/js/select2.min.js"></script>
-<script src="<?php echo $CRM_ASSET_BASE; ?>/plugins/sweetalert2/sweetalert2.min.js"></script>
-<script src="<?php echo $CRM_ASSET_BASE; ?>/js/sweetalerts.js"></script>
+<!-- SweetAlert2 from CDN (all bundle). Theme sweetalerts.js removed — it targeted demo-only #sweetalert-* IDs and crashed on real pages. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.10.5/sweetalert2.all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="<?php echo $CRM_ASSET_BASE; ?>/js/theme-script.js"></script>
 <script src="<?php echo $CRM_ASSET_BASE; ?>/js/script.js"></script>
 

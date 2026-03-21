@@ -104,6 +104,8 @@
         <link rel="stylesheet" href="<?php echo $CRM_ASSET_BASE; ?>/plugins/select2/css/select2.min.css">
         <link rel="stylesheet" href="<?php echo $CRM_ASSET_BASE; ?>/css/style.css" id="app-style">
         <link rel="stylesheet" href="assets/css/panel.css">
+        <!-- SweetAlert2 (CDN): modals / confirmations app-wide -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.10.5/sweetalert2.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta2/css/bootstrap-select.min.css" />
 
         <style>

@@ -59,6 +59,12 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
             text-overflow: ellipsis;
             width: 115px;
         }
+        .badge{
+            width: 140px;
+        }
+        table.table-bordered.dataTable th:first-child, table.table-bordered.dataTable th:first-child, table.table-bordered.dataTable td:first-child, table.table-bordered.dataTable td:first-child{
+            text-align: center;
+        }
         .btn-fup-date.btn-fup-no-answer{ background: #fd7e14; color: #fff; }
         .btn-fup-date.btn-fup-callback{ background: #0d6efd; color: #fff; border: 2px double rgba(255,255,255,0.4); }
         .btn-fup-date.btn-fup-booked{ background: #e6a800; color: #fff; }

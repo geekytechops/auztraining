@@ -471,6 +471,7 @@ if((int)$checkId > 0 && isset($_SESSION['user_type']) && $_SESSION['user_type'] 
 }
 
 // New enquiry (staff/admin only): if email already exists on an active enquiry, update that row instead of inserting
+$dup_email_merge_update = false;
 if((int)$checkId === 0 && (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student')){
     $dupQ = mysqli_query($connection, "SELECT st_id FROM student_enquiry WHERE st_enquiry_status=0 AND LOWER(TRIM(st_email))=LOWER('".$emailAddress."') ORDER BY st_id DESC LIMIT 1");
     if($dupQ && ($dupRow = mysqli_fetch_assoc($dupQ))){
@@ -478,10 +479,188 @@ if((int)$checkId === 0 && (!isset($_SESSION['user_type']) || $_SESSION['user_typ
         if($existingId > 0){
             $checkId = $existingId;
             $formId = $existingId;
+            $dup_email_merge_update = true;
             $rpl_status = mysqli_num_rows(mysqli_query($connection, "SELECT 1 FROM rpl_enquries WHERE enq_form_id=".$existingId." LIMIT 1")) > 0 ? 1 : 0;
             $short_grp_status = mysqli_num_rows(mysqli_query($connection, "SELECT 1 FROM short_group_form WHERE enq_form_id=".$existingId." LIMIT 1")) > 0 ? 1 : 0;
             $reg_grp_status = mysqli_num_rows(mysqli_query($connection, "SELECT 1 FROM regular_group_form WHERE enq_form_id=".$existingId." LIMIT 1")) > 0 ? 1 : 0;
             $slot_book_status = mysqli_num_rows(mysqli_query($connection, "SELECT 1 FROM slot_book WHERE enq_form_id=".$existingId." LIMIT 1")) > 0 ? 1 : 0;
+        }
+    }
+}
+
+// Duplicate-email path: merge POST with existing row — only overwrite fields that were actually submitted (non-empty).
+// Otherwise empty POST values would wipe name, courses, remarks, RPL, etc.
+if($dup_email_merge_update && (int)$checkId > 0){
+    $dup_merge_ex_row = mysqli_fetch_assoc(mysqli_query($connection, "SELECT * FROM student_enquiry WHERE st_id=".(int)$checkId." LIMIT 1"));
+    if($dup_merge_ex_row){
+        $e = $dup_merge_ex_row;
+        $post_student_empty = trim((string)($_POST['studentName'] ?? '')) === '';
+        $post_member_empty = trim((string)($_POST['memberName'] ?? '')) === '';
+        if($post_student_empty){
+            $studentName = mysqli_real_escape_string($connection, (string)$e['st_name']);
+        }
+        if($post_member_empty){
+            $memberName = mysqli_real_escape_string($connection, (string)$e['st_member_name']);
+        }
+        if(trim((string)($_POST['contactName'] ?? '')) === ''){
+            $contactName = mysqli_real_escape_string($connection, (string)$e['st_phno']);
+        }
+        if(empty($courses_raw) || (is_array($courses_raw) && count($courses_raw) === 0)){
+            $courses = mysqli_real_escape_string($connection, (string)$e['st_course']);
+        }
+        if(trim((string)($_POST['payment'] ?? '')) === ''){
+            $payment = mysqli_real_escape_string($connection, (string)$e['st_fee']);
+        }
+        if(trim((string)($_POST['surname'] ?? '')) === ''){
+            $surname = mysqli_real_escape_string($connection, (string)$e['st_surname']);
+        }
+        if(trim((string)($_POST['suburb'] ?? '')) === ''){
+            $suburb = mysqli_real_escape_string($connection, (string)$e['st_suburb']);
+        }
+        if(trim((string)($_POST['visaNote'] ?? '')) === ''){
+            $visaNote = mysqli_real_escape_string($connection, (string)$e['st_visa_note']);
+        }
+        if(trim((string)($_POST['comments'] ?? '')) === ''){
+            $comments = mysqli_real_escape_string($connection, (string)$e['st_comments']);
+        }
+        if(trim((string)($_POST['prefComment'] ?? '')) === ''){
+            $prefComment = mysqli_real_escape_string($connection, (string)$e['st_pref_comments']);
+        }
+        if(trim((string)($_POST['streetDetails'] ?? '')) === ''){
+            $streetDetails = mysqli_real_escape_string($connection, (string)$e['st_street_details']);
+        }
+        if(trim((string)($_POST['hear_about'] ?? '')) === ''){
+            $hear_about = mysqli_real_escape_string($connection, (string)$e['st_heared']);
+        }
+        if(trim((string)($_POST['hearedby'] ?? '')) === ''){
+            $hearedby = mysqli_real_escape_string($connection, (string)$e['st_hearedby']);
+        }
+        if(trim((string)($_POST['plan_to_start_date'] ?? '')) === ''){
+            $plan_to_start_date = mysqli_real_escape_string($connection, (string)$e['st_startplan_date']);
+        }
+        if(trim((string)($_POST['referer_name'] ?? '')) === ''){
+            $referer_name = mysqli_real_escape_string($connection, (string)$e['st_refer_name']);
+        }
+        if(trim((string)($_POST['ethnicity'] ?? '')) === ''){
+            $ethnicity = mysqli_real_escape_string($connection, (string)$e['st_ethnicity']);
+        }
+        if(trim((string)($_POST['enquiryDate'] ?? '')) === ''){
+            $enquiryDate = mysqli_real_escape_string($connection, (string)$e['st_enquiry_date']);
+        }
+        if(trim((string)($_POST['location'] ?? '')) === ''){
+            $location = mysqli_real_escape_string($connection, (string)$e['st_location']);
+        }
+        if(empty($_POST['remarks']) || !is_array($_POST['remarks']) || count($_POST['remarks']) === 0){
+            $remarks = mysqli_real_escape_string($connection, (string)$e['st_remarks']);
+        }
+        if(trim((string)($_POST['reg_grp_names'] ?? '')) === ''){
+            $rgr = mysqli_fetch_assoc(mysqli_query($connection, "SELECT reg_grp_names FROM regular_group_form WHERE enq_form_id=".(int)$checkId." LIMIT 1"));
+            if($rgr && isset($rgr['reg_grp_names'])){
+                $reg_grp_names = mysqli_real_escape_string($connection, (string)$rgr['reg_grp_names']);
+            }
+        }
+        if($post_student_empty && $post_member_empty){
+            $enquiryFor = (int)$e['st_enquiry_for'];
+        }
+        // Numeric fields: POST often sends 0 as "unset" — keep DB when DB has a non-zero value
+        if((int)$visaStatus === 0 && isset($e['st_visa_status']) && (int)$e['st_visa_status'] !== 0){
+            $visaStatus = (int)$e['st_visa_status'];
+        }
+        if(isset($e['st_visa_condition']) && (int)$visaCondition === 1 && (int)$e['st_visa_condition'] !== 1){
+            $visaCondition = (int)$e['st_visa_condition'];
+        }
+        if($postCode === 0 && isset($e['st_post_code']) && (int)$e['st_post_code'] !== 0){
+            $postCode = (int)$e['st_post_code'];
+        }
+        if($visit_before === 0 && isset($e['st_visited']) && (int)$e['st_visited'] !== 0){
+            $visit_before = (int)$e['st_visited'];
+        }
+        if($refer_select === 0 && isset($e['st_refered']) && (int)$e['st_refered'] !== 0){
+            $refer_select = (int)$e['st_refered'];
+        }
+        if($refer_alumni === 0 && isset($e['st_refer_alumni']) && (int)$e['st_refer_alumni'] !== 0){
+            $refer_alumni = (int)$e['st_refer_alumni'];
+        }
+        if($appointment_booked === 0 && isset($e['st_appoint_book']) && (int)$e['st_appoint_book'] !== 0){
+            $appointment_booked = (int)$e['st_appoint_book'];
+        }
+        if((int)$courseType === 0 && isset($e['st_course_type']) && (int)$e['st_course_type'] !== 0){
+            $courseType = (int)$e['st_course_type'];
+        }
+        if($shore === 0 && isset($e['st_shore']) && (int)$e['st_shore'] !== 0){
+            $shore = (int)$e['st_shore'];
+        }
+        if($enquiry_source === 0 && isset($e['st_enquiry_source']) && (int)$e['st_enquiry_source'] !== 0){
+            $enquiry_source = (int)$e['st_enquiry_source'];
+        }
+        if($enquiry_college === 0 && isset($e['st_enquiry_college']) && (int)$e['st_enquiry_college'] !== 0){
+            $enquiry_college = (int)$e['st_enquiry_college'];
+        }
+        if(($stuState === '0' || (string)$stuState === '0') && isset($e['st_state']) && (string)$e['st_state'] !== '' && (string)$e['st_state'] !== '0'){
+            $stuState = mysqli_real_escape_string($connection, (string)$e['st_state']);
+        }
+        // Reload sub-form payloads from DB when JSON from POST is empty (avoids wiping RPL / short group / slot)
+        $rpl_post_empty = true;
+        if(is_object($rpl_arrays)){
+            foreach((array)$rpl_arrays as $rv){
+                if(trim((string)$rv) !== ''){ $rpl_post_empty = false; break; }
+            }
+        }
+        if($rpl_post_empty && (int)$courseType === 1){
+            $rpl_row = mysqli_fetch_assoc(mysqli_query($connection, "SELECT * FROM rpl_enquries WHERE enq_form_id=".(int)$checkId." LIMIT 1"));
+            if($rpl_row){
+                $rpl_arrays = (object)array(
+                    'rpl_exp' => $rpl_row['rpl_exp'] ?? '',
+                    'exp_in' => $rpl_row['rpl_exp_in'] ?? '',
+                    'exp_docs' => $rpl_row['rpl_exp_docs'] ?? '',
+                    'exp_prev' => $rpl_row['rpl_exp_prev_qual'] ?? '',
+                    'exp_name' => $rpl_row['rpl_exp_role'] ?? '',
+                    'exp_years' => $rpl_row['rpl_exp_years'] ?? '',
+                    'exp_prev_name' => $rpl_row['rpl_exp_qual_name'] ?? '',
+                );
+            }
+        }
+        $short_post_empty = true;
+        if(is_object($short_grps)){
+            foreach((array)$short_grps as $sv){
+                if(trim((string)$sv) !== ''){ $short_post_empty = false; break; }
+            }
+        }
+        if($short_post_empty && ((int)$courseType === 4 || (int)$courseType === 5)){
+            $sg = mysqli_fetch_assoc(mysqli_query($connection, "SELECT * FROM short_group_form WHERE enq_form_id=".(int)$checkId." LIMIT 1"));
+            if($sg){
+                $short_grps = (object)array(
+                    'short_grp_org_name' => $sg['sh_org_name'] ?? '',
+                    'short_grp_org_type' => $sg['sh_grp_org_type'] ?? '',
+                    'short_grp_campus' => $sg['sh_grp_campus'] ?? '',
+                    'short_grp_date' => $sg['sh_grp_date'] ?? '',
+                    'short_grp_num_std' => $sg['sh_grp_num_stds'] ?? '',
+                    'short_grp_ind_exp' => $sg['sh_grp_ind_exp'] ?? '',
+                    'short_grp_before' => $sg['sh_grp_train_bef'] ?? '',
+                    'short_grp_con_type' => $sg['sh_grp_con_us'] ?? '',
+                    'short_grp_con_num' => $sg['sh_grp_phone'] ?? '',
+                    'short_grp_con_name' => $sg['sh_grp_name'] ?? '',
+                    'short_grp_con_email' => $sg['sh_grp_email'] ?? '',
+                );
+            }
+        }
+        $slot_post_empty = true;
+        if(is_object($slot_books)){
+            foreach((array)$slot_books as $bk){
+                if(trim((string)$bk) !== '' && (string)$bk !== '0'){ $slot_post_empty = false; break; }
+            }
+        }
+        if($slot_post_empty && (int)$appointment_booked === 1){
+            $sb = mysqli_fetch_assoc(mysqli_query($connection, "SELECT * FROM slot_book WHERE enq_form_id=".(int)$checkId." LIMIT 1"));
+            if($sb){
+                $slot_books = (object)array(
+                    'slot_book_time' => $sb['slot_bk_datetime'] ?? '',
+                    'slot_book_purpose' => $sb['slot_bk_purpose'] ?? '',
+                    'slot_book_date' => $sb['slot_bk_on'] ?? '',
+                    'slot_book_by' => $sb['slot_book_by'] ?? '',
+                    'slot_book_link' => isset($sb['slot_book_email_link']) ? (int)$sb['slot_book_email_link'] : 0,
+                );
+            }
         }
     }
 }

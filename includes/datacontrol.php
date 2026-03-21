@@ -3112,7 +3112,7 @@ if(@$_POST['formName']=='fetchEnquiryList'){
             htmlspecialchars($r['st_phno']),
             $course_name,
             '<span class="badge bg-'.$status_class.'">'.$status_label.'</span>',
-            '<a href="enquiry_details.php?eq='.$eq_enc.'" class="btn btn-sm btn-outline-primary">View Details</a>'
+            '<a href="student_enquiry.php?eq='.$eq_enc.'&amp;view=1" class="btn btn-sm btn-outline-primary">View Enquiry</a>'
         );
         if($is_datatable){
             $dt_data[] = $cells;

@@ -395,6 +395,9 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
     );
     $queryRes = array_merge($student_enquiry_row_defaults, is_array($queryRes) ? $queryRes : array());
 
+    // From View Enquiries list (?view=1): open in read-only until user turns "Allow editing" on
+    $enquiry_locked_start = (isset($_GET['view']) && (string)$_GET['view'] === '1' && isset($eqId) && (int)$eqId > 0);
+
     /** Safe Y-m-d for date inputs (avoids warnings on empty/invalid DB values) */
     if (!function_exists('student_enquiry_safe_date_ymd')) {
         function student_enquiry_safe_date_ymd($val) {
@@ -539,11 +542,20 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                         <?php if(isset($eqId) && (int)$eqId > 0): ?>
                         <div class="row">
                             <div class="col-12">
-                                <div class="alert alert-light border py-2 mb-3 small d-flex flex-wrap align-items-center gap-2 gap-md-3">
-                                    <span class="text-muted fw-semibold"><i class="ti ti-cloud-upload me-1"></i> Auto-save</span>
-                                    <span id="autosave_badge_enquiry" class="badge rounded-pill bg-secondary">Enquiry: idle</span>
-                                    <span id="autosave_badge_counsel" class="badge rounded-pill bg-secondary">Counseling: idle</span>
-                                    <span id="autosave_badge_followup" class="badge rounded-pill bg-secondary">Follow-up: idle</span>
+                                <div class="alert alert-light border py-2 mb-3 small d-flex flex-wrap align-items-center justify-content-between gap-3">
+                                    <div class="d-flex flex-wrap align-items-center gap-2 gap-md-3">
+                                        <span class="text-muted fw-semibold"><i class="ti ti-cloud-upload me-1"></i> Auto-save</span>
+                                        <span id="autosave_badge_enquiry" class="badge rounded-pill bg-secondary">Enquiry: idle</span>
+                                        <span id="autosave_badge_counsel" class="badge rounded-pill bg-secondary">Counseling: idle</span>
+                                        <span id="autosave_badge_followup" class="badge rounded-pill bg-secondary">Follow-up: idle</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <div class="form-check form-switch mb-0">
+                                            <input class="form-check-input" type="checkbox" id="enquiry_edit_mode_toggle" role="switch" <?php echo !empty($enquiry_locked_start) ? '' : 'checked'; ?> aria-label="Allow editing">
+                                            <label class="form-check-label fw-semibold" for="enquiry_edit_mode_toggle">Allow editing</label>
+                                        </div>
+                                        <span id="enquiry_edit_mode_hint" class="text-muted"><?php echo !empty($enquiry_locked_start) ? 'View only — turn on to edit.' : 'Turn off to view without editing.'; ?></span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1355,6 +1367,8 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
         <?php include('includes/footer_includes.php'); ?>
         <script>
             window.STUDENT_ENQUIRY_AUTO_SAVE = <?php echo (isset($eqId) && (int)$eqId > 0) ? 'true' : 'false'; ?>;
+            window.ENQUIRY_EDIT_PAGE = <?php echo (isset($eqId) && (int)$eqId > 0) ? 'true' : 'false'; ?>;
+            window.ENQUIRY_LOCKED_START = <?php echo (!empty($enquiry_locked_start)) ? 'true' : 'false'; ?>;
             function autosaveSetBadge(kind, label, state){
                 var map = { enquiry:'#autosave_badge_enquiry', counsel:'#autosave_badge_counsel', followup:'#autosave_badge_followup' };
                 var $b = $(map[kind]||'');
@@ -1366,6 +1380,34 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 else if(state==='wait') $b.addClass('bg-warning');
                 else $b.addClass('bg-secondary');
             }
+
+            function enquiryEditingAllowed(){
+                if(!window.ENQUIRY_EDIT_PAGE) return true;
+                var $t = $('#enquiry_edit_mode_toggle');
+                if(!$t.length) return true;
+                return $t.is(':checked');
+            }
+            function applyEnquiryFormLock(locked){
+                if(!window.ENQUIRY_EDIT_PAGE) return;
+                var $t = $('#enquiry_edit_mode_toggle');
+                $('#student_enquiry_form').find(':input').not($t).prop('disabled', !!locked);
+                $('#counselling_form').find(':input').prop('disabled', !!locked);
+                $('#followup_form_embed').find(':input').prop('disabled', !!locked);
+                $('#enquiry_form,#counseling_submit,#followup_check,#followup_send_status_email,#followup_open_calendar_btn').prop('disabled', !!locked);
+                $('#fp_appointment_submit_btn').prop('disabled', !!locked);
+                if($('#enquiry_edit_mode_hint').length){
+                    $('#enquiry_edit_mode_hint').text(locked ? 'View only — turn on to edit.' : 'Turn off to view without editing.');
+                }
+            }
+            $(function(){
+                if(!window.ENQUIRY_EDIT_PAGE) return;
+                var lockedStart = window.ENQUIRY_LOCKED_START === true;
+                $('#enquiry_edit_mode_toggle').prop('checked', !lockedStart);
+                applyEnquiryFormLock(lockedStart);
+                $('#enquiry_edit_mode_toggle').on('change', function(){
+                    applyEnquiryFormLock(!$(this).is(':checked'));
+                });
+            });
 
             var checkPhone=0;
             function PhoneCheck(number){
@@ -1545,6 +1587,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             }
             async function performStudentEnquirySave(silent){
                 silent = !!silent;
+                if(!enquiryEditingAllowed()) return;
                 var checkId = $("#check_update").val();
                 // Autosave only runs when editing an existing enquiry (checkId set). Manual submit must always reach the API for new enquiries (checkId 0).
                 if(silent && (!checkId || checkId==='0')) return;
@@ -1628,6 +1671,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
 
             $(document).on('input change','#student_enquiry_form :input', function(e){
                 if(!window.STUDENT_ENQUIRY_AUTO_SAVE) return;
+                if(!enquiryEditingAllowed()) return;
                 if($(e.target).attr('id')==='enquiry_form') return;
                 clearTimeout(enquiryAutoSaveTimer);
                 enquiryAutoSaveTimer = setTimeout(function(){ performStudentEnquirySave(true); }, 1000);
@@ -1840,6 +1884,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             var counselSaveSeq=0;
             function performCounselingSave(silent){
                 silent=!!silent;
+                if(!enquiryEditingAllowed()) return;
                 var checkId=$('#counselling_check_update').val();
                 if(!checkId||checkId==='0') return;
                 if(silent && !window.STUDENT_ENQUIRY_AUTO_SAVE) return;
@@ -1867,6 +1912,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             $(document).on('click','#counseling_submit',function(){ performCounselingSave(false); });
             $(document).on('input change','#counselling_form :input',function(e){
                 if(!window.STUDENT_ENQUIRY_AUTO_SAVE) return;
+                if(!enquiryEditingAllowed()) return;
                 var id=$(e.target).attr('id');
                 if(id==='counseling_submit') return;
                 clearTimeout(counselAutoSaveTimer);
@@ -2148,6 +2194,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             var followupSaveSeq=0;
             function performFollowupSave(silent){
                 silent=!!silent;
+                if(!enquiryEditingAllowed()) return;
                 var checkId=$('#followup_check_update').val();
                 if(!checkId||checkId==='0') return;
                 if(silent && !window.STUDENT_ENQUIRY_AUTO_SAVE) return;
@@ -2170,6 +2217,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             $(document).on('click','#followup_check',function(){ performFollowupSave(false); });
             $(document).on('input change','#followup_form_embed :input',function(e){
                 if(!window.STUDENT_ENQUIRY_AUTO_SAVE) return;
+                if(!enquiryEditingAllowed()) return;
                 var id=$(e.target).attr('id');
                 if(id==='followup_check'||id==='followup_send_status_email') return;
                 clearTimeout(followupAutoSaveTimer);

@@ -2847,7 +2847,7 @@ if(@$_POST['formName']=='fetchEnquiryDashboard'){
     exit;
 }
 
-// Enquiry list for View Enquiries: filters, sort, next_followup_date, status
+// Enquiry list for View Enquiries: filters, sort, next_followup_date, status (HTML or DataTables JSON)
 if(@$_POST['formName']=='fetchEnquiryList'){
     $search = isset($_POST['search']) ? mysqli_real_escape_string($connection, trim($_POST['search'])) : '';
     $filter_course = isset($_POST['filter_course']) ? (int)$_POST['filter_course'] : 0;
@@ -2857,10 +2857,17 @@ if(@$_POST['formName']=='fetchEnquiryList'){
     $filter_counsellor = isset($_POST['filter_counsellor']) ? (int)$_POST['filter_counsellor'] : 0;
     $filter_source = isset($_POST['filter_source']) ? (int)$_POST['filter_source'] : -1;
     $sort_by = isset($_POST['sort_by']) ? $_POST['sort_by'] : 'latest';
+    $draw = isset($_POST['draw']) ? (int)$_POST['draw'] : 0;
+    $is_datatable = ($draw > 0);
+    $start = isset($_POST['start']) ? (int)$_POST['start'] : 0;
+    if($start < 0){ $start = 0; }
+    $length = isset($_POST['length']) ? (int)$_POST['length'] : 999999;
+    if($length === -1){ $length = 500; }
+    if($length <= 0){ $length = 10; }
+    if($length > 500){ $length = 500; }
+
     $flow_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_flow_status'")) ? 'COALESCE(e.st_enquiry_flow_status,1)' : '1';
     $source_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_source'")) ? 'e.st_enquiry_source' : '0';
-    $next_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM followup_calls LIKE 'flw_next_followup_date'"));
-    $sub_next = $next_col ? "(SELECT MAX(f.flw_next_followup_date) FROM followup_calls f WHERE f.enquiry_id = e.st_enquiry_id)" : "NULL";
     $where = " e.st_enquiry_status = 0 ";
     if($search !== ''){
         $where .= " AND (e.st_name LIKE '%$search%' OR e.st_phno LIKE '%$search%' OR e.st_email LIKE '%$search%' OR e.st_enquiry_id LIKE '%$search%') ";
@@ -2895,7 +2902,7 @@ if(@$_POST['formName']=='fetchEnquiryList'){
     if($sort_by === 'status'){
         $order_sql = " ORDER BY $flow_col ASC, e.st_id DESC ";
     }
-    $q = mysqli_query($connection, "SELECT e.st_id, e.st_enquiry_id, e.st_name, e.st_phno, e.st_email, e.st_course, e.st_course_type, e.st_enquiry_date, e.created_date, $flow_col AS flow_status FROM student_enquiry e WHERE $where $order_sql");
+
     $status_labels = array(
         1=>'New',
         2=>'Contacted',
@@ -2924,39 +2931,7 @@ if(@$_POST['formName']=='fetchEnquiryList'){
     $outcome_keys_canonical = array('No Answer','Call Back Later','Booked Counselling','Application Started','Enrolled','Requested More Information','Not Interested');
     $outcome_normalize = array();
     foreach($outcome_keys_canonical as $k) $outcome_normalize[strtolower(trim($k))] = $k;
-    $tbody = '';
-    $rows = array();
-    while($r = mysqli_fetch_assoc($q)){
-        $next_fup = null;
-        $follow_up_outcome = '';
-        $eid_esc = mysqli_real_escape_string($connection, $r['st_enquiry_id']);
-        $fq = mysqli_query($connection, "SELECT * FROM followup_calls WHERE enquiry_id='$eid_esc' AND flw_enquiry_status=0 ORDER BY flw_id DESC LIMIT 1");
-        if($fq && ($fr = mysqli_fetch_assoc($fq))){
-            if(isset($fr['flw_next_followup_date']) && $fr['flw_next_followup_date'] !== null && $fr['flw_next_followup_date'] !== '') $next_fup = $fr['flw_next_followup_date'];
-            if(isset($fr['flw_follow_up_outcome']) && $fr['flw_follow_up_outcome'] !== null){
-                $follow_up_outcome = trim((string)$fr['flw_follow_up_outcome']);
-                if($follow_up_outcome !== '' && isset($outcome_normalize[strtolower($follow_up_outcome)])) $follow_up_outcome = $outcome_normalize[strtolower($follow_up_outcome)];
-            }
-        }
-        $appointment_id = null;
-        $appointment_date = null;
-        if(in_array($follow_up_outcome, array('No Answer','Call Back Later','Booked Counselling'), true)){
-            $aq = mysqli_query($connection, "SELECT appointment_id, appointment_datetime, appointment_date FROM appointments WHERE connected_enquiry_id='".mysqli_real_escape_string($connection,$r['st_enquiry_id'])."' AND delete_status!=1 ORDER BY appointment_datetime DESC LIMIT 1");
-            if($aq && ($ar = mysqli_fetch_assoc($aq))){
-                $appointment_id = (int)$ar['appointment_id'];
-                $appointment_date = !empty($ar['appointment_datetime']) ? $ar['appointment_datetime'] : (!empty($ar['appointment_date']) ? $ar['appointment_date'] : null);
-            }
-        }
-        $rows[] = array('r'=>$r,'next_fup'=>$next_fup,'follow_up_outcome'=>$follow_up_outcome,'appointment_id'=>$appointment_id,'appointment_date'=>$appointment_date);
-    }
-    if($sort_by === 'followup_date'){
-        usort($rows, function($a,$b){
-            $ta = $a['next_fup'] ? strtotime($a['next_fup']) : 0;
-            $tb = $b['next_fup'] ? strtotime($b['next_fup']) : 0;
-            return $tb - $ta;
-        });
-    }
-    // Same options as Follow Up Outcome dropdown in followup_accordion_form.php
+
     $outcome_display = array(
         'No Answer' => array('label'=>'No Answer','btn'=>'btn-fup-no-answer','date_btn'=>true),
         'Call Back Later' => array('label'=>'Call Back Later','btn'=>'btn-fup-callback','date_btn'=>true),
@@ -2966,6 +2941,85 @@ if(@$_POST['formName']=='fetchEnquiryList'){
         'Requested More Information' => array('label'=>'Provide Info.','outcome_btn'=>'btn-fup-provide-info'),
         'Not Interested' => array('label'=>'Lost','outcome_btn'=>'btn-fup-lost')
     );
+
+    $records_total = 0;
+    $rtq = mysqli_query($connection, "SELECT COUNT(*) FROM student_enquiry WHERE st_enquiry_status=0");
+    if($rtq && ($rtr = mysqli_fetch_row($rtq))){ $records_total = (int)$rtr[0]; }
+
+    $records_filtered = 0;
+    $rfq = mysqli_query($connection, "SELECT COUNT(*) FROM student_enquiry e WHERE $where");
+    if($rfq && ($rfr = mysqli_fetch_row($rfq))){ $records_filtered = (int)$rfr[0]; }
+
+    $rows = array();
+    $select_sql = "SELECT e.st_id, e.st_enquiry_id, e.st_name, e.st_phno, e.st_email, e.st_course, e.st_course_type, e.st_enquiry_date, e.created_date, $flow_col AS flow_status FROM student_enquiry e WHERE $where ";
+
+    if($sort_by === 'followup_date'){
+        $q = mysqli_query($connection, $select_sql.$order_sql);
+        while($r = mysqli_fetch_assoc($q)){
+            $next_fup = null;
+            $follow_up_outcome = '';
+            $eid_esc = mysqli_real_escape_string($connection, $r['st_enquiry_id']);
+            $fq = mysqli_query($connection, "SELECT * FROM followup_calls WHERE enquiry_id='$eid_esc' AND flw_enquiry_status=0 ORDER BY flw_id DESC LIMIT 1");
+            if($fq && ($fr = mysqli_fetch_assoc($fq))){
+                if(isset($fr['flw_next_followup_date']) && $fr['flw_next_followup_date'] !== null && $fr['flw_next_followup_date'] !== '') $next_fup = $fr['flw_next_followup_date'];
+                if(isset($fr['flw_follow_up_outcome']) && $fr['flw_follow_up_outcome'] !== null){
+                    $follow_up_outcome = trim((string)$fr['flw_follow_up_outcome']);
+                    if($follow_up_outcome !== '' && isset($outcome_normalize[strtolower($follow_up_outcome)])) $follow_up_outcome = $outcome_normalize[strtolower($follow_up_outcome)];
+                }
+            }
+            $appointment_id = null;
+            $appointment_date = null;
+            if(in_array($follow_up_outcome, array('No Answer','Call Back Later','Booked Counselling'), true)){
+                $aq = mysqli_query($connection, "SELECT appointment_id, appointment_datetime, appointment_date FROM appointments WHERE connected_enquiry_id='".mysqli_real_escape_string($connection,$r['st_enquiry_id'])."' AND delete_status!=1 ORDER BY appointment_datetime DESC LIMIT 1");
+                if($aq && ($ar = mysqli_fetch_assoc($aq))){
+                    $appointment_id = (int)$ar['appointment_id'];
+                    $appointment_date = !empty($ar['appointment_datetime']) ? $ar['appointment_datetime'] : (!empty($ar['appointment_date']) ? $ar['appointment_date'] : null);
+                }
+            }
+            $rows[] = array('r'=>$r,'next_fup'=>$next_fup,'follow_up_outcome'=>$follow_up_outcome,'appointment_id'=>$appointment_id,'appointment_date'=>$appointment_date);
+        }
+        usort($rows, function($a,$b){
+            $ta = $a['next_fup'] ? strtotime($a['next_fup']) : 0;
+            $tb = $b['next_fup'] ? strtotime($b['next_fup']) : 0;
+            return $tb - $ta;
+        });
+        if($is_datatable){
+            $rows = array_slice($rows, $start, $length);
+        }
+    } else {
+        if($is_datatable){
+            $lim = " LIMIT ".(int)$start.", ".(int)$length;
+            $q = mysqli_query($connection, $select_sql.$order_sql.$lim);
+        } else {
+            $q = mysqli_query($connection, $select_sql.$order_sql);
+        }
+        while($r = mysqli_fetch_assoc($q)){
+            $next_fup = null;
+            $follow_up_outcome = '';
+            $eid_esc = mysqli_real_escape_string($connection, $r['st_enquiry_id']);
+            $fq = mysqli_query($connection, "SELECT * FROM followup_calls WHERE enquiry_id='$eid_esc' AND flw_enquiry_status=0 ORDER BY flw_id DESC LIMIT 1");
+            if($fq && ($fr = mysqli_fetch_assoc($fq))){
+                if(isset($fr['flw_next_followup_date']) && $fr['flw_next_followup_date'] !== null && $fr['flw_next_followup_date'] !== '') $next_fup = $fr['flw_next_followup_date'];
+                if(isset($fr['flw_follow_up_outcome']) && $fr['flw_follow_up_outcome'] !== null){
+                    $follow_up_outcome = trim((string)$fr['flw_follow_up_outcome']);
+                    if($follow_up_outcome !== '' && isset($outcome_normalize[strtolower($follow_up_outcome)])) $follow_up_outcome = $outcome_normalize[strtolower($follow_up_outcome)];
+                }
+            }
+            $appointment_id = null;
+            $appointment_date = null;
+            if(in_array($follow_up_outcome, array('No Answer','Call Back Later','Booked Counselling'), true)){
+                $aq = mysqli_query($connection, "SELECT appointment_id, appointment_datetime, appointment_date FROM appointments WHERE connected_enquiry_id='".mysqli_real_escape_string($connection,$r['st_enquiry_id'])."' AND delete_status!=1 ORDER BY appointment_datetime DESC LIMIT 1");
+                if($aq && ($ar = mysqli_fetch_assoc($aq))){
+                    $appointment_id = (int)$ar['appointment_id'];
+                    $appointment_date = !empty($ar['appointment_datetime']) ? $ar['appointment_datetime'] : (!empty($ar['appointment_date']) ? $ar['appointment_date'] : null);
+                }
+            }
+            $rows[] = array('r'=>$r,'next_fup'=>$next_fup,'follow_up_outcome'=>$follow_up_outcome,'appointment_id'=>$appointment_id,'appointment_date'=>$appointment_date);
+        }
+    }
+
+    $tbody = '';
+    $dt_data = array();
     foreach($rows as $row){
         $r = $row['r']; $next_fup = $row['next_fup']; $follow_up_outcome = $row['follow_up_outcome']; $appointment_id = $row['appointment_id']; $appointment_date = $row['appointment_date'];
         $courseNames = array();
@@ -2976,7 +3030,6 @@ if(@$_POST['formName']=='fetchEnquiryList'){
                 if($c) $courseNames[] = trim(($c['course_sname']??'').'-'.($c['course_name']??''));
             }
         }
-        // Display first course and "+N more" if multiple; show all in tooltip
         if(count($courseNames)){
             $firstCourse = $courseNames[0];
             $extraCount = count($courseNames) - 1;
@@ -2984,9 +3037,7 @@ if(@$_POST['formName']=='fetchEnquiryList'){
             if($extraCount > 0){
                 $displayText .= ' +'.$extraCount.' more';
             }
-            // Tooltip text as multiline list (each course on its own line)
             $tooltipText = htmlspecialchars(implode("\n", $courseNames), ENT_QUOTES, 'UTF-8');
-            // Use Bootstrap tooltip on hover (HTML enabled via JS)
             $course_name = '<span class="course-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="'.$tooltipText.'">'.$displayText.'</span>';
         } else {
             $course_name = '-';
@@ -3020,15 +3071,35 @@ if(@$_POST['formName']=='fetchEnquiryList'){
             $outcome_html = '<span class="text-muted">'.date('d/m/Y', $next_ts).'</span>';
         }
         $eq_enc = base64_encode($r['st_id']);
-        $tbody .= '<tr>';
-        $tbody .= '<td>'.$outcome_html.'</td>';
-        $tbody .= '<td>'.$enquiry_date.'</td>';
-        $tbody .= '<td>'.htmlspecialchars($r['st_name']).'</td>';
-        $tbody .= '<td>'.htmlspecialchars($r['st_phno']).'</td>';
-        $tbody .= '<td>'.$course_name.'</td>';
-        $tbody .= '<td><span class="badge bg-'.$status_class.'">'.$status_label.'</span></td>';
-        $tbody .= '<td><a href="enquiry_details.php?eq='.$eq_enc.'" class="btn btn-sm btn-outline-primary">View Details</a></td>';
-        $tbody .= '</tr>';
+        $cells = array(
+            $outcome_html,
+            $enquiry_date,
+            htmlspecialchars($r['st_name']),
+            htmlspecialchars($r['st_phno']),
+            $course_name,
+            '<span class="badge bg-'.$status_class.'">'.$status_label.'</span>',
+            '<a href="enquiry_details.php?eq='.$eq_enc.'" class="btn btn-sm btn-outline-primary">View Details</a>'
+        );
+        if($is_datatable){
+            $dt_data[] = $cells;
+        } else {
+            $tbody .= '<tr>';
+            foreach($cells as $c){
+                $tbody .= '<td>'.$c.'</td>';
+            }
+            $tbody .= '</tr>';
+        }
+    }
+
+    if($is_datatable){
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(array(
+            'draw' => $draw,
+            'recordsTotal' => $records_total,
+            'recordsFiltered' => $records_filtered,
+            'data' => $dt_data
+        ));
+        exit;
     }
     echo $tbody ?: '<tr><td colspan="7">No records</td></tr>';
     exit;

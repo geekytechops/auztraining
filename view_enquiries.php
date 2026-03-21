@@ -27,7 +27,7 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
         .enquiry-card:hover{ transform: translateY(-2px); }
         .table-next-fup{ min-width: 140px; }
         .table-enquiry-list thead th{ white-space: nowrap; }
-        #enquiry_list_body tr td:first-child{ font-weight: 500; }
+        #enquiry_list_body tr td:first-child{ font-weight: 500;text-align: center; }
         .view-enq-filters .form-control,
         .view-enq-filters .form-select{ box-shadow: none; }
         /* Make all filter controls same height & width */
@@ -47,17 +47,17 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
             border: none;
             padding: 0 12px;
             border-radius: 6px;
-            font-size: 0.875rem;
+            font-size: 0.75rem;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             font-weight: 500;
-            height: 34px;
+            height: 25px;
             box-sizing: border-box;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            width: 140px;
+            width: 115px;
         }
         .btn-fup-date.btn-fup-no-answer{ background: #fd7e14; color: #fff; }
         .btn-fup-date.btn-fup-callback{ background: #0d6efd; color: #fff; border: 2px double rgba(255,255,255,0.4); }
@@ -67,18 +67,18 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
             display: inline-flex;
             padding: 0 12px;
             border-radius: 6px;
-            font-size: 0.875rem;
+            font-size: 0.75rem;
             font-weight: 500;
             color: #fff;
             border: none;
             align-items: center;
             justify-content: center;
-            height: 34px;
+            height: 25px;
             box-sizing: border-box;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            width: 140px;
+            width: 115px;
         }
         .btn-fup-outcome.btn-fup-progressing{ background: #0d6efd; }
         .btn-fup-outcome.btn-fup-converted{ background: #198754; }
@@ -90,8 +90,8 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            height: 34px;
-            width: 140px;
+            height: 25px;
+            width: 115px;
             box-sizing: border-box;
             white-space: nowrap;
             overflow: hidden;
@@ -107,6 +107,11 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
             max-width: 600px; /* wider tooltip for course list */
             min-width: 260px;
         }
+        /* DataTables + enquiry table */
+        #enquiry_table_wrapper .dataTables_filter{ display: none; }
+        #enquiry_table_wrapper .dataTables_length{ margin-bottom: 0.75rem; }
+        #enquiry_table_wrapper .dataTables_info{ padding-top: 0.5rem; }
+        #enquiry_table_wrapper .dataTables_paginate{ padding-top: 0.5rem; }
     </style>
 </head>
 <body>
@@ -284,7 +289,7 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
                             </div>
                         </div>
                         <div class="table-responsive">
-                            <table class="table table-hover table-bordered table-enquiry-list mb-0">
+                            <table id="enquiry_table" class="table table-hover table-bordered table-enquiry-list mb-0 w-100">
                                 <thead class="table-light">
                                     <tr>
                                         <th class="table-next-fup">Follow-up Outcome</th>
@@ -296,9 +301,7 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
                                         <th style="width:120px">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody id="enquiry_list_body">
-                                    <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
-                                </tbody>
+                                <tbody></tbody>
                             </table>
                         </div>
                     </div>
@@ -350,6 +353,13 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
 <script>
 $(function(){
     var viewEnqCurrentAppointmentId = null;
+    var enquiryTable = null;
+
+    function reloadEnquiryTable(resetPaging){
+        if(enquiryTable && enquiryTable.ajax){
+            enquiryTable.ajax.reload(null, resetPaging !== false);
+        }
+    }
 
     $(document).on('click', '.btn-fup-date[data-appointment-id]', function(){
         var id = $(this).data('appointment-id');
@@ -390,7 +400,7 @@ $(function(){
                 $('#toast-text').html('Appointment status updated successfully');
                 if(document.getElementById('borderedToast1Btn')) $('#borderedToast1Btn').trigger('click');
                 $('#viewEnqAppointmentModal').modal('hide');
-                loadList();
+                reloadEnquiryTable(false);
             } else {
                 $('#toast-text2').html('Cannot update appointment status');
                 if(document.getElementById('borderedToast2Btn')) $('#borderedToast2Btn').trigger('click');
@@ -416,7 +426,7 @@ $(function(){
                         $('#viewEnq_mark_completed_btn, #viewEnq_mark_no_show_btn, #viewEnq_cancel_appointment_btn, #viewEnq_time_in_btn, #viewEnq_time_out_btn').hide();
                     }
                 });
-                loadList();
+                reloadEnquiryTable(false);
             } else {
                 $('#toast-text2').html('Cannot record time');
                 if(document.getElementById('borderedToast2Btn')) $('#borderedToast2Btn').trigger('click');
@@ -446,27 +456,58 @@ $(function(){
             } catch(e) {}
         });
     }
-    function loadList(){
-        var d = {
-            formName: 'fetchEnquiryList',
-            search: $('#filter_search').val(),
-            filter_course: $('#filter_course').val(),
-            filter_status: $('#filter_status').val(),
-            filter_date_from: $('#filter_date_from').val(),
-            filter_date_to: $('#filter_date_to').val(),
-            filter_counsellor: $('#filter_counsellor').val(),
-            filter_source: $('#filter_source').val(),
-            sort_by: $('#sort_by').val()
-        };
-        $('#enquiry_list_body').html('<tr><td colspan="6" class="text-center">Loading...</td></tr>');
-        $.post('includes/datacontrol.php', d, function(html){
-            $('#enquiry_list_body').html(html && html.trim() ? html : '<tr><td colspan="6" class="text-center text-muted">No records</td></tr>');
-        });
-    }
+    enquiryTable = $('#enquiry_table').DataTable({
+        processing: true,
+        serverSide: true,
+        searching: false,
+        ordering: false,
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+        ajax: {
+            url: 'includes/datacontrol.php',
+            type: 'POST',
+            data: function(d){
+                d.formName = 'fetchEnquiryList';
+                d.search = $('#filter_search').val();
+                d.filter_course = $('#filter_course').val();
+                d.filter_status = $('#filter_status').val();
+                d.filter_date_from = $('#filter_date_from').val();
+                d.filter_date_to = $('#filter_date_to').val();
+                d.filter_counsellor = $('#filter_counsellor').val();
+                d.filter_source = $('#filter_source').val();
+                d.sort_by = $('#sort_by').val();
+            }
+        },
+        columns: [
+            { data: 0, render: function(x){ return x; } },
+            { data: 1, render: function(x){ return x; } },
+            { data: 2, render: function(x){ return x; } },
+            { data: 3, render: function(x){ return x; } },
+            { data: 4, render: function(x){ return x; } },
+            { data: 5, render: function(x){ return x; } },
+            { data: 6, render: function(x){ return x; } }
+        ],
+        language: {
+            processing: 'Loading...',
+            emptyTable: 'No records',
+            zeroRecords: 'No records',
+            info: 'Showing _START_ to _END_ of _TOTAL_ entries',
+            infoEmpty: 'Showing 0 to 0 of 0 entries',
+            infoFiltered: '(filtered from _MAX_ total entries)',
+            paginate: { previous: '&laquo;', next: '&raquo;' }
+        },
+        drawCallback: function(){
+            $('.dataTables_paginate > .pagination').addClass('pagination-rounded mb-0');
+            document.querySelectorAll('#enquiry_table .course-tooltip').forEach(function(el){
+                var t = bootstrap.Tooltip.getInstance(el);
+                if(t){ t.dispose(); }
+            });
+        }
+    });
+
     loadDashboard();
-    loadList();
     $('#btn_apply').on('click', function(){
-        loadList();
+        reloadEnquiryTable(true);
         loadDashboard();
     });
     $('#btn_reset').on('click', function(){
@@ -476,12 +517,12 @@ $(function(){
         $('#filter_status,#filter_source').val('-1');
         $('#filter_date_from,#filter_date_to').val('');
         $('#sort_by').val('latest');
-        loadList();
+        reloadEnquiryTable(true);
         loadDashboard();
     });
     $('#filter_search').on('keypress', function(e){
         if(e.which===13){
-            loadList();
+            reloadEnquiryTable(true);
             loadDashboard();
         }
     });

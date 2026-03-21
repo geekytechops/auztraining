@@ -2898,9 +2898,11 @@ if(@$_POST['formName']=='fetchEnquiryList'){
     if($filter_source >= 0){
         $where .= " AND $source_col = ".(int)$filter_source;
     }
-    $order_sql = " ORDER BY e.st_id DESC ";
+    // "Latest" = newest enquiry date first (same basis as Enquiry Date column: created_date or st_enquiry_date)
+    $enquiry_dt_expr = "COALESCE(e.created_date, e.st_enquiry_date)";
+    $order_sql = " ORDER BY $enquiry_dt_expr DESC, e.st_id DESC ";
     if($sort_by === 'status'){
-        $order_sql = " ORDER BY $flow_col ASC, e.st_id DESC ";
+        $order_sql = " ORDER BY $flow_col ASC, $enquiry_dt_expr DESC, e.st_id DESC ";
     }
 
     $status_labels = array(

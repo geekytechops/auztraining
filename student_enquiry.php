@@ -484,6 +484,18 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                 </div>
                             </div>
                         </div>
+                        <?php if(isset($eqId) && (int)$eqId > 0): ?>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="alert alert-light border py-2 mb-3 small d-flex flex-wrap align-items-center gap-2 gap-md-3">
+                                    <span class="text-muted fw-semibold"><i class="ti ti-cloud-upload me-1"></i> Auto-save</span>
+                                    <span id="autosave_badge_enquiry" class="badge rounded-pill bg-secondary">Enquiry: idle</span>
+                                    <span id="autosave_badge_counsel" class="badge rounded-pill bg-secondary">Counseling: idle</span>
+                                    <span id="autosave_badge_followup" class="badge rounded-pill bg-secondary">Follow-up: idle</span>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
                         <!-- end page title -->
         <div id="enquiryAccordionGroup">
         <div class="accordion">
@@ -513,7 +525,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                 <!-- Enquiry Date: one line, 50% width only -->
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="enquiry_date">Enquiry Date<span class="asterisk">*</span></label>
+                                                        <label class="form-label" for="enquiry_date">Enquiry Date</label>
                                                         <input type="date" class="form-control" id="enquiry_date" value="<?php echo  $queryRes['st_enquiry_date']!='' ? date('Y-m-d',strtotime($queryRes['st_enquiry_date'])) : ''; ?>">
                                                         <div class="error-feedback">
                                                             Please select the Date
@@ -523,7 +535,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                 <div class="col-md-6"></div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="member_name">Name<span class="asterisk">*</span></label>
+                                                        <label class="form-label" for="member_name">Name</label>
                                                         <input type="text" class="form-control" id="member_name" placeholder="Name" value="<?php echo $queryRes['st_enquiry_for']==1 ? $queryRes['st_name'] : $queryRes['st_member_name']; ?>">
                                                         <div class="error-feedback">
                                                             Please enter the Name
@@ -532,7 +544,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="surname">Surname<span class="asterisk">*</span></label>
+                                                        <label class="form-label" for="surname">Surname</label>
                                                         <input type="text" class="form-control" id="surname" placeholder="Surname" value="<?php echo  $queryRes['st_surname']; ?>" >
                                                         <div class="error-feedback">
                                                             Please enter the Surname
@@ -541,7 +553,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="email_address">Email<span class="asterisk">*</span></label>
+                                                        <label class="form-label" for="email_address">Email</label>
                                                         <input type="text" class="form-control" id="email_address" placeholder="Email Address" value="<?php echo $queryRes['st_email']; ?>" >
                                                         <div class="error-feedback">
                                                             Please enter the Email Address
@@ -550,7 +562,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="contact_num">Mobile<span class="asterisk">*</span></label>
+                                                        <label class="form-label" for="contact_num">Mobile</label>
                                                         <input type="text" class="form-control number-field" maxlength="10" id="contact_num" placeholder="Contact Number" value="<?php echo $queryRes['st_phno']; ?>" >
                                                         <div class="error-feedback">
                                                             Please enter the Contact Number
@@ -590,7 +602,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="enquiry_for">Enquiring For<span class="asterisk">*</span></label>
+                                                        <label class="form-label" for="enquiry_for">Enquiring For</label>
                                                         <select name="enquiry_for" class="form-select" id="enquiry_for">
                                                         <?php  
                                                         $st_enquiry=['--select--','Self','Family Member'];
@@ -625,7 +637,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                         </select>
                                                     </div>
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="location">Location<span class="asterisk">*</span></label>
+                                                        <label class="form-label" for="location">Location</label>
                                                         <input type="text" class="form-control" id="location" name="location" placeholder="Location" value="<?php echo isset($queryRes['st_location']) ? htmlspecialchars($queryRes['st_location']) : ''; ?>">
                                                         <div class="error-feedback">Please enter the Location</div>
                                                     </div>
@@ -975,7 +987,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                                 </div>
                                                                 <div class="col-md-6">
                                                                     <div class="mb-3">
-                                                                        <label class="form-label" for="refer_select">Have you been referred by someone?<span class="asterisk">*</span></label>
+                                                                        <label class="form-label" for="refer_select">Have you been referred by someone?</label>
                                                                         <select name="refer_select" class="form-select refered" id="refer_select">
                                                                         <?php  
                                                                         $st_refered=['--select--','Yes','No'];
@@ -1287,6 +1299,18 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
 
         <?php include('includes/footer_includes.php'); ?>
         <script>
+            window.STUDENT_ENQUIRY_AUTO_SAVE = <?php echo (isset($eqId) && (int)$eqId > 0) ? 'true' : 'false'; ?>;
+            function autosaveSetBadge(kind, label, state){
+                var map = { enquiry:'#autosave_badge_enquiry', counsel:'#autosave_badge_counsel', followup:'#autosave_badge_followup' };
+                var $b = $(map[kind]||'');
+                if(!$b.length) return;
+                $b.text(label);
+                $b.removeClass('bg-secondary bg-success bg-danger bg-warning');
+                if(state==='ok') $b.addClass('bg-success');
+                else if(state==='err') $b.addClass('bg-danger');
+                else if(state==='wait') $b.addClass('bg-warning');
+                else $b.addClass('bg-secondary');
+            }
 
             var checkPhone=0;
             function PhoneCheck(number){
@@ -1411,13 +1435,12 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 })
             })
 
-            $(document).on('click','#enquiry_form',async() =>{
+            function buildStudentEnquiryFormData(){
                 var enquiryForVal = ($('#enquiry_for').val()||'0').toString();
                 var studentName = enquiryForVal === '1' ? $('#member_name').val().trim() : $('#student_name').val().trim();
                 var contactName=$('#contact_num').val().trim();
                 var emailAddress=$('#email_address').val().trim();
                 var enquiryDate=$('#enquiry_date').val();
-
                 var surname=$('#surname').val();
                 var suburb=$('#suburb').val();
                 var stuState=$('#stu_state').val() == 0 ? '' : $('#stu_state').val();
@@ -1433,247 +1456,107 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var comments=$('#comments').length ? $('#comments').val() : '';
                 var remarks=[];
                 var appointment_booked=$('#appointment_booked').val();
-
-                $('.remarks_check:checkbox:checked').each(function() {
-                    remarks.push(this.value);
-                });           
-                     
+                $('.remarks_check:checkbox:checked').each(function(){ remarks.push(this.value); });
                 var streetDetails=$('#street_no').val();
-                var ethnicity=$('#ethnicity').val();                
-                var prefComment=$('#pref_comment').val();                
+                var ethnicity=$('#ethnicity').val();
+                var prefComment=$('#pref_comment').val();
                 var enquiryFor=$('#enquiry_for').val()==0 ? '' : $('#enquiry_for').val();
-                var locationVal=($('#location').val()||'').trim();
                 var courseType=$('#course_type').val();
-
-                var emailregexp = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
-                // var courses=$('#courses').val()==0 ? '' : $('#courses').val();
                 var courses=[];
-
-                $('.courses_check:checkbox:checked').each(function() {
-                    courses.push(this.value);
-                });
-
+                $('.courses_check:checkbox:checked').each(function(){ courses.push(this.value); });
                 var payment=$('#payment_fee').val().trim();
                 var memberName=$('#member_name').val().trim();
                 var visaStatus=$('#visa_condition').val();
                 var visaNote=$('#visa_note').val();
                 var visaCondition=$('.visa_status').val();
-
                 var reg_grp_names=$('#reg_grp_names').val();
+                if(visaStatus==7 && visaNote==''){ window.visaNoteStatus=1; }else{ window.visaNoteStatus=0; }
+                var forms=true, appointForm=true;
+                if(courseType==1){ forms= submitRpl(); }
+                else if(courseType==5 || courseType==4){ forms= submitShortGroup(); }
+                else if(courseType==3){ $('#reg_grp_names').removeClass('invalid-div'); }
+                if(appointment_booked==1){ appointForm= submitSlot(); }
+                if(!forms || !appointForm) return null;
+                courses=courses.filter(function(item){ return item !== '0'; });
+                remarks=remarks.filter(function(item){ return item !== '0'; });
+                var checkId=$("#check_update").val();
+                return {formName:'student_enquiry',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,payment:payment,checkId:checkId,visaStatus:visaStatus,surname:surname,enquiryDate:enquiryDate,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,hearedby:hearedby,memberName:memberName,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,visaNote:visaNote,prefComment:prefComment,comments:comments,appointment_booked:appointment_booked,visaCondition:visaCondition,remarks:remarks,reg_grp_names:reg_grp_names,streetDetails:streetDetails,enquiryFor:enquiryFor,courseType:courseType,shore:shore,ethnicity:ethnicity,enquiry_source:$('#enquiry_source').val()||0,location:($('#location').val()||'').trim(),enquiry_college:($('#enquiry_college').length ? $('#enquiry_college').val() : 0)||0,rpl_arrays:JSON.stringify(rpl_array),short_grps:JSON.stringify(short_grp),slot_books:JSON.stringify(slot_book),admin_id:"<?php echo $_SESSION['user_id']; ?>",formId:<?php echo $form_id; ?>,rpl_status:'<?php echo $rpl_status; ?>',short_grp_status:'<?php echo $short_grp_status; ?>',reg_grp_status:'<?php echo $reg_grp_status; ?>',slot_book_status:'<?php echo $slot_book_status; ?>'};
+            }
 
-                if(visaStatus==7 && visaNote=='' ){
-                    visaNoteStatus=1;
-                }else{
-                    visaNoteStatus=0;
-                }
-
-                if(refer_select==0){
-                    refer_select_error=0;
-                }else if(refer_select==1){
-
-                    if(refer_alumni==0){
-                        refer_select_error=0;
-                    }else{
-                        refer_select_error=1;
-                    }
-
-                }else{
-                    refer_select_error=1;
-                }
-
-                var hear_about_error=1;
-                
-                // checkPhone=0;            
-                // var error_ph=await getData(contactName).split('||')[0];
-                var enquiryIdRec=await getData(contactName);                
-                if(enquiryIdRec.split('||')[0]==1 || ( contactName=='' || contactName.length!=10 ) ){
-                    var phoneChecks=1;
-                }else{
-                    var phoneChecks=0;
-                }
-
-                // Mandatory: Name, Surname, Email, Mobile (10-digit), Location, Enquiring For
-                if(memberName=='' || surname=='' || emailAddress=='' || (emailAddress!='' && !emailAddress.match(emailregexp)) || contactName.length!=10 || phoneChecks==1 || locationVal=='' || enquiryFor=='' || enquiryFor==0 ){
-
-                    if(memberName==''){
-                        if(enquiryForVal==='1'){
-                            $('#member_name').addClass('invalid-div');
-                            $('#member_name').removeClass('valid-div');
-                            $('#member_name').closest('div').find('.error-feedback').show();
-                        }else{
-                            $('#student_name').addClass('invalid-div');
-                            $('#student_name').removeClass('valid-div');
-                            $('#student_name').closest('div').find('.error-feedback').show();
-                        }
-                    }else{
-                        $('#member_name').addClass('valid-div');
-                        $('#member_name').removeClass('invalid-div');
-                        $('#member_name').closest('div').find('.error-feedback').hide();
-                        $('#student_name').addClass('valid-div');
-                        $('#student_name').removeClass('invalid-div');
-                        $('#student_name').closest('div').find('.error-feedback').hide();
-                    }
-
-                    if(contactName=='' || contactName.length!=10 ){
-                        $('#contact_num').addClass('invalid-div');
-                        $('#contact_num').removeClass('valid-div');
-                        $('#contact_num').closest('div').find('.error-feedback').show();
-                    }else if(enquiryIdRec.split('||')[0]==1){
-                        $('#contact_num').addClass('invalid-div');
-                        $('#contact_num').removeClass('valid-div');                        
-                        $('#contact_num').closest('div').find('.error-feedback').hide();     
+            var enquiryAutoSaveTimer = null;
+            var enquirySaveSeq = 0;
+            async function performStudentEnquirySave(silent){
+                silent = !!silent;
+                var checkId = $("#check_update").val();
+                if(!checkId || checkId==='0') return;
+                var seq = ++enquirySaveSeq;
+                if(!silent){
+                    var enquiryIdRec = await getData($('#contact_num').val().trim());
+                    if(enquiryIdRec && String(enquiryIdRec).split('||')[0]==='1'){
                         $('#contact_num').closest('div').find('.phone_error').show();
-                        $('#contact_num').closest('div').find('#phone_err_id').html(enquiryIdRec.split('||')[1]);
-                    }else{
-                        $('#contact_num').addClass('valid-div');
-                        $('#contact_num').removeClass('invalid-div');
-                        $('#contact_num').closest('div').find('.error-feedback').hide();
+                        $('#contact_num').closest('div').find('#phone_err_id').html(String(enquiryIdRec).split('||')[1]||'');
+                    } else {
                         $('#contact_num').closest('div').find('.phone_error').hide();
                     }
-                    if(memberName=='' ){
-                        $('#member_name').addClass('invalid-div');
-                        $('#member_name').removeClass('valid-div');
-                        $('#member_name').closest('div').find('.error-feedback').show();
-                    }else{
-                        $('#member_name').addClass('valid-div');
-                        $('#member_name').removeClass('invalid-div');
-                        $('#member_name').closest('div').find('.error-feedback').hide();
-                    }
-                    if(emailAddress=='' || (emailAddress!='' && (!emailAddress.match(emailregexp)==true))){
-                        $('#email_address').addClass('invalid-div');
-                        $('#email_address').removeClass('valid-div');
-                        $('#email_address').closest('div').find('.error-feedback').show();
-                    }else{
-                        $('#email_address').addClass('valid-div');
-                        $('#email_address').removeClass('invalid-div');
-                        $('#email_address').closest('div').find('.error-feedback').hide();
-                    }
-
-                    if(surname==''){
-                        $('#surname').addClass('invalid-div');
-                        $('#surname').removeClass('valid-div');
-                        $('#surname').closest('div').find('.error-feedback').show();
-                    }else{
-                        $('#surname').addClass('valid-div');
-                        $('#surname').removeClass('invalid-div');
-                        $('#surname').closest('div').find('.error-feedback').hide();
-                    }
-
-                    if(locationVal==''){
-                        $('#location').addClass('invalid-div');
-                        $('#location').removeClass('valid-div');
-                        $('#location').closest('.mb-3').find('.error-feedback').show().css('display','block');
-                    }else{
-                        $('#location').addClass('valid-div');
-                        $('#location').removeClass('invalid-div');
-                        $('#location').closest('.mb-3').find('.error-feedback').hide();
-                    }
-
-                    if(enquiryFor=='' || enquiryFor==0){
-                        $('#enquiry_for').addClass('invalid-div');
-                        $('#enquiry_for').removeClass('valid-div');
-                        $('#enquiry_for').closest('.mb-3').find('.error-feedback').show().css('display','block');
-                    }else{
-                        $('#enquiry_for').addClass('valid-div');
-                        $('#enquiry_for').removeClass('invalid-div');
-                        $('#enquiry_for').closest('.mb-3').find('.error-feedback').hide();
-                    }
-
-                    // Optional fields: hide their errors when validating (only mandatory fields block submit)
-                    $('.courses_error').hide();
-                    $('#enquiry_date').removeClass('invalid-div').addClass('valid-div').closest('div').find('.error-feedback').hide();
-                    $('#post_code').removeClass('invalid-div').addClass('valid-div').closest('div').find('.error-feedback').hide();
-                    $('#visit_before').removeClass('invalid-div').addClass('valid-div').closest('div').find('.error-feedback').hide();
-                    $('#refer_select').removeClass('invalid-div').addClass('valid-div').closest('div').find('.error-feedback').hide();
-                    $('#visa_note').removeClass('invalid-div').addClass('valid-div').closest('div').find('.error-feedback').hide();
-
-                    // console.log($('.error-feedback:visible'));
-                    // $('.collapse').collapse();
-
-                    $('.error-feedback:visible').parent('.accordion-button').trigger('click');
-                    // Expand Basic Details if Location or Enquiring For errors are shown
-                    if($('#location').hasClass('invalid-div') || $('#enquiry_for').hasClass('invalid-div')){
-                        var collapseEl = document.getElementById('collapseOne');
-                        if(collapseEl && !$('#collapseOne').hasClass('show')){
-                            var bsCollapse = typeof bootstrap !== 'undefined' && bootstrap.Collapse ? bootstrap.Collapse.getOrCreateInstance(collapseEl) : null;
-                            if(bsCollapse) bsCollapse.show();
-                        }
-                    }
-                    // if($('.error-feedback:visible').css('display')!='none'){
-
-                    // }
-                    return false;
-
-                }else{
-                    var checkId=$("#check_update").val();
-                    var forms=true;
-                    var appointForm=true;
-
-                    if(courseType==1){
-                        forms= submitRpl();
-                    }else if(courseType==5 || courseType==4){
-                        forms= submitShortGroup();
-                    }else if(courseType==3){
-                        if(reg_grp_names==''){
-                            $('#reg_grp_names').addClass('invalid-div');
-                             $('#reg_grp_names').removeClass('valid-div');
-                            return false;
-                        }else{
-                            $('#reg_grp_names').addClass('valid-div');
-                             $('#reg_grp_names').removeClass('invalid-div');
-                        }
-                    }
-
-                    if(appointment_booked==1){
-                        appointForm= submitSlot();
-                    }
-
-                    if(forms && appointForm ){
-
+                }
+                var details = buildStudentEnquiryFormData();
+                if(!details) return;
+                if(silent){ autosaveSetBadge('enquiry','Enquiry: saving…','wait'); }
+                else {
                     $('#loader-container').css('display','flex');
                     $('#student_enquiry_form').css('opacity','0.1');
-
-                    courses=courses.filter(item => item !== '0');
-                    remarks=remarks.filter(item => item !== '0');
-                    
-                    details={formName:'student_enquiry',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,payment:payment,checkId:checkId,visaStatus:visaStatus,surname:surname,enquiryDate:enquiryDate,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,hearedby:hearedby,memberName:memberName,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,visaNote:visaNote,prefComment:prefComment,comments:comments,appointment_booked:appointment_booked,visaCondition:visaCondition,remarks:remarks,reg_grp_names:reg_grp_names,streetDetails:streetDetails,enquiryFor:enquiryFor,courseType:courseType,shore:shore,ethnicity:ethnicity,enquiry_source:$('#enquiry_source').val()||0,location:($('#location').val()||'').trim(),enquiry_college:($('#enquiry_college').length ? $('#enquiry_college').val() : 0)||0,rpl_arrays:JSON.stringify(rpl_array),short_grps:JSON.stringify(short_grp),slot_books:JSON.stringify(slot_book),admin_id:"<?php echo $_SESSION['user_id']; ?>",formId:<?php echo $form_id; ?>,rpl_status:'<?php echo $rpl_status; ?>',short_grp_status:'<?php echo $short_grp_status; ?>',reg_grp_status:'<?php echo $reg_grp_status; ?>',slot_book_status:'<?php echo $slot_book_status; ?>'};
-                    $.ajax({
-                        type:'post',
-                        url:'includes/datacontrol.php',
-                        data:details,
-                        success:function(data){
-                            if(data==0){
-                                $('.toast-text2').html('Cannot add record. Please try again later');
-                                $('#borderedToast2Btn').trigger('click');
-                            }else if(data==2){
-                                // $( "#student_enquiry_form_parent" ).load(window.location.href + " #student_enquiry_form" );
-                                document.getElementById('student_enquiry_form').reset();
-                                $('#toast-text').html('Record Updated Successfully');
-                                $('#borderedToast1Btn').trigger('click');
-                                // $('#jelly_loader').hide();
-                                $('#loader-container').hide();
-                                $('#student_enquiry_form').css('opacity','');
-                                setTimeout(() => {location.reload();}, 500); 
-                                // window.location.href="dashboard.php";
-                            }else{
-                                // $( "#student_enquiry_form_parent" ).load(window.location.href + " #student_enquiry_form" );
-                                document.getElementById('student_enquiry_form').reset();
-                                $('#toast-text').html('Enquiry saved successfully');
-                                $('#borderedToast1Btn').trigger('click');
-
-                                $('#myModalLabel').html('Enquiry ID Created:');
-                                $('.modal-body').html(data);
-                                $('#model_trigger').trigger('click');
-                                $('#loader-container').hide();
-                                // $('#jelly_loader').hide();
-                                $('#student_enquiry_form').css('opacity','');
-                                setTimeout(() => {location.reload();}, 500); 
-                            }
-                        }
-                    })
-                    }
                 }
+                $.ajax({
+                    type:'post',
+                    url:'includes/datacontrol.php',
+                    data:details,
+                    success:function(data){
+                        if(silent){
+                            if(seq !== enquirySaveSeq) return;
+                            if(data==0 || data==='0'){
+                                autosaveSetBadge('enquiry','Enquiry: failed','err');
+                            }else if(data==2 || data=='2'){
+                                autosaveSetBadge('enquiry','Enquiry: saved '+new Date().toLocaleTimeString(),'ok');
+                            }else{
+                                autosaveSetBadge('enquiry','Enquiry: saved '+new Date().toLocaleTimeString(),'ok');
+                            }
+                            return;
+                        }
+                        if(data==0){
+                            $('.toast-text2').html('Cannot add record. Please try again later');
+                            $('#borderedToast2Btn').trigger('click');
+                        }else if(data==2){
+                            document.getElementById('student_enquiry_form').reset();
+                            $('#toast-text').html('Record Updated Successfully');
+                            $('#borderedToast1Btn').trigger('click');
+                            $('#loader-container').hide();
+                            $('#student_enquiry_form').css('opacity','');
+                            setTimeout(function(){ location.reload(); }, 500);
+                        }else{
+                            document.getElementById('student_enquiry_form').reset();
+                            $('#toast-text').html('Enquiry saved successfully');
+                            $('#borderedToast1Btn').trigger('click');
+                            $('#myModalLabel').html('Enquiry ID Created:');
+                            $('.modal-body').html(data);
+                            $('#model_trigger').trigger('click');
+                            $('#loader-container').hide();
+                            $('#student_enquiry_form').css('opacity','');
+                            setTimeout(function(){ location.reload(); }, 500);
+                        }
+                    },
+                    error:function(){
+                        if(silent && seq === enquirySaveSeq){ autosaveSetBadge('enquiry','Enquiry: error','err'); }
+                    }
+                });
+            }
 
+            $(document).on('click','#enquiry_form',async function(){ await performStudentEnquirySave(false); });
+
+            $(document).on('input change','#student_enquiry_form :input', function(e){
+                if(!window.STUDENT_ENQUIRY_AUTO_SAVE) return;
+                if($(e.target).attr('id')==='enquiry_form') return;
+                clearTimeout(enquiryAutoSaveTimer);
+                enquiryAutoSaveTimer = setTimeout(function(){ performStudentEnquirySave(true); }, 1000);
             })
 
 
@@ -1729,86 +1612,8 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                var exp_name=$('#exp_name').val();
                var exp_years=$('#exp_years').val();
                var exp_prev_name=$('#exp_prev_name').val();
-
-
-               if(rpl_exp=='' || ( rpl_exp!='' && rpl_exp==1 ) && ( exp_in=='' ||  exp_docs=='' || exp_prev=='' || exp_name=='' || exp_years=='' ) || ( rpl_exp!='' && rpl_exp==1 ) && ( exp_prev==1 && exp_prev_name=='' ) ) {
-
-
-
-                    if(rpl_exp==''){
-                            $('#rpl_exp').addClass('invalid-div');
-                            $('#rpl_exp').removeClass('valid-div');
-                    }else{
-                            $('#rpl_exp').addClass('valid-div');
-                            $('#rpl_exp').removeClass('invalid-div');
-                    }
-
-                    if(rpl_exp!='' && ( exp_in=='' ||  exp_docs=='' || exp_prev=='' || exp_name=='' || exp_years=='' )){
-
-
-                        if(exp_in==''){
-                            $('#exp_in').addClass('invalid-div');
-                            $('#exp_in').removeClass('valid-div');
-                        }else{
-                                $('#exp_in').addClass('valid-div');
-                                $('#exp_in').removeClass('invalid-div');
-                        }
-
-                        if(exp_docs==''){
-                            $('#exp_docs').addClass('invalid-div');
-                            $('#exp_docs').removeClass('valid-div');
-                        }else{
-                            $('#exp_docs').addClass('valid-div');
-                            $('#exp_docs').removeClass('invalid-div');
-                        }
-
-                        if(exp_prev==''){
-                            $('#exp_prev').addClass('invalid-div');
-                            $('#exp_prev').removeClass('valid-div');
-                        }else{
-                            $('#exp_prev').addClass('valid-div');
-                            $('#exp_prev').removeClass('invalid-div');
-                        }
-
-                        if(exp_name==''){
-                            $('#exp_name').addClass('invalid-div');
-                            $('#exp_name').removeClass('valid-div');
-                        }else{
-                            $('#exp_name').addClass('valid-div');
-                            $('#exp_name').removeClass('invalid-div');
-                        }
-
-                        if(exp_years==''){
-                            $('#exp_years').addClass('invalid-div');
-                            $('#exp_years').removeClass('valid-div');
-                        }else{
-                            $('#exp_years').addClass('valid-div');
-                            $('#exp_years').removeClass('invalid-div');
-                        }
-
-                    }
-
-                    if( exp_prev==1 && exp_prev_name=='' ){
-
-                        if(exp_prev_name==''){
-                            $('#exp_prev_name').addClass('invalid-div');
-                            $('#exp_prev_name').removeClass('valid-div');
-                        }else{
-                            $('#exp_prev_name').addClass('valid-div');
-                            $('#exp_prev_name').removeClass('invalid-div');
-                        }
-
-                    }
-
-                    return false;
-
-                }else{
-
-                    rpl_array={"rpl_exp":rpl_exp,"exp_in":exp_in,"exp_docs":exp_docs,"exp_prev":exp_prev,"exp_name":exp_name,"exp_years":exp_years,"exp_prev_name":exp_prev_name};
-                    return true;
-                    
-                }
-
+               rpl_array={"rpl_exp":rpl_exp,"exp_in":exp_in,"exp_docs":exp_docs,"exp_prev":exp_prev,"exp_name":exp_name,"exp_years":exp_years,"exp_prev_name":exp_prev_name};
+               return true;
             }
 
             function submitShortGroup(){
@@ -1910,12 +1715,9 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
 
                 // }else{
 
-                    
-                    short_grp={"short_grp_org_name":short_grp_org_name,"short_grp_org_type":short_grp_org_type,"short_grp_campus":short_grp_campus,"short_grp_date":short_grp_date,"short_grp_num_std":short_grp_num_std,"short_grp_ind_exp":short_grp_ind_exp,"short_grp_con_type":short_grp_con_type,"short_grp_con_num":short_grp_con_num,"short_grp_con_name":short_grp_con_name, "short_grp_con_email":short_grp_con_email,"short_grp_before":short_grp_before};
-                    return true;
-
-                }
-            // }
+                short_grp={"short_grp_org_name":short_grp_org_name,"short_grp_org_type":short_grp_org_type,"short_grp_campus":short_grp_campus,"short_grp_date":short_grp_date,"short_grp_num_std":short_grp_num_std,"short_grp_ind_exp":short_grp_ind_exp,"short_grp_con_type":short_grp_con_type,"short_grp_con_num":short_grp_con_num,"short_grp_con_name":short_grp_con_name, "short_grp_con_email":short_grp_con_email,"short_grp_before":short_grp_before};
+                return true;
+            }
 
             function submitSlot(){
                 var slot_book_time=$('#slot_book_time').val(); 
@@ -1923,64 +1725,8 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var slot_book_date=$('#slot_book_date').val(); 
                 var slot_book_by=$('#slot_book_by').val(); 
                 var slot_book_link=$('#slot_book_link').val()==0 ? '' : $('#slot_book_link').val(); 
-
-                if(slot_book_time=='' || slot_book_purpose=='' || slot_book_date=='' || slot_book_by=='' || slot_book_link==''){
-
-                    if(slot_book_time==''){
-
-                        $('#slot_book_time').addClass('invalid-div');
-                        $('#slot_book_time').removeClass('valid-div');
-                    }else{
-                        $('#slot_book_time').addClass('valid-div');
-                        $('#slot_book_time').removeClass('invalid-div');
-
-                    }
-                    if(slot_book_purpose==''){
-
-                        $('#slot_book_purpose').addClass('invalid-div');
-                        $('#slot_book_purpose').removeClass('valid-div');
-                    }else{
-                        $('#slot_book_purpose').addClass('valid-div');
-                        $('#slot_book_purpose').removeClass('invalid-div');
-
-                    }
-                    if(slot_book_date==''){
-
-                        $('#slot_book_date').addClass('invalid-div');
-                        $('#slot_book_date').removeClass('valid-div');
-                    }else{
-                        $('#slot_book_date').addClass('valid-div');
-                        $('#slot_book_date').removeClass('invalid-div');
-
-                    }
-                    if(slot_book_by==''){
-
-                        $('#slot_book_by').addClass('invalid-div');
-                        $('#slot_book_by').removeClass('valid-div');
-                    }else{
-                        $('#slot_book_by').addClass('valid-div');
-                        $('#slot_book_by').removeClass('invalid-div');
-
-                    }
-                    if(slot_book_link==''){
-
-                        $('#slot_book_link').addClass('invalid-div');
-                        $('#slot_book_link').removeClass('valid-div');
-                    }else{
-                        $('#slot_book_link').addClass('valid-div');
-                        $('#slot_book_link').removeClass('invalid-div');
-
-                    }
-
-                    return false;
-
-                }else{
-
-                    slot_book={"slot_book_time":slot_book_time,"slot_book_purpose":slot_book_purpose,"slot_book_date":slot_book_date,"slot_book_by":slot_book_by,"slot_book_link":slot_book_link};
-                    return true;
-
-                }
-
+                slot_book={"slot_book_time":slot_book_time,"slot_book_purpose":slot_book_purpose,"slot_book_date":slot_book_date,"slot_book_by":slot_book_by,"slot_book_link":slot_book_link};
+                return true;
             }
 
             $(document).on('change','#counselling_form .mig_test',function(){
@@ -1991,11 +1737,8 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var aus_study=$('#counselling_form .aus_study:checked').val();
                 $('#counselling_form .aus_study_child').toggle(aus_study==1);
             });
-            $(document).on('click','#counseling_submit',function(){
+            function buildCounselingFormData(){
                 var $f=$('#counselling_form');
-                // reset previous validation state on each submit click
-                $f.find('.invalid-div').removeClass('invalid-div');
-                $f.find('.error-feedback').hide();
                 var enquiry_id=($('#counselling_enquiry_id').length ? $('#counselling_enquiry_id').val() : '').toString().trim();
                 var counselling_date=$('#counselling_date').val().trim();
                 var start_time=$('#counseling_timing').val().trim();
@@ -2017,62 +1760,43 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var vaccine_status=$f.find('.vaccine_status:checked').val();
                 var remarks=[];$f.find('.counselling_remarks:checked').each(function(){remarks.push(this.value);});
                 var checkId=$('#counselling_check_update').val();
-                var aus_study_error=1;
-                if(aus_study==1){if($('#counselling_course').val()==''||$('#counselling_university_name').val()=='')aus_study_error=0;}
-                var mig_test_error=1;
-                if(mig_test==1){if($('#counselling_overall_result').val()==''||$('#counselling_module_result').val()==''||$('#counselling_job_nature').val()=='')mig_test_error=0;}
-                if(!enquiry_id||!counseling_timing||!counseling_type||!member_name||!aus_duration||!work_status||!visa_condition||!education||eng_rate==''||!vaccine_status||!qualification||aus_study_error==0||mig_test_error==0){
-                    if(!enquiry_id){
-                        $('#counselling_enquiry_id').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
-                    }
-                    if(!counseling_timing){
-                        if(!start_time) $('#counseling_timing').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
-                        if(!counselling_date) $('#counselling_date').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
-                    }
-                    if(!member_name){
-                        $('#counselling_member_name').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
-                    }
-                    if(!aus_duration){
-                        $('#aus_duration').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
-                    }
-                    if(!visa_condition){
-                        $('#counselling_visa_condition').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
-                    }
-                    if(aus_study_error==0){
-                        if(!$('#counselling_course').val()){
-                            $('#counselling_course').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
-                        }
-                        if(!$('#counselling_university_name').val()){
-                            $('#counselling_university_name').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
-                        }
-                    }
-                    if(mig_test_error==0){
-                        if(!$('#counselling_overall_result').val()){
-                            $('#counselling_overall_result').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
-                        }
-                        if(!$('#counselling_module_result').val()){
-                            $('#counselling_module_result').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
-                        }
-                        if(!$('#counselling_job_nature').val()){
-                            $('#counselling_job_nature').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
-                        }
-                    }
-                    if(!education){
-                        $('#counselling_education').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
-                    }
-                    if(eng_rate===''){
-                        $('#counselling_eng_rate').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
-                    }
-                    if(!qualification){
-                        $('#counselling_qualification').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
-                    }
-                    return;
+                return {formName:'counseling_form',vaccine_status:vaccine_status,job_nature:$('#counselling_job_nature').val(),module_result:$('#counselling_module_result').val(),eng_rate:eng_rate,mig_test:mig_test,overall_result:$('#counselling_overall_result').val(),course:$('#counselling_course').val(),university_name:$('#counselling_university_name').val(),qualification:qualification,counseling_timing:counseling_timing,counseling_end_timing:counseling_end_timing,enquiry_id:enquiry_id,counseling_type:counseling_type,member_name:member_name,preferred_intake_date:$('#counselling_preferred_intake_date').val(),mode_of_study:$('#counselling_mode_of_study').val(),aus_duration:aus_duration,work_status:work_status,visa_condition:visa_condition,education:education,remarks:remarks,aus_study:aus_study,counselling_notes:($('#counselling_notes').val()||'').trim(),checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
+            }
+            var counselAutoSaveTimer=null;
+            var counselSaveSeq=0;
+            function performCounselingSave(silent){
+                silent=!!silent;
+                var checkId=$('#counselling_check_update').val();
+                if(!checkId||checkId==='0') return;
+                if(silent && !window.STUDENT_ENQUIRY_AUTO_SAVE) return;
+                if(!silent){
+                    var $f=$('#counselling_form');
+                    $f.find('.invalid-div').removeClass('invalid-div');
+                    $f.find('.error-feedback').hide();
                 }
-                var details={formName:'counseling_form',vaccine_status:vaccine_status,job_nature:$('#counselling_job_nature').val(),module_result:$('#counselling_module_result').val(),eng_rate:eng_rate,mig_test:mig_test,overall_result:$('#counselling_overall_result').val(),course:$('#counselling_course').val(),university_name:$('#counselling_university_name').val(),qualification:qualification,counseling_timing:counseling_timing,counseling_end_timing:counseling_end_timing,enquiry_id:enquiry_id,counseling_type:counseling_type,member_name:member_name,preferred_intake_date:$('#counselling_preferred_intake_date').val(),mode_of_study:$('#counselling_mode_of_study').val(),aus_duration:aus_duration,work_status:work_status,visa_condition:visa_condition,education:education,remarks:remarks,aus_study:aus_study,counselling_notes:($('#counselling_notes').val()||'').trim(),checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
+                var details=buildCounselingFormData();
+                var seq=++counselSaveSeq;
+                if(silent){ autosaveSetBadge('counsel','Counseling: saving…','wait'); }
                 $.ajax({type:'post',url:'includes/datacontrol.php',data:details,success:function(data){
+                    if(silent){
+                        if(seq!==counselSaveSeq) return;
+                        if(data==1||data=='1'){ autosaveSetBadge('counsel','Counseling: saved '+new Date().toLocaleTimeString(),'ok'); }
+                        else { autosaveSetBadge('counsel','Counseling: failed','err'); }
+                        return;
+                    }
                     if(data==1){$('#toast-text').html('Record Added Successfully');$('#borderedToast1Btn').trigger('click');setTimeout(function(){location.reload();},400);}
                     else{$('.toast-text2').html('Cannot add record. Please try again later');$('#borderedToast2Btn').trigger('click');}
+                },error:function(){
+                    if(silent && seq===counselSaveSeq){ autosaveSetBadge('counsel','Counseling: error','err'); }
                 }});
+            }
+            $(document).on('click','#counseling_submit',function(){ performCounselingSave(false); });
+            $(document).on('input change','#counselling_form :input',function(e){
+                if(!window.STUDENT_ENQUIRY_AUTO_SAVE) return;
+                var id=$(e.target).attr('id');
+                if(id==='counseling_submit') return;
+                clearTimeout(counselAutoSaveTimer);
+                counselAutoSaveTimer=setTimeout(function(){ performCounselingSave(true); },1000);
             });
             // live clear validation when user fixes counselling fields
             $(document).on('input change','#counselling_form input, #counselling_form select',function(){
@@ -2107,7 +1831,6 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             $(document).on('change','#followup_follow_up_outcome',function(){ toggleFollowupCalendarBtn(); });
             $(document).on('click','#followup_open_calendar_btn',function(){
                 var enquiryId = ($('#followup_enquiry_id').val() || '').toString().trim();
-                if(!enquiryId){ $('.toast-text2').html('Save the enquiry first to open Calendar.'); $('#borderedToast2Btn').trigger('click'); return; }
                 $('#fp_connected_enquiry_id').val(enquiryId);
                 // Limit appointment date so it cannot be before enquiry date or before today
                 var enquiryDateStr = ($('#enquiry_date').val() || '').toString().trim();
@@ -2146,15 +1869,17 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             // Follow-up appointment popup: attendee type toggle
             $(document).on('change','#fp_attendee_type_id',function(){
                 var v = $(this).val();
-                if(v=='1'){ $('#fp_student_info_section').show(); $('#fp_business_info_section').hide(); $('#fp_student_name,#fp_student_phone,#fp_student_email').prop('required',true); $('#fp_business_name,#fp_business_contact').prop('required',false); }
-                else if(v=='2'){ $('#fp_student_info_section').hide(); $('#fp_business_info_section').show(); $('#fp_student_name,#fp_student_phone,#fp_student_email').prop('required',false); $('#fp_business_name,#fp_business_contact').prop('required',true); }
-                else { $('#fp_student_info_section').hide(); $('#fp_business_info_section').hide(); $('#fp_student_name,#fp_student_phone,#fp_student_email,#fp_business_name,#fp_business_contact').prop('required',false); }
+                if(v=='1'){ $('#fp_student_info_section').show(); $('#fp_business_info_section').hide(); }
+                else if(v=='2'){ $('#fp_student_info_section').hide(); $('#fp_business_info_section').show(); }
+                else { $('#fp_student_info_section').hide(); $('#fp_business_info_section').hide(); }
+                $('#fp_student_name,#fp_student_phone,#fp_student_email,#fp_business_name,#fp_business_contact').prop('required',false);
             });
             $(document).on('change','#fp_meeting_type',function(){
                 var v = $(this).val();
-                if(v=='Online'){ $('#fp_platform_section,#fp_meeting_link_section').show(); $('#fp_location_section').hide(); $('#fp_platform_id').prop('required',true); $('#fp_location_id').prop('required',false); }
-                else if(v=='Face to Face'){ $('#fp_location_section').show(); $('#fp_platform_section,#fp_meeting_link_section').hide(); $('#fp_location_id').prop('required',true); $('#fp_platform_id').prop('required',false); }
-                else { $('#fp_location_section,#fp_platform_section,#fp_meeting_link_section').hide(); $('#fp_location_id,#fp_platform_id').prop('required',false); }
+                if(v=='Online'){ $('#fp_platform_section,#fp_meeting_link_section').show(); $('#fp_location_section').hide(); }
+                else if(v=='Face to Face'){ $('#fp_location_section').show(); $('#fp_platform_section,#fp_meeting_link_section').hide(); }
+                else { $('#fp_location_section,#fp_platform_section,#fp_meeting_link_section').hide(); }
+                $('#fp_location_id,#fp_platform_id').prop('required',false);
             });
             // Follow-up appointment time helpers (match main appointment page behaviour)
             var FP_MIN_GAP_MINUTES = 1;
@@ -2267,44 +1992,10 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 e.preventDefault();
                 var $f = $(this);
                 $f.find('.error-feedback').hide();
+                $f.find('[required]').prop('required',false);
                 var date = $('#fp_appointment_date').val();
                 var time = $('#fp_appointment_time').val();
-                var timeTo = $('#fp_appointment_time_to').val();
                 var state = $('#fp_timezone_state').val();
-                // Prevent booking an appointment before enquiry date or before today
-                var enquiryDateStr = ($('#enquiry_date').val() || '').toString().trim();
-                var today = new Date();
-                var todayStr = today.toISOString().slice(0,10);
-                var minDate = todayStr;
-                if(enquiryDateStr && enquiryDateStr > minDate){
-                    minDate = enquiryDateStr;
-                }
-                var valid = true;
-                if(date && date < minDate){
-                    valid = false;
-                    var $dateWrapper = $('#fp_appointment_date').closest('.mb-3');
-                    $dateWrapper.find('.error-feedback').text('Appointment date cannot be before '+ minDate +'.').show();
-                    $('.toast-text2').html('Appointment date cannot be in the past or before enquiry date.');
-                    $('#borderedToast2Btn').trigger('click');
-                }
-                // Prevent booking a time in the past for same-day appointments
-                var nowTimeStr = today.toTimeString().slice(0,5);
-                if(valid && date === todayStr && time && time < nowTimeStr){
-                    valid = false;
-                    var $timeWrapperStart = $('#fp_appointment_time').closest('.mb-3');
-                    $timeWrapperStart.find('.error-feedback').text('Start time cannot be in the past.').show();
-                    $('.toast-text2').html('Start time cannot be in the past.');
-                    $('#borderedToast2Btn').trigger('click');
-                }
-                // Prevent backwards time range (To earlier than From)
-                if(valid && time && timeTo && timeTo < time){
-                    valid = false;
-                    var $timeWrapper = $('#fp_appointment_time').closest('.mb-3');
-                    $timeWrapper.find('.error-feedback').text('End time must be after start time.').show();
-                    $('.toast-text2').html('End time must be after start time.');
-                    $('#borderedToast2Btn').trigger('click');
-                }
-                if(!valid) return;
                 if(date && time && state){
                     var stateDt = date + ' ' + time;
                     $('#fp_appointment_time_state').val(stateDt);
@@ -2312,9 +2003,6 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     $('#fp_appointment_time_india').val(stateDt);
                     $('#fp_appointment_time_philippines').val(stateDt);
                 }
-                valid = true;
-                $f.find('[required]').each(function(){ if(!$(this).val()){ valid=false; $(this).closest('.mb-3').find('.error-feedback').show(); } });
-                if(!valid) return;
                 var formData = new FormData(this);
                 $('#fp_appointment_submit_btn').prop('disabled',true);
                 $.ajax({ type:'POST', url:'includes/datacontrol.php', data:formData, contentType:false, processData:false,
@@ -2347,8 +2035,6 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var status_code=$('#followup_enquiry_flow_status').val();
                 var subject=$('#followup_email_subject').val().trim();
                 var body=$('#followup_email_body').val().trim();
-                if(!enquiry_id||enquiry_id=='0'){ alert('Please select an Enquiry ID first.'); return; }
-                if(!subject||!body){ alert('Please enter subject and message.'); return; }
                 var save_as_default = $('#followup_save_template_default').is(':checked') ? 1 : 0;
                 var $btn=$('#followup_send_status_email').prop('disabled',true).text('Sending...');
                 $.post('includes/datacontrol.php',{ send_enquiry_status_email: 1, enquiry_id: enquiry_id, status_code: status_code, subject: subject, body: body, save_as_default: save_as_default },function(data){
@@ -2365,7 +2051,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             // Load default email template once when form is ready (for current status)
             loadFollowupTemplateForCurrentStatus();
 
-            $(document).on('click','#followup_check',function(){
+            function buildFollowupFormData(){
                 var enquiryForVal = ($('#enquiry_for').val()||'0').toString();
                 var student_name = enquiryForVal === '1' ? $('#member_name').val().trim() : $('#student_name').val().trim();
                 var contact_num=$('#contact_num').val().trim();
@@ -2381,21 +2067,39 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var enquiry_id=$('#followup_enquiry_id').val();
                 var remarks=[];$('#followup_form_embed .followup_remarks:checked').each(function(){remarks.push(this.value);});
                 var checkId=$('#followup_check_update').val();
-                if(!contacted_person||!student_name||!contacted_time||!contact_num||contact_num.length!=10){
-                    if(!contact_num||contact_num.length!=10)$('#contact_num').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
-                    if(!contacted_time)$('#followup_contacted_time').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
-                    if(!student_name){
-                        if(enquiryForVal==='1') $('#member_name').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
-                        else $('#student_name').addClass('invalid-div').closest('.mb-3').find('.error-feedback').show();
-                    }
-                    return;
-                }
                 if(!date) date = contacted_time ? contacted_time.slice(0,10) : '';
-                var details={formName:'followup_call',student_name:student_name,date:date,contacted_person:contacted_person,contacted_time:contacted_time,contactMode:contactMode||followupType,followup_type:followupType,enquiry_flow_status:enquiry_flow_status,follow_up_notes:follow_up_notes,next_followup_date:next_followup_date,follow_up_outcome:follow_up_outcome,contact_num:contact_num,enquiry_id:enquiry_id,remarks:remarks,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
+                return {formName:'followup_call',student_name:student_name,date:date,contacted_person:contacted_person,contacted_time:contacted_time,contactMode:contactMode||followupType,followup_type:followupType,enquiry_flow_status:enquiry_flow_status,follow_up_notes:follow_up_notes,next_followup_date:next_followup_date,follow_up_outcome:follow_up_outcome,contact_num:contact_num,enquiry_id:enquiry_id,remarks:remarks,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
+            }
+            var followupAutoSaveTimer=null;
+            var followupSaveSeq=0;
+            function performFollowupSave(silent){
+                silent=!!silent;
+                var checkId=$('#followup_check_update').val();
+                if(!checkId||checkId==='0') return;
+                if(silent && !window.STUDENT_ENQUIRY_AUTO_SAVE) return;
+                var details=buildFollowupFormData();
+                var seq=++followupSaveSeq;
+                if(silent){ autosaveSetBadge('followup','Follow-up: saving…','wait'); }
                 $.ajax({type:'post',url:'includes/datacontrol.php',data:details,success:function(data){
+                    if(silent){
+                        if(seq!==followupSaveSeq) return;
+                        if(data==1 || data=='1'){ autosaveSetBadge('followup','Follow-up: saved '+new Date().toLocaleTimeString(),'ok'); }
+                        else { autosaveSetBadge('followup','Follow-up: failed','err'); }
+                        return;
+                    }
                     if(data==1 || data=='1'){$('#toast-text').html('Follow-up saved successfully');$('#borderedToast1Btn').trigger('click');setTimeout(function(){location.reload();},600);}
                     else{$('.toast-text2').html(data && data.trim() ? data : 'Cannot save follow-up. Please try again.');$('#borderedToast2Btn').trigger('click');}
+                },error:function(){
+                    if(silent && seq===followupSaveSeq){ autosaveSetBadge('followup','Follow-up: error','err'); }
                 }});
+            }
+            $(document).on('click','#followup_check',function(){ performFollowupSave(false); });
+            $(document).on('input change','#followup_form_embed :input',function(e){
+                if(!window.STUDENT_ENQUIRY_AUTO_SAVE) return;
+                var id=$(e.target).attr('id');
+                if(id==='followup_check'||id==='followup_send_status_email') return;
+                clearTimeout(followupAutoSaveTimer);
+                followupAutoSaveTimer=setTimeout(function(){ performFollowupSave(true); },1000);
             });
 
         </script>

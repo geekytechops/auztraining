@@ -40,9 +40,9 @@ $followup_enquiry_code = isset($followup_Query['enquiry_id']) ? $followup_Query[
 <input type="text" readonly class="form-control-plaintext fw-semibold" value="<?php echo $followup_enquiry_code ? $followup_enquiry_code : 'Save enquiry first'; ?>">
 <input type="hidden" name="enquiry_id" id="followup_enquiry_id" value="<?php echo htmlspecialchars($followup_enquiry_code); ?>">
 <div class="error-feedback">Please Select the Enquiry ID</div></div></div>
-<div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_contacted_time">Follow-up Date &amp; Time<span class="asterisk">*</span></label>
+<div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_contacted_time">Follow-up Date &amp; Time</label>
 <input type="datetime-local" class="form-control" id="followup_contacted_time" value="<?php echo $followup_Query['flw_contacted_time']=='' ? '' : date('Y-m-d\TH:i',strtotime($followup_Query['flw_contacted_time'])); ?>"><div class="error-feedback">Please select the follow-up date and time</div></div></div>
-<div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_contacted_person">Responsible Staff<span class="asterisk">*</span></label>
+<div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_contacted_person">Responsible Staff</label>
 <select class="form-select" id="followup_contacted_person">
 <option value="">--select--</option>
 <?php
@@ -57,7 +57,7 @@ if($followupUsers){
 ?>
 </select>
 <div class="error-feedback">Please select the Responsible Staff</div></div></div>
-<div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_followup_type">Follow-up Type<span class="asterisk">*</span></label>
+<div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_followup_type">Follow-up Type</label>
 <select class="form-select" id="followup_followup_type">
 <option value="">--select--</option>
 <option value="Call" <?php echo (isset($followup_Query['flw_followup_type']) && $followup_Query['flw_followup_type']=='Call') ? 'selected' : ''; ?>>Call</option>

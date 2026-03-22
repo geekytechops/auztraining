@@ -59,6 +59,9 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
             line-height: 1.4;
             width: 100%;
         }
+        table.table-bordered.dataTable th:last-child, table.table-bordered.dataTable th:last-child, table.table-bordered.dataTable td:last-child, table.table-bordered.dataTable td:last-child{
+            text-align: center;
+        }
         .view-enq-filters input[type="date"].form-control-sm{
             padding-top: 0.25rem;
             padding-bottom: 0.25rem;

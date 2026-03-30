@@ -1863,19 +1863,20 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var end_time=$('#counseling_end_timing').val().trim();
                 var counseling_timing=(counselling_date && start_time) ? (counselling_date+' '+start_time) : '';
                 var counseling_end_timing=(counselling_date && end_time) ? (counselling_date+' '+end_time) : (counselling_date && start_time ? counselling_date+' '+start_time : '');
-                var counseling_type=$f.find('.counseling_type:checked').val();
+                var counseling_type=$f.find('.counseling_type:checked').val() || '1';
                 var member_name=$('#counselling_member_name').val();
                 if(member_name) member_name=member_name.trim();
                 var aus_duration=$('#aus_duration').val().trim();
-                var work_status=$f.find('.work_status:checked').val();
+                var work_status=$f.find('.work_status:checked').val() || '1';
                 var visa_condition=$('#counselling_visa_condition').val();
+                if(visa_condition===undefined || visa_condition===null) visa_condition='';
                 if(visa_condition=='0')visa_condition='';
                 var education=$('#counselling_education').val();
-                var aus_study=$f.find('.aus_study:checked').val();
+                var aus_study=$f.find('.aus_study:checked').val() || '1';
                 var qualification=$('#counselling_qualification').val();
                 var eng_rate=$('#counselling_eng_rate').val();
-                var mig_test=$f.find('.mig_test:checked').val();
-                var vaccine_status=$f.find('.vaccine_status:checked').val();
+                var mig_test=$f.find('.mig_test:checked').val() || '1';
+                var vaccine_status=$f.find('.vaccine_status:checked').val() || '1';
                 var remarks=[];$f.find('.counselling_remarks:checked').each(function(){remarks.push(this.value);});
                 var checkId=$('#counselling_check_update').val();
                 return {formName:'counseling_form',vaccine_status:vaccine_status,job_nature:$('#counselling_job_nature').val(),module_result:$('#counselling_module_result').val(),eng_rate:eng_rate,mig_test:mig_test,overall_result:$('#counselling_overall_result').val(),course:$('#counselling_course').val(),university_name:$('#counselling_university_name').val(),qualification:qualification,counseling_timing:counseling_timing,counseling_end_timing:counseling_end_timing,enquiry_id:enquiry_id,counseling_type:counseling_type,member_name:member_name,preferred_intake_date:$('#counselling_preferred_intake_date').val(),mode_of_study:$('#counselling_mode_of_study').val(),aus_duration:aus_duration,work_status:work_status,visa_condition:visa_condition,education:education,remarks:remarks,aus_study:aus_study,counselling_notes:($('#counselling_notes').val()||'').trim(),checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
@@ -1886,7 +1887,11 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 silent=!!silent;
                 if(!enquiryEditingAllowed()) return;
                 var checkId=$('#counselling_check_update').val();
-                if(!checkId||checkId==='0') return;
+                var hasExistingCounsel = !!checkId && checkId !== '0';
+                var enquiryId = ($('#counselling_enquiry_id').val() || '').toString().trim();
+                // For new counselling records (checkId=0), allow manual submit but skip autosave.
+                if(!hasExistingCounsel && silent) return;
+                if(!hasExistingCounsel && !enquiryId) return;
                 if(silent && !window.STUDENT_ENQUIRY_AUTO_SAVE) return;
                 if(!silent){
                     var $f=$('#counselling_form');
@@ -2196,7 +2201,10 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 silent=!!silent;
                 if(!enquiryEditingAllowed()) return;
                 var checkId=$('#followup_check_update').val();
-                if(!checkId||checkId==='0') return;
+                var hasExistingFollowup = !!checkId && checkId !== '0';
+                var enquiryId = ($('#followup_enquiry_id').val() || '').toString().trim();
+                if(!hasExistingFollowup && silent) return;
+                if(!hasExistingFollowup && !enquiryId) return;
                 if(silent && !window.STUDENT_ENQUIRY_AUTO_SAVE) return;
                 var details=buildFollowupFormData();
                 var seq=++followupSaveSeq;

@@ -1028,21 +1028,24 @@ if(mysqli_num_rows($filterQueryget)!=0){
     
 }
 if(@$_POST['formName']=='followup_call'){
-        $student_name=mysqli_real_escape_string($connection,$_POST['student_name']);
+        $student_name=mysqli_real_escape_string($connection,isset($_POST['student_name']) ? $_POST['student_name'] : '');
         $date=isset($_POST['date']) && $_POST['date']!='' ? date('Y-m-d',strtotime($_POST['date'])) : (isset($_POST['contacted_time']) && $_POST['contacted_time']!='' ? date('Y-m-d',strtotime($_POST['contacted_time'])) : '');
-        $contacted_person=mysqli_real_escape_string($connection,$_POST['contacted_person']);
+        $contacted_person=mysqli_real_escape_string($connection,isset($_POST['contacted_person']) ? $_POST['contacted_person'] : '');
         $contacted_time=isset($_POST['contacted_time']) && $_POST['contacted_time']!='' ? date('Y-m-d H:i:s',strtotime($_POST['contacted_time'])) : date('Y-m-d H:i:s');
         $contactMode=isset($_POST['contactMode']) ? mysqli_real_escape_string($connection,$_POST['contactMode']) : '';
         $followup_type=isset($_POST['followup_type']) ? mysqli_real_escape_string($connection,$_POST['followup_type']) : '';
-        $enquiry_flow_status=isset($_POST['enquiry_flow_status']) && $_POST['enquiry_flow_status']!='' ? (int)$_POST['enquiry_flow_status'] : null;
+        $enquiry_flow_status=isset($_POST['enquiry_flow_status']) && $_POST['enquiry_flow_status']!=='' ? (int)$_POST['enquiry_flow_status'] : null;
         // When Follow Up Outcome is Booked Counselling, set enquiry status to 9 so Status column shows correctly
-        if(isset($_POST['follow_up_outcome']) && trim($_POST['follow_up_outcome']) === 'Booked Counselling') $enquiry_flow_status = 9;
+        if(isset($_POST['follow_up_outcome']) && trim((string)$_POST['follow_up_outcome']) === 'Booked Counselling') $enquiry_flow_status = 9;
         $follow_up_notes=isset($_POST['follow_up_notes']) ? mysqli_real_escape_string($connection,$_POST['follow_up_notes']) : '';
         $next_followup_date=isset($_POST['next_followup_date']) && $_POST['next_followup_date']!='' ? date('Y-m-d H:i:s',strtotime($_POST['next_followup_date'])) : null;
         $follow_up_outcome=isset($_POST['follow_up_outcome']) ? mysqli_real_escape_string($connection,$_POST['follow_up_outcome']) : '';
         $progress_status=isset($_POST['progress_status']) ? mysqli_real_escape_string($connection,$_POST['progress_status']) : '';
-        $contact_num=mysqli_real_escape_string($connection,$_POST['contact_num']);
-        $enquiry_id=mysqli_real_escape_string($connection,$_POST['enquiry_id']);
+        if($progress_status==='' && $enquiry_flow_status!==null){
+            $progress_status=(string)(int)$enquiry_flow_status;
+        }
+        $contact_num=mysqli_real_escape_string($connection,isset($_POST['contact_num']) ? $_POST['contact_num'] : '');
+        $enquiry_id=mysqli_real_escape_string($connection,isset($_POST['enquiry_id']) ? $_POST['enquiry_id'] : '');
         $checkId=isset($_POST['checkId']) ? (int)$_POST['checkId'] : 0;
         if(@$_POST['remarks'] && $_POST['remarks']!=''){
             $remarks=json_encode($_POST['remarks']);
@@ -1050,7 +1053,7 @@ if(@$_POST['formName']=='followup_call'){
             $remarks='';
         }
         $comments=mysqli_real_escape_string($connection,isset($_POST['comments']) ? $_POST['comments'] : '');
-        $admin_id=$_POST['admin_id'];
+        $admin_id=isset($_POST['admin_id']) ? (int)$_POST['admin_id'] : 0;
 
         if($checkId==0){
             $next_sql = $next_followup_date !== null ? "'".mysqli_real_escape_string($connection,$next_followup_date)."'" : 'NULL';
@@ -1157,31 +1160,34 @@ if(@$_POST['formName']=='followup_call'){
         }
 }
 if(@$_POST['formName']=='counseling_form'){
-  
-        $vaccine_status=$_POST['vaccine_status'];
-        $job_nature=$_POST['job_nature'];
-        $module_result=$_POST['module_result'];
-        $counseling_timing=date('Y-m-d H:i:s',strtotime($_POST['counseling_timing']));
-        $counseling_end_timing= $_POST['counseling_end_timing']!='' ? date('Y-m-d H:i:s',strtotime($_POST['counseling_end_timing'])) : '';
+        /* All fields optional: defaults match typical form presets so partial saves never 500/fail. */
+        $enquiry_id=isset($_POST['enquiry_id']) ? trim($_POST['enquiry_id']) : '';
+        $checkId=isset($_POST['checkId']) ? $_POST['checkId'] : 0;
+        $admin_id=isset($_POST['admin_id']) ? (int)$_POST['admin_id'] : 0;
+        $vaccine_status=(isset($_POST['vaccine_status']) && $_POST['vaccine_status']!=='') ? (int)$_POST['vaccine_status'] : 1;
+        $job_nature=mysqli_real_escape_string($connection,isset($_POST['job_nature']) ? $_POST['job_nature'] : '');
+        $module_result=mysqli_real_escape_string($connection,isset($_POST['module_result']) ? $_POST['module_result'] : '');
+        $ct_raw=isset($_POST['counseling_timing']) ? trim((string)$_POST['counseling_timing']) : '';
+        $counseling_timing=($ct_raw!=='' && @strtotime($ct_raw)) ? date('Y-m-d H:i:s',strtotime($ct_raw)) : date('Y-m-d H:i:s');
+        $ce_raw=isset($_POST['counseling_end_timing']) ? trim((string)$_POST['counseling_end_timing']) : '';
+        $counseling_end_timing=($ce_raw!=='' && @strtotime($ce_raw)) ? date('Y-m-d H:i:s',strtotime($ce_raw)) : '';
         $pref_comment=isset($_POST['pref_comment']) ? mysqli_real_escape_string($connection,$_POST['pref_comment']) : '';
         $counselling_notes=isset($_POST['counselling_notes']) ? mysqli_real_escape_string($connection,$_POST['counselling_notes']) : '';
-        $eng_rate=$_POST['eng_rate'];
-        $mig_test=$_POST['mig_test'];
-        $overall_result=$_POST['overall_result'];
-        $course=$_POST['course'];
-        $university_name=$_POST['university_name'];
-        $enquiry_id=trim($_POST['enquiry_id']);
-        $qualification=$_POST['qualification'];
-        $counseling_type=$_POST['counseling_type'];
-        $member_name=$_POST['member_name'];
+        $eng_rate=mysqli_real_escape_string($connection,isset($_POST['eng_rate']) ? $_POST['eng_rate'] : '');
+        $mig_test=(isset($_POST['mig_test']) && $_POST['mig_test']!=='') ? (int)$_POST['mig_test'] : 1;
+        $overall_result=mysqli_real_escape_string($connection,isset($_POST['overall_result']) ? $_POST['overall_result'] : '');
+        $course=mysqli_real_escape_string($connection,isset($_POST['course']) ? $_POST['course'] : '');
+        $university_name=mysqli_real_escape_string($connection,isset($_POST['university_name']) ? $_POST['university_name'] : '');
+        $qualification=mysqli_real_escape_string($connection,isset($_POST['qualification']) ? $_POST['qualification'] : '');
+        $counseling_type=(isset($_POST['counseling_type']) && $_POST['counseling_type']!=='') ? (int)$_POST['counseling_type'] : 1;
+        $member_name=mysqli_real_escape_string($connection,isset($_POST['member_name']) ? $_POST['member_name'] : '');
         $preferred_intake_date=isset($_POST['preferred_intake_date']) && $_POST['preferred_intake_date']!='' ? date('Y-m-d',strtotime($_POST['preferred_intake_date'])) : '';
         $mode_of_study=isset($_POST['mode_of_study']) && $_POST['mode_of_study']!='' ? (int)$_POST['mode_of_study'] : null;
-        $aus_duration=$_POST['aus_duration'];
-        $visa_condition=$_POST['visa_condition'];
-        $education=$_POST['education'];
-        $aus_study=$_POST['aus_study'];
-        $work_status=$_POST['work_status'];
-        $checkId=$_POST['checkId'];       
+        $aus_duration=mysqli_real_escape_string($connection,isset($_POST['aus_duration']) ? $_POST['aus_duration'] : '');
+        $visa_condition=(isset($_POST['visa_condition']) && $_POST['visa_condition']!=='' && $_POST['visa_condition']!==null) ? (int)$_POST['visa_condition'] : 0;
+        $education=mysqli_real_escape_string($connection,isset($_POST['education']) ? $_POST['education'] : '');
+        $aus_study=(isset($_POST['aus_study']) && $_POST['aus_study']!=='') ? (int)$_POST['aus_study'] : 1;
+        $work_status=(isset($_POST['work_status']) && $_POST['work_status']!=='') ? (int)$_POST['work_status'] : 1;
 
         // Normalise enquiry_id: if a numeric st_id was posted instead of st_enquiry_id (e.g. EQ00033),
         // look up the proper st_enquiry_id so counseling_details always stores the canonical code.
@@ -1203,9 +1209,9 @@ if(@$_POST['formName']=='counseling_form'){
         }else{
             $remarks='';
         }
+        $remarks=mysqli_real_escape_string($connection,$remarks);
 
-        $admin_id=$_POST['admin_id'];
-
+        $enquiry_id_sql=mysqli_real_escape_string($connection,$enquiry_id);
 
     $do_insert = ($checkId == 0);
     if (!$do_insert) {
@@ -1219,7 +1225,7 @@ if(@$_POST['formName']=='counseling_form'){
     if ($do_insert) {
         $mode_of_study_sql = $mode_of_study !== null ? $mode_of_study : 'NULL';
         $preferred_intake_sql = $preferred_intake_date !== '' ? "'$preferred_intake_date'" : 'NULL';
-        $query=mysqli_query($connection,"INSERT INTO counseling_details(`st_enquiry_id`,`counsil_mem_name`,`counsil_preferred_intake_date`,`counsil_mode_of_study`,`counsil_vaccine_status`,`counsil_job_nature`,`counsil_module_result`,`counsil_timing`,`counsil_end_time`,`counsil_pref_comments`,`counsil_eng_rate`,`counsil_migration_test`,`counsil_overall_result`,`counsil_course`,`counsil_university`,`counsil_qualification`,`counsil_type`,`counsil_aus_stay_time`,`counsil_visa_condition`,`counsil_education`,`counsil_aus_study_status`,`counsil_work_status`,`counsil_remarks`,`counsil_notes`,`counsil_createdby`)VALUES('$enquiry_id','$member_name',$preferred_intake_sql,$mode_of_study_sql,$vaccine_status,'$job_nature','$module_result','$counseling_timing','$counseling_end_timing','$pref_comment','$eng_rate',$mig_test,'$overall_result','$course','$university_name','$qualification',$counseling_type,'$aus_duration',$visa_condition,'$education',$aus_study,$work_status,'$remarks','$counselling_notes',$admin_id)");
+        $query=mysqli_query($connection,"INSERT INTO counseling_details(`st_enquiry_id`,`counsil_mem_name`,`counsil_preferred_intake_date`,`counsil_mode_of_study`,`counsil_vaccine_status`,`counsil_job_nature`,`counsil_module_result`,`counsil_timing`,`counsil_end_time`,`counsil_pref_comments`,`counsil_eng_rate`,`counsil_migration_test`,`counsil_overall_result`,`counsil_course`,`counsil_university`,`counsil_qualification`,`counsil_type`,`counsil_aus_stay_time`,`counsil_visa_condition`,`counsil_education`,`counsil_aus_study_status`,`counsil_work_status`,`counsil_remarks`,`counsil_notes`,`counsil_createdby`)VALUES('$enquiry_id_sql','$member_name',$preferred_intake_sql,$mode_of_study_sql,$vaccine_status,'$job_nature','$module_result','$counseling_timing','$counseling_end_timing','$pref_comment','$eng_rate',$mig_test,'$overall_result','$course','$university_name','$qualification',$counseling_type,'$aus_duration',$visa_condition,'$education',$aus_study,$work_status,'$remarks','$counselling_notes',$admin_id)");
         $lastId=mysqli_insert_id($connection);
         if($lastId!=''){
             echo "1";

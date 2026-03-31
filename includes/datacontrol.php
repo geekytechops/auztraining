@@ -2001,21 +2001,238 @@ online on Friday by 3 PM and be there for 2 hours with the video on. \n\n $orien
 //     }
 // }
 
-if(@$_POST['formName']=='login'){
-$email=$_POST['email'];
-$password=$_POST['password'];
-$query=mysqli_query($connection,"SELECT user_id,user_type,user_name,user_log_id FROM users WHERE user_email='$email' AND user_password='$password'");
-$error=mysqli_error($connection);
-$id=mysqli_fetch_array($query);
-if($id['user_id']=='' || $id['user_id']=='undefined'){
-    echo "1|invalid";
-}else{
-    $_SESSION['user_id']=$id['user_id'];
-    $_SESSION['user_type']=$id['user_type'];
-    $_SESSION['user_name']=$id['user_name'];
-    $_SESSION['user_log_id']=$id['user_log_id'];
-    echo "0|".$id['user_type'];
+if(!function_exists('auth_send_login_otp')){
+    function auth_send_login_otp($to, $otp, $label){
+        if(!function_exists('send_mail')){
+            require_once(__DIR__ . '/mail_function.php');
+        }
+        $subject = 'Your Login OTP - National College Australia';
+        $body = '<div style="font-family:Segoe UI,Arial,sans-serif;max-width:560px;margin:auto;">'
+              . '<h3 style="margin:0 0 12px;">Login verification</h3>'
+              . '<p style="margin:0 0 10px;">Use this OTP to continue your ' . htmlspecialchars($label) . ' login.</p>'
+              . '<p style="font-size:26px;letter-spacing:3px;font-weight:700;margin:12px 0;">' . htmlspecialchars($otp) . '</p>'
+              . '<p style="margin:0;color:#666;">This OTP is valid for 10 minutes.</p>'
+              . '<p style="margin-top:14px;color:#666;">If this was not you, please ignore this email.</p>'
+              . '</div>';
+        send_mail($to, $subject, $body);
+    }
 }
+
+if(!function_exists('auth_login_otp_client_ip')){
+    function auth_login_otp_client_ip(){
+        if(!empty($_SERVER['HTTP_X_FORWARDED_FOR'])){
+            $parts = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+            $p = trim($parts[0]);
+            if($p !== '') return substr($p, 0, 45);
+        }
+        return substr((string)($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45);
+    }
+}
+
+if(!function_exists('auth_login_otp_user_agent')){
+    function auth_login_otp_user_agent(){
+        return substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 512);
+    }
+}
+
+if(!function_exists('auth_login_otp_ensure_table')){
+    function auth_login_otp_ensure_table($connection){
+        static $ok = null;
+        if($ok !== null) return $ok;
+        $sql = "CREATE TABLE IF NOT EXISTS `login_otp_challenges` (
+          `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+          `channel` enum('admin','student') NOT NULL,
+          `email` varchar(255) NOT NULL,
+          `user_pk` bigint(20) UNSIGNED NOT NULL,
+          `otp_code` varchar(10) NOT NULL COMMENT 'plain OTP (testing)',
+          `session_bind` char(64) NOT NULL,
+          `expires_at` datetime NOT NULL,
+          `is_used` tinyint(3) UNSIGNED NOT NULL DEFAULT 0,
+          `verified_at` datetime DEFAULT NULL,
+          `verify_attempts` int(10) UNSIGNED NOT NULL DEFAULT 0,
+          `max_verify_attempts` tinyint(3) UNSIGNED NOT NULL DEFAULT 5,
+          `ip_request` varchar(45) DEFAULT NULL,
+          `ip_last_verify` varchar(45) DEFAULT NULL,
+          `user_agent` varchar(512) DEFAULT NULL,
+          `created_at` datetime NOT NULL,
+          PRIMARY KEY (`id`),
+          UNIQUE KEY `session_bind` (`session_bind`),
+          KEY `idx_channel_email_active` (`channel`,`email`,`is_used`,`expires_at`),
+          KEY `idx_expires` (`expires_at`),
+          KEY `idx_created` (`created_at`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+        $ok = (bool)mysqli_query($connection, $sql);
+        if($ok){
+            static $migrated = false;
+            if(!$migrated){
+                $migrated = true;
+                $chk = @mysqli_query($connection, "SHOW COLUMNS FROM `login_otp_challenges` LIKE 'otp_hash'");
+                if($chk && mysqli_num_rows($chk) > 0){
+                    @mysqli_query($connection, "ALTER TABLE `login_otp_challenges` CHANGE COLUMN `otp_hash` `otp_code` varchar(10) NOT NULL COMMENT 'plain OTP (testing)'");
+                }
+            }
+        }
+        return $ok;
+    }
+}
+
+if(!function_exists('auth_login_otp_normalize_email')){
+    function auth_login_otp_normalize_email($email){
+        return strtolower(trim((string)$email));
+    }
+}
+
+if(!function_exists('auth_login_otp_rate_ok')){
+    function auth_login_otp_rate_ok($connection, $channel, $email_esc, $max_per_hour){
+        $ch = mysqli_real_escape_string($connection, $channel);
+        $q = mysqli_query($connection, "SELECT COUNT(*) AS c FROM login_otp_challenges WHERE channel='$ch' AND email='$email_esc' AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)");
+        if(!$q) return true;
+        $r = mysqli_fetch_assoc($q);
+        return (int)($r['c'] ?? 0) < $max_per_hour;
+    }
+}
+
+if(!function_exists('auth_login_otp_revoke_active')){
+    function auth_login_otp_revoke_active($connection, $channel, $email_esc){
+        $ch = mysqli_real_escape_string($connection, $channel);
+        mysqli_query($connection, "UPDATE login_otp_challenges SET is_used=2 WHERE channel='$ch' AND email='$email_esc' AND is_used=0");
+    }
+}
+
+if(!defined('AUTH_LOGIN_OTP_TTL_SECONDS')){
+    define('AUTH_LOGIN_OTP_TTL_SECONDS', 600);
+}
+if(!defined('AUTH_LOGIN_OTP_MAX_PER_EMAIL_HOUR')){
+    define('AUTH_LOGIN_OTP_MAX_PER_EMAIL_HOUR', 12);
+}
+
+if(@$_POST['formName']=='login_request_otp'){
+    if(!auth_login_otp_ensure_table($connection)){
+        echo json_encode(array('success'=>false,'message'=>'Login verification is temporarily unavailable.'));
+        exit;
+    }
+    $email_raw = auth_login_otp_normalize_email($_POST['email'] ?? '');
+    $email_esc = mysqli_real_escape_string($connection, $email_raw);
+    $password = trim($_POST['password'] ?? '');
+    if($email_raw === '' || $password === ''){
+        echo json_encode(array('success'=>false,'message'=>'Email and password are required.'));
+        exit;
+    }
+    if(!auth_login_otp_rate_ok($connection, 'admin', $email_esc, AUTH_LOGIN_OTP_MAX_PER_EMAIL_HOUR)){
+        echo json_encode(array('success'=>false,'message'=>'Too many verification codes requested. Try again in an hour.'));
+        exit;
+    }
+    $query = mysqli_query($connection,"SELECT user_id,user_type,user_name,user_log_id,user_email FROM users WHERE LOWER(TRIM(user_email))='$email_esc' AND user_password='".mysqli_real_escape_string($connection, $password)."' LIMIT 1");
+    $id = ($query && mysqli_num_rows($query) > 0) ? mysqli_fetch_assoc($query) : null;
+    if(!$id){
+        echo json_encode(array('success'=>false,'message'=>'Invalid email or password.'));
+        exit;
+    }
+    $otp = (string)random_int(100000, 999999);
+    $otp_esc = mysqli_real_escape_string($connection, $otp);
+    $session_bind = bin2hex(random_bytes(32));
+    $bind_esc = mysqli_real_escape_string($connection, $session_bind);
+    $expires_at = date('Y-m-d H:i:s', time() + AUTH_LOGIN_OTP_TTL_SECONDS);
+    $expires_esc = mysqli_real_escape_string($connection, $expires_at);
+    $user_pk = (int)$id['user_id'];
+    $ip_esc = mysqli_real_escape_string($connection, auth_login_otp_client_ip());
+    $ua_esc = mysqli_real_escape_string($connection, auth_login_otp_user_agent());
+    auth_login_otp_revoke_active($connection, 'admin', $email_esc);
+    $ins = mysqli_query($connection, "INSERT INTO login_otp_challenges (channel,email,user_pk,otp_code,session_bind,expires_at,is_used,verify_attempts,max_verify_attempts,ip_request,user_agent,created_at) VALUES ('admin','$email_esc',$user_pk,'$otp_esc','$bind_esc','$expires_esc',0,0,5,'$ip_esc','$ua_esc',NOW())");
+    if(!$ins){
+        echo json_encode(array('success'=>false,'message'=>'Unable to start login verification. Please try again.'));
+        exit;
+    }
+    $otp_row_id = (int)mysqli_insert_id($connection);
+    try{
+        auth_send_login_otp($id['user_email'], $otp, 'staff/admin');
+    }catch(Throwable $e){
+        if($otp_row_id > 0){
+            mysqli_query($connection, "UPDATE login_otp_challenges SET is_used=2 WHERE id=$otp_row_id");
+        }
+        echo json_encode(array('success'=>false,'message'=>'Unable to send OTP email right now. Please try again.'));
+        exit;
+    }
+    unset($_SESSION['login_otp_admin'], $_SESSION['login_otp_student'], $_SESSION['login_otp_bind']);
+    $_SESSION['login_otp_pending'] = array('bind' => $session_bind, 'channel' => 'admin');
+    $masked = preg_replace('/(^.).*(@.*$)/', '$1***$2', (string)$id['user_email']);
+    echo json_encode(array('success'=>true,'message'=>'OTP sent to ' . $masked));
+    exit;
+}
+
+if(@$_POST['formName']=='login_verify_otp'){
+    if(!auth_login_otp_ensure_table($connection)){
+        echo json_encode(array('success'=>false,'message'=>'Login verification is temporarily unavailable.'));
+        exit;
+    }
+    $otp = trim($_POST['otp'] ?? '');
+    if($otp === ''){
+        echo json_encode(array('success'=>false,'message'=>'Please enter OTP.'));
+        exit;
+    }
+    $pend = $_SESSION['login_otp_pending'] ?? null;
+    $bind = is_array($pend) ? ($pend['bind'] ?? '') : '';
+    $ch = is_array($pend) ? ($pend['channel'] ?? '') : '';
+    if($bind === '' || $ch !== 'admin'){
+        echo json_encode(array('success'=>false,'message'=>'Verification session expired. Please log in again.'));
+        exit;
+    }
+    $bind_esc = mysqli_real_escape_string($connection, $bind);
+    $rq = mysqli_query($connection, "SELECT * FROM login_otp_challenges WHERE session_bind='$bind_esc' AND channel='admin' AND is_used=0 LIMIT 1");
+    $row = ($rq && mysqli_num_rows($rq) > 0) ? mysqli_fetch_assoc($rq) : null;
+    if(!$row){
+        unset($_SESSION['login_otp_pending']);
+        echo json_encode(array('success'=>false,'message'=>'Invalid or expired verification. Please log in again.'));
+        exit;
+    }
+    $rid = (int)$row['id'];
+    if(strtotime($row['expires_at']) < time()){
+        mysqli_query($connection, "UPDATE login_otp_challenges SET is_used=4 WHERE id=$rid");
+        unset($_SESSION['login_otp_pending']);
+        echo json_encode(array('success'=>false,'message'=>'OTP expired. Please log in again.'));
+        exit;
+    }
+    if((int)$row['verify_attempts'] >= (int)$row['max_verify_attempts']){
+        mysqli_query($connection, "UPDATE login_otp_challenges SET is_used=3 WHERE id=$rid");
+        unset($_SESSION['login_otp_pending']);
+        echo json_encode(array('success'=>false,'message'=>'Too many invalid attempts. Please log in again.'));
+        exit;
+    }
+    $want = trim((string)$row['otp_code']);
+    $got = trim($otp);
+    if(strlen($want) !== 6 || strlen($got) !== 6 || !hash_equals($want, $got)){
+        $attempts = (int)$row['verify_attempts'] + 1;
+        $max = (int)$row['max_verify_attempts'];
+        $ip_esc = mysqli_real_escape_string($connection, auth_login_otp_client_ip());
+        mysqli_query($connection, "UPDATE login_otp_challenges SET verify_attempts=$attempts, ip_last_verify='$ip_esc' WHERE id=$rid");
+        if($attempts >= $max){
+            mysqli_query($connection, "UPDATE login_otp_challenges SET is_used=3 WHERE id=$rid");
+            unset($_SESSION['login_otp_pending']);
+            echo json_encode(array('success'=>false,'message'=>'Too many invalid attempts. Please log in again.'));
+            exit;
+        }
+        $left = $max - $attempts;
+        echo json_encode(array('success'=>false,'message'=>'Invalid OTP. ' . $left . ' attempt' . ($left === 1 ? '' : 's') . ' left.'));
+        exit;
+    }
+    mysqli_query($connection, "UPDATE login_otp_challenges SET is_used=1, verified_at=NOW(), ip_last_verify='".mysqli_real_escape_string($connection, auth_login_otp_client_ip())."' WHERE id=$rid");
+    $email_row_esc = mysqli_real_escape_string($connection, $row['email']);
+    mysqli_query($connection, "UPDATE login_otp_challenges SET is_used=2 WHERE channel='admin' AND email='$email_row_esc' AND is_used=0 AND id<>$rid");
+    $uid = (int)$row['user_pk'];
+    $uq = mysqli_query($connection, "SELECT user_id,user_type,user_name,user_log_id FROM users WHERE user_id=$uid LIMIT 1");
+    $u = ($uq && mysqli_num_rows($uq) > 0) ? mysqli_fetch_assoc($uq) : null;
+    if(!$u){
+        unset($_SESSION['login_otp_pending']);
+        echo json_encode(array('success'=>false,'message'=>'Account not found. Please contact support.'));
+        exit;
+    }
+    $_SESSION['user_id'] = (int)$u['user_id'];
+    $_SESSION['user_type'] = (int)$u['user_type'];
+    $_SESSION['user_name'] = $u['user_name'];
+    $_SESSION['user_log_id'] = $u['user_log_id'];
+    unset($_SESSION['login_otp_pending'], $_SESSION['login_otp_admin'], $_SESSION['login_otp_student'], $_SESSION['login_otp_bind']);
+    echo json_encode(array('success'=>true,'user_type'=>(int)$_SESSION['user_type']));
+    exit;
 }
 
 // Student portal: register (link enquiry by email)
@@ -2059,31 +2276,140 @@ if(@$_POST['formName']=='student_register'){
 }
 
 // Student login (student_login.php): students only from student_users. user_type=0 = staff (admin login).
-if(@$_POST['formName']=='student_login'){
-    $email = mysqli_real_escape_string($connection, trim($_POST['email'] ?? ''));
+if(@$_POST['formName']=='student_login_request_otp'){
+    if(!auth_login_otp_ensure_table($connection)){
+        echo json_encode(array('success'=>false,'message'=>'Login verification is temporarily unavailable.'));
+        exit;
+    }
+    $email_raw = auth_login_otp_normalize_email($_POST['email'] ?? '');
+    $email_esc = mysqli_real_escape_string($connection, $email_raw);
     $password = $_POST['password'] ?? '';
-    if($email === '' || $password === ''){
+    if($email_raw === '' || $password === ''){
         echo json_encode(array('success' => false, 'message' => 'Email and password required.'));
         exit;
     }
-    $q = mysqli_query($connection, "SELECT id, full_name, password_hash, email FROM student_users WHERE email='$email' AND status=1");
+    if(!auth_login_otp_rate_ok($connection, 'student', $email_esc, AUTH_LOGIN_OTP_MAX_PER_EMAIL_HOUR)){
+        echo json_encode(array('success'=>false,'message'=>'Too many verification codes requested. Try again in an hour.'));
+        exit;
+    }
+    $q = mysqli_query($connection, "SELECT id, full_name, password_hash, email FROM student_users WHERE LOWER(TRIM(email))='$email_esc' AND status=1 LIMIT 1");
     if($q && mysqli_num_rows($q) > 0){
         $row = mysqli_fetch_assoc($q);
         if(!password_verify($password, $row['password_hash'])){
             echo json_encode(array('success' => false, 'message' => 'Invalid email or password.'));
             exit;
         }
-        $_SESSION['user_id'] = $row['id'];
-        $_SESSION['user_type'] = 'student';
-        $_SESSION['user_name'] = $row['full_name'];
-        $_SESSION['student_email'] = $row['email'];
-        $em = mysqli_real_escape_string($connection, $row['email']);
-        $eq = mysqli_query($connection, "SELECT st_id FROM student_enquiry WHERE st_email='$em' AND st_enquiry_status!=1 ORDER BY st_id DESC LIMIT 1");
-        $_SESSION['student_eq_id'] = ($eq && mysqli_num_rows($eq) > 0) ? (int)mysqli_fetch_assoc($eq)['st_id'] : 0;
-        echo json_encode(array('success' => true, 'redirect' => 'student_enquiry_form.php'));
+        $otp = (string)random_int(100000, 999999);
+        $otp_esc = mysqli_real_escape_string($connection, $otp);
+        $session_bind = bin2hex(random_bytes(32));
+        $bind_esc = mysqli_real_escape_string($connection, $session_bind);
+        $expires_at = date('Y-m-d H:i:s', time() + AUTH_LOGIN_OTP_TTL_SECONDS);
+        $expires_esc = mysqli_real_escape_string($connection, $expires_at);
+        $user_pk = (int)$row['id'];
+        $stu_email_esc = mysqli_real_escape_string($connection, auth_login_otp_normalize_email($row['email']));
+        $ip_esc = mysqli_real_escape_string($connection, auth_login_otp_client_ip());
+        $ua_esc = mysqli_real_escape_string($connection, auth_login_otp_user_agent());
+        auth_login_otp_revoke_active($connection, 'student', $stu_email_esc);
+        $ins = mysqli_query($connection, "INSERT INTO login_otp_challenges (channel,email,user_pk,otp_code,session_bind,expires_at,is_used,verify_attempts,max_verify_attempts,ip_request,user_agent,created_at) VALUES ('student','$stu_email_esc',$user_pk,'$otp_esc','$bind_esc','$expires_esc',0,0,5,'$ip_esc','$ua_esc',NOW())");
+        if(!$ins){
+            echo json_encode(array('success'=>false,'message'=>'Unable to start login verification. Please try again.'));
+            exit;
+        }
+        $otp_row_id = (int)mysqli_insert_id($connection);
+        try{
+            auth_send_login_otp($row['email'], $otp, 'student');
+        }catch(Throwable $e){
+            if($otp_row_id > 0){
+                mysqli_query($connection, "UPDATE login_otp_challenges SET is_used=2 WHERE id=$otp_row_id");
+            }
+            echo json_encode(array('success'=>false,'message'=>'Unable to send OTP email right now. Please try again.'));
+            exit;
+        }
+        unset($_SESSION['login_otp_admin'], $_SESSION['login_otp_student'], $_SESSION['login_otp_bind']);
+        $_SESSION['login_otp_pending'] = array('bind' => $session_bind, 'channel' => 'student');
+        $masked = preg_replace('/(^.).*(@.*$)/', '$1***$2', (string)$row['email']);
+        echo json_encode(array('success' => true, 'message' => 'OTP sent to ' . $masked));
         exit;
     }
     echo json_encode(array('success' => false, 'message' => 'Invalid email or password.'));
+    exit;
+}
+
+if(@$_POST['formName']=='student_login_verify_otp'){
+    if(!auth_login_otp_ensure_table($connection)){
+        echo json_encode(array('success'=>false,'message'=>'Login verification is temporarily unavailable.'));
+        exit;
+    }
+    $otp = trim($_POST['otp'] ?? '');
+    if($otp === ''){
+        echo json_encode(array('success'=>false,'message'=>'Please enter OTP.'));
+        exit;
+    }
+    $pend = $_SESSION['login_otp_pending'] ?? null;
+    $bind = is_array($pend) ? ($pend['bind'] ?? '') : '';
+    $ch = is_array($pend) ? ($pend['channel'] ?? '') : '';
+    if($bind === '' || $ch !== 'student'){
+        echo json_encode(array('success'=>false,'message'=>'Verification session expired. Please log in again.'));
+        exit;
+    }
+    $bind_esc = mysqli_real_escape_string($connection, $bind);
+    $rq = mysqli_query($connection, "SELECT * FROM login_otp_challenges WHERE session_bind='$bind_esc' AND channel='student' AND is_used=0 LIMIT 1");
+    $row = ($rq && mysqli_num_rows($rq) > 0) ? mysqli_fetch_assoc($rq) : null;
+    if(!$row){
+        unset($_SESSION['login_otp_pending']);
+        echo json_encode(array('success'=>false,'message'=>'Invalid or expired verification. Please log in again.'));
+        exit;
+    }
+    $rid = (int)$row['id'];
+    if(strtotime($row['expires_at']) < time()){
+        mysqli_query($connection, "UPDATE login_otp_challenges SET is_used=4 WHERE id=$rid");
+        unset($_SESSION['login_otp_pending']);
+        echo json_encode(array('success'=>false,'message'=>'OTP expired. Please log in again.'));
+        exit;
+    }
+    if((int)$row['verify_attempts'] >= (int)$row['max_verify_attempts']){
+        mysqli_query($connection, "UPDATE login_otp_challenges SET is_used=3 WHERE id=$rid");
+        unset($_SESSION['login_otp_pending']);
+        echo json_encode(array('success'=>false,'message'=>'Too many invalid attempts. Please log in again.'));
+        exit;
+    }
+    $want = trim((string)$row['otp_code']);
+    $got = trim($otp);
+    if(strlen($want) !== 6 || strlen($got) !== 6 || !hash_equals($want, $got)){
+        $attempts = (int)$row['verify_attempts'] + 1;
+        $max = (int)$row['max_verify_attempts'];
+        $ip_esc = mysqli_real_escape_string($connection, auth_login_otp_client_ip());
+        mysqli_query($connection, "UPDATE login_otp_challenges SET verify_attempts=$attempts, ip_last_verify='$ip_esc' WHERE id=$rid");
+        if($attempts >= $max){
+            mysqli_query($connection, "UPDATE login_otp_challenges SET is_used=3 WHERE id=$rid");
+            unset($_SESSION['login_otp_pending']);
+            echo json_encode(array('success'=>false,'message'=>'Too many invalid attempts. Please log in again.'));
+            exit;
+        }
+        $left = $max - $attempts;
+        echo json_encode(array('success'=>false,'message'=>'Invalid OTP. ' . $left . ' attempt' . ($left === 1 ? '' : 's') . ' left.'));
+        exit;
+    }
+    mysqli_query($connection, "UPDATE login_otp_challenges SET is_used=1, verified_at=NOW(), ip_last_verify='".mysqli_real_escape_string($connection, auth_login_otp_client_ip())."' WHERE id=$rid");
+    $email_row_esc = mysqli_real_escape_string($connection, $row['email']);
+    mysqli_query($connection, "UPDATE login_otp_challenges SET is_used=2 WHERE channel='student' AND email='$email_row_esc' AND is_used=0 AND id<>$rid");
+    $sid = (int)$row['user_pk'];
+    $sq = mysqli_query($connection, "SELECT id, full_name, email FROM student_users WHERE id=$sid AND status=1 LIMIT 1");
+    $srow = ($sq && mysqli_num_rows($sq) > 0) ? mysqli_fetch_assoc($sq) : null;
+    if(!$srow){
+        unset($_SESSION['login_otp_pending']);
+        echo json_encode(array('success'=>false,'message'=>'Account not found. Please contact support.'));
+        exit;
+    }
+    $_SESSION['user_id'] = (int)$srow['id'];
+    $_SESSION['user_type'] = 'student';
+    $_SESSION['user_name'] = $srow['full_name'];
+    $_SESSION['student_email'] = $srow['email'];
+    $em = mysqli_real_escape_string($connection, $srow['email']);
+    $eq = mysqli_query($connection, "SELECT st_id FROM student_enquiry WHERE st_email='$em' AND st_enquiry_status!=1 ORDER BY st_id DESC LIMIT 1");
+    $_SESSION['student_eq_id'] = ($eq && mysqli_num_rows($eq) > 0) ? (int)mysqli_fetch_assoc($eq)['st_id'] : 0;
+    unset($_SESSION['login_otp_pending'], $_SESSION['login_otp_admin'], $_SESSION['login_otp_student'], $_SESSION['login_otp_bind']);
+    echo json_encode(array('success'=>true,'redirect'=>'student_enquiry_form.php'));
     exit;
 }
 

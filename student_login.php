@@ -50,9 +50,18 @@ $asset_base = 'crm/html/template/assets';
                                         </div>
                                         <div class="invalid-feedback d-block" id="pass_err" style="display:none !important;">Please enter your password.</div>
                                     </div>
+                                    <div class="mb-3" id="otp_wrap" style="display:none;">
+                                        <label class="form-label">OTP</label>
+                                        <div class="input-group input-group-flat">
+                                            <input type="text" class="form-control" id="login_otp" name="login_otp" placeholder="Enter 6-digit OTP" maxlength="6">
+                                            <span class="input-group-text"><i class="ti ti-shield-lock"></i></span>
+                                        </div>
+                                        <div class="invalid-feedback d-block" id="otp_err" style="display:none !important;">Please enter valid OTP.</div>
+                                    </div>
                                     <div class="alert alert-danger py-2 mb-3" id="form_error" style="display:none;"></div>
+                                    <div id="login_sending_wrap" class="text-center text-muted small mb-2" style="display:none;"><span class="spinner-border spinner-border-sm align-middle me-2" role="status" aria-hidden="true"></span>Sending OTP to your email…</div>
                                     <div class="mb-3">
-                                        <button type="submit" class="btn btn-primary w-100">Sign In</button>
+                                        <button type="submit" id="login_btn" class="btn btn-primary w-100">Submit</button>
                                     </div>
                                     <div class="mb-3">
                                         <p class="mb-0">New on our platform? <a href="student_register.php" class="link-indigo fw-bold link-hover">Create an account</a></p>
@@ -73,27 +82,80 @@ $asset_base = 'crm/html/template/assets';
     <script src="<?php echo $asset_base; ?>/js/bootstrap.bundle.min.js"></script>
     <script src="<?php echo $asset_base; ?>/js/script.js"></script>
     <script>
+    var studentOtpStep = false;
+    var studentOtpSending = false;
+    function studentLoginRefreshButton(){
+        var btn = document.getElementById('login_btn');
+        if(studentOtpSending){
+            btn.disabled = true;
+            btn.textContent = 'Sending…';
+            return;
+        }
+        btn.disabled = false;
+        btn.textContent = 'Submit';
+    }
     document.getElementById('login_form').addEventListener('submit', function(e){
         e.preventDefault();
+        if(studentOtpSending) return;
         var email = document.getElementById('email').value.trim();
         var password = document.getElementById('password').value;
+        var otp = document.getElementById('login_otp').value.trim();
         var errEl = document.getElementById('form_error');
+        var sendingWrap = document.getElementById('login_sending_wrap');
         errEl.style.display = 'none';
         document.getElementById('email_err').style.setProperty('display','none','important');
         document.getElementById('pass_err').style.setProperty('display','none','important');
-        if(!email){ document.getElementById('email_err').style.setProperty('display','block','important'); return; }
-        if(!password){ document.getElementById('pass_err').style.setProperty('display','block','important'); return; }
+        document.getElementById('otp_err').style.setProperty('display','none','important');
         var fd = new FormData();
-        fd.append('formName', 'student_login');
-        fd.append('email', email);
-        fd.append('password', password);
-        fetch('includes/datacontrol.php', { method: 'POST', body: fd })
-            .then(function(r){ return r.json(); })
-            .then(function(data){
-                if(data.success && data.redirect){ window.location.href = data.redirect; }
-                else { errEl.textContent = data.message || 'Invalid email or password.'; errEl.style.display = 'block'; }
-            })
-            .catch(function(){ errEl.textContent = 'Network error. Please try again.'; errEl.style.display = 'block'; });
+        if(!studentOtpStep){
+            if(!email){ document.getElementById('email_err').style.setProperty('display','block','important'); return; }
+            if(!password){ document.getElementById('pass_err').style.setProperty('display','block','important'); return; }
+            fd.append('formName', 'student_login_request_otp');
+            fd.append('email', email);
+            fd.append('password', password);
+            studentOtpSending = true;
+            sendingWrap.style.display = 'block';
+            studentLoginRefreshButton();
+            fetch('includes/datacontrol.php', { method: 'POST', body: fd })
+                .then(function(r){ return r.json(); })
+                .then(function(data){
+                    if(data.success){
+                        studentOtpStep = true;
+                        document.getElementById('otp_wrap').style.display = 'block';
+                        document.getElementById('email').readOnly = true;
+                        document.getElementById('password').readOnly = true;
+                        errEl.classList.remove('alert-danger');
+                        errEl.classList.add('alert-info');
+                        errEl.textContent = data.message || 'OTP sent to your email.';
+                        errEl.style.display = 'block';
+                    } else {
+                        errEl.classList.remove('alert-info');
+                        errEl.classList.add('alert-danger');
+                        errEl.textContent = data.message || 'Invalid email or password.';
+                        errEl.style.display = 'block';
+                    }
+                })
+                .catch(function(){ errEl.classList.remove('alert-info'); errEl.classList.add('alert-danger'); errEl.textContent = 'Network error. Please try again.'; errEl.style.display = 'block'; })
+                .finally(function(){
+                    studentOtpSending = false;
+                    sendingWrap.style.display = 'none';
+                    studentLoginRefreshButton();
+                });
+        }else{
+            if(!/^\d{6}$/.test(otp)){
+                document.getElementById('otp_err').style.setProperty('display','block','important');
+                return;
+            }
+            fd.append('formName', 'student_login_verify_otp');
+            fd.append('otp', otp);
+            fetch('includes/datacontrol.php', { method: 'POST', body: fd })
+                .then(function(r){ return r.json(); })
+                .then(function(data){
+                    if(data.success && data.redirect){ window.location.href = data.redirect; }
+                    else { errEl.classList.remove('alert-info'); errEl.classList.add('alert-danger'); errEl.textContent = data.message || 'Invalid OTP.'; errEl.style.display = 'block'; }
+                })
+                .catch(function(){ errEl.classList.remove('alert-info'); errEl.classList.add('alert-danger'); errEl.textContent = 'Network error. Please try again.'; errEl.style.display = 'block'; });
+        }
     });
     </script>
 </body>

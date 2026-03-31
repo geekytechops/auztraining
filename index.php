@@ -60,6 +60,11 @@ if(@$_SESSION['user_id']!=''){
                                                             Please enter the Password
                                                     </div>
                                                 </div>
+                                                <div class="mb-4" id="otp_wrap" style="display:none;">
+                                                    <label class="form-label" for="login_otp">OTP</label>
+                                                    <input type="text" class="form-control" id="login_otp" maxlength="6" placeholder="Enter 6-digit OTP">
+                                                    <div class="error-feedback">Please enter valid OTP.</div>
+                                                </div>
 
                                                 <div class="row">
                                                     <!-- <div class="col">
@@ -78,7 +83,8 @@ if(@$_SESSION['user_id']!=''){
                                                 <div class="error-feedback" style="font-size:14px;text-align:center;" id="login_error">
                                                             Please enter proper Credentials
                                                 </div>
-                                                    <button class="btn btn-primary waves-effect waves-light" id="login" type="button">Log In</button>
+                                                    <div id="login_sending_wrap" class="text-center text-muted small mb-2" style="display:none;"><span class="spinner-border spinner-border-sm align-middle me-2" role="status" aria-hidden="true"></span>Sending OTP to your email…</div>
+                                                    <button class="btn btn-primary waves-effect waves-light" id="login" type="button">Submit</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -100,10 +106,29 @@ if(@$_SESSION['user_id']!=''){
         <?php include('includes/footer_includes.php'); ?>
 
         <script>
+            var loginOtpStep = false;
+            var loginOtpSending = false;
+            function adminLoginRefreshButton(){
+                var $b = $('#login');
+                if(loginOtpSending){
+                    $b.prop('disabled', true).text('Sending…');
+                    return;
+                }
+                $b.prop('disabled', false);
+                $b.text('Submit');
+            }
+            function adminLoginSetError(msg){
+                if(msg){
+                    $('#login_error').text(msg).show();
+                }else{
+                    $('#login_error').hide();
+                }
+            }
             $(document).on("click","#login",function(){
                 var email=$('#email').val().trim();
                 var password=$('#password').val().trim();
-                if(email==''||password==''){
+                var otp=$('#login_otp').val().trim();
+                if(!loginOtpStep && (email==''||password=='')){
                     if(email==''){
                         $('#email').addClass('invalid-div');
                         $('#email').removeClass('valid-div');
@@ -123,29 +148,65 @@ if(@$_SESSION['user_id']!=''){
                         $('#password').closest('div').find('.error-feedback').hide();
                     }
                 }
-            else{
-                details={formName:'login',email:email,password:password};
-                $.ajax({
+                else if(!loginOtpStep){
+                    details={formName:'login_request_otp',email:email,password:password};
+                    loginOtpSending = true;
+                    $('#login_sending_wrap').show();
+                    adminLoginRefreshButton();
+                    adminLoginSetError('');
+                    $.ajax({
                         type:'post',
                         url:'includes/datacontrol.php',
                         data:details,
+                        dataType:'json',
                         success:function(data){
-                            if(data.split('|')[0]==0){
-                                var ut = data.split('|')[1];
-                                if(ut==1 || ut==2){
+                            if(data && data.success){
+                                loginOtpStep = true;
+                                $('#otp_wrap').show();
+                                $('#email,#password').prop('readonly',true);
+                                adminLoginSetError(data.message || 'OTP sent to your email.');
+                            }else{
+                                adminLoginSetError((data && data.message) ? data.message : 'Invalid email or password.');
+                            }
+                        },
+                        error:function(){
+                            adminLoginSetError('Unable to process login now.');
+                        },
+                        complete:function(){
+                            loginOtpSending = false;
+                            $('#login_sending_wrap').hide();
+                            adminLoginRefreshButton();
+                        }
+                    });
+                }else{
+                    if(!/^\d{6}$/.test(otp)){
+                        $('#login_otp').addClass('invalid-div');
+                        $('#login_otp').closest('div').find('.error-feedback').show();
+                        return;
+                    }
+                    details={formName:'login_verify_otp',otp:otp};
+                    $.ajax({
+                        type:'post',
+                        url:'includes/datacontrol.php',
+                        data:details,
+                        dataType:'json',
+                        success:function(data){
+                            if(data && data.success){
+                                var ut = parseInt(data.user_type,10);
+                                if(ut===1 || ut===2){
                                     window.location.href="dashboard.php";
                                 }else{
                                     window.location.href="student_docs.php";
                                 }
-                                document.getElementById('login_form').reset();
-                                $('#login_error').hide();
                             }else{
-                                $('#login_error').show();
+                                adminLoginSetError((data && data.message) ? data.message : 'Invalid OTP.');
                             }
+                        },
+                        error:function(){
+                            adminLoginSetError('Unable to verify OTP now.');
                         }
-                    })
-
-            }
+                    });
+                }
             })
         </script>
     </body>

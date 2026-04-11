@@ -122,7 +122,22 @@
                     }else if(value==2){
                         $('#student_name_wrap').show();
                     }
-                })
+                });
+                function toggleEnquirySourceStaffField(){
+                    var v = parseInt($('#enquiry_source').val(), 10) || 0;
+                    if (v === 4 || v === 5 || v === 6) {
+                        $('#enquiry_source_staff_wrap').show();
+                    } else {
+                        $('#enquiry_source_staff_wrap').hide();
+                        $('#enquiry_source_staff_error').hide();
+                    }
+                }
+                $('#enquiry_source').on('change', toggleEnquirySourceStaffField);
+                $('#enquiry_source_responsible_staff').on('change', function(){
+                    $('#enquiry_source_staff_error').hide();
+                    $(this).removeClass('invalid-div');
+                });
+                toggleEnquirySourceStaffField();
             })
 
             $(document).on('click','#enquiry_form',async() =>{
@@ -139,6 +154,11 @@
                 var visit_before=$('#visit_before').val()==0 ? '' :$('#visit_before').val();
                 var hear_about='';
                 var hearedby='';
+                var esSrc = parseInt($('#enquiry_source').val(), 10) || 0;
+                if (esSrc === 4 || esSrc === 5 || esSrc === 6) {
+                    hearedby = ($('#enquiry_source_responsible_staff').val() || '').trim();
+                }
+                var staffSourceInvalid = (esSrc === 4 || esSrc === 5 || esSrc === 6) && hearedby === '';
                 var plan_to_start_date=$('#plan_to_start_date').val();
                 var refer_select=$('#refer_select').val();
                 var referer_name=$('#referer_name').val();
@@ -205,7 +225,7 @@
                     var phoneChecks=0;
                 }
 
-                if(studentName==''|| phoneChecks==1 ||emailAddress==''|| (emailAddress!='' && !emailAddress.match(emailregexp)==true ) ||courses.length==0|| enquiryDate=='' || refer_select_error==0 || surname=='' || enquiryFor==''|| postCode=='' || visit_before=='' || memberName=='' || visaNoteStatus==1 ){
+                if(studentName==''|| phoneChecks==1 ||emailAddress==''|| (emailAddress!='' && !emailAddress.match(emailregexp)==true ) ||courses.length==0|| enquiryDate=='' || refer_select_error==0 || surname=='' || enquiryFor==''|| postCode=='' || visit_before=='' || memberName=='' || visaNoteStatus==1 || staffSourceInvalid){
 
                     if(refer_select_error==0){
                         if(refer_select==0){
@@ -352,6 +372,16 @@
                         $('#visit_before').closest('div').find('.error-feedback').hide();
                     }
 
+                    if(staffSourceInvalid){
+                        $('#enquiry_source_staff_error').show();
+                        $('#enquiry_source_responsible_staff').addClass('invalid-div');
+                        $('#enquiry_source_responsible_staff').removeClass('valid-div');
+                    }else{
+                        $('#enquiry_source_staff_error').hide();
+                        $('#enquiry_source_responsible_staff').removeClass('invalid-div');
+                        $('#enquiry_source_responsible_staff').addClass('valid-div');
+                    }
+
                     // console.log($('.error-feedback:visible'));
                     // $('.collapse').collapse();
 
@@ -402,6 +432,14 @@
                                 $('#toast-text2').html('Cannot add record. Please try again later');
                                 var t2 = document.getElementById('borderedToast2');
                                 if (t2 && window.bootstrap) { new bootstrap.Toast(t2).show(); } else { $('#borderedToast2Btn').trigger('click'); }
+                            }else if(data==='enquiry_source_staff_required' || data=='enquiry_source_staff_required'){
+                                $('#toast-text2').html('Please select responsible staff for Email, WhatsApp, or Facebook / Instagram ads.');
+                                var t2 = document.getElementById('borderedToast2');
+                                if (t2 && window.bootstrap) { new bootstrap.Toast(t2).show(); } else { $('#borderedToast2Btn').trigger('click'); }
+                                $('#enquiry_source_staff_error').show();
+                                $('#enquiry_source_responsible_staff').addClass('invalid-div');
+                                $('#loader-container').hide();
+                                $('#student_enquiry_form').css('opacity','');
                             }else if(data==2){
                                 document.getElementById('student_enquiry_form').reset();
                                 $('#toast-text').html('Record Updated Successfully');

@@ -107,14 +107,38 @@
                                                         <label class="form-label" for="enquiry_source">Enquiry Source</label>
                                                         <select name="enquiry_source" class="form-select" id="enquiry_source">
                                                         <?php
-                                                        $st_enquiry_source = ['--select--','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads','Agent / referral'];
+                                                        $st_enquiry_source = ['--select--','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads'];
                                                         $sel_source = isset($queryRes['st_enquiry_source']) ? (int)$queryRes['st_enquiry_source'] : 0;
                                                         for($i=0;$i<count($st_enquiry_source);$i++){
                                                             $ch = $i === $sel_source ? 'selected' : '';
                                                             echo '<option value="'.$i.'" '.$ch.'>'.$st_enquiry_source[$i].'</option>';
                                                         }
+                                                        if ($sel_source === 7) {
+                                                            echo '<option value="7" selected>Agent / referral (legacy)</option>';
+                                                        }
                                                         ?>
                                                         </select>
+                                                    </div>
+                                                    <div class="mb-3" id="enquiry_source_staff_wrap" style="display:<?php echo (in_array($sel_source, array(4, 5, 6), true)) ? 'block' : 'none'; ?>;">
+                                                        <label class="form-label" for="enquiry_source_responsible_staff">Responsible staff</label>
+                                                        <select class="form-select" id="enquiry_source_responsible_staff" name="enquiry_source_responsible_staff">
+                                                            <option value="">--select--</option>
+                                                            <?php
+                                                            if (!isset($enquirySourceStaffUsers) && isset($connection)) {
+                                                                $enquirySourceStaffUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE user_status != 1 ORDER BY user_name");
+                                                            }
+                                                            $staff_sel = isset($queryRes['st_hearedby']) ? trim((string)$queryRes['st_hearedby']) : '';
+                                                            if ($enquirySourceStaffUsers && mysqli_num_rows($enquirySourceStaffUsers) > 0) {
+                                                                mysqli_data_seek($enquirySourceStaffUsers, 0);
+                                                                while ($su = mysqli_fetch_array($enquirySourceStaffUsers)) {
+                                                                    $nm = $su['user_name'];
+                                                                    $os = ($staff_sel === $nm) ? 'selected' : '';
+                                                                    echo '<option value="'.htmlspecialchars($nm, ENT_QUOTES, 'UTF-8').'" '.$os.'>'.htmlspecialchars($nm, ENT_QUOTES, 'UTF-8').'</option>';
+                                                                }
+                                                            }
+                                                            ?>
+                                                        </select>
+                                                        <div class="error-feedback" id="enquiry_source_staff_error" style="display:none;">Please select the responsible staff for this enquiry source.</div>
                                                     </div>
                                                 </div>
                                                 <?php if (!$is_student_portal): ?>

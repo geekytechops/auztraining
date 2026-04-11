@@ -391,6 +391,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
         'st_fee' => '',
         'st_appoint_book' => 0,
         'st_remarks' => '',
+        'st_hearedby' => '',
         'st_enquiry_flow_status' => '',
     );
     $queryRes = array_merge($student_enquiry_row_defaults, is_array($queryRes) ? $queryRes : array());
@@ -410,6 +411,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
     $enquiryIds=mysqli_query($connection,"SELECT st_enquiry_id,st_name,st_phno from student_enquiry where st_enquiry_status!=1");
     $enquiryIdsCounselling=mysqli_query($connection,"SELECT st_enquiry_id,st_name,st_phno from student_enquiry where st_enquiry_status!=1");
     $enquiryIdsFollowup=mysqli_query($connection,"SELECT st_enquiry_id,st_name,st_phno from student_enquiry where st_enquiry_status!=1");
+    $enquirySourceStaffUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE user_status != 1 ORDER BY user_name");
     $counsilEqId=0;
     $followupEqId=0;
     $counsil_Query=array('st_enquiry_id'=>'','counsil_timing'=>'','counsil_end_time'=>'','counsil_type'=>'','counsil_mem_name'=>'','counsil_aus_stay_time'=>'','counsil_work_status'=>'','counsil_visa_condition'=>'','counsil_education'=>'','counsil_aus_study_status'=>'','counsil_course'=>'','counsil_university'=>'','counsil_qualification'=>'','counsil_eng_rate'=>'','counsil_migration_test'=>'','counsil_overall_result'=>'','counsil_module_result'=>'','counsil_job_nature'=>'','counsil_vaccine_status'=>'','counsil_pref_comments'=>'','counsil_remarks'=>'');
@@ -746,14 +748,35 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                         <label class="form-label" for="enquiry_source">Enquiry Source</label>
                                                         <select name="enquiry_source" class="form-select" id="enquiry_source">
                                                         <?php
-                                                        $st_enquiry_source = ['--select--','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads','Agent / referral'];
+                                                        $st_enquiry_source = ['--select--','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads'];
                                                         $sel_source = isset($queryRes['st_enquiry_source']) ? (int)$queryRes['st_enquiry_source'] : 0;
                                                         for($i=0;$i<count($st_enquiry_source);$i++){
                                                             $ch = $i === $sel_source ? 'selected' : '';
                                                             echo '<option value="'.$i.'" '.$ch.'>'.$st_enquiry_source[$i].'</option>';
                                                         }
+                                                        if ($sel_source === 7) {
+                                                            echo '<option value="7" selected>Agent / referral (legacy)</option>';
+                                                        }
                                                         ?>
                                                         </select>
+                                                    </div>
+                                                    <div class="mb-3" id="enquiry_source_staff_wrap" style="display:<?php echo (in_array($sel_source, array(4, 5, 6), true)) ? 'block' : 'none'; ?>;">
+                                                        <label class="form-label" for="enquiry_source_responsible_staff">Responsible staff</label>
+                                                        <select class="form-select" id="enquiry_source_responsible_staff" name="enquiry_source_responsible_staff">
+                                                            <option value="">--select--</option>
+                                                            <?php
+                                                            $staff_sel = isset($queryRes['st_hearedby']) ? trim((string)$queryRes['st_hearedby']) : '';
+                                                            if ($enquirySourceStaffUsers && mysqli_num_rows($enquirySourceStaffUsers) > 0) {
+                                                                mysqli_data_seek($enquirySourceStaffUsers, 0);
+                                                                while ($su = mysqli_fetch_array($enquirySourceStaffUsers)) {
+                                                                    $nm = $su['user_name'];
+                                                                    $os = ($staff_sel === $nm) ? 'selected' : '';
+                                                                    echo '<option value="'.htmlspecialchars($nm, ENT_QUOTES, 'UTF-8').'" '.$os.'>'.htmlspecialchars($nm, ENT_QUOTES, 'UTF-8').'</option>';
+                                                                }
+                                                            }
+                                                            ?>
+                                                        </select>
+                                                        <div class="error-feedback" id="enquiry_source_staff_error" style="display:none;">Please select the responsible staff for this enquiry source.</div>
                                                     </div>
                                                     <div class="mb-3">
                                                         <label class="form-label" for="location">Location</label>
@@ -1652,7 +1675,22 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     }else if(value==2){
                         $('#student_name_wrap').show();
                     }
-                })
+                });
+                function toggleEnquirySourceStaffField(){
+                    var v = parseInt($('#enquiry_source').val(), 10) || 0;
+                    if (v === 4 || v === 5 || v === 6) {
+                        $('#enquiry_source_staff_wrap').show();
+                    } else {
+                        $('#enquiry_source_staff_wrap').hide();
+                        $('#enquiry_source_staff_error').hide();
+                    }
+                }
+                $('#enquiry_source').on('change', toggleEnquirySourceStaffField);
+                $('#enquiry_source_responsible_staff').on('change', function(){
+                    $('#enquiry_source_staff_error').hide();
+                    $(this).removeClass('is-invalid');
+                });
+                toggleEnquirySourceStaffField();
             })
 
             function buildStudentEnquiryFormData(){
@@ -1668,6 +1706,10 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var visit_before=$('#visit_before').val()==0 ? '' :$('#visit_before').val();
                 var hear_about='';
                 var hearedby='';
+                var esSrc = parseInt($('#enquiry_source').val(), 10) || 0;
+                if (esSrc === 4 || esSrc === 5 || esSrc === 6) {
+                    hearedby = ($('#enquiry_source_responsible_staff').val() || '').trim();
+                }
                 var plan_to_start_date=$('#plan_to_start_date').val();
                 var refer_select=$('#refer_select').val();
                 var referer_name=$('#referer_name').val();
@@ -1732,6 +1774,20 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     }
                     return;
                 }
+                var esChk = parseInt($('#enquiry_source').val(), 10) || 0;
+                if ((esChk === 4 || esChk === 5 || esChk === 6) && !($('#enquiry_source_responsible_staff').val() || '').toString().trim()) {
+                    $('#enquiry_source_staff_error').show();
+                    $('#enquiry_source_responsible_staff').addClass('is-invalid');
+                    if (!silent) {
+                        $('.toast-text2').html('Please select responsible staff for Email, WhatsApp, or Facebook / Instagram ads.');
+                        $('#borderedToast2Btn').trigger('click');
+                    } else {
+                        autosaveSetBadge('enquiry','Enquiry: select responsible staff','err');
+                    }
+                    return;
+                }
+                $('#enquiry_source_staff_error').hide();
+                $('#enquiry_source_responsible_staff').removeClass('is-invalid');
                 var seq = ++enquirySaveSeq;
                 if(!silent){
                     var enquiryIdRec = await getData($('#contact_num').val().trim());
@@ -1758,6 +1814,10 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                             if(seq !== enquirySaveSeq) return;
                             if(data==0 || data==='0'){
                                 autosaveSetBadge('enquiry','Enquiry: failed','err');
+                            }else if(data==='enquiry_source_staff_required' || data=='enquiry_source_staff_required'){
+                                autosaveSetBadge('enquiry','Enquiry: select responsible staff','err');
+                                $('#enquiry_source_staff_error').show();
+                                $('#enquiry_source_responsible_staff').addClass('is-invalid');
                             }else if(data==2 || data=='2'){
                                 autosaveSetBadge('enquiry','Enquiry: saved '+new Date().toLocaleTimeString(),'ok');
                             }else{
@@ -1771,6 +1831,13 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                         }else if(data==='invalid_email' || data=='invalid_email'){
                             $('.toast-text2').html('Please enter a valid email address.');
                             $('#borderedToast2Btn').trigger('click');
+                            $('#loader-container').hide();
+                            $('#student_enquiry_form').css('opacity','');
+                        }else if(data==='enquiry_source_staff_required' || data=='enquiry_source_staff_required'){
+                            $('.toast-text2').html('Please select responsible staff for Email, WhatsApp, or Facebook / Instagram ads.');
+                            $('#borderedToast2Btn').trigger('click');
+                            $('#enquiry_source_staff_error').show();
+                            $('#enquiry_source_responsible_staff').addClass('is-invalid');
                             $('#loader-container').hide();
                             $('#student_enquiry_form').css('opacity','');
                         }else if(data==2){

@@ -11,7 +11,7 @@ if($ut !== 1 && $ut !== 2){
     exit;
 }
 $courses_q = mysqli_query($connection, "SELECT course_id, course_sname, course_name FROM courses WHERE course_status!=1 ORDER BY course_sname");
-$sources = array('','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads','Agent / referral');
+$sources = array('','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads','Agent / referral (legacy)');
 $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE user_status!=1 ORDER BY user_name");
 ?>
 <!DOCTYPE html>

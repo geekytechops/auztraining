@@ -68,7 +68,7 @@ if(!empty($enquiry['st_course'])){
 }
 $course_type = array('','Need exemption','Regular','Regular - Group','Short courses','Short course - Group');
 $enquiry_for = array('','Self','Family Member');
-$sources = array('','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads','Agent / referral');
+$sources = array('','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads','Agent / referral (legacy)');
 ?>
 <!DOCTYPE html>
 <html lang="en">

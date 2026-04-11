@@ -83,12 +83,13 @@ if ($st_id_to_load > 0) {
 } else {
     $queryRes = array(
         'st_email'=>'','st_enquiry_date'=>'','st_surname'=>'','st_enquiry_for'=>1,'st_name'=>'','st_member_name'=>'','st_course_type'=>'','st_enquiry_source'=>0,'st_enquiry_college'=>0,
-        'st_phno'=>'','st_street_details'=>'','st_suburb'=>'','st_state'=>'','st_post_code'=>'','st_visited'=>'','st_heared'=>'','st_startplan_date'=>'','st_refered'=>'','st_refer_name'=>'','st_visa_status'=>'','st_visa_note'=>'','st_visa_condition'=>'','st_course'=>'','st_ethnicity'=>'','st_fee'=>'','st_comments'=>'','st_appoint_book'=>'','st_remarks'=>'','st_pref_comments'=>''
+        'st_phno'=>'','st_street_details'=>'','st_suburb'=>'','st_state'=>'','st_post_code'=>'','st_visited'=>'','st_heared'=>'','st_hearedby'=>'','st_startplan_date'=>'','st_refered'=>'','st_refer_name'=>'','st_visa_status'=>'','st_visa_note'=>'','st_visa_condition'=>'','st_course'=>'','st_ethnicity'=>'','st_fee'=>'','st_comments'=>'','st_appoint_book'=>'','st_remarks'=>'','st_pref_comments'=>''
     );
 }
 $rpl_arrays = json_encode($rpl_array);
 $short_grps = json_encode($short_grp);
 $slot_books = json_encode($slot_book);
+$enquirySourceStaffUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE user_status != 1 ORDER BY user_name");
 $courses = mysqli_query($connection, "SELECT * FROM courses WHERE course_status!=1");
 $visaStatus = mysqli_query($connection, "SELECT * FROM visa_statuses WHERE visa_state_status!=1");
 $is_student_portal = true;

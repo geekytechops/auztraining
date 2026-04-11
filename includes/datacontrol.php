@@ -502,7 +502,8 @@ $stuState=isset($_POST['stuState']) && $_POST['stuState'] !== '' ? mysqli_real_e
 $postCode=isset($_POST['postCode']) && $_POST['postCode'] !== '' ? (int)$_POST['postCode'] : 0;
 $visit_before=isset($_POST['visit_before']) && $_POST['visit_before'] !== '' ? (int)$_POST['visit_before'] : 0;
 $hear_about=mysqli_real_escape_string($connection, trim((string)($_POST['hear_about'] ?? '')));
-$hearedby=mysqli_real_escape_string($connection, trim((string)($_POST['hearedby'] ?? '')));
+$hearedby_raw = trim((string)($_POST['hearedby'] ?? ''));
+$hearedby=mysqli_real_escape_string($connection, $hearedby_raw);
 $plan_to_start_date=mysqli_real_escape_string($connection, trim((string)($_POST['plan_to_start_date'] ?? '')));
 $refer_select=isset($_POST['refer_select']) && $_POST['refer_select'] !== '' ? (int)$_POST['refer_select'] : 0;
 $referer_name=mysqli_real_escape_string($connection, trim((string)($_POST['referer_name'] ?? '')));
@@ -524,6 +525,10 @@ $ethnicity=mysqli_real_escape_string($connection, trim((string)($_POST['ethnicit
 $visaNote=mysqli_real_escape_string($connection, trim((string)($_POST['visaNote'] ?? '')));
 $created_by=isset($_POST['admin_id']) ? (int)$_POST['admin_id'] : 0;
 $enquiry_source = isset($_POST['enquiry_source']) ? (int)$_POST['enquiry_source'] : 0;
+if (in_array($enquiry_source, array(4, 5, 6), true) && $hearedby_raw === '') {
+    echo 'enquiry_source_staff_required';
+    exit;
+}
 $location = mysqli_real_escape_string($connection, $_POST['location'] ?? '');
 $enquiry_college = isset($_POST['enquiry_college']) ? (int)$_POST['enquiry_college'] : 0;
 $formId=isset($_POST['formId']) ? $_POST['formId'] : 0;
@@ -4026,7 +4031,7 @@ if(@$_POST['formName']=='fetchEnquiryReports'){
             $by_course[] = array('course'=>$r['course_sname'].' - '.$r['course_name'], 'count'=>(int)$r['cnt']);
         }
     }
-    $sources = array('','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads','Agent / referral');
+    $sources = array('','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads','Agent / referral (legacy)');
     $sq = mysqli_query($connection, "SELECT $source_col AS src, COUNT(*) AS cnt FROM student_enquiry e WHERE $where GROUP BY $source_col");
     if($sq){
         while($r = mysqli_fetch_assoc($sq)){
@@ -4096,7 +4101,7 @@ if(@$_POST['formName']=='exportEnquiryReportsExcel' || @$_GET['export']==='enqui
     $conversion_rate = $total_enquiries > 0 ? round(($converted_count / $total_enquiries) * 100, 1) : 0;
     $by_course = array(); $cq = mysqli_query($connection, "SELECT c.course_id, c.course_sname, c.course_name, COUNT(*) AS cnt FROM student_enquiry e INNER JOIN courses c ON (e.st_course LIKE CONCAT('%', c.course_id, '%')) AND c.course_status != 1 WHERE $where GROUP BY c.course_id, c.course_sname, c.course_name ORDER BY cnt DESC");
     while($r = mysqli_fetch_assoc($cq)) $by_course[] = array('course'=>$r['course_sname'].' - '.$r['course_name'], 'count'=>(int)$r['cnt']);
-    $sources = array('','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads','Agent / referral');
+    $sources = array('','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads','Agent / referral (legacy)');
     $by_source = array(); $sq = mysqli_query($connection, "SELECT $source_col AS src, COUNT(*) AS cnt FROM student_enquiry e WHERE $where GROUP BY $source_col");
     while($r = mysqli_fetch_assoc($sq)){ $idx = (int)$r['src']; $by_source[] = array('source'=> isset($sources[$idx]) ? $sources[$idx] : ('Source '.$idx), 'count'=>(int)$r['cnt']); }
     $counsellor_perf = array(); $cpq = mysqli_query($connection, "SELECT c.counsil_mem_name AS name, COUNT(DISTINCT c.st_enquiry_id) AS enquiries, COUNT(DISTINCT CASE WHEN e.st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '' AND st_enquiry_id IS NOT NULL) THEN e.st_enquiry_id END) AS converted FROM counseling_details c INNER JOIN student_enquiry e ON e.st_enquiry_id = c.st_enquiry_id AND c.counsil_enquiry_status = 0 AND $where GROUP BY c.counsil_mem_name ORDER BY enquiries DESC");
@@ -4160,7 +4165,7 @@ if(@$_POST['formName']=='exportEnquiryReportsPdf' || @$_GET['export']==='enquiry
     $conversion_rate = $total_enquiries > 0 ? round(($converted_count / $total_enquiries) * 100, 1) : 0;
     $by_course = array(); $cq = mysqli_query($connection, "SELECT c.course_id, c.course_sname, c.course_name, COUNT(*) AS cnt FROM student_enquiry e INNER JOIN courses c ON (e.st_course LIKE CONCAT('%', c.course_id, '%')) AND c.course_status != 1 WHERE $where GROUP BY c.course_id, c.course_sname, c.course_name ORDER BY cnt DESC");
     while($r = mysqli_fetch_assoc($cq)) $by_course[] = array('course'=>$r['course_sname'].' - '.$r['course_name'], 'count'=>(int)$r['cnt']);
-    $sources = array('','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads','Agent / referral');
+    $sources = array('','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads','Agent / referral (legacy)');
     $by_source = array(); $sq = mysqli_query($connection, "SELECT $source_col AS src, COUNT(*) AS cnt FROM student_enquiry e WHERE $where GROUP BY $source_col");
     while($r = mysqli_fetch_assoc($sq)){ $idx = (int)$r['src']; $by_source[] = array('source'=> isset($sources[$idx]) ? $sources[$idx] : ('Source '.$idx), 'count'=>(int)$r['cnt']); }
     $counsellor_perf = array(); $cpq = mysqli_query($connection, "SELECT c.counsil_mem_name AS name, COUNT(DISTINCT c.st_enquiry_id) AS enquiries, COUNT(DISTINCT CASE WHEN e.st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '' AND st_enquiry_id IS NOT NULL) THEN e.st_enquiry_id END) AS converted FROM counseling_details c INNER JOIN student_enquiry e ON e.st_enquiry_id = c.st_enquiry_id AND c.counsil_enquiry_status = 0 AND $where GROUP BY c.counsil_mem_name ORDER BY enquiries DESC");

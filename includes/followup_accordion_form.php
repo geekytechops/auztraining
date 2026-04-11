@@ -121,6 +121,7 @@ echo '<div class="form-check"><input type="checkbox" class="remarks_check form-c
 </div>
 <div class="error-feedback">Please select atleast one option</div></div></div>
 </div>
+<p class="text-muted small mb-2">Each submit adds a new entry in follow-up history (previous records are kept). Use <strong>Follow-up history</strong> at the top of the page to review or resend status emails.</p>
 <button class="btn btn-primary" type="button" id="followup_check">Submit Follow Up</button>
 <input type="hidden" value="<?php echo $followupEqId; ?>" id="followup_check_update">
 </form>

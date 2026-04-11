@@ -418,7 +418,8 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
     // When editing a specific enquiry, pre-fill counselling & follow-up context from that enquiry
     if(!empty($queryRes['st_id'])){
         $current_enquiry_code = !empty($queryRes['st_enquiry_id']) ? $queryRes['st_enquiry_id'] : sprintf('EQ%05d', (int)$queryRes['st_id']);
-        $followupEqId = 0; // always "new" follow-up when submitting from this page
+        // Always INSERT a new follow-up_calls row on each save (full history). Form is still prefilled from the latest row.
+        $followupEqId = 0;
         $counsil_Query['st_enquiry_id'] = $current_enquiry_code;
         $followup_Query['enquiry_id'] = $current_enquiry_code;
         $followup_Query['flw_name'] = $queryRes['st_name'] ?: $queryRes['st_member_name'];
@@ -457,11 +458,10 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             $counsilEqId = 0; // no existing counselling -> INSERT on submit
             $counsil_Query['counsil_visa_condition'] = $queryRes['st_visa_status'] ?? '';
         }
-        // Load latest follow-up for this enquiry so form is prefilled (and we UPDATE on submit if exists)
+        // Load latest follow-up for this enquiry to prefill the form (each save still INSERTs a new row for history)
         $flw_q = mysqli_query($connection, "SELECT * FROM followup_calls WHERE enquiry_id = '" . mysqli_real_escape_string($connection, $current_enquiry_code) . "' AND flw_enquiry_status = 0 ORDER BY flw_id DESC LIMIT 1");
         if ($flw_q && mysqli_num_rows($flw_q) > 0) {
             $frow = mysqli_fetch_assoc($flw_q);
-            $followupEqId = (int)$frow['flw_id'];
             $followup_Query = array_merge($followup_Query, array(
                 'enquiry_id' => $frow['enquiry_id'] ?? $current_enquiry_code,
                 'flw_name' => $frow['flw_name'] ?? $followup_Query['flw_name'],
@@ -480,12 +480,16 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 'enquiry_flow_status' => isset($frow['flw_progress_state']) && $frow['flw_progress_state'] !== '' ? $frow['flw_progress_state'] : (isset($queryRes['st_enquiry_flow_status']) ? $queryRes['st_enquiry_flow_status'] : '')
             ));
         } else {
-            $followupEqId = 0;
             // Keep enquiry_id, flw_name, flw_phone from main enquiry; use enquiry's flow status for dropdown if available
             if (isset($queryRes['st_enquiry_flow_status']) && $queryRes['st_enquiry_flow_status'] !== '') {
                 $followup_Query['enquiry_flow_status'] = $queryRes['st_enquiry_flow_status'];
             }
         }
+    }
+
+    $followup_history_enquiry_code = '';
+    if (!empty($queryRes['st_id'])) {
+        $followup_history_enquiry_code = !empty($queryRes['st_enquiry_id']) ? $queryRes['st_enquiry_id'] : sprintf('EQ%05d', (int)$queryRes['st_id']);
     }
 
 ?>
@@ -504,6 +508,47 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
         <?php 
         include('includes/app_includes.php'); 
         ?>
+        <style>
+            /* Follow-up history modal: first three columns (outcome, status, notes) stay pinned; others scroll horizontally */
+            #followup_history_scrollwrap {
+                max-height: 70vh;
+                overflow: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            #followup_history_table thead th.fh-pin,
+            #followup_history_table tbody td.fh-pin {
+                position: sticky;
+                z-index: 15;
+                vertical-align: top;
+                box-sizing: border-box;
+                background-color: #fff;
+                overflow-wrap: anywhere;
+                word-break: break-word;
+            }
+            #followup_history_table thead th.fh-pin {
+                z-index: 25;
+                background-color: #fff;
+            }
+            #followup_history_table .fh-pin-1 {
+                left: 0;
+                width: 6.5rem;
+                min-width: 6.5rem;
+                max-width: 6.5rem;
+            }
+            #followup_history_table .fh-pin-2 {
+                left: 6.5rem;
+                width: 10rem;
+                min-width: 7.75rem;
+                max-width: 10rem;
+            }
+            #followup_history_table .fh-pin-3 {
+                left: 14.25rem;
+                width: 9.5rem;
+                min-width: 9.5rem;
+                max-width: 9.5rem;
+                box-shadow: 6px 0 8px -4px rgba(0, 0, 0, 0.12);
+            }
+        </style>
     </head>
 
     <body>
@@ -523,7 +568,12 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                             <div class="col-12">
                                 <div class="page-title-box d-sm-flex align-items-center justify-content-between">
                                     <h4 class="mb-sm-0"><?php echo $is_student_portal ? 'Student – My Enquiry' : "Student's Enquiry"; ?></h4>
-                                    <div class="page-title-right">
+                                    <div class="page-title-right d-flex align-items-center flex-wrap gap-2 justify-content-end">
+                                        <?php if (!$is_student_portal && isset($eqId) && (int)$eqId > 0 && $followup_history_enquiry_code !== ''): ?>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="followup_history_open_btn" data-enquiry-id="<?php echo htmlspecialchars($followup_history_enquiry_code, ENT_QUOTES, 'UTF-8'); ?>">
+                                            <i class="ti ti-history me-1"></i> Follow-up history
+                                        </button>
+                                        <?php endif; ?>
                                         <ol class="breadcrumb m-0 align-items-baseline">
                                         <?php if (!$is_student_portal): ?>
                                         <!-- <li class="breadcrumb-item">
@@ -1366,6 +1416,75 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
 
         <?php include('includes/followup_appointment_modal.inc.php'); ?>
 
+        <?php if (!$is_student_portal && isset($eqId) && (int)$eqId > 0 && $followup_history_enquiry_code !== ''): ?>
+        <div class="modal fade" id="followupHistoryModal" tabindex="-1" aria-labelledby="followupHistoryModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="followupHistoryModalLabel">Follow-up history</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="fh_pane_list">
+                            <p class="text-muted small mb-2">Each row shows all saved follow-up fields (student, phone, times, staff, type, outcome, status, notes, remarks, comments, audit). Newest first. <strong>Follow-up outcome</strong>, <strong>Enquiry status</strong>, and <strong>Follow-up notes</strong> stay fixed on the left; scroll sideways to see the rest. Use <strong>Resend email</strong> to send the status template for that row&rsquo;s enquiry status again.</p>
+                            <div id="followup_history_loading" class="text-muted py-3 d-none">Loading…</div>
+                            <div id="followup_history_empty" class="text-muted py-3 d-none">No follow-up records yet.</div>
+                            <div id="followup_history_scrollwrap">
+                                <table class="table table-sm table-striped table-bordered align-top mb-0" id="followup_history_table" style="min-width: 2400px;">
+                                    <thead class="table-light"><tr>
+                                        <th class="fh-pin fh-pin-1">Follow-up outcome</th>
+                                        <th class="fh-pin fh-pin-2">Enquiry status</th>
+                                        <th class="fh-pin fh-pin-3">Follow-up notes</th>
+                                        <th>#</th>
+                                        <th>Enquiry ID</th>
+                                        <th>Student name</th>
+                                        <th>Phone</th>
+                                        <th>Follow-up date &amp; time</th>
+                                        <th>Date (record)</th>
+                                        <th>Responsible staff</th>
+                                        <th>Follow-up type</th>
+                                        <th>Mode of contact</th>
+                                        <th>Next follow-up</th>
+                                        <th style="min-width: 220px;">Remarks</th>
+                                        <th style="min-width: 160px;">Comments</th>
+                                        <th>Created by</th>
+                                        <th>Last updated</th>
+                                        <th style="min-width: 110px;">Resend email</th>
+                                    </tr></thead>
+                                    <tbody id="followup_history_tbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div id="fh_pane_resend" class="d-none">
+                            <button type="button" class="btn btn-link btn-sm px-0 mb-3" id="fh_back_to_list">&larr; Back to history</button>
+                            <h6 class="mb-3">Resend status email</h6>
+                            <p class="small text-muted mb-2">Template is loaded for the enquiry status on this history row. Edit if needed, then send.</p>
+                            <p class="small mb-2"><span class="fw-semibold">Enquiry status:</span> <span id="fh_resend_status_label"></span> <span class="text-muted">(#<span id="fh_resend_status_code"></span>)</span></p>
+                            <input type="hidden" id="fh_resend_enquiry_id" value="">
+                            <input type="hidden" id="fh_resend_status_code_val" value="">
+                            <div class="mb-2">
+                                <label class="form-label" for="fh_resend_subject">Subject</label>
+                                <input type="text" class="form-control" id="fh_resend_subject" placeholder="Subject">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label" for="fh_resend_body">Message</label>
+                                <textarea class="form-control" id="fh_resend_body" rows="10" placeholder="Email body"></textarea>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input type="checkbox" class="form-check-input" id="fh_resend_save_default" value="1">
+                                <label class="form-check-label" for="fh_resend_save_default">Save subject &amp; body as default template for this status</label>
+                            </div>
+                            <div class="d-flex gap-2 justify-content-end">
+                                <button type="button" class="btn btn-light" id="fh_resend_cancel_btn">Cancel</button>
+                                <button type="button" class="btn btn-success" id="fh_resend_send_btn">Send email</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <?php include('includes/footer_includes.php'); ?>
         <script>
             window.STUDENT_ENQUIRY_AUTO_SAVE = <?php echo (isset($eqId) && (int)$eqId > 0) ? 'true' : 'false'; ?>;
@@ -1397,6 +1516,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 $('#counselling_form').find(':input').prop('disabled', !!locked);
                 $('#followup_form_embed').find(':input').prop('disabled', !!locked);
                 $('#enquiry_form,#counseling_submit,#followup_check,#followup_send_status_email,#followup_open_calendar_btn').prop('disabled', !!locked);
+                $('#followup_history_open_btn').prop('disabled', false);
                 $('#fp_appointment_submit_btn').prop('disabled', !!locked);
                 if($('#enquiry_edit_mode_hint').length){
                     $('#enquiry_edit_mode_hint').text(locked ? 'View only — turn on to edit.' : 'Turn off to view without editing.');
@@ -1587,6 +1707,15 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var em = ($('#email_address').val()||'').trim();
                 var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 return em.length>0 && re.test(em);
+            }
+            /** Create-enquiry page: server returns 1|st_id when counselling/follow-up created or linked an enquiry — open that enquiry. */
+            function studentEnquiryNavigateAfterSideSave(data){
+                if (window.ENQUIRY_EDIT_PAGE) return false;
+                var s = (data === null || data === undefined) ? '' : String(data).trim();
+                var m = /^1\|(\d+)$/.exec(s);
+                if (!m) return false;
+                window.location.href = 'student_enquiry.php?eq=' + encodeURIComponent(btoa(m[1]));
+                return true;
             }
             async function performStudentEnquirySave(silent){
                 silent = !!silent;
@@ -1873,7 +2002,8 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             }
             function buildCounselingFormData(){
                 var $f=$('#counselling_form');
-                var enquiry_id=($('#counselling_enquiry_id').length ? $('#counselling_enquiry_id').val() : '').toString().trim();
+                var enquiry_id=($('#counselling_enquiry_id').length ? ($('#counselling_enquiry_id').val() || '') : '').toString().trim();
+                if (enquiry_id === '0') enquiry_id = '';
                 var counselling_date=$('#counselling_date').val().trim();
                 var start_time=$('#counseling_timing').val().trim();
                 var end_time=$('#counseling_end_timing').val().trim();
@@ -1905,6 +2035,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var checkId=$('#counselling_check_update').val();
                 var hasExistingCounsel = !!checkId && checkId !== '0';
                 var enquiryId = ($('#counselling_enquiry_id').val() || '').toString().trim();
+                if (enquiryId === '0') enquiryId = '';
                 // For new counselling records (checkId=0), allow manual submit but skip autosave.
                 if(!hasExistingCounsel && silent) return;
                 if(!hasExistingCounsel && !enquiryId){
@@ -1928,11 +2059,14 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 $.ajax({type:'post',url:'includes/datacontrol.php',data:details,success:function(data){
                     if(silent){
                         if(seq!==counselSaveSeq) return;
-                        if(data==1||data=='1'){ autosaveSetBadge('counsel','Counseling: saved '+new Date().toLocaleTimeString(),'ok'); }
+                        if(data==1||data=='1'||/^1\|\d+$/.test(String(data).trim())){ autosaveSetBadge('counsel','Counseling: saved '+new Date().toLocaleTimeString(),'ok'); }
                         else { autosaveSetBadge('counsel','Counseling: failed','err'); }
                         return;
                     }
-                    if(data==1||data=='1'){$('#toast-text').html('Record Added Successfully');$('#borderedToast1Btn').trigger('click');setTimeout(function(){location.reload();},400);}
+                    if(data==1||data=='1'||/^1\|\d+$/.test(String(data).trim())){
+                        if(studentEnquiryNavigateAfterSideSave(data)) return;
+                        $('#toast-text').html('Record Added Successfully');$('#borderedToast1Btn').trigger('click');setTimeout(function(){location.reload();},400);
+                    }
                     else if(data==='invalid_email' || data=='invalid_email'){$('.toast-text2').html('Please enter a valid email address in Student contact above.');$('#borderedToast2Btn').trigger('click');}
                     else{$('.toast-text2').html('Cannot add record. Please try again later');$('#borderedToast2Btn').trigger('click');}
                 },error:function(){
@@ -2214,7 +2348,8 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var follow_up_notes=$('#followup_follow_up_notes').val().trim();
                 var next_followup_date=$('#followup_next_followup_date').val();
                 var follow_up_outcome=$('#followup_follow_up_outcome').val();
-                var enquiry_id=$('#followup_enquiry_id').val();
+                var enquiry_id=($('#followup_enquiry_id').val() || '').toString().trim();
+                if (enquiry_id === '0') enquiry_id = '';
                 var remarks=[];$('#followup_form_embed .followup_remarks:checked').each(function(){remarks.push(this.value);});
                 var checkId=$('#followup_check_update').val();
                 if(!date) date = contacted_time ? contacted_time.slice(0,10) : '';
@@ -2228,6 +2363,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var checkId=$('#followup_check_update').val();
                 var hasExistingFollowup = !!checkId && checkId !== '0';
                 var enquiryId = ($('#followup_enquiry_id').val() || '').toString().trim();
+                if (enquiryId === '0') enquiryId = '';
                 if(!hasExistingFollowup && silent) return;
                 if(!hasExistingFollowup && !enquiryId){
                     if(!studentEnquiryValidEmail()){
@@ -2245,11 +2381,14 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 $.ajax({type:'post',url:'includes/datacontrol.php',data:details,success:function(data){
                     if(silent){
                         if(seq!==followupSaveSeq) return;
-                        if(data==1 || data=='1'){ autosaveSetBadge('followup','Follow-up: saved '+new Date().toLocaleTimeString(),'ok'); }
+                        if(data==1 || data=='1' || /^1\|\d+$/.test(String(data).trim())){ autosaveSetBadge('followup','Follow-up: saved '+new Date().toLocaleTimeString(),'ok'); }
                         else { autosaveSetBadge('followup','Follow-up: failed','err'); }
                         return;
                     }
-                    if(data==1 || data=='1'){$('#toast-text').html('Follow-up saved successfully');$('#borderedToast1Btn').trigger('click');setTimeout(function(){location.reload();},600);}
+                    if(data==1 || data=='1' || /^1\|\d+$/.test(String(data).trim())){
+                        if(studentEnquiryNavigateAfterSideSave(data)) return;
+                        $('#toast-text').html('Follow-up saved successfully');$('#borderedToast1Btn').trigger('click');setTimeout(function(){location.reload();},600);
+                    }
                     else if(data==='invalid_email' || data=='invalid_email'){$('.toast-text2').html('Please enter a valid email address in Student contact above.');$('#borderedToast2Btn').trigger('click');}
                     else{$('.toast-text2').html(data && data.trim() ? data : 'Cannot save follow-up. Please try again.');$('#borderedToast2Btn').trigger('click');}
                 },error:function(){
@@ -2264,6 +2403,154 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 if(id==='followup_check'||id==='followup_send_status_email') return;
                 clearTimeout(followupAutoSaveTimer);
                 followupAutoSaveTimer=setTimeout(function(){ performFollowupSave(true); },1000);
+            });
+
+            function fhShowFollowupHistoryList(){
+                $('#fh_pane_resend').addClass('d-none');
+                $('#fh_pane_list').removeClass('d-none');
+                $('#followupHistoryModalLabel').text('Follow-up history');
+            }
+            function fhShowFollowupHistoryResend(){
+                $('#fh_pane_list').addClass('d-none');
+                $('#fh_pane_resend').removeClass('d-none');
+                $('#followupHistoryModalLabel').text('Resend status email');
+            }
+            function loadFollowupHistoryTable(){
+                var eid = ($('#followup_history_open_btn').data('enquiry-id') || '').toString().trim();
+                if (!eid) return;
+                $('#followup_history_loading').removeClass('d-none');
+                $('#followup_history_empty').addClass('d-none').text('No follow-up records yet.');
+                $('#followup_history_tbody').empty();
+                $.post('includes/datacontrol.php', { formName: 'fetch_followup_history', enquiry_id: eid }, function(raw){
+                    $('#followup_history_loading').addClass('d-none');
+                    var j;
+                    try { j = (typeof raw === 'object' && raw !== null) ? raw : JSON.parse(raw); } catch (err) { j = { rows: [] }; }
+                    var rows = (j && j.rows) ? j.rows : [];
+                    var $tb = $('#followup_history_tbody');
+                    if (!rows.length) {
+                        $('#followup_history_empty').removeClass('d-none');
+                        return;
+                    }
+                    var cellPre = { whiteSpace: 'pre-wrap', wordBreak: 'break-word', verticalAlign: 'top' };
+                    rows.forEach(function(r){
+                        var sc = parseInt(r.flw_progress_state, 10);
+                        if (isNaN(sc)) sc = 0;
+                        var canResend = sc >= 1 && sc <= 10;
+                        var $tr = $('<tr/>');
+                        $tr.append($('<td/>').addClass('fh-pin fh-pin-1').text(r.flw_follow_up_outcome || ''));
+                        $tr.append($('<td/>').addClass('fh-pin fh-pin-2').text(r.status_label || ''));
+                        $tr.append($('<td/>').addClass('fh-pin fh-pin-3').css(cellPre).text(r.flw_follow_up_notes != null ? String(r.flw_follow_up_notes) : ''));
+                        $tr.append($('<td/>').text(r.flw_id != null ? String(r.flw_id) : ''));
+                        $tr.append($('<td/>').text(r.enquiry_id || ''));
+                        $tr.append($('<td/>').text(r.flw_name || ''));
+                        $tr.append($('<td/>').css('font-weight', '600').text(r.flw_phone || ''));
+                        $tr.append($('<td/>').text(r.contacted_time_fmt || ''));
+                        $tr.append($('<td/>').text(r.flw_date_fmt || ''));
+                        $tr.append($('<td/>').text(r.flw_contacted_person || ''));
+                        $tr.append($('<td/>').text(r.flw_followup_type || ''));
+                        $tr.append($('<td/>').text(r.flw_mode_contact || ''));
+                        $tr.append($('<td/>').text(r.next_followup_fmt || ''));
+                        $tr.append($('<td/>').css(cellPre).text(r.remarks_text != null ? String(r.remarks_text) : ''));
+                        $tr.append($('<td/>').css(cellPre).text(r.flw_comments != null ? String(r.flw_comments) : ''));
+                        $tr.append($('<td/>').text(r.created_by_name || ''));
+                        $tr.append($('<td/>').text(r.last_updated_display != null ? String(r.last_updated_display) : ''));
+                        var $tdAct = $('<td/>');
+                        if (canResend) {
+                            $('<button type="button" class="btn btn-sm btn-outline-primary fh-resend-btn"/>').text('Resend email')
+                                .data('status-code', sc).data('status-label', r.status_label || ('Status ' + sc)).appendTo($tdAct);
+                        } else {
+                            $tdAct.append($('<span class="text-muted small"/>').text('—'));
+                        }
+                        $tr.append($tdAct);
+                        $tb.append($tr);
+                    });
+                }).fail(function(){
+                    $('#followup_history_loading').addClass('d-none');
+                    $('#followup_history_empty').removeClass('d-none').text('Could not load history.');
+                });
+            }
+            (function bindFollowupHistoryTableWheel(){
+                var wrap = document.getElementById('followup_history_scrollwrap');
+                if (!wrap || wrap.dataset.fhWheelBound === '1') return;
+                wrap.dataset.fhWheelBound = '1';
+                wrap.addEventListener('wheel', function(e){
+                    if (this.scrollWidth <= this.clientWidth) return;
+                    var tag = (e.target && e.target.tagName) ? String(e.target.tagName).toLowerCase() : '';
+                    if (tag === 'input' || tag === 'textarea' || tag === 'select' || tag === 'button') return;
+                    var d = e.deltaX + e.deltaY;
+                    if (d === 0) return;
+                    e.preventDefault();
+                    this.scrollLeft += d;
+                }, { passive: false });
+            })();
+            $(document).on('click', '#followup_history_open_btn', function(){
+                fhShowFollowupHistoryList();
+                var modal = new bootstrap.Modal(document.getElementById('followupHistoryModal'));
+                modal.show();
+                loadFollowupHistoryTable();
+            });
+            $('#followupHistoryModal').on('hidden.bs.modal', function(){
+                fhShowFollowupHistoryList();
+                $('#followup_history_tbody').empty();
+                $('#followup_history_empty').addClass('d-none').text('No follow-up records yet.');
+                $('#fh_resend_subject, #fh_resend_body').val('');
+                $('#fh_resend_save_default').prop('checked', false);
+            });
+            $(document).on('click', '.fh-resend-btn', function(){
+                var eid = ($('#followup_history_open_btn').data('enquiry-id') || '').toString().trim();
+                var sc = parseInt($(this).data('status-code'), 10);
+                var label = ($(this).data('status-label') || '').toString();
+                if (!eid || !sc) return;
+                $('#fh_resend_enquiry_id').val(eid);
+                $('#fh_resend_status_code_val').val(String(sc));
+                $('#fh_resend_status_label').text(label || ('Status ' + sc));
+                $('#fh_resend_status_code').text(String(sc));
+                $('#fh_resend_subject, #fh_resend_body').val('');
+                $('#fh_resend_save_default').prop('checked', false);
+                $.post('includes/datacontrol.php', { get_enquiry_status_template: 1, status_code: sc, enquiry_id: eid }, function(data){
+                    try {
+                        var j = (typeof data === 'object' && data !== null) ? data : JSON.parse(data);
+                        $('#fh_resend_subject').val(j.subject || '');
+                        $('#fh_resend_body').val(j.body || '');
+                    } catch (e2) {}
+                    fhShowFollowupHistoryResend();
+                });
+            });
+            $(document).on('click', '#fh_back_to_list, #fh_resend_cancel_btn', function(){
+                fhShowFollowupHistoryList();
+            });
+            $(document).on('click', '#fh_resend_send_btn', function(){
+                var eid = $('#fh_resend_enquiry_id').val();
+                var sub = $('#fh_resend_subject').val().trim();
+                var body = $('#fh_resend_body').val().trim();
+                var sc = parseInt($('#fh_resend_status_code_val').val(), 10);
+                if (!eid || !sub || !body) {
+                    $('.toast-text2').html('Subject and message are required.');
+                    $('#borderedToast2Btn').trigger('click');
+                    return;
+                }
+                var $btn = $(this).prop('disabled', true).text('Sending…');
+                var post = { send_enquiry_status_email: 1, enquiry_id: eid, subject: sub, body: body };
+                if ($('#fh_resend_save_default').is(':checked') && sc >= 1 && sc <= 10) {
+                    post.save_as_default = 1;
+                    post.status_code = sc;
+                }
+                $.post('includes/datacontrol.php', post, function(res){
+                    $btn.prop('disabled', false).text('Send email');
+                    if (res == '1') {
+                        $('#toast-text').html('Email sent successfully');
+                        $('#borderedToast1Btn').trigger('click');
+                        fhShowFollowupHistoryList();
+                        loadFollowupHistoryTable();
+                    } else {
+                        $('.toast-text2').html(res || 'Failed to send email');
+                        $('#borderedToast2Btn').trigger('click');
+                    }
+                }).fail(function(){
+                    $btn.prop('disabled', false).text('Send email');
+                    $('.toast-text2').html('Request failed.');
+                    $('#borderedToast2Btn').trigger('click');
+                });
             });
 
         </script>

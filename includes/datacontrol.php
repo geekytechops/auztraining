@@ -23,6 +23,78 @@ function enquiry_ack_email_body($name, $enquiry_id, $form_url, $register_url, $l
     return $html;
 }
 
+/**
+ * When counselling or follow-up is saved without an existing enquiry context, create (or reuse by email)
+ * a minimal student_enquiry row so the record can link to st_enquiry_id.
+ *
+ * @return array{ok:bool,enquiry_id?:string,error?:string}
+ */
+if (!function_exists('crm_ensure_enquiry_from_sidebar_contact')) {
+function crm_ensure_enquiry_from_sidebar_contact($connection, $admin_id) {
+    $emailRaw = trim((string)($_POST['emailAddress'] ?? ''));
+    if ($emailRaw === '' || !filter_var($emailRaw, FILTER_VALIDATE_EMAIL)) {
+        return array('ok' => false, 'error' => 'invalid_email');
+    }
+    $emailEsc = mysqli_real_escape_string($connection, $emailRaw);
+    $dupQ = mysqli_query($connection, "SELECT st_id, st_enquiry_id FROM student_enquiry WHERE st_enquiry_status=0 AND LOWER(TRIM(st_email))=LOWER('" . $emailEsc . "') ORDER BY st_id DESC LIMIT 1");
+    if ($dupQ && ($dupRow = mysqli_fetch_assoc($dupQ)) && !empty($dupRow['st_enquiry_id'])) {
+        return array('ok' => true, 'enquiry_id' => $dupRow['st_enquiry_id']);
+    }
+    $enquiryFor = isset($_POST['enquiryFor']) && $_POST['enquiryFor'] !== '' ? (int)$_POST['enquiryFor'] : 1;
+    if ($enquiryFor !== 2) {
+        $enquiryFor = 1;
+    }
+    $studentNameRaw = trim((string)($_POST['studentName'] ?? ''));
+    $memberNameRaw = trim((string)($_POST['memberName'] ?? ''));
+    if ($enquiryFor === 1) {
+        $studentNameEsc = mysqli_real_escape_string($connection, $studentNameRaw);
+        $memberNameEsc = mysqli_real_escape_string($connection, $memberNameRaw);
+    } else {
+        $studentNameEsc = mysqli_real_escape_string($connection, $memberNameRaw);
+        $memberNameEsc = mysqli_real_escape_string($connection, $studentNameRaw);
+    }
+    $contactName = mysqli_real_escape_string($connection, trim((string)($_POST['contactName'] ?? '')));
+    $surname = mysqli_real_escape_string($connection, trim((string)($_POST['surname'] ?? '')));
+    $courses = mysqli_real_escape_string($connection, '[]');
+    $payment = '';
+    $visaStatus = 0;
+    $visaCondition = 1;
+    $visaNote = '';
+    $suburb = '';
+    $stuState = '0';
+    $postCode = 0;
+    $visit_before = 0;
+    $hear_about = '';
+    $hearedby = '';
+    $plan_to_start_date = '';
+    $refer_select = 0;
+    $referer_name = '';
+    $refer_alumni = 0;
+    $comments = '';
+    $prefComment = '';
+    $appointment_booked = 0;
+    $remarks = '';
+    $streetDetails = '';
+    $enquiryDate = mysqli_real_escape_string($connection, date('Y-m-d'));
+    $courseType = 0;
+    $shore = 0;
+    $ethnicity = '';
+    $created_by = (int)$admin_id;
+    $query = mysqli_query($connection, "INSERT INTO student_enquiry(st_name,st_member_name,st_phno,st_email,st_course,st_fee,st_visa_status,st_visa_condition,st_visa_note,st_surname,st_suburb,st_state,st_post_code,st_visited,st_heared,st_hearedby,st_startplan_date,st_refered,st_refer_name,st_refer_alumni,st_comments,st_pref_comments,st_appoint_book,st_remarks,st_street_details,st_enquiry_for,st_enquiry_date,st_course_type,st_shore,st_ethnicity,st_created_by,st_enquiry_source,st_location,st_enquiry_college)VALUES('$studentNameEsc','$memberNameEsc','$contactName','$emailEsc','$courses','$payment',$visaStatus,$visaCondition,'$visaNote','$surname','$suburb','$stuState',$postCode,$visit_before,'$hear_about','$hearedby','$plan_to_start_date',$refer_select,'$referer_name',$refer_alumni,'$comments','$prefComment',$appointment_booked,'$remarks','$streetDetails',$enquiryFor,'$enquiryDate',$courseType,$shore,'$ethnicity',$created_by,NULL,NULL)");
+    if (!$query) {
+        return array('ok' => false, 'error' => 'insert_failed');
+    }
+    $lastId = mysqli_insert_id($connection);
+    if ($lastId <= 0) {
+        return array('ok' => false, 'error' => 'insert_failed');
+    }
+    $uniqueId = sprintf('EQ%05d', $lastId);
+    $uniqueEsc = mysqli_real_escape_string($connection, $uniqueId);
+    mysqli_query($connection, "UPDATE student_enquiry SET st_enquiry_id='$uniqueEsc' WHERE st_id=" . (int)$lastId);
+    return array('ok' => true, 'enquiry_id' => $uniqueId);
+}
+}
+
 // Enquiry status email template (load by status code) and send email
 if(isset($_POST['get_enquiry_status_template']) && isset($_POST['status_code'])){
     $status_code = (int)$_POST['status_code'];
@@ -1055,6 +1127,15 @@ if(@$_POST['formName']=='followup_call'){
         $comments=mysqli_real_escape_string($connection,isset($_POST['comments']) ? $_POST['comments'] : '');
         $admin_id=isset($_POST['admin_id']) ? (int)$_POST['admin_id'] : 0;
 
+        if (trim($enquiry_id) === '' && $checkId == 0) {
+            $ens = crm_ensure_enquiry_from_sidebar_contact($connection, $admin_id);
+            if (!$ens['ok']) {
+                echo ($ens['error'] === 'invalid_email') ? 'invalid_email' : '0';
+                exit;
+            }
+            $enquiry_id = $ens['enquiry_id'];
+        }
+
         if($checkId==0){
             $next_sql = $next_followup_date !== null ? "'".mysqli_real_escape_string($connection,$next_followup_date)."'" : 'NULL';
             $mode_contact_val = $contactMode ?: $followup_type;
@@ -1211,8 +1292,6 @@ if(@$_POST['formName']=='counseling_form'){
         }
         $remarks=mysqli_real_escape_string($connection,$remarks);
 
-        $enquiry_id_sql=mysqli_real_escape_string($connection,$enquiry_id);
-
     $do_insert = ($checkId == 0);
     if (!$do_insert) {
         $checkId = (int)$checkId;
@@ -1221,6 +1300,17 @@ if(@$_POST['formName']=='counseling_form'){
             $do_insert = true; // no such counselling record -> INSERT (e.g. checkId was enquiry st_id by mistake)
         }
     }
+
+    if ($do_insert && trim($enquiry_id) === '') {
+        $ens = crm_ensure_enquiry_from_sidebar_contact($connection, $admin_id);
+        if (!$ens['ok']) {
+            echo ($ens['error'] === 'invalid_email') ? 'invalid_email' : '0';
+            exit;
+        }
+        $enquiry_id = $ens['enquiry_id'];
+    }
+
+        $enquiry_id_sql=mysqli_real_escape_string($connection,$enquiry_id);
 
     if ($do_insert) {
         $mode_of_study_sql = $mode_of_study !== null ? $mode_of_study : 'NULL';

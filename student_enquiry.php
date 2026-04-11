@@ -561,6 +561,50 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                         </div>
                         <?php endif; ?>
                         <!-- end page title -->
+                        <div class="card mb-3" id="student_enquiry_contact_bar">
+                            <div class="card-body">
+                                <h6 class="card-title mb-3">Student contact</h6>
+                                <p class="text-muted small mb-3">Used for every section below (enquiry, follow-up, and counselling). Email is required to save any of them. If you save follow-up or counselling first, an enquiry is created automatically from these details.</p>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label" for="member_name">Name</label>
+                                            <input type="text" class="form-control" id="member_name" placeholder="Name" value="<?php echo $queryRes['st_enquiry_for']==1 ? $queryRes['st_name'] : $queryRes['st_member_name']; ?>">
+                                            <div class="error-feedback">Please enter the Name</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label" for="surname">Surname</label>
+                                            <input type="text" class="form-control" id="surname" placeholder="Surname" value="<?php echo  $queryRes['st_surname']; ?>" >
+                                            <div class="error-feedback">Please enter the Surname</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label" for="email_address">Email</label>
+                                            <?php $is_edit_enquiry = isset($eqId) && (int)$eqId > 0; ?>
+                                            <input type="email" class="form-control<?php echo $is_edit_enquiry ? ' bg-light' : ''; ?>" id="email_address" name="email_address" placeholder="<?php echo $is_edit_enquiry ? 'Email (locked)' : 'Email Address (required)'; ?>" <?php echo $is_edit_enquiry ? 'readonly aria-readonly="true"' : 'required'; ?> autocomplete="email" value="<?php echo htmlspecialchars((string)($queryRes['st_email'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" >
+                                            <?php if ($is_edit_enquiry): ?>
+                                            <div class="form-text text-muted small">Email cannot be changed for an existing enquiry.</div>
+                                            <?php else: ?>
+                                            <div class="error-feedback">Please enter the Email Address</div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label" for="contact_num">Mobile</label>
+                                            <input type="text" class="form-control number-field" maxlength="10" id="contact_num" placeholder="Contact Number" value="<?php echo $queryRes['st_phno']; ?>" >
+                                            <div class="error-feedback">Please enter the Contact Number</div>
+                                            <div class="phone_error">
+                                                Entered Number Already exist with Enquiry ID: <span id="phone_err_id"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
         <div id="enquiryAccordionGroup">
         <div class="accordion">
             <div class="accordion-item">
@@ -597,48 +641,6 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6"></div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="member_name">Name</label>
-                                                        <input type="text" class="form-control" id="member_name" placeholder="Name" value="<?php echo $queryRes['st_enquiry_for']==1 ? $queryRes['st_name'] : $queryRes['st_member_name']; ?>">
-                                                        <div class="error-feedback">
-                                                            Please enter the Name
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="surname">Surname</label>
-                                                        <input type="text" class="form-control" id="surname" placeholder="Surname" value="<?php echo  $queryRes['st_surname']; ?>" >
-                                                        <div class="error-feedback">
-                                                            Please enter the Surname
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="email_address">Email</label>
-                                                        <?php $is_edit_enquiry = isset($eqId) && (int)$eqId > 0; ?>
-                                                        <input type="email" class="form-control<?php echo $is_edit_enquiry ? ' bg-light' : ''; ?>" id="email_address" name="email_address" placeholder="<?php echo $is_edit_enquiry ? 'Email (locked)' : 'Email Address (required)'; ?>" <?php echo $is_edit_enquiry ? 'readonly aria-readonly="true"' : 'required'; ?> autocomplete="email" value="<?php echo htmlspecialchars((string)($queryRes['st_email'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" >
-                                                        <?php if ($is_edit_enquiry): ?>
-                                                        <div class="form-text text-muted small">Email cannot be changed for an existing enquiry.</div>
-                                                        <?php else: ?>
-                                                        <div class="error-feedback">Please enter the Email Address</div>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="contact_num">Mobile</label>
-                                                        <input type="text" class="form-control number-field" maxlength="10" id="contact_num" placeholder="Contact Number" value="<?php echo $queryRes['st_phno']; ?>" >
-                                                        <div class="error-feedback">
-                                                            Please enter the Contact Number
-                                                        </div>
-                                                        <div class="phone_error">
-                                                            Entered Number Already exist with Enquiry ID: <span id="phone_err_id"></span>
-                                                        </div>
-                                                    </div>
-                                                </div>
                                                 <!-- Left: Course list only | Right: Enquiring For, Enquiry Source, Location (one below one) -->
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
@@ -1390,6 +1392,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             function applyEnquiryFormLock(locked){
                 if(!window.ENQUIRY_EDIT_PAGE) return;
                 var $t = $('#enquiry_edit_mode_toggle');
+                $('#student_enquiry_contact_bar').find(':input').prop('disabled', !!locked);
                 $('#student_enquiry_form').find(':input').not($t).prop('disabled', !!locked);
                 $('#counselling_form').find(':input').prop('disabled', !!locked);
                 $('#followup_form_embed').find(':input').prop('disabled', !!locked);
@@ -1669,7 +1672,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
 
             $(document).on('click','#enquiry_form',async function(){ await performStudentEnquirySave(false); });
 
-            $(document).on('input change','#student_enquiry_form :input', function(e){
+            $(document).on('input change','#student_enquiry_form :input, #student_enquiry_contact_bar :input', function(e){
                 if(!window.STUDENT_ENQUIRY_AUTO_SAVE) return;
                 if(!enquiryEditingAllowed()) return;
                 if($(e.target).attr('id')==='enquiry_form') return;
@@ -1855,6 +1858,19 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var aus_study=$('#counselling_form .aus_study:checked').val();
                 $('#counselling_form .aus_study_child').toggle(aus_study==1);
             });
+            function buildAutoEnquiryContactPayload(){
+                var enquiryForVal = ($('#enquiry_for').val()||'1').toString();
+                var studentName = enquiryForVal === '1' ? ($('#member_name').val()||'').trim() : ($('#student_name').length ? ($('#student_name').val()||'').trim() : '');
+                var memberName = ($('#member_name').val()||'').trim();
+                return {
+                    emailAddress: ($('#email_address').val()||'').trim(),
+                    enquiryFor: enquiryForVal === '0' ? '1' : enquiryForVal,
+                    studentName: studentName,
+                    memberName: memberName,
+                    contactName: ($('#contact_num').val()||'').trim(),
+                    surname: ($('#surname').val()||'').trim()
+                };
+            }
             function buildCounselingFormData(){
                 var $f=$('#counselling_form');
                 var enquiry_id=($('#counselling_enquiry_id').length ? $('#counselling_enquiry_id').val() : '').toString().trim();
@@ -1879,7 +1895,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var vaccine_status=$f.find('.vaccine_status:checked').val() || '1';
                 var remarks=[];$f.find('.counselling_remarks:checked').each(function(){remarks.push(this.value);});
                 var checkId=$('#counselling_check_update').val();
-                return {formName:'counseling_form',vaccine_status:vaccine_status,job_nature:$('#counselling_job_nature').val(),module_result:$('#counselling_module_result').val(),eng_rate:eng_rate,mig_test:mig_test,overall_result:$('#counselling_overall_result').val(),course:$('#counselling_course').val(),university_name:$('#counselling_university_name').val(),qualification:qualification,counseling_timing:counseling_timing,counseling_end_timing:counseling_end_timing,enquiry_id:enquiry_id,counseling_type:counseling_type,member_name:member_name,preferred_intake_date:$('#counselling_preferred_intake_date').val(),mode_of_study:$('#counselling_mode_of_study').val(),aus_duration:aus_duration,work_status:work_status,visa_condition:visa_condition,education:education,remarks:remarks,aus_study:aus_study,counselling_notes:($('#counselling_notes').val()||'').trim(),checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
+                return $.extend({formName:'counseling_form',vaccine_status:vaccine_status,job_nature:$('#counselling_job_nature').val(),module_result:$('#counselling_module_result').val(),eng_rate:eng_rate,mig_test:mig_test,overall_result:$('#counselling_overall_result').val(),course:$('#counselling_course').val(),university_name:$('#counselling_university_name').val(),qualification:qualification,counseling_timing:counseling_timing,counseling_end_timing:counseling_end_timing,enquiry_id:enquiry_id,counseling_type:counseling_type,member_name:member_name,preferred_intake_date:$('#counselling_preferred_intake_date').val(),mode_of_study:$('#counselling_mode_of_study').val(),aus_duration:aus_duration,work_status:work_status,visa_condition:visa_condition,education:education,remarks:remarks,aus_study:aus_study,counselling_notes:($('#counselling_notes').val()||'').trim(),checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"}, buildAutoEnquiryContactPayload());
             }
             var counselAutoSaveTimer=null;
             var counselSaveSeq=0;
@@ -1891,7 +1907,15 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var enquiryId = ($('#counselling_enquiry_id').val() || '').toString().trim();
                 // For new counselling records (checkId=0), allow manual submit but skip autosave.
                 if(!hasExistingCounsel && silent) return;
-                if(!hasExistingCounsel && !enquiryId) return;
+                if(!hasExistingCounsel && !enquiryId){
+                    if(!studentEnquiryValidEmail()){
+                        if(!silent){
+                            $('.toast-text2').html('Please enter a valid email address in Student contact above.');
+                            $('#borderedToast2Btn').trigger('click');
+                        }
+                        return;
+                    }
+                }
                 if(silent && !window.STUDENT_ENQUIRY_AUTO_SAVE) return;
                 if(!silent){
                     var $f=$('#counselling_form');
@@ -1908,7 +1932,8 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                         else { autosaveSetBadge('counsel','Counseling: failed','err'); }
                         return;
                     }
-                    if(data==1){$('#toast-text').html('Record Added Successfully');$('#borderedToast1Btn').trigger('click');setTimeout(function(){location.reload();},400);}
+                    if(data==1||data=='1'){$('#toast-text').html('Record Added Successfully');$('#borderedToast1Btn').trigger('click');setTimeout(function(){location.reload();},400);}
+                    else if(data==='invalid_email' || data=='invalid_email'){$('.toast-text2').html('Please enter a valid email address in Student contact above.');$('#borderedToast2Btn').trigger('click');}
                     else{$('.toast-text2').html('Cannot add record. Please try again later');$('#borderedToast2Btn').trigger('click');}
                 },error:function(){
                     if(silent && seq===counselSaveSeq){ autosaveSetBadge('counsel','Counseling: error','err'); }
@@ -2193,7 +2218,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var remarks=[];$('#followup_form_embed .followup_remarks:checked').each(function(){remarks.push(this.value);});
                 var checkId=$('#followup_check_update').val();
                 if(!date) date = contacted_time ? contacted_time.slice(0,10) : '';
-                return {formName:'followup_call',student_name:student_name,date:date,contacted_person:contacted_person,contacted_time:contacted_time,contactMode:contactMode||followupType,followup_type:followupType,enquiry_flow_status:enquiry_flow_status,follow_up_notes:follow_up_notes,next_followup_date:next_followup_date,follow_up_outcome:follow_up_outcome,contact_num:contact_num,enquiry_id:enquiry_id,remarks:remarks,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
+                return $.extend({formName:'followup_call',student_name:student_name,date:date,contacted_person:contacted_person,contacted_time:contacted_time,contactMode:contactMode||followupType,followup_type:followupType,enquiry_flow_status:enquiry_flow_status,follow_up_notes:follow_up_notes,next_followup_date:next_followup_date,follow_up_outcome:follow_up_outcome,contact_num:contact_num,enquiry_id:enquiry_id,remarks:remarks,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"}, buildAutoEnquiryContactPayload());
             }
             var followupAutoSaveTimer=null;
             var followupSaveSeq=0;
@@ -2204,7 +2229,15 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var hasExistingFollowup = !!checkId && checkId !== '0';
                 var enquiryId = ($('#followup_enquiry_id').val() || '').toString().trim();
                 if(!hasExistingFollowup && silent) return;
-                if(!hasExistingFollowup && !enquiryId) return;
+                if(!hasExistingFollowup && !enquiryId){
+                    if(!studentEnquiryValidEmail()){
+                        if(!silent){
+                            $('.toast-text2').html('Please enter a valid email address in Student contact above.');
+                            $('#borderedToast2Btn').trigger('click');
+                        }
+                        return;
+                    }
+                }
                 if(silent && !window.STUDENT_ENQUIRY_AUTO_SAVE) return;
                 var details=buildFollowupFormData();
                 var seq=++followupSaveSeq;
@@ -2217,6 +2250,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                         return;
                     }
                     if(data==1 || data=='1'){$('#toast-text').html('Follow-up saved successfully');$('#borderedToast1Btn').trigger('click');setTimeout(function(){location.reload();},600);}
+                    else if(data==='invalid_email' || data=='invalid_email'){$('.toast-text2').html('Please enter a valid email address in Student contact above.');$('#borderedToast2Btn').trigger('click');}
                     else{$('.toast-text2').html(data && data.trim() ? data : 'Cannot save follow-up. Please try again.');$('#borderedToast2Btn').trigger('click');}
                 },error:function(){
                     if(silent && seq===followupSaveSeq){ autosaveSetBadge('followup','Follow-up: error','err'); }

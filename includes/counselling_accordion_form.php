@@ -13,7 +13,8 @@ $counsellingUsers = isset($counsellingUsers) ? $counsellingUsers : mysqli_query(
 <?php
 $counselling_enquiry_code = isset($counsil_Query['st_enquiry_id']) ? $counsil_Query['st_enquiry_id'] : '';
 ?>
-<input type="text" readonly class="form-control-plaintext fw-semibold" value="<?php echo $counselling_enquiry_code ? $counselling_enquiry_code : 'Save enquiry first'; ?>">
+<?php $counsel_enquiry_placeholder = $counselling_enquiry_code ? $counselling_enquiry_code : 'Save counselling to create or link enquiry (email required above)'; ?>
+<input type="text" readonly class="form-control-plaintext fw-semibold<?php echo $counselling_enquiry_code ? '' : ' text-muted'; ?>" value="<?php echo htmlspecialchars($counsel_enquiry_placeholder); ?>">
 <input type="hidden" name="enquiry_id" id="counselling_enquiry_id" value="<?php echo htmlspecialchars($counselling_enquiry_code); ?>">
 <div class="error-feedback">Please Select the Enquiry ID</div>
 </div>

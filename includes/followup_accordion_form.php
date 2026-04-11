@@ -37,7 +37,8 @@ $followupUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users
 <?php
 $followup_enquiry_code = isset($followup_Query['enquiry_id']) ? $followup_Query['enquiry_id'] : '';
 ?>
-<input type="text" readonly class="form-control-plaintext fw-semibold" value="<?php echo $followup_enquiry_code ? $followup_enquiry_code : 'Save enquiry first'; ?>">
+<?php $followup_enquiry_placeholder = $followup_enquiry_code ? $followup_enquiry_code : 'Save follow-up to create or link enquiry (email required above)'; ?>
+<input type="text" readonly class="form-control-plaintext fw-semibold<?php echo $followup_enquiry_code ? '' : ' text-muted'; ?>" value="<?php echo htmlspecialchars($followup_enquiry_placeholder); ?>">
 <input type="hidden" name="enquiry_id" id="followup_enquiry_id" value="<?php echo htmlspecialchars($followup_enquiry_code); ?>">
 <div class="error-feedback">Please Select the Enquiry ID</div></div></div>
 <div class="col-md-6"><div class="mb-3"><label class="form-label" for="followup_contacted_time">Follow-up Date &amp; Time</label>

@@ -525,8 +525,7 @@ document.addEventListener("DOMContentLoaded", function(e) {
         </div>
 
         <div class="d-flex align-items-center gap-2 px-3 py-2 offcanvas-header border-top">
-            <button type="button" class="btn w-50 btn-light" id="reset-layout"><i class="ti ti-restore me-1"></i>Reset</button>
-            <button type="button" class="btn w-50 btn-primary">Buy Product</button>
+            <button type="button" class="btn w-100 btn-light" id="reset-layout"><i class="ti ti-restore me-1"></i>Reset</button>
         </div>
 
     </div>`

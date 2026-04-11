@@ -270,12 +270,15 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
                                     <option value="-1">All</option>
                                     <option value="1">New</option>
                                     <option value="2">Contacted</option>
-                                    <option value="3">Follow-up Required</option>
-                                    <option value="4">Interested</option>
-                                    <option value="5">Documents Collected</option>
-                                    <option value="6">Enrolled</option>
-                                    <option value="7">Not Interested</option>
+                                    <option value="3">Follow-up Pending</option>
+                                    <option value="4">In Progress</option>
+                                    <option value="5">Ready to Enrol</option>
+                                    <option value="6">Converted</option>
+                                    <option value="7">Closed / Lost</option>
                                     <option value="8">Invalid/Duplicate</option>
+                                    <option value="9">Booked Counselling</option>
+                                    <option value="10">Re-enquired</option>
+                                    <option value="11">Counselling Pending</option>
                                 </select>
                             </div>
                             <div class="col-md-2">

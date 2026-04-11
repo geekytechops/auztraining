@@ -36,14 +36,15 @@ if(!$enquiry){
 $status_labels = array(
     1=>'New',
     2=>'Contacted',
-    3=>'Follow-up Required',
-    4=>'Interested',
-    5=>'Documents Collected',
-    6=>'Enrolled',
-    7=>'Not Interested',
+    3=>'Follow-up Pending',
+    4=>'In Progress',
+    5=>'Ready to Enrol',
+    6=>'Converted',
+    7=>'Closed / Lost',
     8=>'Invalid/Duplicate',
     9=>'Booked Counselling',
-    10=>'Re-enquired'
+    10=>'Re-enquired',
+    11=>'Counselling Pending'
 );
 $status_classes = array(
     1=>'secondary',
@@ -55,7 +56,8 @@ $status_classes = array(
     7=>'danger',
     8=>'secondary',
     9=>'warning',
-    10=>'info'
+    10=>'info',
+    11=>'warning'
 );
 $flow_status = (int)(isset($enquiry['st_enquiry_flow_status']) ? $enquiry['st_enquiry_flow_status'] : 1);
 $courseNames = array();

@@ -2,8 +2,17 @@
 if(!isset($enquiryIdsCounselling)) $enquiryIdsCounselling = $enquiryIds ?? null;
 if(!isset($counsilEqId)) $counsilEqId = 0;
 if(!isset($counsil_Query)) $counsil_Query = array();
-$counsil_Query = array_merge(array('st_enquiry_id'=>'','counsil_timing'=>'','counsil_end_time'=>'','counsil_type'=>'','counsil_mem_name'=>'','counsil_preferred_intake_date'=>'','counsil_mode_of_study'=>'','counsil_aus_stay_time'=>'','counsil_work_status'=>'','counsil_visa_condition'=>'','counsil_education'=>'','counsil_aus_study_status'=>'','counsil_course'=>'','counsil_university'=>'','counsil_qualification'=>'','counsil_eng_rate'=>'','counsil_migration_test'=>'','counsil_overall_result'=>'','counsil_module_result'=>'','counsil_job_nature'=>'','counsil_vaccine_status'=>'','counsil_remarks'=>'','counsil_notes'=>''), $counsil_Query);
+$counsil_Query = array_merge(array('st_enquiry_id'=>'','counsil_timing'=>'','counsil_end_time'=>'','counsil_type'=>'','counsil_mem_name'=>'','counsil_preferred_intake_date'=>'','counsil_mode_of_study'=>'','counsil_aus_stay_time'=>'','counsil_work_status'=>'','counsil_visa_condition'=>'','counsil_education'=>'','counsil_aus_study_status'=>'','counsil_course'=>'','counsil_university'=>'','counsil_qualification'=>'','counsil_eng_rate'=>'','counsil_migration_test'=>'','counsil_overall_result'=>'','counsil_module_result'=>'','counsil_job_nature'=>'','counsil_vaccine_status'=>'','counsil_remarks'=>'','counsil_notes'=>'','counsil_outcome'=>''), $counsil_Query);
 $counsellingUsers = isset($counsellingUsers) ? $counsellingUsers : mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE user_status != 1 ORDER BY user_name");
+$co_raw = isset($counsil_Query['counsil_outcome']) ? trim((string) $counsil_Query['counsil_outcome']) : '';
+$co_norm_map = array(
+    'counselling done' => 'Counselling Done',
+    'counseling done' => 'Counselling Done',
+    'rejected' => 'Rejected',
+    'rescheduled' => 'Rescheduled',
+);
+$co_lk = strtolower($co_raw);
+$co_sel = ($co_raw !== '' && isset($co_norm_map[$co_lk])) ? $co_norm_map[$co_lk] : $co_raw;
 ?>
 <form class="followup_form" id="counselling_form">
 <div class="row">
@@ -47,6 +56,22 @@ if($counsil_date_val==''){
 <div class="col-md-6"><div class="mb-3"><label class="form-label">Counseling Type</label><br>
 <input type="radio" id="counseling_type1" name="counseling_type" class="form-check-input counseling_type" value="1" <?php echo $counsil_Query['counsil_type']==''||$counsil_Query['counsil_type']==1 ? 'checked' : ''; ?>><label for="counseling_type1">Face to Face</label>
 <input type="radio" id="counseling_type2" name="counseling_type" class="form-check-input counseling_type" value="2" <?php echo $counsil_Query['counsil_type']==2 ? 'checked' : ''; ?>><label for="counseling_type2">Video</label></div></div>
+<div class="col-md-6"><div class="mb-3"><label class="form-label" for="counselling_outcome">Counselling outcome</label>
+<select class="form-select" id="counselling_outcome" name="counselling_outcome">
+<?php
+$couns_outcomes = array(''=>'--select--','Counselling Done'=>'Counselling Done','Rejected'=>'Rejected','Rescheduled'=>'Rescheduled');
+foreach ($couns_outcomes as $ov => $ol) {
+    $os = ($co_sel === $ov) ? 'selected' : '';
+    echo '<option value="'.htmlspecialchars($ov, ENT_QUOTES, 'UTF-8').'" '.$os.'>'.htmlspecialchars($ol, ENT_QUOTES, 'UTF-8').'</option>';
+}
+?>
+</select>
+<small class="text-muted d-block mt-1">Saving applies the matching enquiry status automatically.</small>
+</div></div>
+<div class="col-12 mb-2" id="counselling_reschedule_calendar_wrap" style="display:<?php echo ($co_sel === 'Rescheduled') ? 'block' : 'none'; ?>;">
+<button type="button" class="btn btn-outline-primary" id="counselling_open_calendar_btn"><i class="ti ti-calendar"></i> Calendar</button>
+<small class="text-muted ms-2">Book the rescheduled session; enquiry status is set to Counselling Pending.</small>
+</div>
 <div class="col-md-6"><div class="mb-3"><label class="form-label" for="counselling_member_name">Counsellor's Name</label>
 <select class="form-select" id="counselling_member_name">
 <option value="">--select--</option>
@@ -131,4 +156,24 @@ echo '<div class="form-check"><input type="checkbox" class="remarks_check form-c
 </div>
 <button class="btn btn-primary" type="button" id="counseling_submit">Submit Counseling</button>
 <input type="hidden" value="<?php echo $counsilEqId; ?>" id="counselling_check_update">
+<script>
+(function(){
+    var want = <?php echo json_encode($co_sel, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+    function applyCounsellingOutcomePreselect(){
+        var el = document.getElementById('counselling_outcome');
+        if (!el || !want) return;
+        var ok = false;
+        for (var i = 0; i < el.options.length; i++) {
+            if (el.options[i].value === want) { ok = true; break; }
+        }
+        if (ok) el.value = want;
+    }
+    window.__applyCounsellingOutcomePreselect = applyCounsellingOutcomePreselect;
+    document.addEventListener('DOMContentLoaded', applyCounsellingOutcomePreselect);
+    if (window.jQuery) {
+        jQuery(function(){ applyCounsellingOutcomePreselect(); setTimeout(applyCounsellingOutcomePreselect, 0); setTimeout(applyCounsellingOutcomePreselect, 150); });
+    }
+    setTimeout(applyCounsellingOutcomePreselect, 50);
+})();
+</script>
 </form>

@@ -395,6 +395,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
         'st_enquiry_flow_status' => '',
     );
     $queryRes = array_merge($student_enquiry_row_defaults, is_array($queryRes) ? $queryRes : array());
+    $sel_source = isset($queryRes['st_enquiry_source']) ? (int)$queryRes['st_enquiry_source'] : 0;
 
     // From View Enquiries list (?view=1): open in read-only until user turns "Allow editing" on
     $enquiry_locked_start = (isset($_GET['view']) && (string)$_GET['view'] === '1' && isset($eqId) && (int)$eqId > 0);
@@ -414,7 +415,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
     $enquirySourceStaffUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE user_status != 1 ORDER BY user_name");
     $counsilEqId=0;
     $followupEqId=0;
-    $counsil_Query=array('st_enquiry_id'=>'','counsil_timing'=>'','counsil_end_time'=>'','counsil_type'=>'','counsil_mem_name'=>'','counsil_aus_stay_time'=>'','counsil_work_status'=>'','counsil_visa_condition'=>'','counsil_education'=>'','counsil_aus_study_status'=>'','counsil_course'=>'','counsil_university'=>'','counsil_qualification'=>'','counsil_eng_rate'=>'','counsil_migration_test'=>'','counsil_overall_result'=>'','counsil_module_result'=>'','counsil_job_nature'=>'','counsil_vaccine_status'=>'','counsil_pref_comments'=>'','counsil_remarks'=>'');
+    $counsil_Query=array('st_enquiry_id'=>'','counsil_timing'=>'','counsil_end_time'=>'','counsil_type'=>'','counsil_mem_name'=>'','counsil_aus_stay_time'=>'','counsil_work_status'=>'','counsil_visa_condition'=>'','counsil_education'=>'','counsil_aus_study_status'=>'','counsil_course'=>'','counsil_university'=>'','counsil_qualification'=>'','counsil_eng_rate'=>'','counsil_migration_test'=>'','counsil_overall_result'=>'','counsil_module_result'=>'','counsil_job_nature'=>'','counsil_vaccine_status'=>'','counsil_pref_comments'=>'','counsil_remarks'=>'','counsil_outcome'=>'');
     $followup_Query=array('enquiry_id'=>'','flw_name'=>'','flw_phone'=>'','flw_contacted_person'=>'','flw_contacted_time'=>'','flw_date'=>'','flw_mode_contact'=>'','flw_followup_type'=>'','flw_follow_up_notes'=>'','flw_next_followup_date'=>'','flw_follow_up_outcome'=>'','flw_comments'=>'','flw_progress_state'=>'','flw_remarks'=>'');
 
     // When editing a specific enquiry, pre-fill counselling & follow-up context from that enquiry
@@ -454,8 +455,19 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 'counsil_job_nature' => $crow['counsil_job_nature'] ?? '',
                 'counsil_vaccine_status' => $crow['counsil_vaccine_status'] ?? '',
                 'counsil_remarks' => $crow['counsil_remarks'] ?? '',
-                'counsil_notes' => $crow['counsil_notes'] ?? ''
+                'counsil_notes' => $crow['counsil_notes'] ?? '',
+                'counsil_outcome' => isset($crow['counsil_outcome']) ? trim((string) $crow['counsil_outcome']) : ''
             ));
+            // Re-read outcome by primary key so it always pre-fills (SELECT * can omit new columns on some setups)
+            if ($counsilEqId > 0) {
+                $coq = @mysqli_query($connection, 'SELECT counsil_outcome FROM counseling_details WHERE counsil_id=' . (int) $counsilEqId . ' LIMIT 1');
+                if ($coq && ($cor = mysqli_fetch_assoc($coq)) && array_key_exists('counsil_outcome', $cor)) {
+                    $vco = trim((string) $cor['counsil_outcome']);
+                    if ($vco !== '') {
+                        $counsil_Query['counsil_outcome'] = $vco;
+                    }
+                }
+            }
         } else {
             $counsilEqId = 0; // no existing counselling -> INSERT on submit
             $counsil_Query['counsil_visa_condition'] = $queryRes['st_visa_status'] ?? '';
@@ -548,7 +560,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 width: 9.5rem;
                 min-width: 9.5rem;
                 max-width: 9.5rem;
-                box-shadow: 6px 0 8px -4px rgba(0, 0, 0, 0.12);
+                /* box-shadow: 6px 0 8px -4px rgba(0, 0, 0, 0.12); */
             }
         </style>
     </head>
@@ -655,6 +667,58 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                         </div>
                                     </div>
                                 </div>
+                                <div class="row mt-2 pt-2 border-top">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label" for="enquiry_source">Enquiry source</label>
+                                            <select name="enquiry_source" class="form-select" id="enquiry_source">
+                                            <?php
+                                            $st_enquiry_source = ['--select--','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads'];
+                                            for($i=0;$i<count($st_enquiry_source);$i++){
+                                                $ch = $i === $sel_source ? 'selected' : '';
+                                                echo '<option value="'.$i.'" '.$ch.'>'.$st_enquiry_source[$i].'</option>';
+                                            }
+                                            if ($sel_source === 7) {
+                                                echo '<option value="7" selected>Agent / referral (legacy)</option>';
+                                            }
+                                            ?>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3" id="enquiry_source_staff_wrap" style="display:<?php echo (in_array($sel_source, array(2, 4, 5, 6), true)) ? 'block' : 'none'; ?>;">
+                                            <label class="form-label" for="enquiry_source_responsible_staff">Responsible staff</label>
+                                            <select class="form-select" id="enquiry_source_responsible_staff" name="enquiry_source_responsible_staff">
+                                                <option value="">--select--</option>
+                                                <?php
+                                                $staff_sel = isset($queryRes['st_hearedby']) ? trim((string)$queryRes['st_hearedby']) : '';
+                                                if ($enquirySourceStaffUsers && mysqli_num_rows($enquirySourceStaffUsers) > 0) {
+                                                    mysqli_data_seek($enquirySourceStaffUsers, 0);
+                                                    while ($su = mysqli_fetch_array($enquirySourceStaffUsers)) {
+                                                        $nm = $su['user_name'];
+                                                        $os = ($staff_sel === $nm) ? 'selected' : '';
+                                                        echo '<option value="'.htmlspecialchars($nm, ENT_QUOTES, 'UTF-8').'" '.$os.'>'.htmlspecialchars($nm, ENT_QUOTES, 'UTF-8').'</option>';
+                                                    }
+                                                }
+                                                ?>
+                                            </select>
+                                            <div class="error-feedback" id="enquiry_source_staff_error" style="display:none;">Please select the responsible staff for this enquiry source.</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label" for="location">Location</label>
+                                            <input type="text" class="form-control" id="location" name="location" placeholder="Location" value="<?php echo isset($queryRes['st_location']) ? htmlspecialchars($queryRes['st_location']) : ''; ?>">
+                                            <div class="error-feedback">Please enter the Location</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row" id="enquiry_source_phone_calendar_wrap" style="display:<?php echo ($sel_source === 2) ? 'block' : 'none'; ?>;">
+                                    <div class="col-12 mb-2">
+                                        <button type="button" class="btn btn-outline-primary" id="contact_bar_open_calendar_btn"><i class="ti ti-calendar"></i> Calendar</button>
+                                        <small class="text-muted ms-2">Book a counselling appointment (same as Follow-up). With no enquiry yet, saving the appointment creates the enquiry and sets status to Booked Counselling.</small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
         <div id="enquiryAccordionGroup">
@@ -693,7 +757,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6"></div>
-                                                <!-- Left: Course list only | Right: Enquiring For, Enquiry Source, Location (one below one) -->
+                                                <!-- Left: Course list only | Right: Enquiring For, student name (family), college -->
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="courses">Course Interested In</label>
@@ -743,45 +807,6 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                         <div class="error-feedback">
                                                             Please enter the Student name
                                                         </div>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="enquiry_source">Enquiry Source</label>
-                                                        <select name="enquiry_source" class="form-select" id="enquiry_source">
-                                                        <?php
-                                                        $st_enquiry_source = ['--select--','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads'];
-                                                        $sel_source = isset($queryRes['st_enquiry_source']) ? (int)$queryRes['st_enquiry_source'] : 0;
-                                                        for($i=0;$i<count($st_enquiry_source);$i++){
-                                                            $ch = $i === $sel_source ? 'selected' : '';
-                                                            echo '<option value="'.$i.'" '.$ch.'>'.$st_enquiry_source[$i].'</option>';
-                                                        }
-                                                        if ($sel_source === 7) {
-                                                            echo '<option value="7" selected>Agent / referral (legacy)</option>';
-                                                        }
-                                                        ?>
-                                                        </select>
-                                                    </div>
-                                                    <div class="mb-3" id="enquiry_source_staff_wrap" style="display:<?php echo (in_array($sel_source, array(4, 5, 6), true)) ? 'block' : 'none'; ?>;">
-                                                        <label class="form-label" for="enquiry_source_responsible_staff">Responsible staff</label>
-                                                        <select class="form-select" id="enquiry_source_responsible_staff" name="enquiry_source_responsible_staff">
-                                                            <option value="">--select--</option>
-                                                            <?php
-                                                            $staff_sel = isset($queryRes['st_hearedby']) ? trim((string)$queryRes['st_hearedby']) : '';
-                                                            if ($enquirySourceStaffUsers && mysqli_num_rows($enquirySourceStaffUsers) > 0) {
-                                                                mysqli_data_seek($enquirySourceStaffUsers, 0);
-                                                                while ($su = mysqli_fetch_array($enquirySourceStaffUsers)) {
-                                                                    $nm = $su['user_name'];
-                                                                    $os = ($staff_sel === $nm) ? 'selected' : '';
-                                                                    echo '<option value="'.htmlspecialchars($nm, ENT_QUOTES, 'UTF-8').'" '.$os.'>'.htmlspecialchars($nm, ENT_QUOTES, 'UTF-8').'</option>';
-                                                                }
-                                                            }
-                                                            ?>
-                                                        </select>
-                                                        <div class="error-feedback" id="enquiry_source_staff_error" style="display:none;">Please select the responsible staff for this enquiry source.</div>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="location">Location</label>
-                                                        <input type="text" class="form-control" id="location" name="location" placeholder="Location" value="<?php echo isset($queryRes['st_location']) ? htmlspecialchars($queryRes['st_location']) : ''; ?>">
-                                                        <div class="error-feedback">Please enter the Location</div>
                                                     </div>
                                                     <?php if (!$is_student_portal): ?>
                                                     <div class="mb-3">
@@ -1087,6 +1112,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                         </div>
                                     </div>
                                 </div>
+                                </div>
                                 <div class="row">
                                     <div class="col-xl-12">
                                         <div class="card">
@@ -1244,6 +1270,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                             </div>
                                         </div>
                                     </div>
+                                </div>
                                 </div>
 
                         <div class="row">
@@ -1453,13 +1480,11 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                             <div id="followup_history_loading" class="text-muted py-3 d-none">Loading…</div>
                             <div id="followup_history_empty" class="text-muted py-3 d-none">No follow-up records yet.</div>
                             <div id="followup_history_scrollwrap">
-                                <table class="table table-sm table-striped table-bordered align-top mb-0" id="followup_history_table" style="min-width: 2400px;">
+                                <table class="table table-sm table-striped table-bordered align-top mb-0" id="followup_history_table" style="min-width: 2200px;">
                                     <thead class="table-light"><tr>
                                         <th class="fh-pin fh-pin-1">Follow-up outcome</th>
                                         <th class="fh-pin fh-pin-2">Enquiry status</th>
                                         <th class="fh-pin fh-pin-3">Follow-up notes</th>
-                                        <th>#</th>
-                                        <th>Enquiry ID</th>
                                         <th>Student name</th>
                                         <th>Phone</th>
                                         <th>Follow-up date &amp; time</th>
@@ -1538,11 +1563,14 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 $('#student_enquiry_form').find(':input').not($t).prop('disabled', !!locked);
                 $('#counselling_form').find(':input').prop('disabled', !!locked);
                 $('#followup_form_embed').find(':input').prop('disabled', !!locked);
-                $('#enquiry_form,#counseling_submit,#followup_check,#followup_send_status_email,#followup_open_calendar_btn').prop('disabled', !!locked);
+                $('#enquiry_form,#counseling_submit,#followup_check,#followup_send_status_email,#followup_open_calendar_btn,#contact_bar_open_calendar_btn,#counselling_open_calendar_btn').prop('disabled', !!locked);
                 $('#followup_history_open_btn').prop('disabled', false);
                 $('#fp_appointment_submit_btn').prop('disabled', !!locked);
                 if($('#enquiry_edit_mode_hint').length){
                     $('#enquiry_edit_mode_hint').text(locked ? 'View only — turn on to edit.' : 'Turn off to view without editing.');
+                }
+                if (typeof window.__applyCounsellingOutcomePreselect === 'function') {
+                    window.__applyCounsellingOutcomePreselect();
                 }
             }
             $(function(){
@@ -1678,12 +1706,13 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 });
                 function toggleEnquirySourceStaffField(){
                     var v = parseInt($('#enquiry_source').val(), 10) || 0;
-                    if (v === 4 || v === 5 || v === 6) {
+                    if (v === 2 || v === 4 || v === 5 || v === 6) {
                         $('#enquiry_source_staff_wrap').show();
                     } else {
                         $('#enquiry_source_staff_wrap').hide();
                         $('#enquiry_source_staff_error').hide();
                     }
+                    $('#enquiry_source_phone_calendar_wrap').toggle(v === 2);
                 }
                 $('#enquiry_source').on('change', toggleEnquirySourceStaffField);
                 $('#enquiry_source_responsible_staff').on('change', function(){
@@ -1707,7 +1736,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var hear_about='';
                 var hearedby='';
                 var esSrc = parseInt($('#enquiry_source').val(), 10) || 0;
-                if (esSrc === 4 || esSrc === 5 || esSrc === 6) {
+                if (esSrc === 2 || esSrc === 4 || esSrc === 5 || esSrc === 6) {
                     hearedby = ($('#enquiry_source_responsible_staff').val() || '').trim();
                 }
                 var plan_to_start_date=$('#plan_to_start_date').val();
@@ -1775,11 +1804,11 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     return;
                 }
                 var esChk = parseInt($('#enquiry_source').val(), 10) || 0;
-                if ((esChk === 4 || esChk === 5 || esChk === 6) && !($('#enquiry_source_responsible_staff').val() || '').toString().trim()) {
+                if ((esChk === 2 || esChk === 4 || esChk === 5 || esChk === 6) && !($('#enquiry_source_responsible_staff').val() || '').toString().trim()) {
                     $('#enquiry_source_staff_error').show();
                     $('#enquiry_source_responsible_staff').addClass('is-invalid');
                     if (!silent) {
-                        $('.toast-text2').html('Please select responsible staff for Email, WhatsApp, or Facebook / Instagram ads.');
+                        $('.toast-text2').html('Please select responsible staff for Phone call, Email, WhatsApp, or Facebook / Instagram ads.');
                         $('#borderedToast2Btn').trigger('click');
                     } else {
                         autosaveSetBadge('enquiry','Enquiry: select responsible staff','err');
@@ -1834,7 +1863,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                             $('#loader-container').hide();
                             $('#student_enquiry_form').css('opacity','');
                         }else if(data==='enquiry_source_staff_required' || data=='enquiry_source_staff_required'){
-                            $('.toast-text2').html('Please select responsible staff for Email, WhatsApp, or Facebook / Instagram ads.');
+                            $('.toast-text2').html('Please select responsible staff for Phone call, Email, WhatsApp, or Facebook / Instagram ads.');
                             $('#borderedToast2Btn').trigger('click');
                             $('#enquiry_source_staff_error').show();
                             $('#enquiry_source_responsible_staff').addClass('is-invalid');
@@ -2092,7 +2121,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var vaccine_status=$f.find('.vaccine_status:checked').val() || '1';
                 var remarks=[];$f.find('.counselling_remarks:checked').each(function(){remarks.push(this.value);});
                 var checkId=$('#counselling_check_update').val();
-                return $.extend({formName:'counseling_form',vaccine_status:vaccine_status,job_nature:$('#counselling_job_nature').val(),module_result:$('#counselling_module_result').val(),eng_rate:eng_rate,mig_test:mig_test,overall_result:$('#counselling_overall_result').val(),course:$('#counselling_course').val(),university_name:$('#counselling_university_name').val(),qualification:qualification,counseling_timing:counseling_timing,counseling_end_timing:counseling_end_timing,enquiry_id:enquiry_id,counseling_type:counseling_type,member_name:member_name,preferred_intake_date:$('#counselling_preferred_intake_date').val(),mode_of_study:$('#counselling_mode_of_study').val(),aus_duration:aus_duration,work_status:work_status,visa_condition:visa_condition,education:education,remarks:remarks,aus_study:aus_study,counselling_notes:($('#counselling_notes').val()||'').trim(),checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"}, buildAutoEnquiryContactPayload());
+                return $.extend({formName:'counseling_form',vaccine_status:vaccine_status,job_nature:$('#counselling_job_nature').val(),module_result:$('#counselling_module_result').val(),eng_rate:eng_rate,mig_test:mig_test,overall_result:$('#counselling_overall_result').val(),course:$('#counselling_course').val(),university_name:$('#counselling_university_name').val(),qualification:qualification,counseling_timing:counseling_timing,counseling_end_timing:counseling_end_timing,enquiry_id:enquiry_id,counseling_type:counseling_type,member_name:member_name,preferred_intake_date:$('#counselling_preferred_intake_date').val(),mode_of_study:$('#counselling_mode_of_study').val(),aus_duration:aus_duration,work_status:work_status,visa_condition:visa_condition,education:education,remarks:remarks,aus_study:aus_study,counselling_notes:($('#counselling_notes').val()||'').trim(),counselling_outcome:($('#counselling_outcome').length ? ($('#counselling_outcome').val() || '') : ''),checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"}, buildAutoEnquiryContactPayload());
             }
             var counselAutoSaveTimer=null;
             var counselSaveSeq=0;
@@ -2157,6 +2186,18 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     $field.closest('.mb-3').find('.error-feedback').hide();
                 }
             });
+            function followupAutoResizeEmailBody(){
+                var el = document.getElementById('followup_email_body');
+                if(!el) return;
+                var minH = 120;
+                var maxH = 448;
+                el.style.height = 'auto';
+                el.style.overflowY = 'hidden';
+                var sh = el.scrollHeight;
+                var h = Math.min(maxH, Math.max(minH, sh));
+                el.style.height = h + 'px';
+                el.style.overflowY = sh > maxH ? 'auto' : 'hidden';
+            }
             function loadFollowupTemplateForCurrentStatus(){
                 var status=$('#followup_enquiry_flow_status').val();
                 var enquiry_id=$('#followup_enquiry_id').val();
@@ -2169,8 +2210,13 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     }catch(e){
                         // ignore parse errors, leave fields as-is
                     }
+                    setTimeout(followupAutoResizeEmailBody, 0);
                 });
             }
+            $(document).on('input','#followup_email_body', followupAutoResizeEmailBody);
+            $('#collapseFollowup').on('shown.bs.collapse', function(){
+                setTimeout(followupAutoResizeEmailBody, 50);
+            });
             $(document).on('change','#followup_enquiry_flow_status',function(){
                 loadFollowupTemplateForCurrentStatus();
             });
@@ -2179,11 +2225,20 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var show = (outcome === 'No Answer' || outcome === 'Call Back Later' || outcome === 'Booked Counselling');
                 $('#followup_calendar_btn_wrap').toggle(!!show);
             }
-            $(document).on('change','#followup_follow_up_outcome',function(){ toggleFollowupCalendarBtn(); });
-            $(document).on('click','#followup_open_calendar_btn',function(){
-                var enquiryId = ($('#followup_enquiry_id').val() || '').toString().trim();
-                $('#fp_connected_enquiry_id').val(enquiryId);
-                // Limit appointment date so it cannot be before enquiry date or before today
+            /** Mirrors server mapping in includes/enquiry_status_auto_map.php */
+            function applyFollowupOutcomeToEnquiryStatusFromOutcome(){
+                var o = ($('#followup_follow_up_outcome').val() || '').toString().trim();
+                var map = { 'No Answer':'3', 'Call Back Later':'3', 'Booked Counselling':'2', 'Requested More Information':'2', 'Application Started':'4', 'Enrolled':'6', 'Not Interested':'7', 'Do not Call':'7' };
+                if(Object.prototype.hasOwnProperty.call(map, o)){
+                    $('#followup_enquiry_flow_status').val(map[o]);
+                    loadFollowupTemplateForCurrentStatus();
+                }
+            }
+            $(document).on('change','#followup_follow_up_outcome',function(){
+                applyFollowupOutcomeToEnquiryStatusFromOutcome();
+                toggleFollowupCalendarBtn();
+            });
+            function fpPrepareAndOpenAppointmentModal(){
                 var enquiryDateStr = ($('#enquiry_date').val() || '').toString().trim();
                 var today = new Date();
                 var todayStr = today.toISOString().slice(0,10);
@@ -2197,8 +2252,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     $('#fp_appointment_date').val(minDate);
                     currentApptDate = minDate;
                 }
-                // For same-day bookings, do not allow past times
-                var nowTimeStr = today.toTimeString().slice(0,5); // HH:MM
+                var nowTimeStr = today.toTimeString().slice(0,5);
                 if(currentApptDate === todayStr){
                     $('#fp_appointment_time,#fp_appointment_time_to').attr('min', nowTimeStr);
                 } else {
@@ -2216,6 +2270,51 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 $('#fp_business_info_section').hide();
                 var modal = new bootstrap.Modal(document.getElementById('followupAppointmentModal'));
                 modal.show();
+            }
+            $(document).on('click','#followup_open_calendar_btn',function(){
+                window.__fpBookFromContactBarPhone = false;
+                window.__fpBookFromCounsellingReschedule = false;
+                var enquiryId = ($('#followup_enquiry_id').val() || '').toString().trim();
+                $('#fp_connected_enquiry_id').val(enquiryId);
+                fpPrepareAndOpenAppointmentModal();
+            });
+            $(document).on('click','#contact_bar_open_calendar_btn',function(){
+                window.__fpBookFromCounsellingReschedule = false;
+                var src = parseInt($('#enquiry_source').val(), 10) || 0;
+                if (src !== 2) { return; }
+                if (typeof studentEnquiryValidEmail === 'function' && !studentEnquiryValidEmail()) {
+                    $('.toast-text2').html('Please enter a valid email address before booking.');
+                    $('#borderedToast2Btn').trigger('click');
+                    return;
+                }
+                if (!($('#enquiry_source_responsible_staff').val() || '').toString().trim()) {
+                    $('#enquiry_source_staff_error').show();
+                    $('#enquiry_source_responsible_staff').addClass('is-invalid');
+                    $('.toast-text2').html('Please select responsible staff for Phone call.');
+                    $('#borderedToast2Btn').trigger('click');
+                    return;
+                }
+                window.__fpBookFromContactBarPhone = true;
+                var enquiryId = ($('#followup_enquiry_id').val() || '').toString().trim();
+                $('#fp_connected_enquiry_id').val(enquiryId);
+                fpPrepareAndOpenAppointmentModal();
+            });
+            function toggleCounsellingRescheduleCalendarWrap(){
+                var v = ($('#counselling_outcome').val() || '').toString().trim();
+                $('#counselling_reschedule_calendar_wrap').toggle(v === 'Rescheduled');
+            }
+            $(document).on('change','#counselling_outcome', function(){ toggleCounsellingRescheduleCalendarWrap(); });
+            $(document).on('click','#counselling_open_calendar_btn',function(){
+                window.__fpBookFromContactBarPhone = false;
+                window.__fpBookFromCounsellingReschedule = true;
+                if (typeof studentEnquiryValidEmail === 'function' && !studentEnquiryValidEmail()) {
+                    $('.toast-text2').html('Please enter a valid email address before booking.');
+                    $('#borderedToast2Btn').trigger('click');
+                    return;
+                }
+                var enquiryId = ($('#counselling_enquiry_id').val() || $('#followup_enquiry_id').val() || '').toString().trim();
+                $('#fp_connected_enquiry_id').val(enquiryId);
+                fpPrepareAndOpenAppointmentModal();
             });
             // Follow-up appointment popup: attendee type toggle
             $(document).on('change','#fp_attendee_type_id',function(){
@@ -2355,10 +2454,75 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     $('#fp_appointment_time_philippines').val(stateDt);
                 }
                 var formData = new FormData(this);
+                if (window.__fpBookFromContactBarPhone) {
+                    formData.append('set_flow_status_booked_counselling', '1');
+                    var fpEq = ($('#fp_connected_enquiry_id').val() || '').toString().trim();
+                    if (!fpEq) {
+                        formData.append('auto_create_enquiry_phone_flow', '1');
+                    }
+                    var ef = ($('#enquiry_for').val() || '1').toString();
+                    formData.append('cb_email', ($('#email_address').val() || '').trim());
+                    formData.append('cb_enquiry_for', ef);
+                    formData.append('cb_student_name', ($('#student_name').val() || '').trim());
+                    formData.append('cb_member_name', ($('#member_name').val() || '').trim());
+                    formData.append('cb_contact_num', ($('#contact_num').val() || '').trim());
+                    formData.append('cb_surname', ($('#surname').val() || '').trim());
+                    formData.append('cb_responsible_staff', ($('#enquiry_source_responsible_staff').val() || '').trim());
+                    formData.append('cb_location', ($('#location').val() || '').trim());
+                }
+                if (window.__fpBookFromCounsellingReschedule) {
+                    formData.append('set_flow_status_counselling_pending', '1');
+                    var fpEqCr = ($('#fp_connected_enquiry_id').val() || '').toString().trim();
+                    if (!fpEqCr) {
+                        formData.append('auto_create_enquiry_counselling_reschedule_flow', '1');
+                    }
+                    var ef2 = ($('#enquiry_for').val() || '1').toString();
+                    formData.append('cb_email', ($('#email_address').val() || '').trim());
+                    formData.append('cb_enquiry_for', ef2);
+                    formData.append('cb_student_name', ($('#student_name').val() || '').trim());
+                    formData.append('cb_member_name', ($('#member_name').val() || '').trim());
+                    formData.append('cb_contact_num', ($('#contact_num').val() || '').trim());
+                    formData.append('cb_surname', ($('#surname').val() || '').trim());
+                }
                 $('#fp_appointment_submit_btn').prop('disabled',true);
                 $.ajax({ type:'POST', url:'includes/datacontrol.php', data:formData, contentType:false, processData:false,
                     success:function(res){
                         var r = (res||'').toString().trim();
+                        var contactPhoneFlow = !!window.__fpBookFromContactBarPhone;
+                        var counsReschedFlow = !!window.__fpBookFromCounsellingReschedule;
+                        var mNav = /^1\|(\d+)$/.exec(r);
+                        if ((contactPhoneFlow || counsReschedFlow) && mNav) {
+                            $('#followupAppointmentModal').modal('hide');
+                            var sid = mNav[1];
+                            window.__fpBookFromContactBarPhone = false;
+                            window.__fpBookFromCounsellingReschedule = false;
+                            if (window.ENQUIRY_EDIT_PAGE) {
+                                window.location.reload();
+                            } else {
+                                window.location.href = 'student_enquiry.php?eq=' + encodeURIComponent(btoa(sid));
+                            }
+                            return;
+                        }
+                        if (contactPhoneFlow && r === '1') {
+                            $('#followupAppointmentModal').modal('hide');
+                            $('#toast-text').html('Appointment saved. Enquiry updated to Booked Counselling.');
+                            $('#borderedToast1Btn').trigger('click');
+                            $f[0].reset();
+                            $('#fp_appointment_submit_btn').prop('disabled', false);
+                            window.__fpBookFromContactBarPhone = false;
+                            setTimeout(function(){ window.location.reload(); }, 500);
+                            return;
+                        }
+                        if (counsReschedFlow && r === '1') {
+                            $('#followupAppointmentModal').modal('hide');
+                            $('#toast-text').html('Appointment saved. Enquiry status set to Counselling Pending.');
+                            $('#borderedToast1Btn').trigger('click');
+                            $f[0].reset();
+                            $('#fp_appointment_submit_btn').prop('disabled', false);
+                            window.__fpBookFromCounsellingReschedule = false;
+                            setTimeout(function(){ window.location.reload(); }, 500);
+                            return;
+                        }
                         if(r==='1'){
                             $('#followupAppointmentModal').modal('hide');
                             $('#toast-text').html('Appointment saved successfully!');
@@ -2368,6 +2532,18 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                             $('#followup_enquiry_flow_status option[value="9"]').prop('disabled', false);
                         } else if(r==='2'){
                             $('.toast-text2').html('Time slot already booked for this person. Choose a different time.');
+                            $('#borderedToast2Btn').trigger('click');
+                            $('#fp_appointment_submit_btn').prop('disabled',false);
+                        } else if(r==='3'){
+                            $('.toast-text2').html('This time falls in a blocked period. Choose a different time.');
+                            $('#borderedToast2Btn').trigger('click');
+                            $('#fp_appointment_submit_btn').prop('disabled',false);
+                        } else if(r==='invalid_email'){
+                            $('.toast-text2').html('Please enter a valid email on the contact card before booking.');
+                            $('#borderedToast2Btn').trigger('click');
+                            $('#fp_appointment_submit_btn').prop('disabled',false);
+                        } else if(r==='contact_phone_staff_required'){
+                            $('.toast-text2').html('Please select responsible staff for Phone call.');
                             $('#borderedToast2Btn').trigger('click');
                             $('#fp_appointment_submit_btn').prop('disabled',false);
                         } else {
@@ -2380,7 +2556,14 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 });
             });
             $('#followupAppointmentModal').on('shown.bs.modal',function(){ $('#fp_attendee_type_id').trigger('change'); $('#fp_meeting_type').trigger('change'); });
-            $(document).ready(function(){ toggleFollowupCalendarBtn(); });
+            $('#followupAppointmentModal').on('hidden.bs.modal', function(){
+                window.__fpBookFromContactBarPhone = false;
+                window.__fpBookFromCounsellingReschedule = false;
+            });
+            $(document).ready(function(){
+                toggleFollowupCalendarBtn();
+                toggleCounsellingRescheduleCalendarWrap();
+            });
             $(document).on('click','#followup_send_status_email',function(){
                 var enquiry_id=$('#followup_enquiry_id').val();
                 var status_code=$('#followup_enquiry_flow_status').val();
@@ -2401,6 +2584,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             });
             // Load default email template once when form is ready (for current status)
             loadFollowupTemplateForCurrentStatus();
+            setTimeout(followupAutoResizeEmailBody, 100);
 
             function buildFollowupFormData(){
                 var enquiryForVal = ($('#enquiry_for').val()||'0').toString();
@@ -2507,8 +2691,6 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                         $tr.append($('<td/>').addClass('fh-pin fh-pin-1').text(r.flw_follow_up_outcome || ''));
                         $tr.append($('<td/>').addClass('fh-pin fh-pin-2').text(r.status_label || ''));
                         $tr.append($('<td/>').addClass('fh-pin fh-pin-3').css(cellPre).text(r.flw_follow_up_notes != null ? String(r.flw_follow_up_notes) : ''));
-                        $tr.append($('<td/>').text(r.flw_id != null ? String(r.flw_id) : ''));
-                        $tr.append($('<td/>').text(r.enquiry_id || ''));
                         $tr.append($('<td/>').text(r.flw_name || ''));
                         $tr.append($('<td/>').css('font-weight', '600').text(r.flw_phone || ''));
                         $tr.append($('<td/>').text(r.contacted_time_fmt || ''));

@@ -6,14 +6,15 @@ $followup_Query = array_merge(array('enquiry_id'=>'','flw_name'=>'','flw_phone'=
 $enquiry_flow_statuses = array(
     1=>'New',
     2=>'Contacted',
-    3=>'Follow-up Required',
-    4=>'Interested',
-    5=>'Documents Collected',
-    6=>'Enrolled',
-    7=>'Not Interested',
+    3=>'Follow-up Pending',
+    4=>'In Progress',
+    5=>'Ready to Enrol',
+    6=>'Converted',
+    7=>'Closed / Lost',
     8=>'Invalid / Duplicate',
     9=>'Booked Counselling',
-    10=>'Re-enquired'
+    10=>'Re-enquired',
+    11=>'Counselling Pending'
 );
 if(!isset($has_counselling_appointment)) $has_counselling_appointment = false;
 // Follow Up Outcome: value => label (actions: No Answer/Call Back Later/Booked Counselling show Calendar button; others no action)
@@ -25,7 +26,8 @@ $follow_up_outcomes = array(
     'Application Started'=>'Application Started',
     'Enrolled'=>'Enrolled',
     'Requested More Information'=>'Requested More Information',
-    'Not Interested'=>'Not Interested'
+    'Not Interested'=>'Not Interested',
+    'Do not Call'=>'Do not Call'
 );
 
 // Load active users for Responsible Staff dropdown
@@ -68,7 +70,7 @@ if($followupUsers){
 <select class="form-select" id="followup_follow_up_outcome">
 <?php foreach($follow_up_outcomes as $k=>$v) echo '<option value="'.htmlspecialchars($k).'" '.((isset($followup_Query['flw_follow_up_outcome']) && $followup_Query['flw_follow_up_outcome']==$k) ? 'selected' : '').'>'.htmlspecialchars($v).'</option>'; ?>
 </select>
-<small class="text-muted d-block mt-1">No Answer / Call Back Later / Booked Counselling: use Calendar to create appointment. Others: no action.</small></div></div>
+<small class="text-muted d-block mt-1">Follow Up Outcome updates Enquiry status automatically. No Answer / Call Back Later / Booked Counselling: use Calendar to book when needed.</small></div></div>
 <div class="col-12 mb-2" id="followup_calendar_btn_wrap" style="display:none;">
 <button type="button" class="btn btn-outline-primary" id="followup_open_calendar_btn"><i class="ti ti-calendar"></i> Calendar</button>
 <small class="text-muted ms-2">Opens New Appointment with this enquiry’s student details pre-filled.</small></div>
@@ -79,25 +81,18 @@ if($followupUsers){
     $dis = ($k==9 && !$has_counselling_appointment) ? ' disabled' : '';
     echo '<option value="'.$k.'" '.$sel.$dis.'>'.$v.'</option>';
 } ?>
-</select><small class="text-muted">Default: New for first-time enquiries. &quot;Booked Counselling&quot; is enabled after you book an appointment via the Calendar button above.</small></div></div>
+</select><small class="text-muted">Follow Up Outcome sets this when you select an outcome. Booked Counselling (9) unlocks after booking via Calendar when required.</small></div></div>
 <div class="col-12 mb-3" id="followup_email_template_section">
 <div class="card border-primary" id="followup_send_email_card"><div class="card-header bg-light">Send status email to student</div><div class="card-body">
 <p class="text-muted small">When you change Enquiry Status, the matching email template is loaded. Review, edit if needed, and send.</p>
 <label class="form-label">Subject</label><input type="text" class="form-control mb-2" id="followup_email_subject" placeholder="Email subject">
-<label class="form-label">Message</label><textarea class="form-control mb-2" id="followup_email_body" rows="4" placeholder="Email body"></textarea>
+<label class="form-label" for="followup_email_body">Message</label>
+<textarea class="form-control mb-2 followup-email-body-autoheight" id="followup_email_body" rows="1" placeholder="Email body" style="min-height:7.5rem;max-height:28rem;line-height:1.5;overflow-y:hidden;resize:vertical;box-sizing:border-box;"></textarea>
 <div class="form-check mb-2"><input type="checkbox" class="form-check-input" id="followup_save_template_default" value="1"><label class="form-check-label" for="followup_save_template_default">Save as default template for this status</label></div>
 <button type="button" class="btn btn-success btn-sm" id="followup_send_status_email">Send email</button>
 </div></div></div>
 <div class="col-12"><div class="mb-3"><label class="form-label" for="followup_follow_up_notes">Follow-Up Notes</label>
 <textarea class="form-control" id="followup_follow_up_notes" rows="3" placeholder="Free text notes"><?php echo htmlspecialchars(isset($followup_Query['flw_follow_up_notes']) ? $followup_Query['flw_follow_up_notes'] : ''); ?></textarea></div></div>
-<div class="col-12 mb-3" id="followup_email_template_section_dup" style="display:none;">
-<div class="card border-primary"><div class="card-header bg-light">Send status email to student</div><div class="card-body">
-<p class="text-muted small">When you change Enquiry Status, the matching email template is loaded. Review, edit if needed, and send.</p>
-<label class="form-label">Subject</label><input type="text" class="form-control mb-2" id="followup_email_subject" placeholder="Email subject">
-<label class="form-label">Message</label><textarea class="form-control mb-2" id="followup_email_body" rows="4" placeholder="Email body"></textarea>
-<div class="form-check mb-2"><input type="checkbox" class="form-check-input" id="followup_save_template_default" value="1"><label class="form-check-label" for="followup_save_template_default">Save as default template for this status</label></div>
-<button type="button" class="btn btn-success btn-sm" id="followup_send_status_email">Send email</button>
-</div></div></div>
 <div class="col-12"><div class="mb-3"><label class="form-label d-block">Remarks</label>
 <div class="row">
 <?php

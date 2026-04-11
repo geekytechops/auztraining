@@ -1,5 +1,6 @@
 <?php 
 require('dbconnect.php');
+require_once __DIR__ . '/enquiry_status_auto_map.php';
 require_once __DIR__ . '/../vendor/tecnickcom/tcpdf/tcpdf.php';
 
 // use TCPDF;
@@ -525,7 +526,7 @@ $ethnicity=mysqli_real_escape_string($connection, trim((string)($_POST['ethnicit
 $visaNote=mysqli_real_escape_string($connection, trim((string)($_POST['visaNote'] ?? '')));
 $created_by=isset($_POST['admin_id']) ? (int)$_POST['admin_id'] : 0;
 $enquiry_source = isset($_POST['enquiry_source']) ? (int)$_POST['enquiry_source'] : 0;
-if (in_array($enquiry_source, array(4, 5, 6), true) && $hearedby_raw === '') {
+if (in_array($enquiry_source, array(2, 4, 5, 6), true) && $hearedby_raw === '') {
     echo 'enquiry_source_staff_required';
     exit;
 }
@@ -1121,11 +1122,16 @@ if(@$_POST['formName']=='followup_call'){
         $contactMode=isset($_POST['contactMode']) ? mysqli_real_escape_string($connection,$_POST['contactMode']) : '';
         $followup_type=isset($_POST['followup_type']) ? mysqli_real_escape_string($connection,$_POST['followup_type']) : '';
         $enquiry_flow_status=isset($_POST['enquiry_flow_status']) && $_POST['enquiry_flow_status']!=='' ? (int)$_POST['enquiry_flow_status'] : null;
-        // When Follow Up Outcome is Booked Counselling, set enquiry status to 9 so Status column shows correctly
-        if(isset($_POST['follow_up_outcome']) && trim((string)$_POST['follow_up_outcome']) === 'Booked Counselling') $enquiry_flow_status = 9;
+        $follow_up_outcome_trim = isset($_POST['follow_up_outcome']) ? trim((string) $_POST['follow_up_outcome']) : '';
+        if ($follow_up_outcome_trim !== '') {
+            $mapped_fu = enquiry_flow_status_for_followup_outcome($follow_up_outcome_trim);
+            if ($mapped_fu !== null) {
+                $enquiry_flow_status = $mapped_fu;
+            }
+        }
         $follow_up_notes=isset($_POST['follow_up_notes']) ? mysqli_real_escape_string($connection,$_POST['follow_up_notes']) : '';
         $next_followup_date=isset($_POST['next_followup_date']) && $_POST['next_followup_date']!='' ? date('Y-m-d H:i:s',strtotime($_POST['next_followup_date'])) : null;
-        $follow_up_outcome=isset($_POST['follow_up_outcome']) ? mysqli_real_escape_string($connection,$_POST['follow_up_outcome']) : '';
+        $follow_up_outcome=mysqli_real_escape_string($connection, $follow_up_outcome_trim);
         $progress_status=isset($_POST['progress_status']) ? mysqli_real_escape_string($connection,$_POST['progress_status']) : '';
         if($progress_status==='' && $enquiry_flow_status!==null){
             $progress_status=(string)(int)$enquiry_flow_status;
@@ -1290,14 +1296,15 @@ if (@$_POST['formName'] === 'fetch_followup_history') {
     $status_labels = array(
         1 => 'New',
         2 => 'Contacted',
-        3 => 'Follow-up Required',
-        4 => 'Interested',
-        5 => 'Documents Collected',
-        6 => 'Enrolled',
-        7 => 'Not Interested',
+        3 => 'Follow-up Pending',
+        4 => 'In Progress',
+        5 => 'Ready to Enrol',
+        6 => 'Converted',
+        7 => 'Closed / Lost',
         8 => 'Invalid / Duplicate',
         9 => 'Booked Counselling',
         10 => 'Re-enquired',
+        11 => 'Counselling Pending',
     );
     // Same strings as followup_accordion_form.php $st_remarks (index in DB JSON may match checkbox value $i → $st_remarks[$i])
     $followup_st_remarks = array(
@@ -1382,6 +1389,8 @@ if(@$_POST['formName']=='counseling_form'){
         $counseling_end_timing=($ce_raw!=='' && @strtotime($ce_raw)) ? date('Y-m-d H:i:s',strtotime($ce_raw)) : '';
         $pref_comment=isset($_POST['pref_comment']) ? mysqli_real_escape_string($connection,$_POST['pref_comment']) : '';
         $counselling_notes=isset($_POST['counselling_notes']) ? mysqli_real_escape_string($connection,$_POST['counselling_notes']) : '';
+        $counselling_outcome_trim = isset($_POST['counselling_outcome']) ? trim((string) $_POST['counselling_outcome']) : '';
+        $counselling_outcome_esc = mysqli_real_escape_string($connection, $counselling_outcome_trim);
         $eng_rate=mysqli_real_escape_string($connection,isset($_POST['eng_rate']) ? $_POST['eng_rate'] : '');
         $mig_test=(isset($_POST['mig_test']) && $_POST['mig_test']!=='') ? (int)$_POST['mig_test'] : 1;
         $overall_result=mysqli_real_escape_string($connection,isset($_POST['overall_result']) ? $_POST['overall_result'] : '');
@@ -1443,12 +1452,28 @@ if(@$_POST['formName']=='counseling_form'){
 
         $enquiry_id_sql=mysqli_real_escape_string($connection,$enquiry_id);
 
+    $cd_has_outcome_col = false;
+    $_cdcol = @mysqli_query($connection, "SHOW COLUMNS FROM counseling_details LIKE 'counsil_outcome'");
+    if ($_cdcol && mysqli_num_rows($_cdcol) > 0) {
+        $cd_has_outcome_col = true;
+    }
+
     if ($do_insert) {
         $mode_of_study_sql = $mode_of_study !== null ? $mode_of_study : 'NULL';
         $preferred_intake_sql = $preferred_intake_date !== '' ? "'$preferred_intake_date'" : 'NULL';
-        $query=mysqli_query($connection,"INSERT INTO counseling_details(`st_enquiry_id`,`counsil_mem_name`,`counsil_preferred_intake_date`,`counsil_mode_of_study`,`counsil_vaccine_status`,`counsil_job_nature`,`counsil_module_result`,`counsil_timing`,`counsil_end_time`,`counsil_pref_comments`,`counsil_eng_rate`,`counsil_migration_test`,`counsil_overall_result`,`counsil_course`,`counsil_university`,`counsil_qualification`,`counsil_type`,`counsil_aus_stay_time`,`counsil_visa_condition`,`counsil_education`,`counsil_aus_study_status`,`counsil_work_status`,`counsil_remarks`,`counsil_notes`,`counsil_createdby`)VALUES('$enquiry_id_sql','$member_name',$preferred_intake_sql,$mode_of_study_sql,$vaccine_status,'$job_nature','$module_result','$counseling_timing','$counseling_end_timing','$pref_comment','$eng_rate',$mig_test,'$overall_result','$course','$university_name','$qualification',$counseling_type,'$aus_duration',$visa_condition,'$education',$aus_study,$work_status,'$remarks','$counselling_notes',$admin_id)");
+        if ($cd_has_outcome_col) {
+            $query=mysqli_query($connection,"INSERT INTO counseling_details(`st_enquiry_id`,`counsil_mem_name`,`counsil_preferred_intake_date`,`counsil_mode_of_study`,`counsil_vaccine_status`,`counsil_job_nature`,`counsil_module_result`,`counsil_timing`,`counsil_end_time`,`counsil_pref_comments`,`counsil_eng_rate`,`counsil_migration_test`,`counsil_overall_result`,`counsil_course`,`counsil_university`,`counsil_qualification`,`counsil_type`,`counsil_aus_stay_time`,`counsil_visa_condition`,`counsil_education`,`counsil_aus_study_status`,`counsil_work_status`,`counsil_remarks`,`counsil_notes`,`counsil_outcome`,`counsil_createdby`)VALUES('$enquiry_id_sql','$member_name',$preferred_intake_sql,$mode_of_study_sql,$vaccine_status,'$job_nature','$module_result','$counseling_timing','$counseling_end_timing','$pref_comment','$eng_rate',$mig_test,'$overall_result','$course','$university_name','$qualification',$counseling_type,'$aus_duration',$visa_condition,'$education',$aus_study,$work_status,'$remarks','$counselling_notes','$counselling_outcome_esc',$admin_id)");
+        } else {
+            $query=mysqli_query($connection,"INSERT INTO counseling_details(`st_enquiry_id`,`counsil_mem_name`,`counsil_preferred_intake_date`,`counsil_mode_of_study`,`counsil_vaccine_status`,`counsil_job_nature`,`counsil_module_result`,`counsil_timing`,`counsil_end_time`,`counsil_pref_comments`,`counsil_eng_rate`,`counsil_migration_test`,`counsil_overall_result`,`counsil_course`,`counsil_university`,`counsil_qualification`,`counsil_type`,`counsil_aus_stay_time`,`counsil_visa_condition`,`counsil_education`,`counsil_aus_study_status`,`counsil_work_status`,`counsil_remarks`,`counsil_notes`,`counsil_createdby`)VALUES('$enquiry_id_sql','$member_name',$preferred_intake_sql,$mode_of_study_sql,$vaccine_status,'$job_nature','$module_result','$counseling_timing','$counseling_end_timing','$pref_comment','$eng_rate',$mig_test,'$overall_result','$course','$university_name','$qualification',$counseling_type,'$aus_duration',$visa_condition,'$education',$aus_study,$work_status,'$remarks','$counselling_notes',$admin_id)");
+        }
         $lastId=mysqli_insert_id($connection);
         if($lastId!=''){
+            if ($counselling_outcome_trim !== '' && $enquiry_id_sql !== '') {
+                $auto_cs = enquiry_flow_status_for_counselling_outcome($counselling_outcome_trim);
+                if ($auto_cs !== null) {
+                    mysqli_query($connection, 'UPDATE student_enquiry SET st_enquiry_flow_status=' . (int) $auto_cs . " WHERE st_enquiry_id='$enquiry_id_sql' AND st_enquiry_status!=1 LIMIT 1");
+                }
+            }
             $resp_cs = '1';
             if ($counsel_auto_linked_enquiry) {
                 $sid_cs = $counsel_side_crm_st_id;
@@ -1468,8 +1493,18 @@ if(@$_POST['formName']=='counseling_form'){
         }
     } else {
         $mod_date=date('Y-m-d');
-        $query=mysqli_query($connection,"UPDATE counseling_details SET `counsil_mem_name`='$member_name',`counsil_preferred_intake_date`=".($preferred_intake_date!='' ? "'$preferred_intake_date'" : 'NULL').",`counsil_mode_of_study`=".($mode_of_study!==null ? $mode_of_study : 'NULL').",`counsil_vaccine_status`=$vaccine_status,`counsil_job_nature`='$job_nature',`counsil_module_result`='$module_result',`counsil_timing`='$counseling_timing',`counsil_end_time`='$counseling_end_timing',`counsil_pref_comments`='$pref_comment',`counsil_eng_rate`='$eng_rate',`counsil_migration_test`=$mig_test,`counsil_overall_result`='$overall_result',`counsil_course`='$course',`counsil_university`='$university_name',`counsil_qualification`='$qualification',`counsil_type`=$counseling_type,`counsil_aus_stay_time`='$aus_duration',`counsil_visa_condition`=$visa_condition,`counsil_education`='$education',`counsil_aus_study_status`=$aus_study,`counsil_work_status`=$work_status,`counsil_remarks`='$remarks',`counsil_notes`='$counselling_notes',`counsil_modified_date`='$mod_date',`counsil_modified_by`=$admin_id WHERE `counsil_id`=".(int)$checkId);
+        if ($cd_has_outcome_col) {
+            $query=mysqli_query($connection,"UPDATE counseling_details SET `counsil_mem_name`='$member_name',`counsil_preferred_intake_date`=".($preferred_intake_date!='' ? "'$preferred_intake_date'" : 'NULL').",`counsil_mode_of_study`=".($mode_of_study!==null ? $mode_of_study : 'NULL').",`counsil_vaccine_status`=$vaccine_status,`counsil_job_nature`='$job_nature',`counsil_module_result`='$module_result',`counsil_timing`='$counseling_timing',`counsil_end_time`='$counseling_end_timing',`counsil_pref_comments`='$pref_comment',`counsil_eng_rate`='$eng_rate',`counsil_migration_test`=$mig_test,`counsil_overall_result`='$overall_result',`counsil_course`='$course',`counsil_university`='$university_name',`counsil_qualification`='$qualification',`counsil_type`=$counseling_type,`counsil_aus_stay_time`='$aus_duration',`counsil_visa_condition`=$visa_condition,`counsil_education`='$education',`counsil_aus_study_status`=$aus_study,`counsil_work_status`=$work_status,`counsil_remarks`='$remarks',`counsil_notes`='$counselling_notes',`counsil_outcome`='$counselling_outcome_esc',`counsil_modified_date`='$mod_date',`counsil_modified_by`=$admin_id WHERE `counsil_id`=".(int)$checkId);
+        } else {
+            $query=mysqli_query($connection,"UPDATE counseling_details SET `counsil_mem_name`='$member_name',`counsil_preferred_intake_date`=".($preferred_intake_date!='' ? "'$preferred_intake_date'" : 'NULL').",`counsil_mode_of_study`=".($mode_of_study!==null ? $mode_of_study : 'NULL').",`counsil_vaccine_status`=$vaccine_status,`counsil_job_nature`='$job_nature',`counsil_module_result`='$module_result',`counsil_timing`='$counseling_timing',`counsil_end_time`='$counseling_end_timing',`counsil_pref_comments`='$pref_comment',`counsil_eng_rate`='$eng_rate',`counsil_migration_test`=$mig_test,`counsil_overall_result`='$overall_result',`counsil_course`='$course',`counsil_university`='$university_name',`counsil_qualification`='$qualification',`counsil_type`=$counseling_type,`counsil_aus_stay_time`='$aus_duration',`counsil_visa_condition`=$visa_condition,`counsil_education`='$education',`counsil_aus_study_status`=$aus_study,`counsil_work_status`=$work_status,`counsil_remarks`='$remarks',`counsil_notes`='$counselling_notes',`counsil_modified_date`='$mod_date',`counsil_modified_by`=$admin_id WHERE `counsil_id`=".(int)$checkId);
+        }
         if($query){
+            if ($counselling_outcome_trim !== '' && $enquiry_id_sql !== '') {
+                $auto_cs = enquiry_flow_status_for_counselling_outcome($counselling_outcome_trim);
+                if ($auto_cs !== null) {
+                    mysqli_query($connection, 'UPDATE student_enquiry SET st_enquiry_flow_status=' . (int) $auto_cs . " WHERE st_enquiry_id='$enquiry_id_sql' AND st_enquiry_status!=1 LIMIT 1");
+                }
+            }
             echo "1";
         }else{
             echo "0";
@@ -3751,14 +3786,15 @@ if(@$_POST['formName']=='fetchEnquiryList'){
     $status_labels = array(
         1=>'New',
         2=>'Contacted',
-        3=>'Follow-up Required',
-        4=>'Interested',
-        5=>'Documents Collected',
-        6=>'Enrolled',
-        7=>'Not Interested',
+        3=>'Follow-up Pending',
+        4=>'In Progress',
+        5=>'Ready to Enrol',
+        6=>'Converted',
+        7=>'Closed / Lost',
         8=>'Invalid/Duplicate',
         9=>'Booked Counselling',
-        10=>'Re-enquired'
+        10=>'Re-enquired',
+        11=>'Counselling Pending'
     );
     $status_classes = array(
         1=>'secondary',
@@ -3770,10 +3806,11 @@ if(@$_POST['formName']=='fetchEnquiryList'){
         7=>'danger',
         8=>'secondary',
         9=>'warning',
-        10=>'info'
+        10=>'info',
+        11=>'warning'
     );
     // Canonical outcome keys (same as Follow Up Outcome in followup_accordion_form.php) for normalising DB values
-    $outcome_keys_canonical = array('No Answer','Call Back Later','Booked Counselling','Application Started','Enrolled','Requested More Information','Not Interested');
+    $outcome_keys_canonical = array('No Answer','Call Back Later','Booked Counselling','Application Started','Enrolled','Requested More Information','Not Interested','Do not Call');
     $outcome_normalize = array();
     foreach($outcome_keys_canonical as $k) $outcome_normalize[strtolower(trim($k))] = $k;
 
@@ -3784,7 +3821,8 @@ if(@$_POST['formName']=='fetchEnquiryList'){
         'Application Started' => array('label'=>'Progressing','outcome_btn'=>'btn-fup-progressing'),
         'Enrolled' => array('label'=>'Converted','outcome_btn'=>'btn-fup-converted'),
         'Requested More Information' => array('label'=>'Provide Info.','outcome_btn'=>'btn-fup-provide-info'),
-        'Not Interested' => array('label'=>'Lost','outcome_btn'=>'btn-fup-lost')
+        'Not Interested' => array('label'=>'Lost','outcome_btn'=>'btn-fup-lost'),
+        'Do not Call' => array('label'=>'Do not Call','outcome_btn'=>'btn-fup-lost')
     );
 
     $records_total = 0;
@@ -4501,6 +4539,180 @@ if(@$_POST['formName']=='fetchFollowupList'){
 
 // ==================== APPOINTMENT SYSTEM FUNCTIONS ====================
 
+/**
+ * Lookups + HTML confirmation for student when booking from enquiry flows
+ * (contact bar “phone call” or counselling “Rescheduled” calendar).
+ */
+if (!function_exists('crm_appointment_lookup_location_name')) {
+    function crm_appointment_lookup_location_name($connection, $location_id) {
+        $id = (int) $location_id;
+        if ($id <= 0) {
+            return '';
+        }
+        $q = mysqli_query($connection, 'SELECT location_name FROM appointment_locations WHERE location_id=' . $id . ' LIMIT 1');
+        if ($q && ($r = mysqli_fetch_assoc($q))) {
+            return (string) $r['location_name'];
+        }
+        return '';
+    }
+}
+if (!function_exists('crm_appointment_lookup_platform_name')) {
+    function crm_appointment_lookup_platform_name($connection, $platform_id) {
+        $id = (int) $platform_id;
+        if ($id <= 0) {
+            return '';
+        }
+        $q = mysqli_query($connection, 'SELECT platform_name FROM appointment_platforms WHERE platform_id=' . $id . ' LIMIT 1');
+        if ($q && ($r = mysqli_fetch_assoc($q))) {
+            return (string) $r['platform_name'];
+        }
+        return '';
+    }
+}
+if (!function_exists('crm_appointment_lookup_user_name')) {
+    function crm_appointment_lookup_user_name($connection, $user_id) {
+        $id = (int) $user_id;
+        if ($id <= 0) {
+            return '';
+        }
+        $q = mysqli_query($connection, 'SELECT user_name FROM users WHERE user_id=' . $id . ' LIMIT 1');
+        if ($q && ($r = mysqli_fetch_assoc($q))) {
+            return (string) $r['user_name'];
+        }
+        return '';
+    }
+}
+if (!function_exists('crm_send_enquiry_flow_appointment_confirmation_email')) {
+    function crm_send_enquiry_flow_appointment_confirmation_email($connection, $student_email, $is_phone_flow, $is_reschedule_flow, array $ctx) {
+        $student_email = trim((string) $student_email);
+        if ($student_email === '' || !filter_var($student_email, FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
+        if (!function_exists('send_mail')) {
+            require_once __DIR__ . '/mail_function.php';
+        }
+        $name = trim((string) ($ctx['student_name'] ?? ''));
+        $greet = $name !== '' ? htmlspecialchars($name, ENT_QUOTES, 'UTF-8') : 'there';
+        $eq = trim((string) ($ctx['enquiry_id'] ?? ''));
+        $purpose = trim((string) ($ctx['purpose_name'] ?? ''));
+        if ($purpose === '') {
+            $purpose = 'Appointment';
+        }
+        $dateYmd = trim((string) ($ctx['appointment_date'] ?? ''));
+        $t1 = trim((string) ($ctx['appointment_time'] ?? ''));
+        $t2 = trim((string) ($ctx['appointment_time_to'] ?? ''));
+        if ($t2 === '') {
+            $t2 = $t1;
+        }
+        $tz = trim((string) ($ctx['timezone_state'] ?? ''));
+        $meet = trim((string) ($ctx['meeting_type'] ?? ''));
+        $loc = trim((string) ($ctx['location_name'] ?? ''));
+        $plat = trim((string) ($ctx['platform_name'] ?? ''));
+        $link = trim((string) ($ctx['online_meeting_link'] ?? ''));
+        $staff = trim((string) ($ctx['staff_name'] ?? ''));
+        $booker = trim((string) ($ctx['booked_by_name'] ?? ''));
+        $comments = trim((string) ($ctx['booking_comments'] ?? ''));
+        $notes = trim((string) ($ctx['appointment_notes'] ?? ''));
+        $phone = trim((string) ($ctx['student_phone'] ?? ''));
+
+        $dateNice = '';
+        if ($dateYmd !== '' && strtotime($dateYmd)) {
+            $dateNice = date('l, j F Y', strtotime($dateYmd));
+        }
+        $timeRange = '';
+        if ($dateYmd !== '' && $t1 !== '' && strtotime($dateYmd . ' ' . $t1)) {
+            $ts = date('g:i A', strtotime($dateYmd . ' ' . $t1));
+            $te = ($t2 !== '' && strtotime($dateYmd . ' ' . $t2)) ? date('g:i A', strtotime($dateYmd . ' ' . $t2)) : $ts;
+            $timeRange = ($ts === $te) ? $ts : ($ts . ' – ' . $te);
+            if ($tz !== '') {
+                $timeRange .= ' (' . $tz . ')';
+            }
+        }
+
+        if ($is_reschedule_flow) {
+            $subject = 'Your rescheduled counselling session – National College Australia';
+            $lead = 'Your counselling session has been rescheduled. Here are your confirmed details.';
+            $next = 'We look forward to meeting you at the scheduled time. If you need to change this appointment, please contact us as soon as possible.';
+        } elseif ($is_phone_flow) {
+            $subject = 'Your scheduled call with us – National College Australia';
+            $lead = 'Thank you for your interest in studying with us. A member of our team will contact you at the time below.';
+            $next = 'Please keep your phone available. If this time no longer suits you, reply to this email or contact us and we will arrange another time.';
+        } else {
+            $subject = 'Your appointment confirmation – National College Australia';
+            $lead = 'This email confirms an appointment with National College Australia.';
+            $next = 'If you have any questions, please contact us.';
+        }
+
+        $brand = 'National College Australia';
+        $html = '<div style="font-family:Segoe UI,Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;background:#f1f5f4;padding:24px;">';
+        $html .= '<div style="background:#ffffff;border-radius:10px;padding:28px 28px 24px;border:1px solid #dfe7e4;">';
+        $html .= '<p style="margin:0 0 6px;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:#158887;font-weight:600;">Appointment confirmation</p>';
+        $html .= '<p style="margin:0 0 20px;font-size:18px;font-weight:600;color:#0f172a;">' . htmlspecialchars($brand, ENT_QUOTES, 'UTF-8') . '</p>';
+        $html .= '<p style="margin:0 0 18px;font-size:16px;line-height:1.6;color:#334155;">Hi ' . $greet . ',</p>';
+        $html .= '<p style="margin:0 0 22px;font-size:15px;line-height:1.65;color:#334155;">' . htmlspecialchars($lead, ENT_QUOTES, 'UTF-8') . '</p>';
+        $html .= '<table cellpadding="0" cellspacing="0" role="presentation" style="width:100%;margin:0 0 22px;font-size:14px;line-height:1.55;color:#334155;">';
+        $html .= '<tr><td style="padding:10px 12px;background:#f8fafc;border-radius:6px 6px 0 0;font-weight:600;color:#0f172a;">Your booking summary</td></tr>';
+        $html .= '<tr><td style="padding:0;border:1px solid #e2e8f0;border-top:0;border-radius:0 0 6px 6px;background:#fff;">';
+        $html .= '<table cellpadding="0" cellspacing="0" style="width:100%;">';
+
+        $row = function ($label, $valHtml) {
+            return '<tr><td style="padding:12px 16px;border-bottom:1px solid #f1f5f9;width:36%;vertical-align:top;color:#64748b;font-size:13px;">' . $label . '</td>'
+                . '<td style="padding:12px 16px;border-bottom:1px solid #f1f5f9;vertical-align:top;font-weight:500;">' . $valHtml . '</td></tr>';
+        };
+
+        $html .= $row('Purpose', htmlspecialchars($purpose, ENT_QUOTES, 'UTF-8'));
+        if ($dateNice !== '') {
+            $html .= $row('Date', htmlspecialchars($dateNice, ENT_QUOTES, 'UTF-8'));
+        }
+        if ($timeRange !== '') {
+            $html .= $row('Time', htmlspecialchars($timeRange, ENT_QUOTES, 'UTF-8'));
+        }
+        if ($meet !== '') {
+            $html .= $row('Format', htmlspecialchars($meet, ENT_QUOTES, 'UTF-8'));
+        }
+        if ($staff !== '') {
+            $html .= $row('Team member', htmlspecialchars($staff, ENT_QUOTES, 'UTF-8'));
+        }
+        if ($phone !== '') {
+            $html .= $row('Your contact number', htmlspecialchars($phone, ENT_QUOTES, 'UTF-8'));
+        }
+        if ($eq !== '' && preg_match('/^EQ\d+$/i', $eq)) {
+            $html .= $row('Enquiry reference', htmlspecialchars($eq, ENT_QUOTES, 'UTF-8'));
+        }
+        if ($meet === 'Face to Face' && $loc !== '') {
+            $html .= $row('Location', htmlspecialchars($loc, ENT_QUOTES, 'UTF-8'));
+        }
+        if ($meet === 'Online') {
+            if ($plat !== '') {
+                $html .= $row('Platform', htmlspecialchars($plat, ENT_QUOTES, 'UTF-8'));
+            }
+            if ($link !== '') {
+                $safe = htmlspecialchars($link, ENT_QUOTES, 'UTF-8');
+                $html .= $row('Meeting link', '<a href="' . $safe . '" style="color:#0d9488;font-weight:600;">Open meeting link</a>');
+            }
+        }
+        if ($comments !== '') {
+            $html .= $row('Message from our team', nl2br(htmlspecialchars($comments, ENT_QUOTES, 'UTF-8')));
+        }
+        if ($notes !== '') {
+            $html .= $row('Additional details', nl2br(htmlspecialchars($notes, ENT_QUOTES, 'UTF-8')));
+        }
+
+        $html .= '</table></td></tr></table>';
+        $html .= '<p style="margin:0 0 14px;font-size:14px;line-height:1.65;color:#475569;">' . htmlspecialchars($next, ENT_QUOTES, 'UTF-8') . '</p>';
+        if ($booker !== '') {
+            $html .= '<p style="margin:0;font-size:12px;color:#94a3b8;">Arranged by ' . htmlspecialchars($booker, ENT_QUOTES, 'UTF-8') . '</p>';
+        }
+        $html .= '</div><p style="margin:18px 8px 0;font-size:11px;line-height:1.5;color:#94a3b8;text-align:center;">You received this because an appointment was booked for you in our system. For questions, contact National College Australia using the same channel you used to reach us.</p></div>';
+
+        try {
+            send_mail($student_email, $subject, $html);
+        } catch (Throwable $e) {
+            // Booking must still succeed if mail transport fails
+        }
+    }
+}
+
 // Appointment Booking
 if(@$_POST['formName']=='appointment_booking'){
     $appointment_id = $_POST['appointment_id'];
@@ -4531,7 +4743,86 @@ if(@$_POST['formName']=='appointment_booking'){
     $appointment_time_adelaide = isset($_POST['appointment_time_adelaide']) && $_POST['appointment_time_adelaide'] != '' ? $_POST['appointment_time_adelaide'] : $appointment_datetime;
     $appointment_time_india = isset($_POST['appointment_time_india']) && $_POST['appointment_time_india'] != '' ? $_POST['appointment_time_india'] : $appointment_datetime;
     $appointment_time_philippines = isset($_POST['appointment_time_philippines']) && $_POST['appointment_time_philippines'] != '' ? $_POST['appointment_time_philippines'] : $appointment_datetime;
-    $connected_enquiry_id = isset($_POST['connected_enquiry_id']) && $_POST['connected_enquiry_id'] != '' ? "'".$_POST['connected_enquiry_id']."'" : 'NULL';
+    $auto_phone_flow = isset($_POST['auto_create_enquiry_phone_flow']) && (string)$_POST['auto_create_enquiry_phone_flow'] === '1';
+    $auto_couns_resched_flow = isset($_POST['auto_create_enquiry_counselling_reschedule_flow']) && (string)$_POST['auto_create_enquiry_counselling_reschedule_flow'] === '1';
+    $set_book_couns = isset($_POST['set_flow_status_booked_counselling']) && (string)$_POST['set_flow_status_booked_counselling'] === '1';
+    $set_couns_pending = isset($_POST['set_flow_status_counselling_pending']) && (string)$_POST['set_flow_status_counselling_pending'] === '1';
+    $ce_raw_init = isset($_POST['connected_enquiry_id']) ? trim((string)$_POST['connected_enquiry_id']) : '';
+    $appointment_return_new_st_id = null;
+    if ($auto_phone_flow && $ce_raw_init === '') {
+        $cb_email = trim((string)($_POST['cb_email'] ?? ''));
+        if ($cb_email === '' || !filter_var($cb_email, FILTER_VALIDATE_EMAIL)) {
+            echo 'invalid_email';
+            exit;
+        }
+        $cb_staff = trim((string)($_POST['cb_responsible_staff'] ?? ''));
+        if ($cb_staff === '') {
+            echo 'contact_phone_staff_required';
+            exit;
+        }
+        $_POST['emailAddress'] = $cb_email;
+        $_POST['enquiryFor'] = isset($_POST['cb_enquiry_for']) && $_POST['cb_enquiry_for'] !== '' ? (string)$_POST['cb_enquiry_for'] : '1';
+        $_POST['studentName'] = trim((string)($_POST['cb_student_name'] ?? ''));
+        $_POST['memberName'] = trim((string)($_POST['cb_member_name'] ?? ''));
+        $_POST['contactName'] = trim((string)($_POST['cb_contact_num'] ?? ''));
+        $_POST['surname'] = trim((string)($_POST['cb_surname'] ?? ''));
+        $admin_id_apt = (int)$_POST['created_by'];
+        $ens = crm_ensure_enquiry_from_sidebar_contact($connection, $admin_id_apt);
+        if (!$ens['ok']) {
+            if (($ens['error'] ?? '') === 'invalid_email') {
+                echo 'invalid_email';
+                exit;
+            }
+            echo 0;
+            exit;
+        }
+        $new_eq = (string)($ens['enquiry_id'] ?? '');
+        if ($new_eq === '') {
+            echo 0;
+            exit;
+        }
+        $new_eq_esc = mysqli_real_escape_string($connection, $new_eq);
+        $loc_esc = mysqli_real_escape_string($connection, trim((string)($_POST['cb_location'] ?? '')));
+        $staff_esc = mysqli_real_escape_string($connection, $cb_staff);
+        mysqli_query($connection, "UPDATE student_enquiry SET st_enquiry_source=2, st_enquiry_flow_status=9, st_location='$loc_esc', st_hearedby='$staff_esc' WHERE st_enquiry_id='$new_eq_esc' AND st_enquiry_status!=1 LIMIT 1");
+        $_POST['connected_enquiry_id'] = $new_eq;
+        $appointment_return_new_st_id = isset($ens['st_id']) ? (int)$ens['st_id'] : 0;
+    }
+    $ce_after_phone = isset($_POST['connected_enquiry_id']) ? trim((string)$_POST['connected_enquiry_id']) : '';
+    if ($auto_couns_resched_flow && $ce_after_phone === '') {
+        $cb_email = trim((string)($_POST['cb_email'] ?? ''));
+        if ($cb_email === '' || !filter_var($cb_email, FILTER_VALIDATE_EMAIL)) {
+            echo 'invalid_email';
+            exit;
+        }
+        $_POST['emailAddress'] = $cb_email;
+        $_POST['enquiryFor'] = isset($_POST['cb_enquiry_for']) && $_POST['cb_enquiry_for'] !== '' ? (string)$_POST['cb_enquiry_for'] : '1';
+        $_POST['studentName'] = trim((string)($_POST['cb_student_name'] ?? ''));
+        $_POST['memberName'] = trim((string)($_POST['cb_member_name'] ?? ''));
+        $_POST['contactName'] = trim((string)($_POST['cb_contact_num'] ?? ''));
+        $_POST['surname'] = trim((string)($_POST['cb_surname'] ?? ''));
+        $admin_id_apt2 = (int)$_POST['created_by'];
+        $ens2 = crm_ensure_enquiry_from_sidebar_contact($connection, $admin_id_apt2);
+        if (!$ens2['ok']) {
+            if (($ens2['error'] ?? '') === 'invalid_email') {
+                echo 'invalid_email';
+                exit;
+            }
+            echo 0;
+            exit;
+        }
+        $new_eq2 = (string)($ens2['enquiry_id'] ?? '');
+        if ($new_eq2 === '') {
+            echo 0;
+            exit;
+        }
+        $new_eq2_esc = mysqli_real_escape_string($connection, $new_eq2);
+        mysqli_query($connection, "UPDATE student_enquiry SET st_enquiry_flow_status=11 WHERE st_enquiry_id='$new_eq2_esc' AND st_enquiry_status!=1 LIMIT 1");
+        $_POST['connected_enquiry_id'] = $new_eq2;
+        $appointment_return_new_st_id = isset($ens2['st_id']) ? (int)$ens2['st_id'] : 0;
+    }
+    $ce_for_sql = isset($_POST['connected_enquiry_id']) ? trim((string)$_POST['connected_enquiry_id']) : '';
+    $connected_enquiry_id = $ce_for_sql !== '' ? "'" . mysqli_real_escape_string($connection, $ce_for_sql) . "'" : 'NULL';
     $connected_enrolment_id = isset($_POST['connected_enrolment_id']) && $_POST['connected_enrolment_id'] != '' ? "'".$_POST['connected_enrolment_id']."'" : 'NULL';
     $connected_counselling_id = isset($_POST['connected_counselling_id']) && $_POST['connected_counselling_id'] != '' ? $_POST['connected_counselling_id'] : 'NULL';
     $appointment_notes = isset($_POST['appointment_notes']) ? $_POST['appointment_notes'] : '';
@@ -4621,15 +4912,88 @@ if(@$_POST['formName']=='appointment_booking'){
     } else {
         $appt_id = $appointment_id == '0' ? mysqli_insert_id($connection) : $appointment_id;
         
-        // Send email if enabled
-        if($send_email == 1 && $student_email != ''){
-            $mail_to = $student_email;
-            $mail_subject = "Appointment Confirmation";
-            $mail_body = "Your appointment has been booked for " . date('d M Y h:i A', strtotime($appointment_datetime)) . ".<br><br>Details:<br>Purpose: " . getPurposeName($connection, $purpose_id) . "<br>Meeting Type: " . $meeting_type;
-            send_mail($mail_to, $mail_subject, $mail_body);
+        // Automatic polished student email for enquiry flows (phone call from contact bar / counselling reschedule)
+        $auto_flow_mail = ($auto_phone_flow || $auto_couns_resched_flow) && $student_email !== '' && filter_var(trim($student_email), FILTER_VALIDATE_EMAIL);
+        if ($auto_flow_mail) {
+            $purpose_n = getPurposeName($connection, (int) $purpose_id);
+            if (!is_string($purpose_n) || $purpose_n === '') {
+                $purpose_n = 'Appointment';
+            }
+            $loc_n = ($location_id !== 'NULL' && $location_id !== '' && is_numeric($location_id)) ? crm_appointment_lookup_location_name($connection, $location_id) : '';
+            $plat_n = ($platform_id !== 'NULL' && $platform_id !== '' && is_numeric($platform_id)) ? crm_appointment_lookup_platform_name($connection, $platform_id) : '';
+            $staff_n = crm_appointment_lookup_user_name($connection, (int) $appointment_to_see);
+            $eq_conn = isset($_POST['connected_enquiry_id']) ? trim((string) $_POST['connected_enquiry_id']) : '';
+            crm_send_enquiry_flow_appointment_confirmation_email(
+                $connection,
+                $student_email,
+                (bool) $auto_phone_flow,
+                (bool) $auto_couns_resched_flow,
+                array(
+                    'student_name' => $student_name,
+                    'student_phone' => $student_phone,
+                    'enquiry_id' => $eq_conn,
+                    'purpose_name' => $purpose_n,
+                    'appointment_date' => $appointment_date,
+                    'appointment_time' => $appointment_time,
+                    'appointment_time_to' => $appointment_time_to,
+                    'timezone_state' => $timezone_state,
+                    'meeting_type' => $meeting_type,
+                    'location_name' => $loc_n,
+                    'platform_name' => $plat_n,
+                    'online_meeting_link' => $online_meeting_link,
+                    'staff_name' => $staff_n,
+                    'booked_by_name' => $booked_by_name,
+                    'booking_comments' => $booking_comments,
+                    'appointment_notes' => $appointment_notes,
+                )
+            );
         }
-        
-        echo 1;
+
+        // Optional manual “send email” from appointment form (plain template) — not duplicated when auto flow mail above ran
+        if ($send_email == 1 && $student_email !== '' && !$auto_flow_mail) {
+            if (!function_exists('send_mail')) {
+                require_once __DIR__ . '/mail_function.php';
+            }
+            $mail_to = $student_email;
+            $mail_subject = 'Appointment Confirmation';
+            $pn = getPurposeName($connection, (int) $purpose_id);
+            if (!is_string($pn) || $pn === '') {
+                $pn = 'Appointment';
+            }
+            $mail_body = 'Your appointment has been booked for ' . date('d M Y h:i A', strtotime($appointment_datetime)) . '.<br><br>Details:<br>Purpose: ' . htmlspecialchars($pn, ENT_QUOTES, 'UTF-8') . '<br>Meeting Type: ' . htmlspecialchars($meeting_type, ENT_QUOTES, 'UTF-8');
+            try {
+                send_mail($mail_to, $mail_subject, $mail_body);
+            } catch (Throwable $e) {
+            }
+        }
+
+        if ($set_book_couns) {
+            $eq_for_status = isset($_POST['connected_enquiry_id']) ? trim((string)$_POST['connected_enquiry_id']) : '';
+            if ($eq_for_status !== '' && preg_match('/^EQ\d+$/i', $eq_for_status)) {
+                $esc = mysqli_real_escape_string($connection, $eq_for_status);
+                $loc_esc = mysqli_real_escape_string($connection, trim((string)($_POST['cb_location'] ?? '')));
+                $staff_raw = trim((string)($_POST['cb_responsible_staff'] ?? ''));
+                $staff_esc = mysqli_real_escape_string($connection, $staff_raw);
+                $upd = "UPDATE student_enquiry SET st_enquiry_flow_status=9, st_enquiry_source=2, st_location='$loc_esc'";
+                if ($staff_raw !== '') {
+                    $upd .= ", st_hearedby='$staff_esc'";
+                }
+                $upd .= " WHERE st_enquiry_id='$esc' AND st_enquiry_status!=1 LIMIT 1";
+                mysqli_query($connection, $upd);
+            }
+        } elseif ($set_couns_pending) {
+            $eq_cp = isset($_POST['connected_enquiry_id']) ? trim((string)$_POST['connected_enquiry_id']) : '';
+            if ($eq_cp !== '' && preg_match('/^EQ\d+$/i', $eq_cp)) {
+                $escp = mysqli_real_escape_string($connection, $eq_cp);
+                mysqli_query($connection, "UPDATE student_enquiry SET st_enquiry_flow_status=11 WHERE st_enquiry_id='$escp' AND st_enquiry_status!=1 LIMIT 1");
+            }
+        }
+
+        if ($appointment_return_new_st_id !== null && $appointment_return_new_st_id > 0) {
+            echo '1|' . $appointment_return_new_st_id;
+        } else {
+            echo 1;
+        }
     }
 }
 
@@ -5101,10 +5465,17 @@ if(@$_POST['formName']=='delete_appointment_block'){
 
 // Helper function
 function getPurposeName($connection, $purpose_id){
-    $query = "SELECT purpose_name FROM appointment_purposes WHERE purpose_id = $purpose_id";
+    $pid = (int) $purpose_id;
+    if ($pid <= 0) {
+        return '';
+    }
+    $query = "SELECT purpose_name FROM appointment_purposes WHERE purpose_id = $pid LIMIT 1";
     $result = mysqli_query($connection, $query);
+    if (!$result) {
+        return '';
+    }
     $row = mysqli_fetch_array($result);
-    return $row['purpose_name'];
+    return ($row && isset($row['purpose_name'])) ? (string) $row['purpose_name'] : '';
 }
 
 // Course Cancellation Form Processing

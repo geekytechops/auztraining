@@ -1,5 +1,6 @@
 <?php
 include('includes/dbconnect.php');
+require_once __DIR__ . '/includes/enquiry_status_counselling_email_helper.php';
 session_start();
 if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] != 1) {
     header('Location: index.php');
@@ -25,9 +26,17 @@ $status_labels = array(
     6 => 'Enrolled',
     7 => 'Not Interested',
     8 => 'Invalid / Duplicate',
-    9 => 'Booked Counselling'
+    9 => 'Booked Counselling',
+    10 => 'Re-enquired',
+    11 => 'Counselling Pending',
+    12 => 'Counselling Done',
+    13 => 'Rescheduling',
+    14 => 'Rejected',
 );
 
+datacontrol_seed_counselling_outcome_email_templates($connection);
+
+$email_template_codes = array_merge(range(1, 11), array(12, 13, 14));
 $templates = array();
 $q = mysqli_query($connection, "SELECT id, status_code, subject, body, updated_at FROM enquiry_status_email_templates ORDER BY status_code");
 if ($q && mysqli_num_rows($q)) {
@@ -35,8 +44,7 @@ if ($q && mysqli_num_rows($q)) {
         $templates[$row['status_code']] = $row;
     }
 }
-// Ensure we have a row for each status (use defaults if table empty)
-for ($i = 1; $i <= 9; $i++) {
+foreach ($email_template_codes as $i) {
     if (!isset($templates[$i])) {
         $templates[$i] = array('id' => '', 'status_code' => $i, 'subject' => '', 'body' => '', 'updated_at' => null);
     }
@@ -74,26 +82,34 @@ for ($i = 1; $i <= 9; $i++) {
             <div class="row">
                 <div class="col-12">
                     <p class="text-muted">
-                        Edit the default email templates used when staff send emails from the Follow-up section. Each template is linked to an enquiry status.
-                        You can use placeholders:
-                        <code>{{FirstName}}</code>, <code>{{CourseName}}</code>, <code>{{OfficerName}}</code> (and legacy <code>{{student_name}}</code>).
-                        For <strong>Booked Counselling</strong> (Status 9): <code>{{CounsellingDate}}</code> and <code>{{CounsellingTime}}</code> are filled from the linked appointment.
+                        Edit templates for the Follow-up section (codes 1–11) and the Counselling section (codes 12–14: Counselling Done, Rescheduling, Rejected).
+                        Placeholders: <code>{{FirstName}}</code>, <code>{{CourseName}}</code>, <code>{{OfficerName}}</code> (and legacy <code>{{student_name}}</code>).
+                        For <strong>Booked Counselling</strong> (code 9): <code>{{CounsellingDate}}</code> and <code>{{CounsellingTime}}</code> come from the linked appointment.
+                        For <strong>counselling emails</strong> (12–14): those placeholders use the counselling session date and times on the form (or the latest saved counselling record).
                     </p>
                     <div class="accordion" id="templatesAccordion">
-                        <?php for ($i = 1; $i <= 9; $i++) {
+                        <?php
+                        $first_acc = true;
+                        foreach ($email_template_codes as $i) {
                             $t = $templates[$i];
                             $sid = (int)$t['status_code'];
                             $subj = htmlspecialchars($t['subject'] ?? '');
                             $body = htmlspecialchars($t['body'] ?? '');
                             $updated = !empty($t['updated_at']) ? date('d M Y H:i', strtotime($t['updated_at'])) : '—';
+                            $label = isset($status_labels[$i]) ? $status_labels[$i] : ('Template ' . $i);
+                            $badge = ($i >= 12 && $i <= 14)
+                                ? '<span class="badge bg-info ms-2">Counselling email</span>'
+                                : '<span class="badge bg-secondary ms-2">Code ' . $i . '</span>';
+                            $show = $first_acc;
+                            $first_acc = false;
                         ?>
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="head<?php echo $sid; ?>">
-                                <button class="accordion-button <?php echo $i > 1 ? 'collapsed' : ''; ?>" type="button" data-bs-toggle="collapse" data-bs-target="#collapse<?php echo $sid; ?>" aria-expanded="<?php echo $i === 1 ? 'true' : 'false'; ?>" aria-controls="collapse<?php echo $sid; ?>">
-                                    <?php echo $status_labels[$i]; ?> <span class="badge bg-secondary ms-2">Status <?php echo $i; ?></span>
+                                <button class="accordion-button <?php echo $show ? '' : 'collapsed'; ?>" type="button" data-bs-toggle="collapse" data-bs-target="#collapse<?php echo $sid; ?>" aria-expanded="<?php echo $show ? 'true' : 'false'; ?>" aria-controls="collapse<?php echo $sid; ?>">
+                                    <?php echo htmlspecialchars($label); ?> <?php echo $badge; ?>
                                 </button>
                             </h2>
-                            <div id="collapse<?php echo $sid; ?>" class="accordion-collapse collapse <?php echo $i === 1 ? 'show' : ''; ?>" aria-labelledby="head<?php echo $sid; ?>" data-bs-parent="#templatesAccordion">
+                            <div id="collapse<?php echo $sid; ?>" class="accordion-collapse collapse <?php echo $show ? 'show' : ''; ?>" aria-labelledby="head<?php echo $sid; ?>" data-bs-parent="#templatesAccordion">
                                 <div class="accordion-body">
                                     <div class="mb-2 small text-muted">Last updated: <?php echo $updated; ?></div>
                                     <div class="mb-3">

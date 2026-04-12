@@ -562,6 +562,20 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 max-width: 9.5rem;
                 /* box-shadow: 6px 0 8px -4px rgba(0, 0, 0, 0.12); */
             }
+            /* Follow Up Call accordion: history control sits just left of the chevron (::after) */
+            #headingFollowup.has-followup-history-btn .accordion-button {
+                padding-right: 10.5rem;
+            }
+            @media (max-width: 576px) {
+                #headingFollowup.has-followup-history-btn .accordion-button {
+                    padding-right: 9rem;
+                }
+            }
+            #headingFollowup .btn-followup-history-accordion {
+                right: 2.85rem;
+                z-index: 5;
+                pointer-events: auto;
+            }
         </style>
     </head>
 
@@ -583,11 +597,6 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                 <div class="page-title-box d-sm-flex align-items-center justify-content-between">
                                     <h4 class="mb-sm-0"><?php echo $is_student_portal ? 'Student – My Enquiry' : "Student's Enquiry"; ?></h4>
                                     <div class="page-title-right d-flex align-items-center flex-wrap gap-2 justify-content-end">
-                                        <?php if (!$is_student_portal && isset($eqId) && (int)$eqId > 0 && $followup_history_enquiry_code !== ''): ?>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="followup_history_open_btn" data-enquiry-id="<?php echo htmlspecialchars($followup_history_enquiry_code, ENT_QUOTES, 'UTF-8'); ?>">
-                                            <i class="ti ti-history me-1"></i> Follow-up history
-                                        </button>
-                                        <?php endif; ?>
                                         <ol class="breadcrumb m-0 align-items-baseline">
                                         <?php if (!$is_student_portal): ?>
                                         <!-- <li class="breadcrumb-item">
@@ -629,6 +638,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                             <div class="card-body">
                                 <h6 class="card-title mb-3">Student contact</h6>
                                 <p class="text-muted small mb-3">Used for every section below (enquiry, follow-up, and counselling). Email is required to save any of them. If you save follow-up or counselling first, an enquiry is created automatically from these details.</p>
+                                <fieldset class="border-0 p-0 m-0 min-w-0" form="student_enquiry_form">
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="mb-3">
@@ -665,6 +675,76 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                 Entered Number Already exist with Enquiry ID: <span id="phone_err_id"></span>
                                             </div>
                                         </div>
+                                    </div>
+                                </div>
+                                <div class="row mt-2 pt-2 border-top">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label" for="enquiry_date">Enquiry Date</label>
+                                            <input type="date" class="form-control" id="enquiry_date" value="<?php echo htmlspecialchars(student_enquiry_safe_date_ymd($queryRes['st_enquiry_date'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+                                            <div class="error-feedback">Please select the Date</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6"></div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label" for="courses">Course Interested In</label>
+                                            <?php
+                                            $counts = 1;
+                                            mysqli_data_seek($courses, 0);
+                                            while ($coursesRes = mysqli_fetch_array($courses)) {
+                                                if ($queryRes['st_course'] != '') {
+                                                    $coursesSel = json_decode($queryRes['st_course']);
+                                                } else {
+                                                    $coursesSel = array();
+                                                }
+                                                if (in_array($counts, $coursesSel)) {
+                                                    $checked = 'checked';
+                                                } else {
+                                                    $checked = '';
+                                                }
+                                                echo '<div class="form-check"><input type="checkbox" class="courses_check form-check-input" id="course_check_' . $counts . '" ' . $checked . ' value="' . $counts . '">';
+                                                echo '<label for="course_check_' . $counts . '">' . $coursesRes['course_sname'] . '-' . $coursesRes['course_name'] . '</label></div>';
+                                                $counts++;
+                                            }
+                                            ?>
+                                            <div class="courses_error">Please select the Courses</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label" for="enquiry_for">Enquiring For</label>
+                                            <select name="enquiry_for" class="form-select" id="enquiry_for">
+                                            <?php
+                                            $st_enquiry = array('--select--', 'Self', 'Family Member');
+                                            for ($i = 0; $i < count($st_enquiry); $i++) {
+                                                $checked = $i == $queryRes['st_enquiry_for'] ? 'selected' : '';
+                                                echo '<option value="' . $i . '" ' . $checked . '>' . $st_enquiry[$i] . '</option>';
+                                            }
+                                            ?>
+                                            </select>
+                                            <div class="error-feedback">Please select atleast one option</div>
+                                        </div>
+                                        <div class="mb-3" id="student_name_wrap" style="display:<?php echo $queryRes['st_enquiry_for'] == 2 ? 'block' : 'none'; ?>">
+                                            <label class="form-label" for="student_name">Student name / Family member name</label>
+                                            <input type="text" class="form-control" id="student_name" placeholder="Student name" value="<?php echo $queryRes['st_name']; ?>">
+                                            <div class="error-feedback">Please enter the Student name</div>
+                                        </div>
+                                        <?php if (!$is_student_portal): ?>
+                                        <div class="mb-3">
+                                            <label class="form-label" for="enquiry_college">Received Enquiry for Which college</label>
+                                            <select name="enquiry_college" class="form-select" id="enquiry_college">
+                                            <?php
+                                            $st_enquiry_college = array('--select--', 'Apt Training College', 'Milton College', 'NCA', 'Power Education', 'Auz Training');
+                                            $sel_college = isset($queryRes['st_enquiry_college']) ? (int) $queryRes['st_enquiry_college'] : 0;
+                                            for ($i = 0; $i < count($st_enquiry_college); $i++) {
+                                                $ch = $i === $sel_college ? 'selected' : '';
+                                                echo '<option value="' . $i . '" ' . $ch . '>' . $st_enquiry_college[$i] . '</option>';
+                                            }
+                                            ?>
+                                            </select>
+                                        </div>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                                 <div class="row mt-2 pt-2 border-top">
@@ -719,6 +799,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                         <small class="text-muted ms-2">Book a counselling appointment (same as Follow-up). With no enquiry yet, saving the appointment creates the enquiry and sets status to Booked Counselling.</small>
                                     </div>
                                 </div>
+                                </fieldset>
                             </div>
                         </div>
         <div id="enquiryAccordionGroup">
@@ -731,108 +812,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 </h2>
                 <div id="collapseStudentEnquiry" class="accordion-collapse collapse show" aria-labelledby="headingStudentEnquiry" data-bs-parent="#enquiryAccordionGroup">
                     <div class="accordion-body p-0">
-        <form class="student_enquiry_form" id="student_enquiry_form">
-        <div class="row">
-            <div class="col-xl-12">
-                <div class="card">
-                    <div class="card-body" id="student_enquiry_form_parent">
-                        <div class="accordion" id="accordionBasicDetails">
-                            <div class="accordion-item">
-                                    <h2 class="accordion-header" id="headingOne">
-                                        <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                        Basic Details
-                                        </button>
-                                    </h2>
-                                <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionBasicDetails">
-                                    <div class="accordion-body">
-                                            <div class="row">
-                                                <!-- Enquiry Date: one line, 50% width only -->
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="enquiry_date">Enquiry Date</label>
-                                                        <input type="date" class="form-control" id="enquiry_date" value="<?php echo htmlspecialchars(student_enquiry_safe_date_ymd($queryRes['st_enquiry_date'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-                                                        <div class="error-feedback">
-                                                            Please select the Date
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6"></div>
-                                                <!-- Left: Course list only | Right: Enquiring For, student name (family), college -->
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="courses">Course Interested In</label>
-                                                        <?php 
-                                                        $counts=1;
-                                                        mysqli_data_seek($courses, 0);
-                                                        while($coursesRes=mysqli_fetch_array($courses)){
-                                                            if($queryRes['st_course']!=''){
-                                                                $coursesSel=json_decode($queryRes['st_course']);
-                                                            }else{
-                                                                $coursesSel=[];   
-                                                            }
-                                                            if(in_array($counts,$coursesSel)){
-                                                                $checked='checked';
-                                                            }else{
-                                                                $checked='';
-                                                            }
-                                                            echo '<div class="form-check"><input type="checkbox" class="courses_check form-check-input" id="course_check_'.$counts.'" '.$checked.' value="'.$counts.'">';
-                                                            echo '<label for="course_check_'.$counts.'">'.$coursesRes["course_sname"].'-'.$coursesRes["course_name"].'</label></div>';
-                                                            $counts++;
-                                                        }
-                                                        ?>
-                                                        <div class="courses_error">
-                                                            Please select the Courses
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="enquiry_for">Enquiring For</label>
-                                                        <select name="enquiry_for" class="form-select" id="enquiry_for">
-                                                        <?php  
-                                                        $st_enquiry=['--select--','Self','Family Member'];
-                                                        for($i=0;$i<count($st_enquiry);$i++){
-                                                            $checked= $i==$queryRes['st_enquiry_for'] ? 'selected' : '';
-                                                            echo '<option value="'.$i.'" '.$checked.'>'.$st_enquiry[$i].'</option>';
-                                                        }
-                                                        ?>
-                                                        </select>  
-                                                        <div class="error-feedback">
-                                                            Please select atleast one option
-                                                        </div>
-                                                    </div>
-                                                    <div class="mb-3" id="student_name_wrap" style="display:<?php echo $queryRes['st_enquiry_for']==2 ? 'block' : 'none' ?>">
-                                                        <label class="form-label" for="student_name">Student name / Family member name</label>
-                                                        <input type="text" class="form-control" id="student_name" placeholder="Student name" value="<?php echo $queryRes['st_name']; ?>">
-                                                        <div class="error-feedback">
-                                                            Please enter the Student name
-                                                        </div>
-                                                    </div>
-                                                    <?php if (!$is_student_portal): ?>
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="enquiry_college">Received Enquiry for Which college</label>
-                                                        <select name="enquiry_college" class="form-select" id="enquiry_college">
-                                                        <?php
-                                                        $st_enquiry_college = ['--select--','Apt Training College','Milton College','NCA','Power Education','Auz Training'];
-                                                        $sel_college = isset($queryRes['st_enquiry_college']) ? (int)$queryRes['st_enquiry_college'] : 0;
-                                                        for($i=0;$i<count($st_enquiry_college);$i++){
-                                                            $ch = $i === $sel_college ? 'selected' : '';
-                                                            echo '<option value="'.$i.'" '.$ch.'>'.$st_enquiry_college[$i].'</option>';
-                                                        }
-                                                        ?>
-                                                        </select>
-                                                    </div>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>                        
-        </div>                        
+                        <form class="student_enquiry_form" id="student_enquiry_form">
 
                           <!-- Short Course - group Form -->
 
@@ -1423,8 +1403,13 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
         <!-- Accordion 2: Follow Up Call (admin only) -->
         <div class="accordion" id="followupMainAccordion">
             <div class="accordion-item">
-                <h2 class="accordion-header" id="headingFollowup">
+                <h2 class="accordion-header position-relative<?php echo (isset($eqId) && (int)$eqId > 0 && $followup_history_enquiry_code !== '') ? ' has-followup-history-btn' : ''; ?>" id="headingFollowup">
                     <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFollowup" aria-expanded="false" aria-controls="collapseFollowup">Follow Up Call</button>
+                    <?php if (isset($eqId) && (int)$eqId > 0 && $followup_history_enquiry_code !== ''): ?>
+                    <button type="button" class="btn btn-outline-secondary btn-sm position-absolute top-50 translate-middle-y btn-followup-history-accordion" id="followup_history_open_btn" data-enquiry-id="<?php echo htmlspecialchars($followup_history_enquiry_code, ENT_QUOTES, 'UTF-8'); ?>">
+                        <i class="ti ti-history me-1"></i> Follow-up history
+                    </button>
+                    <?php endif; ?>
                 </h2>
                 <div id="collapseFollowup" class="accordion-collapse collapse" aria-labelledby="headingFollowup" data-bs-parent="#enquiryAccordionGroup">
                     <div class="accordion-body">
@@ -1563,7 +1548,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 $('#student_enquiry_form').find(':input').not($t).prop('disabled', !!locked);
                 $('#counselling_form').find(':input').prop('disabled', !!locked);
                 $('#followup_form_embed').find(':input').prop('disabled', !!locked);
-                $('#enquiry_form,#counseling_submit,#followup_check,#followup_send_status_email,#followup_open_calendar_btn,#contact_bar_open_calendar_btn,#counselling_open_calendar_btn').prop('disabled', !!locked);
+                $('#enquiry_form,#counseling_submit,#followup_check,#followup_send_status_email,#counselling_send_status_email,#followup_open_calendar_btn,#contact_bar_open_calendar_btn,#counselling_open_calendar_btn').prop('disabled', !!locked);
                 $('#followup_history_open_btn').prop('disabled', false);
                 $('#fp_appointment_submit_btn').prop('disabled', !!locked);
                 if($('#enquiry_edit_mode_hint').length){
@@ -2303,7 +2288,73 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var v = ($('#counselling_outcome').val() || '').toString().trim();
                 $('#counselling_reschedule_calendar_wrap').toggle(v === 'Rescheduled');
             }
-            $(document).on('change','#counselling_outcome', function(){ toggleCounsellingRescheduleCalendarWrap(); });
+            function counsellingSessionPayloadForTemplate(){
+                return {
+                    counselling_session_date: ($('#counselling_date').val() || '').toString().trim(),
+                    counselling_session_start: ($('#counseling_timing').val() || '').toString().trim(),
+                    counselling_session_end: ($('#counseling_end_timing').val() || '').toString().trim()
+                };
+            }
+            function counsellingAutoResizeEmailBody(){
+                var el = document.getElementById('counselling_email_body');
+                if(!el) return;
+                var minH = 120;
+                var maxH = 448;
+                el.style.height = 'auto';
+                el.style.overflowY = 'hidden';
+                var sh = el.scrollHeight;
+                var h = Math.min(maxH, Math.max(minH, sh));
+                el.style.height = h + 'px';
+                el.style.overflowY = sh > maxH ? 'auto' : 'hidden';
+            }
+            function loadCounsellingTemplateForCurrentSelection(){
+                var status = ($('#counselling_email_template_status').val() || '').toString().trim();
+                var enquiry_id = ($('#counselling_enquiry_id').val() || '').toString().trim();
+                if(!status || !enquiry_id){ return; }
+                var post = $.extend({ get_enquiry_status_template: 1, status_code: status, enquiry_id: enquiry_id }, counsellingSessionPayloadForTemplate());
+                $.post('includes/datacontrol.php', post, function(data){
+                    try{
+                        var j = (typeof data === 'object' && data !== null) ? data : JSON.parse(data);
+                        $('#counselling_email_subject').val(j.subject||'');
+                        $('#counselling_email_body').val(j.body||'');
+                    }catch(e){}
+                    setTimeout(counsellingAutoResizeEmailBody, 0);
+                });
+            }
+            function applyCounsellingOutcomeToEmailTemplate(){
+                var o = ($('#counselling_outcome').val() || '').toString().trim();
+                var map = { 'Counselling Done': '12', 'Rescheduled': '13', 'Rejected': '14' };
+                if(Object.prototype.hasOwnProperty.call(map, o)){
+                    $('#counselling_email_template_status').val(map[o]);
+                    loadCounsellingTemplateForCurrentSelection();
+                } else {
+                    $('#counselling_email_template_status').val('');
+                    $('#counselling_email_subject,#counselling_email_body').val('');
+                    counsellingAutoResizeEmailBody();
+                }
+            }
+            var counsellingTemplateReloadTimer = null;
+            $(document).on('change input', '#counselling_date, #counseling_timing, #counseling_end_timing', function(){
+                clearTimeout(counsellingTemplateReloadTimer);
+                counsellingTemplateReloadTimer = setTimeout(function(){
+                    if(($('#counselling_email_template_status').val() || '').toString().trim()){
+                        loadCounsellingTemplateForCurrentSelection();
+                    }
+                }, 250);
+            });
+            $(document).on('change','#counselling_email_template_status', function(){
+                var v = ($(this).val() || '').toString().trim();
+                if(v){ loadCounsellingTemplateForCurrentSelection(); }
+                else {
+                    $('#counselling_email_subject,#counselling_email_body').val('');
+                    counsellingAutoResizeEmailBody();
+                }
+            });
+            $(document).on('input','#counselling_email_body', counsellingAutoResizeEmailBody);
+            $(document).on('change','#counselling_outcome', function(){
+                toggleCounsellingRescheduleCalendarWrap();
+                applyCounsellingOutcomeToEmailTemplate();
+            });
             $(document).on('click','#counselling_open_calendar_btn',function(){
                 window.__fpBookFromContactBarPhone = false;
                 window.__fpBookFromCounsellingReschedule = true;
@@ -2582,9 +2633,53 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     }
                 });
             });
+            $(document).on('click','#counselling_send_status_email', function(){
+                var enquiry_id = ($('#counselling_enquiry_id').val() || '').toString().trim();
+                var status_code = ($('#counselling_email_template_status').val() || '').toString().trim();
+                var subject = $('#counselling_email_subject').val().trim();
+                var body = $('#counselling_email_body').val().trim();
+                var save_as_default = $('#counselling_save_template_default').is(':checked') ? 1 : 0;
+                if(!enquiry_id || !status_code){
+                    $('.toast-text2').html('Enquiry ID and email template are required.');
+                    $('#borderedToast2Btn').trigger('click');
+                    return;
+                }
+                if(!subject || !body){
+                    $('.toast-text2').html('Subject and message are required.');
+                    $('#borderedToast2Btn').trigger('click');
+                    return;
+                }
+                var $btn = $('#counselling_send_status_email').prop('disabled', true).text('Sending...');
+                var post = $.extend({
+                    send_enquiry_status_email: 1,
+                    enquiry_id: enquiry_id,
+                    status_code: status_code,
+                    subject: subject,
+                    body: body,
+                    save_as_default: save_as_default
+                }, counsellingSessionPayloadForTemplate());
+                $.post('includes/datacontrol.php', post, function(data){
+                    if(data=='1'){
+                        $('#toast-text').html('Email sent successfully');
+                        $('#borderedToast1Btn').trigger('click');
+                        $('#counselling_send_email_card').removeClass('border-primary').addClass('border-success').html('<div class="card-body py-3"><p class="text-success mb-0"><i class="ti ti-circle-check me-1"></i> Mail sent</p></div>');
+                    } else {
+                        $btn.prop('disabled', false).text('Send email');
+                        $('.toast-text2').html(data||'Failed to send email');
+                        $('#borderedToast2Btn').trigger('click');
+                    }
+                });
+            });
+            $('#enquiryAccordionGroup #collapseCounseling').on('shown.bs.collapse', function(){
+                setTimeout(function(){
+                    counsellingAutoResizeEmailBody();
+                    applyCounsellingOutcomeToEmailTemplate();
+                }, 50);
+            });
             // Load default email template once when form is ready (for current status)
             loadFollowupTemplateForCurrentStatus();
             setTimeout(followupAutoResizeEmailBody, 100);
+            setTimeout(function(){ applyCounsellingOutcomeToEmailTemplate(); counsellingAutoResizeEmailBody(); }, 350);
 
             function buildFollowupFormData(){
                 var enquiryForVal = ($('#enquiry_for').val()||'0').toString();
@@ -2780,7 +2875,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 }
                 var $btn = $(this).prop('disabled', true).text('Sending…');
                 var post = { send_enquiry_status_email: 1, enquiry_id: eid, subject: sub, body: body };
-                if ($('#fh_resend_save_default').is(':checked') && sc >= 1 && sc <= 10) {
+                if ($('#fh_resend_save_default').is(':checked') && ((sc >= 1 && sc <= 11) || (sc >= 12 && sc <= 14))) {
                     post.save_as_default = 1;
                     post.status_code = sc;
                 }

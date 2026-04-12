@@ -66,7 +66,7 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
             padding-top: 0.25rem;
             padding-bottom: 0.25rem;
         }
-        /* Follow-up Outcome: date buttons (No Answer, Call Back Later, Booked Counselling) */
+        /* Outcome column: date buttons (No Answer, Call Back Later, Booked Counselling) */
         .btn-fup-date{
             cursor: pointer;
             border: none;
@@ -93,7 +93,7 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
         .btn-fup-date.btn-fup-no-answer{ background: #fd7e14; color: #fff; }
         .btn-fup-date.btn-fup-callback{ background: #0d6efd; color: #fff; border: 2px double rgba(255,255,255,0.4); }
         .btn-fup-date.btn-fup-booked{ background: #e6a800; color: #fff; }
-        /* Follow-up Outcome: direct labels (Progressing, Converted, Provide Info., Lost) */
+        /* Outcome column: direct labels (Progressing, Converted, Provide Info., Lost) */
         .btn-fup-outcome{
             display: inline-flex;
             padding: 0 12px;
@@ -116,7 +116,7 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
         .btn-fup-outcome.btn-fup-provide-info{ background: #495057; border: 1px solid #fd7e14; }
         .btn-fup-outcome.btn-fup-lost{ background: #dc3545; }
 
-        /* Follow-up Outcome: col 2 when checkbox present, col 1 for staff (no checkbox) */
+        /* Outcome column: col 2 when checkbox present, col 1 for staff (no checkbox) */
         table.table-enquiry-list td:nth-child(2) .badge,
         table.table-enquiry-list.enq-list-staff td:nth-child(1) .badge{
             display: inline-flex;
@@ -337,7 +337,7 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
                                         <?php if(!empty($view_enq_can_delete)){ ?>
                                         <th class="enq-col-select"><input type="checkbox" id="enq_select_all" class="form-check-input" title="Select all on this page" aria-label="Select all on this page"></th>
                                         <?php } ?>
-                                        <th class="table-next-fup">Follow-up Outcome</th>
+                                        <th class="table-next-fup">Outcome</th>
                                         <th>Enquiry Date</th>
                                         <th>Name</th>
                                         <th>Mobile</th>
@@ -355,7 +355,7 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
         </div>
     </div>
 </div>
-<!-- Appointment Details modal (for date-click from Follow-up Outcome column) -->
+<!-- Appointment Details modal (for date-click from Outcome column) -->
 <div class="modal fade" id="viewEnqAppointmentModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">

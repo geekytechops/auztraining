@@ -74,7 +74,7 @@ if($followupUsers){
 <div class="col-12 mb-2" id="followup_calendar_btn_wrap" style="display:none;">
 <button type="button" class="btn btn-outline-primary" id="followup_open_calendar_btn"><i class="ti ti-calendar"></i> Calendar</button>
 <small class="text-muted ms-2">Opens New Appointment with this enquiry’s student details pre-filled.</small></div>
-<div class="col-12"><div class="mb-3"><label class="form-label" for="followup_enquiry_flow_status">Enquiry Status</label>
+<div class="col-12"><div class="mb-3"><label class="form-label" for="followup_enquiry_flow_status">Email Template</label>
 <select class="form-select" id="followup_enquiry_flow_status">
 <?php foreach($enquiry_flow_statuses as $k=>$v) {
     $sel = (isset($followup_Query['enquiry_flow_status']) && $followup_Query['enquiry_flow_status']==$k) ? 'selected' : '';
@@ -84,7 +84,7 @@ if($followupUsers){
 </select><small class="text-muted">Follow Up Outcome sets this when you select an outcome. Booked Counselling (9) unlocks after booking via Calendar when required.</small></div></div>
 <div class="col-12 mb-3" id="followup_email_template_section">
 <div class="card border-primary" id="followup_send_email_card"><div class="card-header bg-light">Send status email to student</div><div class="card-body">
-<p class="text-muted small">When you change Enquiry Status, the matching email template is loaded. Review, edit if needed, and send.</p>
+<p class="text-muted small">When you change the selection above, the matching email template is loaded. Review, edit if needed, and send.</p>
 <label class="form-label">Subject</label><input type="text" class="form-control mb-2" id="followup_email_subject" placeholder="Email subject">
 <label class="form-label" for="followup_email_body">Message</label>
 <textarea class="form-control mb-2 followup-email-body-autoheight" id="followup_email_body" rows="1" placeholder="Email body" style="min-height:7.5rem;max-height:28rem;line-height:1.5;overflow-y:hidden;resize:vertical;box-sizing:border-box;"></textarea>

@@ -158,16 +158,7 @@ foreach ($couns_outcomes as $ov => $ol) {
 <option value="13" <?php echo ($co_sel === 'Rescheduled') ? 'selected' : ''; ?>>Rescheduling</option>
 <option value="14" <?php echo ($co_sel === 'Rejected') ? 'selected' : ''; ?>>Rejected</option>
 </select>
-<small class="text-muted">Choose the template to load. Changing <strong>Counselling outcome</strong> updates this selection.</small></div></div>
-<div class="col-12 mb-3" id="counselling_email_template_section">
-<div class="card border-primary" id="counselling_send_email_card"><div class="card-header bg-light">Send counselling email to student</div><div class="card-body">
-<p class="text-muted small">When you change the template above, the matching email is loaded. Review, edit if needed, and send.</p>
-<label class="form-label">Subject</label><input type="text" class="form-control mb-2" id="counselling_email_subject" placeholder="Email subject">
-<label class="form-label" for="counselling_email_body">Message</label>
-<textarea class="form-control mb-2 counselling-email-body-autoheight" id="counselling_email_body" rows="1" placeholder="Email body" style="min-height:7.5rem;max-height:28rem;line-height:1.5;overflow-y:hidden;resize:vertical;box-sizing:border-box;"></textarea>
-<div class="form-check mb-2"><input type="checkbox" class="form-check-input" id="counselling_save_template_default" value="1"><label class="form-check-label" for="counselling_save_template_default">Save as default template for this type</label></div>
-<button type="button" class="btn btn-success btn-sm" id="counselling_send_status_email">Send email</button>
-</div></div></div>
+<small class="text-muted d-block">Changing <strong>Counselling outcome</strong> updates this selection. Choosing a template opens a window to review and send the email.</small></div></div>
 <div class="col-12 mb-2" id="counselling_reschedule_calendar_wrap" style="display:<?php echo ($co_sel === 'Rescheduled') ? 'block' : 'none'; ?>;">
 <button type="button" class="btn btn-outline-primary" id="counselling_open_calendar_btn"><i class="ti ti-calendar"></i> Calendar</button>
 <small class="text-muted ms-2">Book the rescheduled session; enquiry status is set to Counselling Pending.</small>

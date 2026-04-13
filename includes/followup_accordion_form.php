@@ -81,16 +81,7 @@ if($followupUsers){
     $dis = ($k==9 && !$has_counselling_appointment) ? ' disabled' : '';
     echo '<option value="'.$k.'" '.$sel.$dis.'>'.$v.'</option>';
 } ?>
-</select><small class="text-muted">Follow Up Outcome sets this when you select an outcome. Booked Counselling (9) unlocks after booking via Calendar when required.</small></div></div>
-<div class="col-12 mb-3" id="followup_email_template_section">
-<div class="card border-primary" id="followup_send_email_card"><div class="card-header bg-light">Send status email to student</div><div class="card-body">
-<p class="text-muted small">When you change the selection above, the matching email template is loaded. Review, edit if needed, and send.</p>
-<label class="form-label">Subject</label><input type="text" class="form-control mb-2" id="followup_email_subject" placeholder="Email subject">
-<label class="form-label" for="followup_email_body">Message</label>
-<textarea class="form-control mb-2 followup-email-body-autoheight" id="followup_email_body" rows="1" placeholder="Email body" style="min-height:7.5rem;max-height:28rem;line-height:1.5;overflow-y:hidden;resize:vertical;box-sizing:border-box;"></textarea>
-<div class="form-check mb-2"><input type="checkbox" class="form-check-input" id="followup_save_template_default" value="1"><label class="form-check-label" for="followup_save_template_default">Save as default template for this status</label></div>
-<button type="button" class="btn btn-success btn-sm" id="followup_send_status_email">Send email</button>
-</div></div></div>
+</select><small class="text-muted d-block">Follow Up Outcome sets this when you select an outcome. Booked Counselling (9) unlocks after booking via Calendar when required. Changing <strong>Email Template</strong> opens a window to review and send the email.</small></div></div>
 <div class="col-12"><div class="mb-3"><label class="form-label" for="followup_follow_up_notes">Follow-Up Notes</label>
 <textarea class="form-control" id="followup_follow_up_notes" rows="3" placeholder="Free text notes"><?php echo htmlspecialchars(isset($followup_Query['flw_follow_up_notes']) ? $followup_Query['flw_follow_up_notes'] : ''); ?></textarea></div></div>
 <div class="col-12"><div class="mb-3"><label class="form-label d-block">Remarks</label>

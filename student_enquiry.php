@@ -1450,6 +1450,61 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
 
         <?php include('includes/followup_appointment_modal.inc.php'); ?>
 
+        <?php if (!$is_student_portal): ?>
+        <div class="modal fade" id="followupStatusEmailModal" tabindex="-1" aria-labelledby="followupStatusEmailModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="followupStatusEmailModalLabel">Send status email to student</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small">Template is loaded for the selected enquiry status. Edit if needed, then send.</p>
+                        <div class="mb-2">
+                            <label class="form-label" for="followup_email_subject">Subject</label>
+                            <input type="text" class="form-control" id="followup_email_subject" placeholder="Email subject" autocomplete="off">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label" for="followup_email_body">Message</label>
+                            <textarea class="form-control followup-email-body-autoheight" id="followup_email_body" rows="6" placeholder="Email body" style="min-height:7.5rem;max-height:28rem;line-height:1.5;resize:vertical;box-sizing:border-box;"></textarea>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="followup_save_template_default" value="1">
+                            <label class="form-check-label" for="followup_save_template_default">Save as default template for this status</label>
+                        </div>
+                        <button type="button" class="btn btn-success" id="followup_send_status_email">Send email</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="counsellingStatusEmailModal" tabindex="-1" aria-labelledby="counsellingStatusEmailModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="counsellingStatusEmailModalLabel">Send counselling email to student</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small">Template is loaded for the selected type. Edit if needed, then send.</p>
+                        <div class="mb-2">
+                            <label class="form-label" for="counselling_email_subject">Subject</label>
+                            <input type="text" class="form-control" id="counselling_email_subject" placeholder="Email subject" autocomplete="off">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label" for="counselling_email_body">Message</label>
+                            <textarea class="form-control counselling-email-body-autoheight" id="counselling_email_body" rows="6" placeholder="Email body" style="min-height:7.5rem;max-height:28rem;line-height:1.5;resize:vertical;box-sizing:border-box;"></textarea>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="counselling_save_template_default" value="1">
+                            <label class="form-check-label" for="counselling_save_template_default">Save as default template for this type</label>
+                        </div>
+                        <button type="button" class="btn btn-success" id="counselling_send_status_email">Send email</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <?php if (!$is_student_portal && isset($eqId) && (int)$eqId > 0 && $followup_history_enquiry_code !== ''): ?>
         <div class="modal fade" id="followupHistoryModal" tabindex="-1" aria-labelledby="followupHistoryModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-xl modal-dialog-scrollable">
@@ -1543,10 +1598,11 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             function applyEnquiryFormLock(locked){
                 if(!window.ENQUIRY_EDIT_PAGE) return;
                 var $t = $('#enquiry_edit_mode_toggle');
+                // Keep accordion section headers clickable in view-only so users can expand/collapse to read content.
                 $('#student_enquiry_contact_bar').find(':input').prop('disabled', !!locked);
-                $('#student_enquiry_form').find(':input').not($t).prop('disabled', !!locked);
-                $('#counselling_form').find(':input').prop('disabled', !!locked);
-                $('#followup_form_embed').find(':input').prop('disabled', !!locked);
+                $('#student_enquiry_form').find(':input').not($t).not('.accordion-button').prop('disabled', !!locked);
+                $('#counselling_form').find(':input').not('.accordion-button').prop('disabled', !!locked);
+                $('#followup_form_embed').find(':input').not('.accordion-button').prop('disabled', !!locked);
                 $('#enquiry_form,#counseling_submit,#followup_check,#followup_send_status_email,#counselling_send_status_email,#followup_open_calendar_btn,#contact_bar_open_calendar_btn,#counselling_open_calendar_btn').prop('disabled', !!locked);
                 $('#followup_history_open_btn').prop('disabled', false);
                 $('#fp_appointment_submit_btn').prop('disabled', !!locked);
@@ -2182,19 +2238,26 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 el.style.height = h + 'px';
                 el.style.overflowY = sh > maxH ? 'auto' : 'hidden';
             }
-            function loadFollowupTemplateForCurrentStatus(){
-                var status=$('#followup_enquiry_flow_status').val();
-                var enquiry_id=$('#followup_enquiry_id').val();
-                if(!status||!enquiry_id){ return; }
-                $.post('includes/datacontrol.php',{ get_enquiry_status_template: 1, status_code: status, enquiry_id: enquiry_id },function(data){
+            function loadFollowupTemplateForCurrentStatus(opts){
+                opts = opts || {};
+                var showModal = !!opts.showModal;
+                var status = $('#followup_enquiry_flow_status').val();
+                if (status === '' || status === null || status === undefined) { return; }
+                var enquiry_id = ($('#followup_enquiry_id').val() || '').toString().trim();
+                $.post('includes/datacontrol.php', { get_enquiry_status_template: 1, status_code: status, enquiry_id: enquiry_id }, function(data){
                     try{
-                        var j=JSON.parse(data);
+                        var j = JSON.parse(data);
                         $('#followup_email_subject').val(j.subject||'');
                         $('#followup_email_body').val(j.body||'');
                     }catch(e){
                         // ignore parse errors, leave fields as-is
                     }
                     setTimeout(followupAutoResizeEmailBody, 0);
+                }).always(function(){
+                    if (showModal) {
+                        var m = document.getElementById('followupStatusEmailModal');
+                        if (m && typeof bootstrap !== 'undefined') { bootstrap.Modal.getOrCreateInstance(m).show(); }
+                    }
                 });
             }
             $(document).on('input','#followup_email_body', followupAutoResizeEmailBody);
@@ -2202,7 +2265,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 setTimeout(followupAutoResizeEmailBody, 50);
             });
             $(document).on('change','#followup_enquiry_flow_status',function(){
-                loadFollowupTemplateForCurrentStatus();
+                loadFollowupTemplateForCurrentStatus({ showModal: true });
             });
             function toggleFollowupCalendarBtn(){
                 var outcome = ($('#followup_follow_up_outcome').val() || '').toString();
@@ -2215,7 +2278,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var map = { 'No Answer':'3', 'Call Back Later':'3', 'Booked Counselling':'2', 'Requested More Information':'2', 'Application Started':'4', 'Enrolled':'6', 'Not Interested':'7', 'Do not Call':'7' };
                 if(Object.prototype.hasOwnProperty.call(map, o)){
                     $('#followup_enquiry_flow_status').val(map[o]);
-                    loadFollowupTemplateForCurrentStatus();
+                    loadFollowupTemplateForCurrentStatus({ showModal: false });
                 }
             }
             $(document).on('change','#followup_follow_up_outcome',function(){
@@ -2306,10 +2369,12 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 el.style.height = h + 'px';
                 el.style.overflowY = sh > maxH ? 'auto' : 'hidden';
             }
-            function loadCounsellingTemplateForCurrentSelection(){
+            function loadCounsellingTemplateForCurrentSelection(opts){
+                opts = opts || {};
+                var showModal = !!opts.showModal;
                 var status = ($('#counselling_email_template_status').val() || '').toString().trim();
+                if (!status) { return; }
                 var enquiry_id = ($('#counselling_enquiry_id').val() || '').toString().trim();
-                if(!status || !enquiry_id){ return; }
                 var post = $.extend({ get_enquiry_status_template: 1, status_code: status, enquiry_id: enquiry_id }, counsellingSessionPayloadForTemplate());
                 $.post('includes/datacontrol.php', post, function(data){
                     try{
@@ -2318,18 +2383,27 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                         $('#counselling_email_body').val(j.body||'');
                     }catch(e){}
                     setTimeout(counsellingAutoResizeEmailBody, 0);
+                }).always(function(){
+                    if (showModal) {
+                        var m = document.getElementById('counsellingStatusEmailModal');
+                        if (m && typeof bootstrap !== 'undefined') { bootstrap.Modal.getOrCreateInstance(m).show(); }
+                    }
                 });
             }
-            function applyCounsellingOutcomeToEmailTemplate(){
+            function applyCounsellingOutcomeToEmailTemplate(opts){
+                opts = opts || {};
+                var showModal = !!opts.showModal;
                 var o = ($('#counselling_outcome').val() || '').toString().trim();
                 var map = { 'Counselling Done': '12', 'Rescheduled': '13', 'Rejected': '14' };
                 if(Object.prototype.hasOwnProperty.call(map, o)){
                     $('#counselling_email_template_status').val(map[o]);
-                    loadCounsellingTemplateForCurrentSelection();
+                    loadCounsellingTemplateForCurrentSelection({ showModal: showModal });
                 } else {
                     $('#counselling_email_template_status').val('');
                     $('#counselling_email_subject,#counselling_email_body').val('');
                     counsellingAutoResizeEmailBody();
+                    var cm = document.getElementById('counsellingStatusEmailModal');
+                    if(cm){ var ci = bootstrap.Modal.getInstance(cm); if(ci) ci.hide(); }
                 }
             }
             var counsellingTemplateReloadTimer = null;
@@ -2343,16 +2417,18 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             });
             $(document).on('change','#counselling_email_template_status', function(){
                 var v = ($(this).val() || '').toString().trim();
-                if(v){ loadCounsellingTemplateForCurrentSelection(); }
+                if(v){ loadCounsellingTemplateForCurrentSelection({ showModal: true }); }
                 else {
                     $('#counselling_email_subject,#counselling_email_body').val('');
                     counsellingAutoResizeEmailBody();
+                    var cm = document.getElementById('counsellingStatusEmailModal');
+                    if(cm){ var ci = bootstrap.Modal.getInstance(cm); if(ci) ci.hide(); }
                 }
             });
             $(document).on('input','#counselling_email_body', counsellingAutoResizeEmailBody);
             $(document).on('change','#counselling_outcome', function(){
                 toggleCounsellingRescheduleCalendarWrap();
-                applyCounsellingOutcomeToEmailTemplate();
+                applyCounsellingOutcomeToEmailTemplate({ showModal: false });
             });
             $(document).on('click','#counselling_open_calendar_btn',function(){
                 window.__fpBookFromContactBarPhone = false;
@@ -2624,8 +2700,9 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 $.post('includes/datacontrol.php',{ send_enquiry_status_email: 1, enquiry_id: enquiry_id, status_code: status_code, subject: subject, body: body, save_as_default: save_as_default },function(data){
                     if(data=='1'){
                         $('#toast-text').html('Email sent successfully'); $('#borderedToast1Btn').trigger('click');
-                        // Replace send-email block with "Mail sent" state (stays until page reload)
-                        $('#followup_send_email_card').removeClass('border-primary').addClass('border-success').html('<div class="card-body py-3"><p class="text-success mb-0"><i class="ti ti-circle-check me-1"></i> Mail sent</p></div>');
+                        var fm = document.getElementById('followupStatusEmailModal');
+                        if(fm){ var fi = bootstrap.Modal.getInstance(fm); if(fi) fi.hide(); }
+                        $('#followup_send_status_email').prop('disabled',false).text('Send email');
                     } else {
                         $btn.prop('disabled',false).text('Send email');
                         $('.toast-text2').html(data||'Failed to send email'); $('#borderedToast2Btn').trigger('click');
@@ -2661,7 +2738,9 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     if(data=='1'){
                         $('#toast-text').html('Email sent successfully');
                         $('#borderedToast1Btn').trigger('click');
-                        $('#counselling_send_email_card').removeClass('border-primary').addClass('border-success').html('<div class="card-body py-3"><p class="text-success mb-0"><i class="ti ti-circle-check me-1"></i> Mail sent</p></div>');
+                        var cm = document.getElementById('counsellingStatusEmailModal');
+                        if(cm){ var ci = bootstrap.Modal.getInstance(cm); if(ci) ci.hide(); }
+                        $('#counselling_send_status_email').prop('disabled',false).text('Send email');
                     } else {
                         $btn.prop('disabled', false).text('Send email');
                         $('.toast-text2').html(data||'Failed to send email');
@@ -2672,13 +2751,15 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             $('#enquiryAccordionGroup #collapseCounseling').on('shown.bs.collapse', function(){
                 setTimeout(function(){
                     counsellingAutoResizeEmailBody();
-                    applyCounsellingOutcomeToEmailTemplate();
+                    applyCounsellingOutcomeToEmailTemplate({ showModal: false });
                 }, 50);
             });
+            $('#followupStatusEmailModal').on('shown.bs.modal', function(){ setTimeout(followupAutoResizeEmailBody, 0); });
+            $('#counsellingStatusEmailModal').on('shown.bs.modal', function(){ setTimeout(counsellingAutoResizeEmailBody, 0); });
             // Load default email template once when form is ready (for current status)
             loadFollowupTemplateForCurrentStatus();
             setTimeout(followupAutoResizeEmailBody, 100);
-            setTimeout(function(){ applyCounsellingOutcomeToEmailTemplate(); counsellingAutoResizeEmailBody(); }, 350);
+            setTimeout(function(){ applyCounsellingOutcomeToEmailTemplate({ showModal: false }); counsellingAutoResizeEmailBody(); }, 350);
 
             function buildFollowupFormData(){
                 var enquiryForVal = ($('#enquiry_for').val()||'0').toString();

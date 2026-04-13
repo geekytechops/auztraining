@@ -634,11 +634,12 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                         </div>
                         <?php endif; ?>
                         <!-- end page title -->
+        <div id="enquiryAccordionGroup">
+                        <form class="student_enquiry_form" id="student_enquiry_form">
                         <div class="card mb-3" id="student_enquiry_contact_bar">
                             <div class="card-body">
                                 <h6 class="card-title mb-3">Student contact</h6>
                                 <p class="text-muted small mb-3">Used for every section below (enquiry, follow-up, and counselling). Email is required to save any of them. If you save follow-up or counselling first, an enquiry is created automatically from these details.</p>
-                                <fieldset class="border-0 p-0 m-0 min-w-0" form="student_enquiry_form">
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="mb-3">
@@ -685,32 +686,6 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                             <div class="error-feedback">Please select the Date</div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6"></div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label" for="courses">Course Interested In</label>
-                                            <?php
-                                            $counts = 1;
-                                            mysqli_data_seek($courses, 0);
-                                            while ($coursesRes = mysqli_fetch_array($courses)) {
-                                                if ($queryRes['st_course'] != '') {
-                                                    $coursesSel = json_decode($queryRes['st_course']);
-                                                } else {
-                                                    $coursesSel = array();
-                                                }
-                                                if (in_array($counts, $coursesSel)) {
-                                                    $checked = 'checked';
-                                                } else {
-                                                    $checked = '';
-                                                }
-                                                echo '<div class="form-check"><input type="checkbox" class="courses_check form-check-input" id="course_check_' . $counts . '" ' . $checked . ' value="' . $counts . '">';
-                                                echo '<label for="course_check_' . $counts . '">' . $coursesRes['course_sname'] . '-' . $coursesRes['course_name'] . '</label></div>';
-                                                $counts++;
-                                            }
-                                            ?>
-                                            <div class="courses_error">Please select the Courses</div>
-                                        </div>
-                                    </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label" for="enquiry_for">Enquiring For</label>
@@ -745,6 +720,33 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                             </select>
                                         </div>
                                         <?php endif; ?>
+                                    </div>
+                                </div>
+                                <div class="row mt-2 pt-2 border-top">
+                                    <div class="col-12">
+                                        <div class="mb-3">
+                                            <label class="form-label" for="courses">Course Interested In</label>
+                                            <?php
+                                            $counts = 1;
+                                            mysqli_data_seek($courses, 0);
+                                            while ($coursesRes = mysqli_fetch_array($courses)) {
+                                                if ($queryRes['st_course'] != '') {
+                                                    $coursesSel = json_decode($queryRes['st_course']);
+                                                } else {
+                                                    $coursesSel = array();
+                                                }
+                                                if (in_array($counts, $coursesSel)) {
+                                                    $checked = 'checked';
+                                                } else {
+                                                    $checked = '';
+                                                }
+                                                echo '<div class="form-check"><input type="checkbox" class="courses_check form-check-input" id="course_check_' . $counts . '" ' . $checked . ' value="' . $counts . '">';
+                                                echo '<label for="course_check_' . $counts . '">' . $coursesRes['course_sname'] . '-' . $coursesRes['course_name'] . '</label></div>';
+                                                $counts++;
+                                            }
+                                            ?>
+                                            <div class="courses_error">Please select the Courses</div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="row mt-2 pt-2 border-top">
@@ -799,10 +801,8 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                         <small class="text-muted ms-2">Book a counselling appointment (same as Follow-up). With no enquiry yet, saving the appointment creates the enquiry and sets status to Booked Counselling.</small>
                                     </div>
                                 </div>
-                                </fieldset>
                             </div>
                         </div>
-        <div id="enquiryAccordionGroup">
         <div class="accordion">
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingStudentEnquiry">
@@ -812,7 +812,6 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 </h2>
                 <div id="collapseStudentEnquiry" class="accordion-collapse collapse show" aria-labelledby="headingStudentEnquiry" data-bs-parent="#enquiryAccordionGroup">
                     <div class="accordion-body p-0">
-                        <form class="student_enquiry_form" id="student_enquiry_form">
 
                           <!-- Short Course - group Form -->
 
@@ -1395,9 +1394,9 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                         </div>
                                     </div>
                                 </div>
-                            </form>
                     </div></div></div>
         </div>
+                            </form>
 
         <?php if (!$is_student_portal): ?>
         <!-- Accordion 2: Follow Up Call (admin only) -->

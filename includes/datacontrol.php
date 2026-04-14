@@ -3840,10 +3840,11 @@ if(@$_POST['formName']=='fetchEnquiryList'){
         'No Answer' => array('label'=>'No Answer','btn'=>'btn-fup-no-answer','date_btn'=>true),
         'Call Back Later' => array('label'=>'Call Back Later','btn'=>'btn-fup-callback','date_btn'=>true),
         'Booked Counselling' => array('label'=>'Booked Counselling','btn'=>'btn-fup-booked','date_btn'=>true),
-        'Application Started' => array('label'=>'Progressing','outcome_btn'=>'btn-fup-progressing'),
-        'Enrolled' => array('label'=>'Converted','outcome_btn'=>'btn-fup-converted'),
-        'Requested More Information' => array('label'=>'Provide Info.','outcome_btn'=>'btn-fup-provide-info'),
-        'Not Interested' => array('label'=>'Lost','outcome_btn'=>'btn-fup-lost'),
+        // Outcome column should show exact follow-up outcome text; Status column shows mapped business state.
+        'Application Started' => array('label'=>'Application Started','outcome_btn'=>'btn-fup-progressing'),
+        'Enrolled' => array('label'=>'Enrolled','outcome_btn'=>'btn-fup-converted'),
+        'Requested More Information' => array('label'=>'Requested More Information','outcome_btn'=>'btn-fup-provide-info'),
+        'Not Interested' => array('label'=>'Not Interested','outcome_btn'=>'btn-fup-lost'),
         'Do not Call' => array('label'=>'Do not Call','outcome_btn'=>'btn-fup-lost')
     );
 

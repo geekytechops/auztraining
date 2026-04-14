@@ -81,7 +81,12 @@ if($followupUsers){
     $dis = ($k==9 && !$has_counselling_appointment) ? ' disabled' : '';
     echo '<option value="'.$k.'" '.$sel.$dis.'>'.$v.'</option>';
 } ?>
-</select><small class="text-muted d-block">Follow Up Outcome sets this when you select an outcome. Booked Counselling (9) unlocks after booking via Calendar when required. Changing <strong>Email Template</strong> opens a window to review and send the email.</small></div></div>
+</select>
+<?php
+$followup_status_actual = (isset($followup_Query['enquiry_flow_status']) && (string)$followup_Query['enquiry_flow_status'] !== '') ? (int)$followup_Query['enquiry_flow_status'] : 1;
+?>
+<input type="hidden" id="followup_enquiry_status_actual" value="<?php echo $followup_status_actual; ?>">
+<small class="text-muted d-block">Follow Up Outcome sets enquiry status automatically. Changing <strong>Email Template</strong> only opens the email popup and does not change enquiry status.</small></div></div>
 <div class="col-12"><div class="mb-3"><label class="form-label" for="followup_follow_up_notes">Follow-Up Notes</label>
 <textarea class="form-control" id="followup_follow_up_notes" rows="3" placeholder="Free text notes"><?php echo htmlspecialchars(isset($followup_Query['flw_follow_up_notes']) ? $followup_Query['flw_follow_up_notes'] : ''); ?></textarea></div></div>
 <div class="col-12"><div class="mb-3"><label class="form-label d-block">Remarks</label>

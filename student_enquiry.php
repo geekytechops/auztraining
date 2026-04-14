@@ -2278,6 +2278,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var map = { 'No Answer':'3', 'Call Back Later':'3', 'Booked Counselling':'2', 'Requested More Information':'2', 'Application Started':'4', 'Enrolled':'6', 'Not Interested':'7', 'Do not Call':'7' };
                 if(Object.prototype.hasOwnProperty.call(map, o)){
                     $('#followup_enquiry_flow_status').val(map[o]);
+                    $('#followup_enquiry_status_actual').val(map[o]);
                     loadFollowupTemplateForCurrentStatus({ showModal: false });
                 }
             }
@@ -2770,7 +2771,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var date = ($('#followup_date').val() || '').trim();
                 var contactMode = $('#followup_mode_contacted').val();
                 var followupType=$('#followup_followup_type').val();
-                var enquiry_flow_status=$('#followup_enquiry_flow_status').val();
+                var enquiry_flow_status = ($('#followup_enquiry_status_actual').val() || $('#followup_enquiry_flow_status').val() || '').toString().trim();
                 var follow_up_notes=$('#followup_follow_up_notes').val().trim();
                 var next_followup_date=$('#followup_next_followup_date').val();
                 var follow_up_outcome=$('#followup_follow_up_outcome').val();

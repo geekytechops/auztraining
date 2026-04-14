@@ -3661,7 +3661,8 @@ if(@$_POST['formName']=='fetchEnquiryDashboard'){
     if($filter_course > 0){
         $where .= " AND (e.st_course LIKE '%\"$filter_course\"%' OR e.st_course LIKE '%$filter_course%') ";
     }
-    if($filter_status >= 0 && $flow_status_col !== '1'){
+    if($filter_status >= 0){
+        // Status filter must always apply to enquiry status (st_enquiry_flow_status).
         $where .= " AND $flow_status_col = ".(int)$filter_status;
     }
     if($filter_date_from !== ''){
@@ -3714,16 +3715,26 @@ if(@$_POST['formName']=='fetchEnquiryDashboard'){
     $next_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM followup_calls LIKE 'flw_next_followup_date'"));
     if($next_col){
         $today_d = date('Y-m-d');
-        $fq = mysqli_query($connection, "SELECT COUNT(DISTINCT e.st_id) 
-            FROM student_enquiry e 
-            INNER JOIN followup_calls f ON f.enquiry_id = e.st_enquiry_id 
+        // Count only latest active follow-up row per enquiry to avoid stale/history duplicates.
+        $fq = mysqli_query($connection, "SELECT COUNT(DISTINCT e.st_id)
+            FROM student_enquiry e
+            INNER JOIN (
+                SELECT enquiry_id, MAX(flw_id) AS last_flw_id
+                FROM followup_calls
+                WHERE flw_enquiry_status = 0
+                GROUP BY enquiry_id
+            ) lf ON lf.enquiry_id = e.st_enquiry_id
+            INNER JOIN followup_calls f ON f.flw_id = lf.last_flw_id
             WHERE $where AND DATE(f.flw_next_followup_date) = '$today_d'");
         if($fq && ($row = mysqli_fetch_row($fq))){ $followups_due_today = (int)$row[0]; }
     }
 
     $converted = 0;
-    $cq = mysqli_query($connection, "SELECT COUNT(*)".$base_from." AND e.st_enquiry_id IN (SELECT st_enquiry_id FROM student_enrolment WHERE st_enquiry_id != '' AND st_enquiry_id IS NOT NULL)");
-    if($cq && ($row = mysqli_fetch_row($cq))){ $converted = (int)$row[0]; }
+    // Keep card consistent with Status filter and enquiry status semantics.
+    if($flow_status_col !== '1'){
+        $cq = mysqli_query($connection, "SELECT COUNT(*)".$base_from." AND $flow_status_col = 6");
+        if($cq && ($row = mysqli_fetch_row($cq))){ $converted = (int)$row[0]; }
+    }
 
     $lost = 0;
     if($flow_status_col !== '1'){

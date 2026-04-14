@@ -696,6 +696,11 @@ $(function(){
             loadDashboard();
         }
     });
+    // Quick UX: apply Status filter immediately on change.
+    $('#filter_status').on('change', function(){
+        reloadEnquiryTable(true);
+        loadDashboard();
+    });
     // Initialise Bootstrap tooltips for dynamically loaded course cells (neat multiline list)
     $(document).on('mouseenter', '.course-tooltip', function () {
         var instance = bootstrap.Tooltip.getInstance(this);

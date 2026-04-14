@@ -2161,7 +2161,8 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var vaccine_status=$f.find('.vaccine_status:checked').val() || '1';
                 var remarks=[];$f.find('.counselling_remarks:checked').each(function(){remarks.push(this.value);});
                 var checkId=$('#counselling_check_update').val();
-                return $.extend({formName:'counseling_form',vaccine_status:vaccine_status,job_nature:$('#counselling_job_nature').val(),module_result:$('#counselling_module_result').val(),eng_rate:eng_rate,mig_test:mig_test,overall_result:$('#counselling_overall_result').val(),course:$('#counselling_course').val(),university_name:$('#counselling_university_name').val(),qualification:qualification,counseling_timing:counseling_timing,counseling_end_timing:counseling_end_timing,enquiry_id:enquiry_id,counseling_type:counseling_type,member_name:member_name,preferred_intake_date:$('#counselling_preferred_intake_date').val(),mode_of_study:$('#counselling_mode_of_study').val(),aus_duration:aus_duration,work_status:work_status,visa_condition:visa_condition,education:education,remarks:remarks,aus_study:aus_study,counselling_notes:($('#counselling_notes').val()||'').trim(),counselling_outcome:($('#counselling_outcome').length ? ($('#counselling_outcome').val() || '') : ''),checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"}, buildAutoEnquiryContactPayload());
+                var counsellingOutcomeActual = ($('#counselling_outcome_actual').val() || ($('#counselling_outcome').val() || '')).toString();
+                return $.extend({formName:'counseling_form',vaccine_status:vaccine_status,job_nature:$('#counselling_job_nature').val(),module_result:$('#counselling_module_result').val(),eng_rate:eng_rate,mig_test:mig_test,overall_result:$('#counselling_overall_result').val(),course:$('#counselling_course').val(),university_name:$('#counselling_university_name').val(),qualification:qualification,counseling_timing:counseling_timing,counseling_end_timing:counseling_end_timing,enquiry_id:enquiry_id,counseling_type:counseling_type,member_name:member_name,preferred_intake_date:$('#counselling_preferred_intake_date').val(),mode_of_study:$('#counselling_mode_of_study').val(),aus_duration:aus_duration,work_status:work_status,visa_condition:visa_condition,education:education,remarks:remarks,aus_study:aus_study,counselling_notes:($('#counselling_notes').val()||'').trim(),counselling_outcome:counsellingOutcomeActual,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"}, buildAutoEnquiryContactPayload());
             }
             var counselAutoSaveTimer=null;
             var counselSaveSeq=0;
@@ -2428,6 +2429,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             });
             $(document).on('input','#counselling_email_body', counsellingAutoResizeEmailBody);
             $(document).on('change','#counselling_outcome', function(){
+                $('#counselling_outcome_actual').val(($('#counselling_outcome').val() || '').toString());
                 toggleCounsellingRescheduleCalendarWrap();
                 applyCounsellingOutcomeToEmailTemplate({ showModal: false });
             });
@@ -2751,6 +2753,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             });
             $('#enquiryAccordionGroup #collapseCounseling').on('shown.bs.collapse', function(){
                 setTimeout(function(){
+                    $('#counselling_outcome_actual').val(($('#counselling_outcome').val() || '').toString());
                     counsellingAutoResizeEmailBody();
                     applyCounsellingOutcomeToEmailTemplate({ showModal: false });
                 }, 50);
@@ -2760,7 +2763,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             // Load default email template once when form is ready (for current status)
             loadFollowupTemplateForCurrentStatus();
             setTimeout(followupAutoResizeEmailBody, 100);
-            setTimeout(function(){ applyCounsellingOutcomeToEmailTemplate({ showModal: false }); counsellingAutoResizeEmailBody(); }, 350);
+            setTimeout(function(){ $('#counselling_outcome_actual').val(($('#counselling_outcome').val() || '').toString()); applyCounsellingOutcomeToEmailTemplate({ showModal: false }); counsellingAutoResizeEmailBody(); }, 350);
 
             function buildFollowupFormData(){
                 var enquiryForVal = ($('#enquiry_for').val()||'0').toString();

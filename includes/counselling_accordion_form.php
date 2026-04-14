@@ -149,6 +149,7 @@ foreach ($couns_outcomes as $ov => $ol) {
 }
 ?>
 </select>
+<input type="hidden" id="counselling_outcome_actual" value="<?php echo htmlspecialchars((string)$co_sel, ENT_QUOTES, 'UTF-8'); ?>">
 <small class="text-muted d-block mt-1">Saving applies the matching enquiry status automatically.</small>
 </div></div>
 <div class="col-12"><div class="mb-3"><label class="form-label" for="counselling_email_template_status">Email template</label>
@@ -158,7 +159,7 @@ foreach ($couns_outcomes as $ov => $ol) {
 <option value="13" <?php echo ($co_sel === 'Rescheduled') ? 'selected' : ''; ?>>Rescheduling</option>
 <option value="14" <?php echo ($co_sel === 'Rejected') ? 'selected' : ''; ?>>Rejected</option>
 </select>
-<small class="text-muted d-block">Changing <strong>Counselling outcome</strong> updates this selection. Choosing a template opens a window to review and send the email.</small></div></div>
+<small class="text-muted d-block">Changing <strong>Counselling outcome</strong> updates this selection. Choosing a template opens a window to review and send the email only (it does not change enquiry status).</small></div></div>
 <div class="col-12 mb-2" id="counselling_reschedule_calendar_wrap" style="display:<?php echo ($co_sel === 'Rescheduled') ? 'block' : 'none'; ?>;">
 <button type="button" class="btn btn-outline-primary" id="counselling_open_calendar_btn"><i class="ti ti-calendar"></i> Calendar</button>
 <small class="text-muted ms-2">Book the rescheduled session; enquiry status is set to Counselling Pending.</small>

@@ -1153,26 +1153,29 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                                     <div class="mb-3">
                                                                         <label class="form-label" for="visa_condition">Visa Condition</label>
                                                                         <select name="visa_condition" class="form-select" id="visa_condition">
-                                                                        <?php 
-                                                                        mysqli_data_seek($visaStatus, 0);
-                                                                        while($visaRes=mysqli_fetch_array($visaStatus)){
-                                                                            if($visaRes['visa_id']==1){
-                                                                                echo "<option value='0'>--select--</option><optgroup label='Subclass 500 main applicant'>";
-                                                                            }
-                                                                        ?>                                                                                                      
-                                                                            <option value="<?php echo $visaRes['visa_id']; ?>" <?php echo $visaRes['visa_id']==$queryRes['st_visa_status'] ? 'selected' : ''; ?>><?php echo $visaRes['visa_status_name']; ?></option>
-                                                                            <?php
-                                                                        if($visaRes['visa_id']==4){
-                                                                            echo '</optgroup>';
-                                                                        }
-                                                                        } ?>
-                                                                        </select> 
+                                                                            <?php $selVisa = isset($queryRes['st_visa_status']) ? (int)$queryRes['st_visa_status'] : 0; ?>
+                                                                            <option value="0">--select--</option>
+                                                                            <optgroup label="Visa 500">
+                                                                                <option value="1" <?php echo $selVisa===1 ? 'selected' : ''; ?>>Main Applicant</option>
+                                                                                <option value="2" <?php echo $selVisa===2 ? 'selected' : ''; ?>>Dependent</option>
+                                                                            </optgroup>
+                                                                            <optgroup label="Visa 491">
+                                                                                <option value="3" <?php echo $selVisa===3 ? 'selected' : ''; ?>>Main Applicant</option>
+                                                                                <option value="4" <?php echo $selVisa===4 ? 'selected' : ''; ?>>Dependent</option>
+                                                                            </optgroup>
+                                                                            <option value="5" <?php echo $selVisa===5 ? 'selected' : ''; ?>>Visitor Visa</option>
+                                                                            <option value="6" <?php echo $selVisa===6 ? 'selected' : ''; ?>>Permanent Resident</option>
+                                                                            <option value="7" <?php echo $selVisa===7 ? 'selected' : ''; ?>>Spouse Visa</option>
+                                                                            <option value="8" <?php echo $selVisa===8 ? 'selected' : ''; ?>>Working Holiday Visa</option>
+                                                                            <option value="9" <?php echo $selVisa===9 ? 'selected' : ''; ?>>AU/NZ Citizen</option>
+                                                                            <option value="10" <?php echo $selVisa===10 ? 'selected' : ''; ?>>Other</option>
+                                                                        </select>
                                                                         <div class="error-feedback">
                                                                             Please select a visa status
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                <div class="col-md-12 visa_note" style="display:<?php echo (isset($queryRes['st_visa_status']) && $queryRes['st_visa_status']==7) ? '' : 'none'; ?>">
+                                                                <div class="col-md-12 visa_note" style="display:<?php echo (isset($queryRes['st_visa_status']) && (int)$queryRes['st_visa_status']===10) ? '' : 'none'; ?>">
                                                                     <div class="mb-3">
                                                                         <label class="form-label" for="visa_note">Specify Visa Status</label>
                                                                         <input type="text" class="form-control" id="visa_note" value="<?php echo $queryRes['st_visa_note']; ?>" placeholder="Visa Note">
@@ -1684,7 +1687,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 })
                 $('#visa_condition').on("change",function(){
                     var value=$(this).val();
-                    if( value==7 ){
+                    if( value==10 ){
                         $('.visa_note').show();
                     }else{
                         $('.visa_note').hide();

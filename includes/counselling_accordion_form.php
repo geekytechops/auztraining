@@ -88,12 +88,22 @@ if($counsellingUsers){
 <input type="radio" id="work_status2" name="work_status" class="form-check-input work_status" value="2" <?php echo $counsil_Query['counsil_work_status']==2 ? 'checked' : ''; ?>><label for="work_status2">No</label></div></div>
 <div class="col-md-6"><div class="mb-3"><label class="form-label" for="counselling_visa_condition">Visa Condition</label>
 <select name="visa_condition" class="form-select" id="counselling_visa_condition">
-<?php if(isset($visaStatus) && $visaStatus){ mysqli_data_seek($visaStatus,0);
-while($visaRes=mysqli_fetch_array($visaStatus)){
-if($visaRes['visa_id']==1) echo "<option value='0'>--select--</option><optgroup label='Subclass 500 main applicant'>";
-?><option value="<?php echo $visaRes['visa_id']; ?>" <?php echo $visaRes['visa_id']==$counsil_Query['counsil_visa_condition'] ? 'selected' : ''; ?>><?php echo $visaRes['visa_status_name']; ?></option><?php
-if($visaRes['visa_id']==4) echo '</optgroup>';
-} }?>
+<?php $selCounVisa = isset($counsil_Query['counsil_visa_condition']) ? (int)$counsil_Query['counsil_visa_condition'] : 0; ?>
+<option value="0">--select--</option>
+<optgroup label="Visa 500">
+<option value="1" <?php echo $selCounVisa===1 ? 'selected' : ''; ?>>Main Applicant</option>
+<option value="2" <?php echo $selCounVisa===2 ? 'selected' : ''; ?>>Dependent</option>
+</optgroup>
+<optgroup label="Visa 491">
+<option value="3" <?php echo $selCounVisa===3 ? 'selected' : ''; ?>>Main Applicant</option>
+<option value="4" <?php echo $selCounVisa===4 ? 'selected' : ''; ?>>Dependent</option>
+</optgroup>
+<option value="5" <?php echo $selCounVisa===5 ? 'selected' : ''; ?>>Visitor Visa</option>
+<option value="6" <?php echo $selCounVisa===6 ? 'selected' : ''; ?>>Permanent Resident</option>
+<option value="7" <?php echo $selCounVisa===7 ? 'selected' : ''; ?>>Spouse Visa</option>
+<option value="8" <?php echo $selCounVisa===8 ? 'selected' : ''; ?>>Working Holiday Visa</option>
+<option value="9" <?php echo $selCounVisa===9 ? 'selected' : ''; ?>>AU/NZ Citizen</option>
+<option value="10" <?php echo $selCounVisa===10 ? 'selected' : ''; ?>>Other</option>
 </select><div class="error-feedback">Please select a visa status</div></div></div>
 <div class="col-md-6"><div class="mb-3"><label class="form-label" for="counselling_education">What is your Educational Background?</label>
 <input type="text" class="form-control" id="counselling_education" value="<?php echo $counsil_Query['counsil_education']; ?>"></div></div>

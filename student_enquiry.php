@@ -643,19 +643,53 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label class="form-label" for="member_name">Name</label>
-                                            <input type="text" class="form-control" id="member_name" placeholder="Name" value="<?php echo $queryRes['st_enquiry_for']==1 ? $queryRes['st_name'] : $queryRes['st_member_name']; ?>">
-                                            <div class="error-feedback">Please enter the Name</div>
+                                            <label class="form-label" for="enquiry_date">Enquiry Date</label>
+                                            <input type="date" class="form-control" id="enquiry_date" value="<?php echo htmlspecialchars(student_enquiry_safe_date_ymd($queryRes['st_enquiry_date'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+                                            <div class="error-feedback">Please select the Date</div>
                                         </div>
-                                    </div>
-                                    <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label" for="surname">Surname</label>
                                             <input type="text" class="form-control" id="surname" placeholder="Surname" value="<?php echo  $queryRes['st_surname']; ?>" >
                                             <div class="error-feedback">Please enter the Surname</div>
                                         </div>
+                                        <div class="mb-3">
+                                            <label class="form-label" for="contact_num">Mobile</label>
+                                            <input type="text" class="form-control number-field" maxlength="10" id="contact_num" placeholder="Contact Number" value="<?php echo $queryRes['st_phno']; ?>" >
+                                            <div class="error-feedback">Please enter the Contact Number</div>
+                                            <div class="phone_error">
+                                                Entered Number Already exist with Enquiry ID: <span id="phone_err_id"></span>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label" for="courses">Course Interested In</label>
+                                            <?php
+                                            $counts = 1;
+                                            mysqli_data_seek($courses, 0);
+                                            while ($coursesRes = mysqli_fetch_array($courses)) {
+                                                if ($queryRes['st_course'] != '') {
+                                                    $coursesSel = json_decode($queryRes['st_course']);
+                                                } else {
+                                                    $coursesSel = array();
+                                                }
+                                                if (in_array($counts, $coursesSel)) {
+                                                    $checked = 'checked';
+                                                } else {
+                                                    $checked = '';
+                                                }
+                                                echo '<div class="form-check"><input type="checkbox" class="courses_check form-check-input" id="course_check_' . $counts . '" ' . $checked . ' value="' . $counts . '">';
+                                                echo '<label for="course_check_' . $counts . '">' . $coursesRes['course_sname'] . '-' . $coursesRes['course_name'] . '</label></div>';
+                                                $counts++;
+                                            }
+                                            ?>
+                                            <div class="courses_error">Please select the Courses</div>
+                                        </div>
                                     </div>
                                     <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label" for="member_name">Name</label>
+                                            <input type="text" class="form-control" id="member_name" placeholder="Name" value="<?php echo $queryRes['st_enquiry_for']==1 ? $queryRes['st_name'] : $queryRes['st_member_name']; ?>">
+                                            <div class="error-feedback">Please enter the Name</div>
+                                        </div>
                                         <div class="mb-3">
                                             <label class="form-label" for="email_address">Email</label>
                                             <?php $is_edit_enquiry = isset($eqId) && (int)$eqId > 0; ?>
@@ -666,27 +700,6 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                             <div class="error-feedback">Please enter the Email Address</div>
                                             <?php endif; ?>
                                         </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label" for="contact_num">Mobile</label>
-                                            <input type="text" class="form-control number-field" maxlength="10" id="contact_num" placeholder="Contact Number" value="<?php echo $queryRes['st_phno']; ?>" >
-                                            <div class="error-feedback">Please enter the Contact Number</div>
-                                            <div class="phone_error">
-                                                Entered Number Already exist with Enquiry ID: <span id="phone_err_id"></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row mt-2 pt-2 border-top">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label" for="enquiry_date">Enquiry Date</label>
-                                            <input type="date" class="form-control" id="enquiry_date" value="<?php echo htmlspecialchars(student_enquiry_safe_date_ymd($queryRes['st_enquiry_date'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-                                            <div class="error-feedback">Please select the Date</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label" for="enquiry_for">Enquiring For</label>
                                             <select name="enquiry_for" class="form-select" id="enquiry_for">
@@ -723,32 +736,6 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                     </div>
                                 </div>
                                 <div class="row mt-2 pt-2 border-top">
-                                    <div class="col-12">
-                                        <div class="mb-3">
-                                            <label class="form-label" for="courses">Course Interested In</label>
-                                            <?php
-                                            $counts = 1;
-                                            mysqli_data_seek($courses, 0);
-                                            while ($coursesRes = mysqli_fetch_array($courses)) {
-                                                if ($queryRes['st_course'] != '') {
-                                                    $coursesSel = json_decode($queryRes['st_course']);
-                                                } else {
-                                                    $coursesSel = array();
-                                                }
-                                                if (in_array($counts, $coursesSel)) {
-                                                    $checked = 'checked';
-                                                } else {
-                                                    $checked = '';
-                                                }
-                                                echo '<div class="form-check"><input type="checkbox" class="courses_check form-check-input" id="course_check_' . $counts . '" ' . $checked . ' value="' . $counts . '">';
-                                                echo '<label for="course_check_' . $counts . '">' . $coursesRes['course_sname'] . '-' . $coursesRes['course_name'] . '</label></div>';
-                                                $counts++;
-                                            }
-                                            ?>
-                                            <div class="courses_error">Please select the Courses</div>
-                                        </div>
-                                    </div>
-                                </div>
                                 <div class="row mt-2 pt-2 border-top">
                                     <div class="col-md-4">
                                         <div class="mb-3">

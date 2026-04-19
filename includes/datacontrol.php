@@ -848,31 +848,26 @@ $query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_member_n
     }
 
 }else{
-    // Email locked on edit unless enquiry is linked to a registered student (student_user_id) — then allow change with duplicate checks
+    // On edit: always save submitted email (duplicate-checked). If linked to student_users, keep portal email in sync when it changes.
     $cidUp = (int)$checkId;
     if($cidUp > 0){
         $emR = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT st_email, student_user_id FROM student_enquiry WHERE st_id=".$cidUp." LIMIT 1"));
         if($emR && array_key_exists('st_email', $emR)){
-            $allow_email_edit = isset($emR['student_user_id']) && (int)$emR['student_user_id'] > 0;
-            if(!$allow_email_edit){
-                $emailAddress = mysqli_real_escape_string($connection, (string)$emR['st_email']);
-            } else {
-                $dupOther = mysqli_query($connection, "SELECT st_id FROM student_enquiry WHERE st_enquiry_status=0 AND LOWER(TRIM(st_email))=LOWER('".$emailAddress."') AND st_id<>".$cidUp." LIMIT 1");
-                if($dupOther && mysqli_num_rows($dupOther) > 0){
-                    echo 'email_duplicate';
+            $dupOther = mysqli_query($connection, "SELECT st_id FROM student_enquiry WHERE st_enquiry_status=0 AND LOWER(TRIM(st_email))=LOWER('".$emailAddress."') AND st_id<>".$cidUp." LIMIT 1");
+            if($dupOther && mysqli_num_rows($dupOther) > 0){
+                echo 'email_duplicate';
+                exit;
+            }
+            $suid = isset($emR['student_user_id']) ? (int)$emR['student_user_id'] : 0;
+            $new_lower = strtolower(trim($emailRaw));
+            $old_lower = strtolower(trim((string)$emR['st_email']));
+            if($suid > 0 && $new_lower !== $old_lower){
+                $em_exists = mysqli_query($connection, "SELECT id FROM student_users WHERE LOWER(TRIM(email))=LOWER('".$emailAddress."') AND id<>".$suid." LIMIT 1");
+                if($em_exists && mysqli_num_rows($em_exists) > 0){
+                    echo 'email_duplicate_student_users';
                     exit;
                 }
-                $new_lower = strtolower(trim($emailRaw));
-                $old_lower = strtolower(trim((string)$emR['st_email']));
-                if($new_lower !== $old_lower){
-                    $suid = (int)$emR['student_user_id'];
-                    $em_exists = mysqli_query($connection, "SELECT id FROM student_users WHERE LOWER(TRIM(email))=LOWER('".$emailAddress."') AND id<>".$suid." LIMIT 1");
-                    if($em_exists && mysqli_num_rows($em_exists) > 0){
-                        echo 'email_duplicate_student_users';
-                        exit;
-                    }
-                    mysqli_query($connection, "UPDATE student_users SET email='".$emailAddress."' WHERE id=".$suid." LIMIT 1");
-                }
+                mysqli_query($connection, "UPDATE student_users SET email='".$emailAddress."' WHERE id=".$suid." LIMIT 1");
             }
         }
     }
@@ -1241,7 +1236,7 @@ if(@$_POST['formName']=='followup_call'){
             if($lastId!=''){
                 if($enquiry_flow_status!==null) {
                     if (!empty($followup_outcome_drove_status)) {
-                        $fu_stage_tag = ($followup_stage_esc === 'post_counselling') ? 'PCFU' : 'PEFU';
+                        $fu_stage_tag = ($followup_stage_esc === 'post_counselling') ? 'CONS' : 'ENQ';
                         $fu_stage_esc = mysqli_real_escape_string($connection, $fu_stage_tag);
                         mysqli_query($connection,"UPDATE student_enquiry SET st_enquiry_flow_status=$enquiry_flow_status, st_enquiry_flow_change_stage='$fu_stage_esc' WHERE st_enquiry_id='$enquiry_id'");
                     } else {
@@ -1335,7 +1330,7 @@ if(@$_POST['formName']=='followup_call'){
             if($query){
                 if($enquiry_flow_status!==null) {
                     if (!empty($followup_outcome_drove_status)) {
-                        $fu_stage_tag = ($followup_stage_esc === 'post_counselling') ? 'PCFU' : 'PEFU';
+                        $fu_stage_tag = ($followup_stage_esc === 'post_counselling') ? 'CONS' : 'ENQ';
                         $fu_stage_esc = mysqli_real_escape_string($connection, $fu_stage_tag);
                         mysqli_query($connection,"UPDATE student_enquiry SET st_enquiry_flow_status=$enquiry_flow_status, st_enquiry_flow_change_stage='$fu_stage_esc' WHERE st_enquiry_id='$enquiry_id'");
                     } else {
@@ -1595,7 +1590,7 @@ if(@$_POST['formName']=='counseling_form'){
             if ($counselling_outcome_trim !== '' && $enquiry_id_sql !== '') {
                 $auto_cs = enquiry_flow_status_for_counselling_outcome($counselling_outcome_trim);
                 if ($auto_cs !== null) {
-                    mysqli_query($connection, 'UPDATE student_enquiry SET st_enquiry_flow_status=' . (int) $auto_cs . ", st_enquiry_flow_change_stage=NULL WHERE st_enquiry_id='$enquiry_id_sql' AND st_enquiry_status!=1 LIMIT 1");
+                    mysqli_query($connection, 'UPDATE student_enquiry SET st_enquiry_flow_status=' . (int) $auto_cs . ", st_enquiry_flow_change_stage='CONS' WHERE st_enquiry_id='$enquiry_id_sql' AND st_enquiry_status!=1 LIMIT 1");
                 }
             }
             $resp_cs = '1';
@@ -1626,7 +1621,7 @@ if(@$_POST['formName']=='counseling_form'){
             if ($counselling_outcome_trim !== '' && $enquiry_id_sql !== '') {
                 $auto_cs = enquiry_flow_status_for_counselling_outcome($counselling_outcome_trim);
                 if ($auto_cs !== null) {
-                    mysqli_query($connection, 'UPDATE student_enquiry SET st_enquiry_flow_status=' . (int) $auto_cs . ", st_enquiry_flow_change_stage=NULL WHERE st_enquiry_id='$enquiry_id_sql' AND st_enquiry_status!=1 LIMIT 1");
+                    mysqli_query($connection, 'UPDATE student_enquiry SET st_enquiry_flow_status=' . (int) $auto_cs . ", st_enquiry_flow_change_stage='CONS' WHERE st_enquiry_id='$enquiry_id_sql' AND st_enquiry_status!=1 LIMIT 1");
                 }
             }
             echo "1";
@@ -4143,9 +4138,23 @@ if(@$_POST['formName']=='fetchEnquiryList'){
         $status_label = $status_labels[$flow_status] ?? 'New';
         $status_class = $status_classes[$flow_status] ?? 'secondary';
         $flow_stage_acr = isset($r['flow_change_stage']) && $r['flow_change_stage'] !== null ? trim((string) $r['flow_change_stage']) : '';
-        $stage_html = ($flow_stage_acr === 'PEFU' || $flow_stage_acr === 'PCFU')
-            ? '<span class="badge bg-secondary" title="Enquiry status last set from follow-up outcome (Post Enquiry vs Post Counselling)">' . htmlspecialchars($flow_stage_acr) . '</span>'
-            : '<span class="text-muted">—</span>';
+        if ($flow_stage_acr === 'ENQ') {
+            $stage_tooltip_esc = htmlspecialchars('ENQ → Post Enquiry Follow Up', ENT_QUOTES, 'UTF-8');
+            $stage_html = '<span class="course-tooltip" title="' . $stage_tooltip_esc . '"><span class="badge bg-secondary enq-stage-badge">' . htmlspecialchars($flow_stage_acr) . '</span></span>';
+        } elseif ($flow_stage_acr === 'CONS') {
+            $stage_tooltip_esc = htmlspecialchars('CONS → Counselling', ENT_QUOTES, 'UTF-8');
+            $stage_html = '<span class="course-tooltip" title="' . $stage_tooltip_esc . '"><span class="badge bg-secondary enq-stage-badge">' . htmlspecialchars($flow_stage_acr) . '</span></span>';
+        } elseif ($flow_stage_acr === 'PEFU') {
+            $stage_tooltip_esc = htmlspecialchars('PEFU → Post Enquiry Follow Up', ENT_QUOTES, 'UTF-8');
+            $stage_html = '<span class="course-tooltip" title="' . $stage_tooltip_esc . '"><span class="badge bg-secondary enq-stage-badge">' . htmlspecialchars($flow_stage_acr) . '</span></span>';
+        } elseif ($flow_stage_acr === 'PCFU') {
+            $stage_tooltip_esc = htmlspecialchars('PCFU → Post Counselling Follow-Up', ENT_QUOTES, 'UTF-8');
+            $stage_html = '<span class="course-tooltip" title="' . $stage_tooltip_esc . '"><span class="badge bg-secondary enq-stage-badge">' . htmlspecialchars($flow_stage_acr) . '</span></span>';
+        } else {
+            $stage_html = '<span class="text-muted">—</span>';
+        }
+        $status_tip = htmlspecialchars($status_label, ENT_QUOTES, 'UTF-8');
+        $status_cell_html = '<span class="course-tooltip" title="' . $status_tip . '"><span class="badge bg-' . $status_class . ' enq-status-badge">' . htmlspecialchars($status_label, ENT_QUOTES, 'UTF-8') . '</span></span>';
         $outcome_html = '<span class="badge bg-secondary">No follow-up yet</span>';
         $use_counselling_outcome = ($couns_outcome !== '' && ($follow_up_outcome === '' || $couns_ts > $follow_ts));
         if ($use_counselling_outcome) {
@@ -4198,7 +4207,7 @@ if(@$_POST['formName']=='fetchEnquiryList'){
                 htmlspecialchars($r['st_name']),
                 htmlspecialchars($r['st_phno']),
                 $course_name,
-                '<span class="badge bg-'.$status_class.'">'.$status_label.'</span>',
+                $status_cell_html,
                 $action_html
             );
         } else {
@@ -4209,7 +4218,7 @@ if(@$_POST['formName']=='fetchEnquiryList'){
                 htmlspecialchars($r['st_name']),
                 htmlspecialchars($r['st_phno']),
                 $course_name,
-                '<span class="badge bg-'.$status_class.'">'.$status_label.'</span>',
+                $status_cell_html,
                 $action_html
             );
         }

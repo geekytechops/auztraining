@@ -1,4 +1,4 @@
--- PEFU / PCFU: last time enquiry flow status was set from a follow-up outcome (Post Enquiry vs Post Counselling).
+-- Stage tag (st_enquiry_flow_change_stage): ENQ / CONS from follow-up or counselling outcomes; legacy PEFU / PCFU.
 -- Applied automatically on save via includes/datacontrol.php when needed.
 
 ALTER TABLE `student_enquiry`

@@ -47,7 +47,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
         #viewEnquiryAccordion .dataTables_scrollBody.drag-scrolling { cursor: grabbing; }
     </style>
 </head>
-<body>
+<body class="page-student-enquiry">
 <div class="main-wrapper">
 <?php include('includes/header.php'); ?>
 <?php include('includes/sidebar.php'); ?>
@@ -663,7 +663,13 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
         </style>
     </head>
 
-    <body<?php echo (isset($eqId) && (int)$eqId > 0 && !empty($enquiry_locked_start)) ? ' class="student-enquiry-controls-disabled"' : ''; ?>>
+    <body<?php
+        $body_classes = array('page-student-enquiry');
+        if (isset($eqId) && (int)$eqId > 0 && !empty($enquiry_locked_start)) {
+            $body_classes[] = 'student-enquiry-controls-disabled';
+        }
+        echo ' class="' . htmlspecialchars(implode(' ', $body_classes), ENT_QUOTES, 'UTF-8') . '"';
+    ?>>
 
     <div id="loader-container">
         <div class="loader"></div>
@@ -779,17 +785,16 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                             <?php
                                             $is_edit_enquiry = isset($eqId) && (int)$eqId > 0;
                                             $linked_student_user_id = isset($queryRes['student_user_id']) ? (int)$queryRes['student_user_id'] : 0;
-                                            $email_editable_linked_student = $is_edit_enquiry && $linked_student_user_id > 0;
-                                            $email_readonly = $is_edit_enquiry && !$email_editable_linked_student;
+                                            $email_linked_to_student = $is_edit_enquiry && $linked_student_user_id > 0;
                                             ?>
                                             <div class="d-flex flex-wrap align-items-stretch gap-2">
-                                                <input type="email" class="form-control flex-grow-1 min-w-0<?php echo $email_readonly ? ' bg-light' : ''; ?>" id="email_address" name="email_address" placeholder="<?php echo $email_readonly ? 'Email (locked)' : 'Email Address (required)'; ?>" <?php echo $email_readonly ? 'readonly aria-readonly="true"' : 'required'; ?> autocomplete="email" value="<?php echo htmlspecialchars((string)($queryRes['st_email'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" >
+                                                <input type="email" class="form-control flex-grow-1 min-w-0" id="email_address" name="email_address" placeholder="Email Address (required)" required autocomplete="email" value="<?php echo htmlspecialchars((string)($queryRes['st_email'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" >
                                                 <?php if ($is_edit_enquiry && !$is_student_portal): ?>
                                                 <button type="button" class="btn btn-sm btn-outline-primary align-self-start" id="send_student_login_link_btn" title="Send student portal login link">Send login link</button>
                                                 <?php endif; ?>
                                             </div>
                                             <?php if ($is_edit_enquiry): ?>
-                                            <div class="form-text text-muted small"><?php echo $email_editable_linked_student ? 'This enquiry is linked to a registered student — you can update the email; it will stay in sync with the student portal account.' : 'Email cannot be changed for this enquiry unless it is linked to a registered student account.'; ?></div>
+                                            <div class="form-text text-muted small"><?php echo $email_linked_to_student ? 'Linked to a registered student — updating the email will stay in sync with the student portal account. Turn on Allow editing to change it.' : 'Used for notifications and enquiry identity. Turn on Allow editing to change it (same as other fields).'; ?></div>
                                             <?php else: ?>
                                             <div class="error-feedback">Please enter the Email Address</div>
                                             <?php endif; ?>

@@ -31,6 +31,51 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
         .table-enquiry-list thead th{ white-space: nowrap; }
         #enquiry_table tbody tr td.col-enq-select{ text-align: center; vertical-align: middle; }
         .enq-col-select{ width: 42px; }
+        /* Narrower Stage / Status — legend on hover via .course-tooltip (same as Course) */
+        .table-enquiry-list:not(.enq-list-staff) thead th:nth-child(2),
+        .table-enquiry-list:not(.enq-list-staff) tbody td:nth-child(2){
+            max-width: 76px;
+        }
+        .table-enquiry-list:not(.enq-list-staff) thead th:nth-child(8),
+        .table-enquiry-list:not(.enq-list-staff) tbody td:nth-child(8){
+            max-width: 100px;
+        }
+        .table-enquiry-list.enq-list-staff thead th:nth-child(1),
+        .table-enquiry-list.enq-list-staff tbody td:nth-child(1){
+            max-width: 76px;
+        }
+        .table-enquiry-list.enq-list-staff thead th:nth-child(7),
+        .table-enquiry-list.enq-list-staff tbody td:nth-child(7){
+            max-width: 100px;
+        }
+        .table-enquiry-list .enq-stage-badge{
+            width: 58px !important;
+            min-width: 58px;
+            max-width: 58px;
+            padding-left: 0.35rem;
+            padding-right: 0.35rem;
+            font-size: 0.7rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .table-enquiry-list .enq-status-badge{
+            width: 88px !important;
+            min-width: 88px;
+            max-width: 88px;
+            padding-left: 0.4rem;
+            padding-right: 0.4rem;
+            font-size: 0.72rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
         /* Action column: icon-only View + Delete — equal square buttons */
         .view-enq-actions .view-enq-btn{
             width: 2.125rem;
@@ -146,7 +191,7 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
         #enquiry_table_wrapper .dataTables_paginate{ padding-top: 0.5rem; }
     </style>
 </head>
-<body>
+<body class="page-view-enquiries">
 <div class="main-wrapper">
     <?php include('includes/header.php'); ?>
     <?php include('includes/sidebar.php'); ?>
@@ -337,13 +382,13 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
                                         <?php if(!empty($view_enq_can_delete)){ ?>
                                         <th class="enq-col-select"><input type="checkbox" id="enq_select_all" class="form-check-input" title="Select all on this page" aria-label="Select all on this page"></th>
                                         <?php } ?>
-                                        <th>Stage</th>
+                                        <th class="enq-col-stage">Stage</th>
                                         <th class="table-next-fup">Outcome</th>
                                         <th>Enquiry Date</th>
                                         <th>Name</th>
                                         <th>Mobile</th>
                                         <th>Course</th>
-                                        <th>Status</th>
+                                        <th class="enq-col-status">Status</th>
                                         <th style="min-width:96px">Action</th>
                                     </tr>
                                 </thead>

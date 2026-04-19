@@ -342,6 +342,7 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
                                         <th>Name</th>
                                         <th>Mobile</th>
                                         <th>Course</th>
+                                        <th>Stage</th>
                                         <th>Status</th>
                                         <th style="min-width:96px">Action</th>
                                     </tr>
@@ -532,7 +533,8 @@ $(function(){
             { data: 4, render: function(x){ return x; } },
             { data: 5, render: function(x){ return x; } },
             { data: 6, render: function(x){ return x; } },
-            { data: 7, render: function(x){ return x; } }
+            { data: 7, render: function(x){ return x; } },
+            { data: 8, render: function(x){ return x; } }
         ] : [
             { data: 0, render: function(x){ return x; } },
             { data: 1, render: function(x){ return x; } },
@@ -540,7 +542,8 @@ $(function(){
             { data: 3, render: function(x){ return x; } },
             { data: 4, render: function(x){ return x; } },
             { data: 5, render: function(x){ return x; } },
-            { data: 6, render: function(x){ return x; } }
+            { data: 6, render: function(x){ return x; } },
+            { data: 7, render: function(x){ return x; } }
         ],
         language: {
             processing: 'Loading...',

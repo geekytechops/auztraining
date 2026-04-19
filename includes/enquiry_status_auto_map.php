@@ -18,6 +18,10 @@ if (!function_exists('enquiry_flow_status_for_followup_outcome')) {
             'Enrolled' => 6,
             'Not Interested' => 7,
             'Do not Call' => 7,
+            'Wrong No' => 7,
+            'Enrolled Elsewhere' => 7,
+            'Course not Offered' => 7,
+            'Funding Enquiry' => 7,
         );
         return isset($map[$o]) ? $map[$o] : null;
     }

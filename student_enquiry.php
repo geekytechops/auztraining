@@ -117,10 +117,10 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                     </div>
                                 </div>
                             </div>
-                            <!-- Accordion 3: Follow Up Call -->
+                            <!-- Accordion 3: Post Enquiry Follow Up (list) -->
                             <div class="accordion-item">
                                 <h2 class="accordion-header" id="headFollowup">
-                                    <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFollowupList" aria-expanded="false" aria-controls="collapseFollowupList">Follow Up Call</button>
+                                    <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFollowupList" aria-expanded="false" aria-controls="collapseFollowupList">Post Enquiry Follow Up</button>
                                 </h2>
                                 <div id="collapseFollowupList" class="accordion-collapse collapse" aria-labelledby="headFollowup">
                                     <div class="accordion-body">
@@ -261,6 +261,14 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
         <?php
         exit;
     }
+
+    $script_web_dir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/'));
+    if ($script_web_dir === '/' || $script_web_dir === '.') {
+        $script_web_dir = '';
+    } else {
+        $script_web_dir = rtrim($script_web_dir, '/');
+    }
+    $student_login_page_url = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . $script_web_dir . '/student_login.php';
     
             $courses=mysqli_query($connection,"SELECT * from courses where course_status!=1");
         $visaStatus=mysqli_query($connection,"SELECT * from visa_statuses where visa_state_status!=1");
@@ -393,6 +401,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
         'st_remarks' => '',
         'st_hearedby' => '',
         'st_enquiry_flow_status' => '',
+        'st_contact_notes' => '',
     );
     $queryRes = array_merge($student_enquiry_row_defaults, is_array($queryRes) ? $queryRes : array());
     $sel_source = isset($queryRes['st_enquiry_source']) ? (int)$queryRes['st_enquiry_source'] : 0;
@@ -417,6 +426,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
     $followupEqId=0;
     $counsil_Query=array('st_enquiry_id'=>'','counsil_timing'=>'','counsil_end_time'=>'','counsil_type'=>'','counsil_mem_name'=>'','counsil_aus_stay_time'=>'','counsil_work_status'=>'','counsil_visa_condition'=>'','counsil_education'=>'','counsil_aus_study_status'=>'','counsil_course'=>'','counsil_university'=>'','counsil_qualification'=>'','counsil_eng_rate'=>'','counsil_migration_test'=>'','counsil_overall_result'=>'','counsil_module_result'=>'','counsil_job_nature'=>'','counsil_vaccine_status'=>'','counsil_pref_comments'=>'','counsil_remarks'=>'','counsil_outcome'=>'');
     $followup_Query=array('enquiry_id'=>'','flw_name'=>'','flw_phone'=>'','flw_contacted_person'=>'','flw_contacted_time'=>'','flw_date'=>'','flw_mode_contact'=>'','flw_followup_type'=>'','flw_follow_up_notes'=>'','flw_next_followup_date'=>'','flw_follow_up_outcome'=>'','flw_comments'=>'','flw_progress_state'=>'','flw_remarks'=>'');
+    $followup_pc_Query=array('enquiry_id'=>'','flw_name'=>'','flw_phone'=>'','flw_contacted_person'=>'','flw_contacted_time'=>'','flw_date'=>'','flw_mode_contact'=>'','flw_followup_type'=>'','flw_follow_up_notes'=>'','flw_next_followup_date'=>'','flw_follow_up_outcome'=>'','flw_comments'=>'','flw_progress_state'=>'','flw_remarks'=>'');
 
     // When editing a specific enquiry, pre-fill counselling & follow-up context from that enquiry
     if(!empty($queryRes['st_id'])){
@@ -472,8 +482,11 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             $counsilEqId = 0; // no existing counselling -> INSERT on submit
             $counsil_Query['counsil_visa_condition'] = $queryRes['st_visa_status'] ?? '';
         }
-        // Load latest follow-up for this enquiry to prefill the form (each save still INSERTs a new row for history)
-        $flw_q = mysqli_query($connection, "SELECT * FROM followup_calls WHERE enquiry_id = '" . mysqli_real_escape_string($connection, $current_enquiry_code) . "' AND flw_enquiry_status = 0 ORDER BY flw_id DESC LIMIT 1");
+        // Load latest post-enquiry follow-up (each save still INSERTs a new row for history)
+        if (!mysqli_fetch_assoc(@mysqli_query($connection, "SHOW COLUMNS FROM followup_calls LIKE 'flw_followup_stage'"))) {
+            @mysqli_query($connection, "ALTER TABLE followup_calls ADD COLUMN `flw_followup_stage` VARCHAR(32) NOT NULL DEFAULT 'enquiry'");
+        }
+        $flw_q = mysqli_query($connection, "SELECT * FROM followup_calls WHERE enquiry_id = '" . mysqli_real_escape_string($connection, $current_enquiry_code) . "' AND flw_enquiry_status = 0 AND flw_followup_stage = 'enquiry' ORDER BY flw_id DESC LIMIT 1");
         if ($flw_q && mysqli_num_rows($flw_q) > 0) {
             $frow = mysqli_fetch_assoc($flw_q);
             $followup_Query = array_merge($followup_Query, array(
@@ -497,6 +510,35 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             // Keep enquiry_id, flw_name, flw_phone from main enquiry; use enquiry's flow status for dropdown if available
             if (isset($queryRes['st_enquiry_flow_status']) && $queryRes['st_enquiry_flow_status'] !== '') {
                 $followup_Query['enquiry_flow_status'] = $queryRes['st_enquiry_flow_status'];
+            }
+        }
+        // Post-counselling follow-up: latest row for this stage only
+        $followup_pc_Query['enquiry_id'] = $current_enquiry_code;
+        $followup_pc_Query['flw_name'] = $queryRes['st_name'] ?: $queryRes['st_member_name'];
+        $followup_pc_Query['flw_phone'] = $queryRes['st_phno'];
+        $flw_pc_q = mysqli_query($connection, "SELECT * FROM followup_calls WHERE enquiry_id = '" . mysqli_real_escape_string($connection, $current_enquiry_code) . "' AND flw_enquiry_status = 0 AND flw_followup_stage = 'post_counselling' ORDER BY flw_id DESC LIMIT 1");
+        if ($flw_pc_q && mysqli_num_rows($flw_pc_q) > 0) {
+            $fpc = mysqli_fetch_assoc($flw_pc_q);
+            $followup_pc_Query = array_merge($followup_pc_Query, array(
+                'enquiry_id' => $fpc['enquiry_id'] ?? $current_enquiry_code,
+                'flw_name' => $fpc['flw_name'] ?? $followup_pc_Query['flw_name'],
+                'flw_phone' => $fpc['flw_phone'] ?? $followup_pc_Query['flw_phone'],
+                'flw_contacted_person' => $fpc['flw_contacted_person'] ?? '',
+                'flw_contacted_time' => $fpc['flw_contacted_time'] ?? '',
+                'flw_date' => $fpc['flw_date'] ?? '',
+                'flw_mode_contact' => $fpc['flw_mode_contact'] ?? '',
+                'flw_followup_type' => $fpc['flw_followup_type'] ?? '',
+                'flw_follow_up_notes' => $fpc['flw_follow_up_notes'] ?? '',
+                'flw_next_followup_date' => isset($fpc['flw_next_followup_date']) && $fpc['flw_next_followup_date'] !== null && $fpc['flw_next_followup_date'] !== '' ? $fpc['flw_next_followup_date'] : '',
+                'flw_follow_up_outcome' => $fpc['flw_follow_up_outcome'] ?? '',
+                'flw_comments' => $fpc['flw_comments'] ?? '',
+                'flw_progress_state' => $fpc['flw_progress_state'] ?? '',
+                'flw_remarks' => $fpc['flw_remarks'] ?? '',
+                'enquiry_flow_status' => isset($fpc['flw_progress_state']) && $fpc['flw_progress_state'] !== '' ? $fpc['flw_progress_state'] : (isset($queryRes['st_enquiry_flow_status']) ? $queryRes['st_enquiry_flow_status'] : '')
+            ));
+        } else {
+            if (isset($queryRes['st_enquiry_flow_status']) && $queryRes['st_enquiry_flow_status'] !== '') {
+                $followup_pc_Query['enquiry_flow_status'] = $queryRes['st_enquiry_flow_status'];
             }
         }
     }
@@ -562,16 +604,19 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 max-width: 9.5rem;
                 /* box-shadow: 6px 0 8px -4px rgba(0, 0, 0, 0.12); */
             }
-            /* Follow Up Call accordion: history control sits just left of the chevron (::after) */
-            #headingFollowup.has-followup-history-btn .accordion-button {
+            /* Post Enquiry / Post Counselling follow-up: history control sits just left of the chevron (::after) */
+            #headingFollowup.has-followup-history-btn .accordion-button,
+            #headingFollowupPostCounselling.has-followup-history-btn .accordion-button {
                 padding-right: 10.5rem;
             }
             @media (max-width: 576px) {
-                #headingFollowup.has-followup-history-btn .accordion-button {
+                #headingFollowup.has-followup-history-btn .accordion-button,
+                #headingFollowupPostCounselling.has-followup-history-btn .accordion-button {
                     padding-right: 9rem;
                 }
             }
-            #headingFollowup .btn-followup-history-accordion {
+            #headingFollowup .btn-followup-history-accordion,
+            #headingFollowupPostCounselling .btn-followup-history-accordion {
                 right: 2.85rem;
                 z-index: 5;
                 pointer-events: auto;
@@ -692,10 +737,20 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label" for="email_address">Email</label>
-                                            <?php $is_edit_enquiry = isset($eqId) && (int)$eqId > 0; ?>
-                                            <input type="email" class="form-control<?php echo $is_edit_enquiry ? ' bg-light' : ''; ?>" id="email_address" name="email_address" placeholder="<?php echo $is_edit_enquiry ? 'Email (locked)' : 'Email Address (required)'; ?>" <?php echo $is_edit_enquiry ? 'readonly aria-readonly="true"' : 'required'; ?> autocomplete="email" value="<?php echo htmlspecialchars((string)($queryRes['st_email'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" >
+                                            <?php
+                                            $is_edit_enquiry = isset($eqId) && (int)$eqId > 0;
+                                            $linked_student_user_id = isset($queryRes['student_user_id']) ? (int)$queryRes['student_user_id'] : 0;
+                                            $email_editable_linked_student = $is_edit_enquiry && $linked_student_user_id > 0;
+                                            $email_readonly = $is_edit_enquiry && !$email_editable_linked_student;
+                                            ?>
+                                            <div class="d-flex flex-wrap align-items-stretch gap-2">
+                                                <input type="email" class="form-control flex-grow-1 min-w-0<?php echo $email_readonly ? ' bg-light' : ''; ?>" id="email_address" name="email_address" placeholder="<?php echo $email_readonly ? 'Email (locked)' : 'Email Address (required)'; ?>" <?php echo $email_readonly ? 'readonly aria-readonly="true"' : 'required'; ?> autocomplete="email" value="<?php echo htmlspecialchars((string)($queryRes['st_email'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" >
+                                                <?php if ($is_edit_enquiry && !$is_student_portal): ?>
+                                                <button type="button" class="btn btn-sm btn-outline-primary align-self-start" id="send_student_login_link_btn" title="Send student portal login link">Send login link</button>
+                                                <?php endif; ?>
+                                            </div>
                                             <?php if ($is_edit_enquiry): ?>
-                                            <div class="form-text text-muted small">Email cannot be changed for an existing enquiry.</div>
+                                            <div class="form-text text-muted small"><?php echo $email_editable_linked_student ? 'This enquiry is linked to a registered student — you can update the email; it will stay in sync with the student portal account.' : 'Email cannot be changed for this enquiry unless it is linked to a registered student account.'; ?></div>
                                             <?php else: ?>
                                             <div class="error-feedback">Please enter the Email Address</div>
                                             <?php endif; ?>
@@ -735,7 +790,6 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                         <?php endif; ?>
                                     </div>
                                 </div>
-                                <div class="row mt-2 pt-2 border-top">
                                 <div class="row mt-2 pt-2 border-top">
                                     <div class="col-md-4">
                                         <div class="mb-3">
@@ -786,6 +840,14 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                     <div class="col-12 mb-2">
                                         <button type="button" class="btn btn-outline-primary" id="contact_bar_open_calendar_btn"><i class="ti ti-calendar"></i> Calendar</button>
                                         <small class="text-muted ms-2">Book a counselling appointment (same as Follow-up). With no enquiry yet, saving the appointment creates the enquiry and sets status to Booked Counselling.</small>
+                                    </div>
+                                </div>
+                                <div class="row mt-2 pt-2 border-top">
+                                    <div class="col-12">
+                                        <div class="mb-0">
+                                            <label class="form-label" for="st_contact_notes">Notes</label>
+                                            <textarea class="form-control" id="st_contact_notes" name="st_contact_notes" rows="3" placeholder="Notes about this contact (internal)"><?php echo htmlspecialchars((string)($queryRes['st_contact_notes'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></textarea>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1378,6 +1440,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                         <button class="btn btn-primary" type="button" id="enquiry_form">Update Enquiry</button>
                                                         <?php } ?>
                                                         <input type="hidden" value="<?php echo $eqId; ?>" id="check_update">
+                                                        <input type="hidden" id="current_enquiry_code" value="<?php echo isset($current_enquiry_code) ? htmlspecialchars($current_enquiry_code, ENT_QUOTES, 'UTF-8') : ''; ?>">
                                                     </div>
                                                 </div>
                                             </div>
@@ -1389,13 +1452,13 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                             </form>
 
         <?php if (!$is_student_portal): ?>
-        <!-- Accordion 2: Follow Up Call (admin only) -->
+        <!-- Accordion 2: Post Enquiry Follow Up (admin only) -->
         <div class="accordion" id="followupMainAccordion">
             <div class="accordion-item">
                 <h2 class="accordion-header position-relative<?php echo (isset($eqId) && (int)$eqId > 0 && $followup_history_enquiry_code !== '') ? ' has-followup-history-btn' : ''; ?>" id="headingFollowup">
-                    <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFollowup" aria-expanded="false" aria-controls="collapseFollowup">Follow Up Call</button>
+                    <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFollowup" aria-expanded="false" aria-controls="collapseFollowup">Post Enquiry Follow Up</button>
                     <?php if (isset($eqId) && (int)$eqId > 0 && $followup_history_enquiry_code !== ''): ?>
-                    <button type="button" class="btn btn-outline-secondary btn-sm position-absolute top-50 translate-middle-y btn-followup-history-accordion" id="followup_history_open_btn" data-enquiry-id="<?php echo htmlspecialchars($followup_history_enquiry_code, ENT_QUOTES, 'UTF-8'); ?>">
+                    <button type="button" class="btn btn-outline-secondary btn-sm position-absolute top-50 translate-middle-y btn-followup-history-accordion" id="followup_history_open_btn" data-enquiry-id="<?php echo htmlspecialchars($followup_history_enquiry_code, ENT_QUOTES, 'UTF-8'); ?>" data-followup-stage="enquiry">
                         <i class="ti ti-history me-1"></i> Follow-up history
                     </button>
                     <?php endif; ?>
@@ -1425,6 +1488,32 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 <div id="collapseCounseling" class="accordion-collapse collapse" aria-labelledby="headingCounseling" data-bs-parent="#enquiryAccordionGroup">
                     <div class="accordion-body">
                         <?php include('includes/counselling_accordion_form.php'); ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accordion 4: Post Counselling Follow Up (admin only) -->
+        <div class="accordion" id="followupPostCounsellingAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header position-relative<?php echo (isset($eqId) && (int)$eqId > 0 && $followup_history_enquiry_code !== '') ? ' has-followup-history-btn' : ''; ?>" id="headingFollowupPostCounselling">
+                    <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFollowupPostCounselling" aria-expanded="false" aria-controls="collapseFollowupPostCounselling">Post Counselling Follow Up</button>
+                    <?php if (isset($eqId) && (int)$eqId > 0 && $followup_history_enquiry_code !== ''): ?>
+                    <button type="button" class="btn btn-outline-secondary btn-sm position-absolute top-50 translate-middle-y btn-followup-history-accordion" id="followup_pc_history_open_btn" data-enquiry-id="<?php echo htmlspecialchars($followup_history_enquiry_code, ENT_QUOTES, 'UTF-8'); ?>" data-followup-stage="post_counselling">
+                        <i class="ti ti-history me-1"></i> Follow-up history
+                    </button>
+                    <?php endif; ?>
+                </h2>
+                <div id="collapseFollowupPostCounselling" class="accordion-collapse collapse" aria-labelledby="headingFollowupPostCounselling" data-bs-parent="#enquiryAccordionGroup">
+                    <div class="accordion-body">
+                        <?php
+                        $_followup_query_saved = $followup_Query;
+                        $followup_Query = $followup_pc_Query;
+                        $followup_accordion_ctx = 'post_counselling';
+                        include 'includes/followup_accordion_form.php';
+                        $followup_Query = $_followup_query_saved;
+                        unset($_followup_query_saved, $followup_accordion_ctx);
+                        ?>
                     </div>
                 </div>
             </div>
@@ -1493,6 +1582,28 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 </div>
             </div>
         </div>
+        <div class="modal fade" id="studentLoginLinkEmailModal" tabindex="-1" aria-labelledby="studentLoginLinkEmailModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="studentLoginLinkEmailModalLabel">Send student login link</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small mb-2">Login page: <code class="user-select-all" id="student_login_link_url_display"></code></p>
+                        <div class="mb-2">
+                            <label class="form-label" for="login_link_email_subject">Subject</label>
+                            <input type="text" class="form-control" id="login_link_email_subject" placeholder="Email subject" autocomplete="off">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label" for="login_link_email_body">Message</label>
+                            <textarea class="form-control" id="login_link_email_body" rows="8" placeholder="Email body" style="min-height:7.5rem;max-height:28rem;line-height:1.5;resize:vertical;box-sizing:border-box;"></textarea>
+                        </div>
+                        <button type="button" class="btn btn-success" id="login_link_send_email_btn">Send email</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         <?php endif; ?>
 
         <?php if (!$is_student_portal && isset($eqId) && (int)$eqId > 0 && $followup_history_enquiry_code !== ''): ?>
@@ -1505,11 +1616,11 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     </div>
                     <div class="modal-body">
                         <div id="fh_pane_list">
-                            <p class="text-muted small mb-2">Each row shows all saved follow-up fields (student, phone, times, staff, type, outcome, status, notes, remarks, comments, audit). Newest first. <strong>Follow-up outcome</strong>, <strong>Enquiry status</strong>, and <strong>Follow-up notes</strong> stay fixed on the left; scroll sideways to see the rest. Use <strong>Resend email</strong> to send the status template for that row&rsquo;s enquiry status again.</p>
+                            <p class="text-muted small mb-2" id="followup_history_intro">Each row shows saved fields for <strong>this section only</strong> (Post Enquiry Follow Up or Post Counselling Follow Up — not mixed). Newest first. <strong>Follow-up outcome</strong>, <strong>Enquiry status</strong>, and <strong>Follow-up notes</strong> stay fixed on the left; scroll sideways for the rest. Use <strong>Resend email</strong> to send the status template for that row&rsquo;s enquiry status again.</p>
                             <div id="followup_history_loading" class="text-muted py-3 d-none">Loading…</div>
                             <div id="followup_history_empty" class="text-muted py-3 d-none">No follow-up records yet.</div>
                             <div id="followup_history_scrollwrap">
-                                <table class="table table-sm table-striped table-bordered align-top mb-0" id="followup_history_table" style="min-width: 2200px;">
+                                <table class="table table-sm table-striped table-bordered align-top mb-0" id="followup_history_table" style="min-width: 2180px;">
                                     <thead class="table-light"><tr>
                                         <th class="fh-pin fh-pin-1">Follow-up outcome</th>
                                         <th class="fh-pin fh-pin-2">Enquiry status</th>
@@ -1567,6 +1678,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             window.STUDENT_ENQUIRY_AUTO_SAVE = <?php echo (isset($eqId) && (int)$eqId > 0) ? 'true' : 'false'; ?>;
             window.ENQUIRY_EDIT_PAGE = <?php echo (isset($eqId) && (int)$eqId > 0) ? 'true' : 'false'; ?>;
             window.ENQUIRY_LOCKED_START = <?php echo (!empty($enquiry_locked_start)) ? 'true' : 'false'; ?>;
+            window.STUDENT_LOGIN_PAGE_URL = <?php echo json_encode(isset($student_login_page_url) ? $student_login_page_url : ''); ?>;
             function autosaveSetBadge(kind, label, state){
                 var map = { enquiry:'#autosave_badge_enquiry', counsel:'#autosave_badge_counsel', followup:'#autosave_badge_followup' };
                 var $b = $(map[kind]||'');
@@ -1589,12 +1701,12 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 if(!window.ENQUIRY_EDIT_PAGE) return;
                 var $t = $('#enquiry_edit_mode_toggle');
                 // Keep accordion section headers clickable in view-only so users can expand/collapse to read content.
-                $('#student_enquiry_contact_bar').find(':input').prop('disabled', !!locked);
+                $('#student_enquiry_contact_bar').find(':input').not('#send_student_login_link_btn').prop('disabled', !!locked);
                 $('#student_enquiry_form').find(':input').not($t).not('.accordion-button').prop('disabled', !!locked);
                 $('#counselling_form').find(':input').not('.accordion-button').prop('disabled', !!locked);
-                $('#followup_form_embed').find(':input').not('.accordion-button').prop('disabled', !!locked);
-                $('#enquiry_form,#counseling_submit,#followup_check,#followup_send_status_email,#counselling_send_status_email,#followup_open_calendar_btn,#contact_bar_open_calendar_btn,#counselling_open_calendar_btn').prop('disabled', !!locked);
-                $('#followup_history_open_btn').prop('disabled', false);
+                $('#followup_form_embed,#followup_pc_form_embed').find(':input').not('.accordion-button').prop('disabled', !!locked);
+                $('#enquiry_form,#counseling_submit,#followup_check,#followup_pc_check,#followup_send_status_email,#counselling_send_status_email,#followup_open_calendar_btn,#followup_pc_open_calendar_btn,#contact_bar_open_calendar_btn,#counselling_open_calendar_btn').prop('disabled', !!locked);
+                $('.btn-followup-history-accordion').prop('disabled', false);
                 $('#fp_appointment_submit_btn').prop('disabled', !!locked);
                 if($('#enquiry_edit_mode_hint').length){
                     $('#enquiry_edit_mode_hint').text(locked ? 'View only — turn on to edit.' : 'Turn off to view without editing.');
@@ -1610,6 +1722,61 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 applyEnquiryFormLock(lockedStart);
                 $('#enquiry_edit_mode_toggle').on('change', function(){
                     applyEnquiryFormLock(!$(this).is(':checked'));
+                });
+            });
+
+            $(document).on('click', '#send_student_login_link_btn', function () {
+                var url = window.STUDENT_LOGIN_PAGE_URL || '';
+                $('#student_login_link_url_display').text(url);
+                var ref = ($('#current_enquiry_code').val() || '').trim();
+                var name = ($('#member_name').val() || '').trim() || 'there';
+                $('#login_link_email_subject').val('Student portal login' + (ref ? ' — ' + ref : ''));
+                $('#login_link_email_body').val(
+                    'Hi ' + name + ',\n\n' +
+                    'You can sign in to the student portal here:\n' + url + '\n\n' +
+                    'Use the email address we have on file for your account.\n\n' +
+                    'Kind regards'
+                );
+                var m = document.getElementById('studentLoginLinkEmailModal');
+                if (m && typeof bootstrap !== 'undefined') {
+                    bootstrap.Modal.getOrCreateInstance(m).show();
+                }
+            });
+            $(document).on('click', '#login_link_send_email_btn', function () {
+                var enquiry_id = ($('#current_enquiry_code').val() || '').trim();
+                var subject = ($('#login_link_email_subject').val() || '').trim();
+                var body = ($('#login_link_email_body').val() || '');
+                var override_to = ($('#email_address').val() || '').trim();
+                if (!enquiry_id) {
+                    $('.toast-text2').html('Missing enquiry reference.');
+                    $('#borderedToast2Btn').trigger('click');
+                    return;
+                }
+                var $btn = $('#login_link_send_email_btn').prop('disabled', true).text('Sending...');
+                $.post('includes/datacontrol.php', {
+                    send_enquiry_status_email: 1,
+                    enquiry_id: enquiry_id,
+                    subject: subject,
+                    body: body,
+                    override_to: override_to
+                }, function (data) {
+                    $btn.prop('disabled', false).text('Send email');
+                    if (String(data).trim() === '1') {
+                        $('.toast-text2').html('Email sent.');
+                        $('#borderedToast2Btn').trigger('click');
+                        var modalEl = document.getElementById('studentLoginLinkEmailModal');
+                        if (modalEl && typeof bootstrap !== 'undefined') {
+                            var ci = bootstrap.Modal.getInstance(modalEl);
+                            if (ci) { ci.hide(); }
+                        }
+                    } else {
+                        $('.toast-text2').html(data && String(data).trim() ? data : 'Failed to send email');
+                        $('#borderedToast2Btn').trigger('click');
+                    }
+                }).fail(function () {
+                    $btn.prop('disabled', false).text('Send email');
+                    $('.toast-text2').html('Failed to send email');
+                    $('#borderedToast2Btn').trigger('click');
                 });
             });
 
@@ -1799,7 +1966,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 courses=courses.filter(function(item){ return item !== '0'; });
                 remarks=remarks.filter(function(item){ return item !== '0'; });
                 var checkId=$("#check_update").val();
-                return {formName:'student_enquiry',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,payment:payment,checkId:checkId,visaStatus:visaStatus,surname:surname,enquiryDate:enquiryDate,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,hearedby:hearedby,memberName:memberName,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,visaNote:visaNote,prefComment:prefComment,comments:comments,appointment_booked:appointment_booked,visaCondition:visaCondition,remarks:remarks,reg_grp_names:reg_grp_names,streetDetails:streetDetails,enquiryFor:enquiryFor,courseType:courseType,shore:shore,ethnicity:ethnicity,enquiry_source:$('#enquiry_source').val()||0,location:($('#location').val()||'').trim(),enquiry_college:($('#enquiry_college').length ? $('#enquiry_college').val() : 0)||0,rpl_arrays:JSON.stringify(rpl_array),short_grps:JSON.stringify(short_grp),slot_books:JSON.stringify(slot_book),admin_id:"<?php echo $_SESSION['user_id']; ?>",formId:<?php echo $form_id; ?>,rpl_status:'<?php echo $rpl_status; ?>',short_grp_status:'<?php echo $short_grp_status; ?>',reg_grp_status:'<?php echo $reg_grp_status; ?>',slot_book_status:'<?php echo $slot_book_status; ?>'};
+                return {formName:'student_enquiry',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,payment:payment,checkId:checkId,visaStatus:visaStatus,surname:surname,enquiryDate:enquiryDate,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,hearedby:hearedby,memberName:memberName,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,visaNote:visaNote,prefComment:prefComment,comments:comments,appointment_booked:appointment_booked,visaCondition:visaCondition,remarks:remarks,reg_grp_names:reg_grp_names,streetDetails:streetDetails,enquiryFor:enquiryFor,courseType:courseType,shore:shore,ethnicity:ethnicity,enquiry_source:$('#enquiry_source').val()||0,location:($('#location').val()||'').trim(),enquiry_college:($('#enquiry_college').length ? $('#enquiry_college').val() : 0)||0,contact_notes:($('#st_contact_notes').length ? ($('#st_contact_notes').val()||'') : '').trim(),rpl_arrays:JSON.stringify(rpl_array),short_grps:JSON.stringify(short_grp),slot_books:JSON.stringify(slot_book),admin_id:"<?php echo $_SESSION['user_id']; ?>",formId:<?php echo $form_id; ?>,rpl_status:'<?php echo $rpl_status; ?>',short_grp_status:'<?php echo $short_grp_status; ?>',reg_grp_status:'<?php echo $reg_grp_status; ?>',slot_book_status:'<?php echo $slot_book_status; ?>'};
             }
 
             var enquiryAutoSaveTimer = null;
@@ -1877,6 +2044,8 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                 autosaveSetBadge('enquiry','Enquiry: select responsible staff','err');
                                 $('#enquiry_source_staff_error').show();
                                 $('#enquiry_source_responsible_staff').addClass('is-invalid');
+                            }else if(data==='email_duplicate' || data=='email_duplicate' || data==='email_duplicate_student_users' || data=='email_duplicate_student_users'){
+                                autosaveSetBadge('enquiry','Enquiry: email conflict','err');
                             }else if(data==2 || data=='2'){
                                 autosaveSetBadge('enquiry','Enquiry: saved '+new Date().toLocaleTimeString(),'ok');
                             }else{
@@ -1897,6 +2066,16 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                             $('#borderedToast2Btn').trigger('click');
                             $('#enquiry_source_staff_error').show();
                             $('#enquiry_source_responsible_staff').addClass('is-invalid');
+                            $('#loader-container').hide();
+                            $('#student_enquiry_form').css('opacity','');
+                        }else if(data==='email_duplicate' || data=='email_duplicate'){
+                            $('.toast-text2').html('That email is already used by another enquiry.');
+                            $('#borderedToast2Btn').trigger('click');
+                            $('#loader-container').hide();
+                            $('#student_enquiry_form').css('opacity','');
+                        }else if(data==='email_duplicate_student_users' || data=='email_duplicate_student_users'){
+                            $('.toast-text2').html('That email is already registered to another student account.');
+                            $('#borderedToast2Btn').trigger('click');
                             $('#loader-container').hide();
                             $('#student_enquiry_form').css('opacity','');
                         }else if(data==2){
@@ -2232,9 +2411,15 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             function loadFollowupTemplateForCurrentStatus(opts){
                 opts = opts || {};
                 var showModal = !!opts.showModal;
-                var status = $('#followup_enquiry_flow_status').val();
+                var prefix = (opts.prefix && typeof opts.prefix === 'string') ? opts.prefix : 'followup_';
+                var status = $('#' + prefix + 'enquiry_flow_status').val();
                 if (status === '' || status === null || status === undefined) { return; }
-                var enquiry_id = ($('#followup_enquiry_id').val() || '').toString().trim();
+                var enquiry_id = ($('#' + prefix + 'enquiry_id').val() || '').toString().trim();
+                if (prefix === 'followup_pc_') {
+                    $('#followupStatusEmailModal').data('emailStatusSource', 'pc');
+                } else {
+                    $('#followupStatusEmailModal').data('emailStatusSource', 'enquiry');
+                }
                 $.post('includes/datacontrol.php', { get_enquiry_status_template: 1, status_code: status, enquiry_id: enquiry_id }, function(data){
                     try{
                         var j = JSON.parse(data);
@@ -2255,27 +2440,41 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             $('#collapseFollowup').on('shown.bs.collapse', function(){
                 setTimeout(followupAutoResizeEmailBody, 50);
             });
-            $(document).on('change','#followup_enquiry_flow_status',function(){
-                loadFollowupTemplateForCurrentStatus({ showModal: true });
+            $('#collapseFollowupPostCounselling').on('shown.bs.collapse', function(){
+                setTimeout(followupAutoResizeEmailBody, 50);
             });
-            function toggleFollowupCalendarBtn(){
-                var outcome = ($('#followup_follow_up_outcome').val() || '').toString();
+            $(document).on('change','#followup_enquiry_flow_status',function(){
+                loadFollowupTemplateForCurrentStatus({ showModal: true, prefix: 'followup_' });
+            });
+            $(document).on('change','#followup_pc_enquiry_flow_status',function(){
+                loadFollowupTemplateForCurrentStatus({ showModal: true, prefix: 'followup_pc_' });
+            });
+            function followupOutcomeToStatusMap(){
+                return { 'No Answer':'3', 'Call Back Later':'3', 'Booked Counselling':'2', 'Requested More Information':'2', 'Application Started':'4', 'Enrolled':'6', 'Not Interested':'7', 'Do not Call':'7', 'Wrong No':'7', 'Enrolled Elsewhere':'7', 'Course not Offered':'7', 'Funding Enquiry':'7' };
+            }
+            function toggleFollowupCalendarBtnForPrefix(prefix){
+                var outcome = ($('#' + prefix + 'follow_up_outcome').val() || '').toString();
                 var show = (outcome === 'No Answer' || outcome === 'Call Back Later' || outcome === 'Booked Counselling');
-                $('#followup_calendar_btn_wrap').toggle(!!show);
+                $('#' + prefix + 'calendar_btn_wrap').toggle(!!show);
             }
             /** Mirrors server mapping in includes/enquiry_status_auto_map.php */
-            function applyFollowupOutcomeToEnquiryStatusFromOutcome(){
-                var o = ($('#followup_follow_up_outcome').val() || '').toString().trim();
-                var map = { 'No Answer':'3', 'Call Back Later':'3', 'Booked Counselling':'2', 'Requested More Information':'2', 'Application Started':'4', 'Enrolled':'6', 'Not Interested':'7', 'Do not Call':'7' };
+            function applyFollowupOutcomeToEnquiryStatusFromOutcome(prefix){
+                prefix = prefix || 'followup_';
+                var o = ($('#' + prefix + 'follow_up_outcome').val() || '').toString().trim();
+                var map = followupOutcomeToStatusMap();
                 if(Object.prototype.hasOwnProperty.call(map, o)){
-                    $('#followup_enquiry_flow_status').val(map[o]);
-                    $('#followup_enquiry_status_actual').val(map[o]);
-                    loadFollowupTemplateForCurrentStatus({ showModal: false });
+                    $('#' + prefix + 'enquiry_flow_status').val(map[o]);
+                    $('#' + prefix + 'enquiry_status_actual').val(map[o]);
+                    loadFollowupTemplateForCurrentStatus({ showModal: false, prefix: prefix });
                 }
             }
             $(document).on('change','#followup_follow_up_outcome',function(){
-                applyFollowupOutcomeToEnquiryStatusFromOutcome();
-                toggleFollowupCalendarBtn();
+                applyFollowupOutcomeToEnquiryStatusFromOutcome('followup_');
+                toggleFollowupCalendarBtnForPrefix('followup_');
+            });
+            $(document).on('change','#followup_pc_follow_up_outcome',function(){
+                applyFollowupOutcomeToEnquiryStatusFromOutcome('followup_pc_');
+                toggleFollowupCalendarBtnForPrefix('followup_pc_');
             });
             function fpPrepareAndOpenAppointmentModal(){
                 var enquiryDateStr = ($('#enquiry_date').val() || '').toString().trim();
@@ -2314,6 +2513,13 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 window.__fpBookFromContactBarPhone = false;
                 window.__fpBookFromCounsellingReschedule = false;
                 var enquiryId = ($('#followup_enquiry_id').val() || '').toString().trim();
+                $('#fp_connected_enquiry_id').val(enquiryId);
+                fpPrepareAndOpenAppointmentModal();
+            });
+            $(document).on('click','#followup_pc_open_calendar_btn',function(){
+                window.__fpBookFromContactBarPhone = false;
+                window.__fpBookFromCounsellingReschedule = false;
+                var enquiryId = ($('#followup_pc_enquiry_id').val() || '').toString().trim();
                 $('#fp_connected_enquiry_id').val(enquiryId);
                 fpPrepareAndOpenAppointmentModal();
             });
@@ -2431,7 +2637,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     $('#borderedToast2Btn').trigger('click');
                     return;
                 }
-                var enquiryId = ($('#counselling_enquiry_id').val() || $('#followup_enquiry_id').val() || '').toString().trim();
+                var enquiryId = ($('#counselling_enquiry_id').val() || $('#followup_enquiry_id').val() || $('#followup_pc_enquiry_id').val() || '').toString().trim();
                 $('#fp_connected_enquiry_id').val(enquiryId);
                 fpPrepareAndOpenAppointmentModal();
             });
@@ -2648,7 +2854,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                             $('#borderedToast1Btn').trigger('click');
                             $f[0].reset();
                             $('#fp_appointment_submit_btn').prop('disabled',false);
-                            $('#followup_enquiry_flow_status option[value="9"]').prop('disabled', false);
+                            $('#followup_enquiry_flow_status option[value="9"], #followup_pc_enquiry_flow_status option[value="9"]').prop('disabled', false);
                         } else if(r==='2'){
                             $('.toast-text2').html('Time slot already booked for this person. Choose a different time.');
                             $('#borderedToast2Btn').trigger('click');
@@ -2680,12 +2886,15 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 window.__fpBookFromCounsellingReschedule = false;
             });
             $(document).ready(function(){
-                toggleFollowupCalendarBtn();
+                toggleFollowupCalendarBtnForPrefix('followup_');
+                toggleFollowupCalendarBtnForPrefix('followup_pc_');
                 toggleCounsellingRescheduleCalendarWrap();
             });
             $(document).on('click','#followup_send_status_email',function(){
-                var enquiry_id=$('#followup_enquiry_id').val();
-                var status_code=$('#followup_enquiry_flow_status').val();
+                var src = ($('#followupStatusEmailModal').data('emailStatusSource') || 'enquiry').toString();
+                var pfx = (src === 'pc') ? 'followup_pc_' : 'followup_';
+                var enquiry_id=$('#' + pfx + 'enquiry_id').val();
+                var status_code=$('#' + pfx + 'enquiry_flow_status').val();
                 var subject=$('#followup_email_subject').val().trim();
                 var body=$('#followup_email_body').val().trim();
                 var save_as_default = $('#followup_save_template_default').is(':checked') ? 1 : 0;
@@ -2751,38 +2960,45 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             $('#followupStatusEmailModal').on('shown.bs.modal', function(){ setTimeout(followupAutoResizeEmailBody, 0); });
             $('#counsellingStatusEmailModal').on('shown.bs.modal', function(){ setTimeout(counsellingAutoResizeEmailBody, 0); });
             // Load default email template once when form is ready (for current status)
-            loadFollowupTemplateForCurrentStatus();
+            loadFollowupTemplateForCurrentStatus({ showModal: false, prefix: 'followup_' });
+            loadFollowupTemplateForCurrentStatus({ showModal: false, prefix: 'followup_pc_' });
             setTimeout(followupAutoResizeEmailBody, 100);
             setTimeout(function(){ $('#counselling_outcome_actual').val(($('#counselling_outcome').val() || '').toString()); applyCounsellingOutcomeToEmailTemplate({ showModal: false }); counsellingAutoResizeEmailBody(); }, 350);
 
-            function buildFollowupFormData(){
+            function buildFollowupFormDataFromPrefix(prefix){
                 var enquiryForVal = ($('#enquiry_for').val()||'0').toString();
                 var student_name = enquiryForVal === '1' ? $('#member_name').val().trim() : $('#student_name').val().trim();
                 var contact_num=$('#contact_num').val().trim();
-                var contacted_person=$('#followup_contacted_person').val().trim();
-                var contacted_time=$('#followup_contacted_time').val().trim();
+                var contacted_person=$('#' + prefix + 'contacted_person').val().trim();
+                var contacted_time=$('#' + prefix + 'contacted_time').val().trim();
                 var date = ($('#followup_date').val() || '').trim();
                 var contactMode = $('#followup_mode_contacted').val();
-                var followupType=$('#followup_followup_type').val();
-                var enquiry_flow_status = ($('#followup_enquiry_status_actual').val() || $('#followup_enquiry_flow_status').val() || '').toString().trim();
-                var follow_up_notes=$('#followup_follow_up_notes').val().trim();
+                var followupType=$('#' + prefix + 'followup_type').val();
+                var enquiry_flow_status = ($('#' + prefix + 'enquiry_status_actual').val() || $('#' + prefix + 'enquiry_flow_status').val() || '').toString().trim();
+                var follow_up_notes=$('#' + prefix + 'follow_up_notes').val().trim();
                 var next_followup_date=$('#followup_next_followup_date').val();
-                var follow_up_outcome=$('#followup_follow_up_outcome').val();
-                var enquiry_id=($('#followup_enquiry_id').val() || '').toString().trim();
+                var follow_up_outcome=$('#' + prefix + 'follow_up_outcome').val();
+                var enquiry_id=($('#' + prefix + 'enquiry_id').val() || '').toString().trim();
                 if (enquiry_id === '0') enquiry_id = '';
-                var remarks=[];$('#followup_form_embed .followup_remarks:checked').each(function(){remarks.push(this.value);});
-                var checkId=$('#followup_check_update').val();
+                var formSel = (prefix === 'followup_pc_') ? '#followup_pc_form_embed' : '#followup_form_embed';
+                var remarks=[];$(formSel + ' .followup_remarks:checked').each(function(){remarks.push(this.value);});
+                var checkId=$('#' + prefix + 'check_update').val();
                 if(!date) date = contacted_time ? contacted_time.slice(0,10) : '';
-                return $.extend({formName:'followup_call',student_name:student_name,date:date,contacted_person:contacted_person,contacted_time:contacted_time,contactMode:contactMode||followupType,followup_type:followupType,enquiry_flow_status:enquiry_flow_status,follow_up_notes:follow_up_notes,next_followup_date:next_followup_date,follow_up_outcome:follow_up_outcome,contact_num:contact_num,enquiry_id:enquiry_id,remarks:remarks,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"}, buildAutoEnquiryContactPayload());
+                var followup_stage = (prefix === 'followup_pc_') ? 'post_counselling' : 'enquiry';
+                return $.extend({formName:'followup_call',followup_stage:followup_stage,student_name:student_name,date:date,contacted_person:contacted_person,contacted_time:contacted_time,contactMode:contactMode||followupType,followup_type:followupType,enquiry_flow_status:enquiry_flow_status,follow_up_notes:follow_up_notes,next_followup_date:next_followup_date,follow_up_outcome:follow_up_outcome,contact_num:contact_num,enquiry_id:enquiry_id,remarks:remarks,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"}, buildAutoEnquiryContactPayload());
             }
+            function buildFollowupFormData(){ return buildFollowupFormDataFromPrefix('followup_'); }
+            function buildFollowupPcFormData(){ return buildFollowupFormDataFromPrefix('followup_pc_'); }
             var followupAutoSaveTimer=null;
             var followupSaveSeq=0;
-            function performFollowupSave(silent){
+            function performFollowupSave(silent, usePostCounselling){
                 silent=!!silent;
+                usePostCounselling = !!usePostCounselling;
+                var prefix = usePostCounselling ? 'followup_pc_' : 'followup_';
                 if(!enquiryEditingAllowed()) return;
-                var checkId=$('#followup_check_update').val();
+                var checkId=$('#' + prefix + 'check_update').val();
                 var hasExistingFollowup = !!checkId && checkId !== '0';
-                var enquiryId = ($('#followup_enquiry_id').val() || '').toString().trim();
+                var enquiryId = ($('#' + prefix + 'enquiry_id').val() || '').toString().trim();
                 if (enquiryId === '0') enquiryId = '';
                 if(!hasExistingFollowup && silent) return;
                 if(!hasExistingFollowup && !enquiryId){
@@ -2795,7 +3011,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     }
                 }
                 if(silent && !window.STUDENT_ENQUIRY_AUTO_SAVE) return;
-                var details=buildFollowupFormData();
+                var details = usePostCounselling ? buildFollowupPcFormData() : buildFollowupFormData();
                 var seq=++followupSaveSeq;
                 if(silent){ autosaveSetBadge('followup','Follow-up: saving…','wait'); }
                 $.ajax({type:'post',url:'includes/datacontrol.php',data:details,success:function(data){
@@ -2810,45 +3026,71 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                         $('#toast-text').html('Follow-up saved successfully');$('#borderedToast1Btn').trigger('click');setTimeout(function(){location.reload();},600);
                     }
                     else if(data==='invalid_email' || data=='invalid_email'){$('.toast-text2').html('Please enter a valid email address in Student contact above.');$('#borderedToast2Btn').trigger('click');}
+                    else if(String(data).trim()==='followup_stage_mismatch'){$('.toast-text2').html('This follow-up belongs to a different section. Reload the page and use Post Enquiry vs Post Counselling forms only for their own records.');$('#borderedToast2Btn').trigger('click');}
                     else{$('.toast-text2').html(data && data.trim() ? data : 'Cannot save follow-up. Please try again.');$('#borderedToast2Btn').trigger('click');}
                 },error:function(){
                     if(silent && seq===followupSaveSeq){ autosaveSetBadge('followup','Follow-up: error','err'); }
                 }});
             }
-            $(document).on('click','#followup_check',function(){ performFollowupSave(false); });
+            $(document).on('click','#followup_check',function(){ performFollowupSave(false, false); });
+            $(document).on('click','#followup_pc_check',function(){ performFollowupSave(false, true); });
             $(document).on('input change','#followup_form_embed :input',function(e){
                 if(!window.STUDENT_ENQUIRY_AUTO_SAVE) return;
                 if(!enquiryEditingAllowed()) return;
                 var id=$(e.target).attr('id');
                 if(id==='followup_check'||id==='followup_send_status_email') return;
                 clearTimeout(followupAutoSaveTimer);
-                followupAutoSaveTimer=setTimeout(function(){ performFollowupSave(true); },1000);
+                followupAutoSaveTimer=setTimeout(function(){ performFollowupSave(true, false); },1000);
+            });
+            $(document).on('input change','#followup_pc_form_embed :input',function(e){
+                if(!window.STUDENT_ENQUIRY_AUTO_SAVE) return;
+                if(!enquiryEditingAllowed()) return;
+                var id=$(e.target).attr('id');
+                if(id==='followup_pc_check'||id==='followup_send_status_email') return;
+                clearTimeout(followupAutoSaveTimer);
+                followupAutoSaveTimer=setTimeout(function(){ performFollowupSave(true, true); },1000);
             });
 
+            function followupHistoryStage(){
+                return ($('#followupHistoryModal').data('fh-stage') || 'enquiry').toString().trim();
+            }
             function fhShowFollowupHistoryList(){
                 $('#fh_pane_resend').addClass('d-none');
                 $('#fh_pane_list').removeClass('d-none');
-                $('#followupHistoryModalLabel').text('Follow-up history');
+                var st = followupHistoryStage();
+                var title = (st === 'post_counselling') ? 'Post Counselling Follow Up — history' : 'Post Enquiry Follow Up — history';
+                $('#followupHistoryModalLabel').text(title);
+                var intro = $('#followup_history_intro');
+                if (intro.length) {
+                    intro.html((st === 'post_counselling')
+                        ? 'Each row shows saved fields for <strong>Post Counselling Follow Up</strong> only (not mixed with Post Enquiry). Newest first. <strong>Follow-up outcome</strong>, <strong>Enquiry status</strong>, and <strong>Follow-up notes</strong> stay fixed on the left; scroll sideways for the rest. Use <strong>Resend email</strong> to send the status template for that row&rsquo;s enquiry status again.'
+                        : 'Each row shows saved fields for <strong>Post Enquiry Follow Up</strong> only (not mixed with Post Counselling). Newest first. <strong>Follow-up outcome</strong>, <strong>Enquiry status</strong>, and <strong>Follow-up notes</strong> stay fixed on the left; scroll sideways for the rest. Use <strong>Resend email</strong> to send the status template for that row&rsquo;s enquiry status again.');
+                }
             }
             function fhShowFollowupHistoryResend(){
                 $('#fh_pane_list').addClass('d-none');
                 $('#fh_pane_resend').removeClass('d-none');
                 $('#followupHistoryModalLabel').text('Resend status email');
             }
+            function followupHistoryEnquiryId(){
+                return ($('#followupHistoryModal').data('fh-enquiry-id') || $('.btn-followup-history-accordion').first().data('enquiry-id') || '').toString().trim();
+            }
             function loadFollowupHistoryTable(){
-                var eid = ($('#followup_history_open_btn').data('enquiry-id') || '').toString().trim();
+                var eid = followupHistoryEnquiryId();
                 if (!eid) return;
+                var st = followupHistoryStage();
+                var emptyMsg = (st === 'post_counselling') ? 'No Post Counselling follow-up records yet.' : 'No Post Enquiry follow-up records yet.';
                 $('#followup_history_loading').removeClass('d-none');
-                $('#followup_history_empty').addClass('d-none').text('No follow-up records yet.');
+                $('#followup_history_empty').addClass('d-none').text(emptyMsg);
                 $('#followup_history_tbody').empty();
-                $.post('includes/datacontrol.php', { formName: 'fetch_followup_history', enquiry_id: eid }, function(raw){
+                $.post('includes/datacontrol.php', { formName: 'fetch_followup_history', enquiry_id: eid, followup_stage: st }, function(raw){
                     $('#followup_history_loading').addClass('d-none');
                     var j;
                     try { j = (typeof raw === 'object' && raw !== null) ? raw : JSON.parse(raw); } catch (err) { j = { rows: [] }; }
                     var rows = (j && j.rows) ? j.rows : [];
                     var $tb = $('#followup_history_tbody');
                     if (!rows.length) {
-                        $('#followup_history_empty').removeClass('d-none');
+                        $('#followup_history_empty').removeClass('d-none').text(emptyMsg);
                         return;
                     }
                     var cellPre = { whiteSpace: 'pre-wrap', wordBreak: 'break-word', verticalAlign: 'top' };
@@ -2901,7 +3143,9 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     this.scrollLeft += d;
                 }, { passive: false });
             })();
-            $(document).on('click', '#followup_history_open_btn', function(){
+            $(document).on('click', '.btn-followup-history-accordion', function(){
+                var $b = $(this);
+                $('#followupHistoryModal').data('fh-enquiry-id', $b.data('enquiry-id')).data('fh-stage', ($b.data('followup-stage') || 'enquiry').toString());
                 fhShowFollowupHistoryList();
                 var modal = new bootstrap.Modal(document.getElementById('followupHistoryModal'));
                 modal.show();
@@ -2911,11 +3155,12 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 fhShowFollowupHistoryList();
                 $('#followup_history_tbody').empty();
                 $('#followup_history_empty').addClass('d-none').text('No follow-up records yet.');
+                $('#followupHistoryModal').removeData('fh-enquiry-id').removeData('fh-stage');
                 $('#fh_resend_subject, #fh_resend_body').val('');
                 $('#fh_resend_save_default').prop('checked', false);
             });
             $(document).on('click', '.fh-resend-btn', function(){
-                var eid = ($('#followup_history_open_btn').data('enquiry-id') || '').toString().trim();
+                var eid = followupHistoryEnquiryId();
                 var sc = parseInt($(this).data('status-code'), 10);
                 var label = ($(this).data('status-label') || '').toString();
                 if (!eid || !sc) return;

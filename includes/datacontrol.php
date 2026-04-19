@@ -182,6 +182,7 @@ if(isset($_POST['send_enquiry_status_email']) && isset($_POST['enquiry_id']) && 
     $enquiry_id = mysqli_real_escape_string($connection, $_POST['enquiry_id']);
     $subject = mysqli_real_escape_string($connection, $_POST['subject']);
     $body = $_POST['body'];
+    $override_to_raw = isset($_POST['override_to']) ? trim((string) $_POST['override_to']) : '';
     $save_as_default = !empty($_POST['save_as_default']) && isset($_POST['status_code']);
     $status_code = $save_as_default ? (int)$_POST['status_code'] : 0;
     $send_status_for_placeholders = isset($_POST['status_code']) ? (int)$_POST['status_code'] : 0;
@@ -189,6 +190,13 @@ if(isset($_POST['send_enquiry_status_email']) && isset($_POST['enquiry_id']) && 
     if($q && mysqli_num_rows($q)){
         $row = mysqli_fetch_assoc($q);
         $to = $row['st_email'];
+        if ($override_to_raw !== '' && filter_var($override_to_raw, FILTER_VALIDATE_EMAIL)) {
+            if (isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'student') {
+                // Students cannot override recipient
+            } else {
+                $to = $override_to_raw;
+            }
+        }
         $student_name = $row['st_name'];
         $first_name = trim(strtok($student_name, ' '));
         $course_name = '';
@@ -492,6 +500,10 @@ if(@$_POST['formName']=='public_enquiry'){
 }
 if(@$_POST['formName']=='student_enquiry'){
 
+    if (!mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_contact_notes'"))) {
+        @mysqli_query($connection, "ALTER TABLE student_enquiry ADD COLUMN st_contact_notes TEXT NULL");
+    }
+
     // Only mandatory field: valid email. Everything else can be empty (partial save / draft).
     $emailRaw = trim((string)($_POST['emailAddress'] ?? ''));
     if($emailRaw === '' || !filter_var($emailRaw, FILTER_VALIDATE_EMAIL)){
@@ -546,6 +558,7 @@ $courseType=isset($_POST['courseType']) && $_POST['courseType'] !== '' ? (int)$_
 $shore=isset($_POST['shore']) && $_POST['shore'] !== '' ? (int)$_POST['shore'] : 0;
 $ethnicity=mysqli_real_escape_string($connection, trim((string)($_POST['ethnicity'] ?? '')));
 $visaNote=mysqli_real_escape_string($connection, trim((string)($_POST['visaNote'] ?? '')));
+$contact_notes=mysqli_real_escape_string($connection, trim((string)($_POST['contact_notes'] ?? '')));
 $created_by=isset($_POST['admin_id']) ? (int)$_POST['admin_id'] : 0;
 $enquiry_source = isset($_POST['enquiry_source']) ? (int)$_POST['enquiry_source'] : 0;
 if (in_array($enquiry_source, array(2, 4, 5, 6), true) && $hearedby_raw === '') {
@@ -658,6 +671,9 @@ if($dup_email_merge_update && (int)$checkId > 0){
         }
         if(trim((string)($_POST['location'] ?? '')) === ''){
             $location = mysqli_real_escape_string($connection, (string)$e['st_location']);
+        }
+        if(trim((string)($_POST['contact_notes'] ?? '')) === '' && isset($e['st_contact_notes'])){
+            $contact_notes = mysqli_real_escape_string($connection, (string)$e['st_contact_notes']);
         }
         if(empty($_POST['remarks']) || !is_array($_POST['remarks']) || count($_POST['remarks']) === 0){
             $remarks = mysqli_real_escape_string($connection, (string)$e['st_remarks']);
@@ -778,7 +794,7 @@ if($checkId==0){
 
     $enquiry_source_val = $enquiry_source > 0 ? $enquiry_source : 'NULL';
 $enquiry_college_val = $enquiry_college > 0 ? $enquiry_college : 'NULL';
-$query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_member_name,st_phno,st_email,st_course,st_fee,st_visa_status,st_visa_condition,st_visa_note,st_surname,st_suburb,st_state,st_post_code,st_visited,st_heared,st_hearedby,st_startplan_date,st_refered,st_refer_name,st_refer_alumni,st_comments,st_pref_comments,st_appoint_book,st_remarks,st_street_details,st_enquiry_for,st_enquiry_date,st_course_type,st_shore,st_ethnicity,st_created_by,st_enquiry_source,st_location,st_enquiry_college)VALUES('$studentName','$memberName','$contactName','$emailAddress','$courses','$payment',$visaStatus,$visaCondition,'$visaNote','$surname','$suburb','$stuState',$postCode,$visit_before,'$hear_about','$hearedby','$plan_to_start_date',$refer_select,'$referer_name',$refer_alumni,'$comments','$prefComment',$appointment_booked,'$remarks','$streetDetails',$enquiryFor,'$enquiryDate',$courseType,$shore,'$ethnicity',$created_by,$enquiry_source_val,'$location',$enquiry_college_val)");
+$query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_member_name,st_phno,st_email,st_course,st_fee,st_visa_status,st_visa_condition,st_visa_note,st_surname,st_suburb,st_state,st_post_code,st_visited,st_heared,st_hearedby,st_startplan_date,st_refered,st_refer_name,st_refer_alumni,st_comments,st_pref_comments,st_appoint_book,st_remarks,st_street_details,st_enquiry_for,st_enquiry_date,st_course_type,st_shore,st_ethnicity,st_created_by,st_enquiry_source,st_location,st_enquiry_college,st_contact_notes)VALUES('$studentName','$memberName','$contactName','$emailAddress','$courses','$payment',$visaStatus,$visaCondition,'$visaNote','$surname','$suburb','$stuState',$postCode,$visit_before,'$hear_about','$hearedby','$plan_to_start_date',$refer_select,'$referer_name',$refer_alumni,'$comments','$prefComment',$appointment_booked,'$remarks','$streetDetails',$enquiryFor,'$enquiryDate',$courseType,$shore,'$ethnicity',$created_by,$enquiry_source_val,'$location',$enquiry_college_val,'$contact_notes')");
     
     echo mysqli_error($connection);
     $lastId=mysqli_insert_id($connection);
@@ -832,18 +848,38 @@ $query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_member_n
     }
 
 }else{
-    // Email is locked on edit — ignore POST tampering; always keep stored address
+    // Email locked on edit unless enquiry is linked to a registered student (student_user_id) — then allow change with duplicate checks
     $cidUp = (int)$checkId;
     if($cidUp > 0){
-        $emR = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT st_email FROM student_enquiry WHERE st_id=".$cidUp." LIMIT 1"));
+        $emR = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT st_email, student_user_id FROM student_enquiry WHERE st_id=".$cidUp." LIMIT 1"));
         if($emR && array_key_exists('st_email', $emR)){
-            $emailAddress = mysqli_real_escape_string($connection, (string)$emR['st_email']);
+            $allow_email_edit = isset($emR['student_user_id']) && (int)$emR['student_user_id'] > 0;
+            if(!$allow_email_edit){
+                $emailAddress = mysqli_real_escape_string($connection, (string)$emR['st_email']);
+            } else {
+                $dupOther = mysqli_query($connection, "SELECT st_id FROM student_enquiry WHERE st_enquiry_status=0 AND LOWER(TRIM(st_email))=LOWER('".$emailAddress."') AND st_id<>".$cidUp." LIMIT 1");
+                if($dupOther && mysqli_num_rows($dupOther) > 0){
+                    echo 'email_duplicate';
+                    exit;
+                }
+                $new_lower = strtolower(trim($emailRaw));
+                $old_lower = strtolower(trim((string)$emR['st_email']));
+                if($new_lower !== $old_lower){
+                    $suid = (int)$emR['student_user_id'];
+                    $em_exists = mysqli_query($connection, "SELECT id FROM student_users WHERE LOWER(TRIM(email))=LOWER('".$emailAddress."') AND id<>".$suid." LIMIT 1");
+                    if($em_exists && mysqli_num_rows($em_exists) > 0){
+                        echo 'email_duplicate_student_users';
+                        exit;
+                    }
+                    mysqli_query($connection, "UPDATE student_users SET email='".$emailAddress."' WHERE id=".$suid." LIMIT 1");
+                }
+            }
         }
     }
 
     $enquiry_source_update = $enquiry_source > 0 ? $enquiry_source : 'NULL';
 $enquiry_college_update = $enquiry_college > 0 ? $enquiry_college : 'NULL';
-if(mysqli_query($connection,"UPDATE student_enquiry SET `st_name`='$studentName',`st_member_name`='$memberName' ,`st_phno`='$contactName',`st_email`='$emailAddress',`st_course`='$courses',`st_fee`='$payment',`st_visa_status`=$visaStatus,`st_visa_condition`=$visaCondition ,`st_visa_note`='$visaNote', `st_surname`='$surname' , `st_suburb`= '$suburb' , `st_state`='$stuState',`st_post_code`= $postCode,`st_visited`=$visit_before,`st_heared`='$hear_about',`st_hearedby`='$hearedby',`st_startplan_date`='$plan_to_start_date',`st_refered`=$refer_select,`st_refer_name`='$referer_name',`st_refer_alumni`=$refer_alumni,`st_comments`='$comments',`st_pref_comments`='$prefComment',`st_appoint_book`= $appointment_booked,`st_remarks`='$remarks',`st_street_details`= '$streetDetails' , `st_enquiry_for`= $enquiryFor , `st_enquiry_date`='$enquiryDate' ,`st_course_type`=$courseType , `st_shore`=$shore,`st_ethnicity`='$ethnicity',`st_modified_by`= $created_by , `st_modified_date`='$now', `st_enquiry_source`=$enquiry_source_update, `st_location`='$location', `st_enquiry_college`=$enquiry_college_update WHERE `st_id`=$checkId")){        
+if(mysqli_query($connection,"UPDATE student_enquiry SET `st_name`='$studentName',`st_member_name`='$memberName' ,`st_phno`='$contactName',`st_email`='$emailAddress',`st_course`='$courses',`st_fee`='$payment',`st_visa_status`=$visaStatus,`st_visa_condition`=$visaCondition ,`st_visa_note`='$visaNote', `st_surname`='$surname' , `st_suburb`= '$suburb' , `st_state`='$stuState',`st_post_code`= $postCode,`st_visited`=$visit_before,`st_heared`='$hear_about',`st_hearedby`='$hearedby',`st_startplan_date`='$plan_to_start_date',`st_refered`=$refer_select,`st_refer_name`='$referer_name',`st_refer_alumni`=$refer_alumni,`st_comments`='$comments',`st_pref_comments`='$prefComment',`st_appoint_book`= $appointment_booked,`st_remarks`='$remarks',`st_street_details`= '$streetDetails' , `st_enquiry_for`= $enquiryFor , `st_enquiry_date`='$enquiryDate' ,`st_course_type`=$courseType , `st_shore`=$shore,`st_ethnicity`='$ethnicity',`st_modified_by`= $created_by , `st_modified_date`='$now', `st_enquiry_source`=$enquiry_source_update, `st_location`='$location', `st_enquiry_college`=$enquiry_college_update, `st_contact_notes`='$contact_notes' WHERE `st_id`=$checkId")){        
 
         // insert course Type data
         if($courseType==1){
@@ -1137,6 +1173,14 @@ if(mysqli_num_rows($filterQueryget)!=0){
     
 }
 if(@$_POST['formName']=='followup_call'){
+        if (!mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_flow_change_stage'"))) {
+            @mysqli_query($connection, "ALTER TABLE `student_enquiry` ADD COLUMN `st_enquiry_flow_change_stage` VARCHAR(8) NULL DEFAULT NULL COMMENT 'PEFU or PCFU when enquiry status last set from follow-up outcome'");
+        }
+        if (!mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM followup_calls LIKE 'flw_followup_stage'"))) {
+            @mysqli_query($connection, "ALTER TABLE followup_calls ADD COLUMN `flw_followup_stage` VARCHAR(32) NOT NULL DEFAULT 'enquiry'");
+        }
+        $followup_stage_raw = isset($_POST['followup_stage']) ? trim((string) $_POST['followup_stage']) : 'enquiry';
+        $followup_stage_esc = ($followup_stage_raw === 'post_counselling') ? 'post_counselling' : 'enquiry';
         $student_name=mysqli_real_escape_string($connection,isset($_POST['student_name']) ? $_POST['student_name'] : '');
         $date=isset($_POST['date']) && $_POST['date']!='' ? date('Y-m-d',strtotime($_POST['date'])) : (isset($_POST['contacted_time']) && $_POST['contacted_time']!='' ? date('Y-m-d',strtotime($_POST['contacted_time'])) : '');
         $contacted_person=mysqli_real_escape_string($connection,isset($_POST['contacted_person']) ? $_POST['contacted_person'] : '');
@@ -1145,10 +1189,12 @@ if(@$_POST['formName']=='followup_call'){
         $followup_type=isset($_POST['followup_type']) ? mysqli_real_escape_string($connection,$_POST['followup_type']) : '';
         $enquiry_flow_status=isset($_POST['enquiry_flow_status']) && $_POST['enquiry_flow_status']!=='' ? (int)$_POST['enquiry_flow_status'] : null;
         $follow_up_outcome_trim = isset($_POST['follow_up_outcome']) ? trim((string) $_POST['follow_up_outcome']) : '';
+        $followup_outcome_drove_status = false;
         if ($follow_up_outcome_trim !== '') {
             $mapped_fu = enquiry_flow_status_for_followup_outcome($follow_up_outcome_trim);
             if ($mapped_fu !== null) {
                 $enquiry_flow_status = $mapped_fu;
+                $followup_outcome_drove_status = true;
             }
         }
         $follow_up_notes=isset($_POST['follow_up_notes']) ? mysqli_real_escape_string($connection,$_POST['follow_up_notes']) : '';
@@ -1190,10 +1236,18 @@ if(@$_POST['formName']=='followup_call'){
             $mode_contact_val = $contactMode ?: $followup_type;
             $flw_now = mysqli_real_escape_string($connection, date('Y-m-d H:i:s'));
             $mod_by = (int)$admin_id;
-            $query=mysqli_query($connection,"INSERT INTO followup_calls(`enquiry_id`,`flw_name`,`flw_phone`,`flw_contacted_person`,`flw_contacted_time`,`flw_date`,`flw_remarks`,`flw_comments`,`flw_mode_contact`,`flw_followup_type`,`flw_follow_up_notes`,`flw_next_followup_date`,`flw_follow_up_outcome`,`flw_progress_state`,`flw_created_by`,`flw_modified_date`,`flw_modifiedby`)VALUES('$enquiry_id','$student_name','$contact_num','$contacted_person','$contacted_time','$date','$remarks','$comments','$mode_contact_val','$followup_type','$follow_up_notes',$next_sql,'$follow_up_outcome','$progress_status',$admin_id,'$flw_now',$mod_by)");
+            $query=mysqli_query($connection,"INSERT INTO followup_calls(`enquiry_id`,`flw_name`,`flw_phone`,`flw_contacted_person`,`flw_contacted_time`,`flw_date`,`flw_remarks`,`flw_comments`,`flw_mode_contact`,`flw_followup_type`,`flw_follow_up_notes`,`flw_next_followup_date`,`flw_follow_up_outcome`,`flw_progress_state`,`flw_created_by`,`flw_modified_date`,`flw_modifiedby`,`flw_followup_stage`)VALUES('$enquiry_id','$student_name','$contact_num','$contacted_person','$contacted_time','$date','$remarks','$comments','$mode_contact_val','$followup_type','$follow_up_notes',$next_sql,'$follow_up_outcome','$progress_status',$admin_id,'$flw_now',$mod_by,'$followup_stage_esc')");
             $lastId=mysqli_insert_id($connection);
             if($lastId!=''){
-                if($enquiry_flow_status!==null) mysqli_query($connection,"UPDATE student_enquiry SET st_enquiry_flow_status=$enquiry_flow_status WHERE st_enquiry_id='$enquiry_id'");
+                if($enquiry_flow_status!==null) {
+                    if (!empty($followup_outcome_drove_status)) {
+                        $fu_stage_tag = ($followup_stage_esc === 'post_counselling') ? 'PCFU' : 'PEFU';
+                        $fu_stage_esc = mysqli_real_escape_string($connection, $fu_stage_tag);
+                        mysqli_query($connection,"UPDATE student_enquiry SET st_enquiry_flow_status=$enquiry_flow_status, st_enquiry_flow_change_stage='$fu_stage_esc' WHERE st_enquiry_id='$enquiry_id'");
+                    } else {
+                        mysqli_query($connection,"UPDATE student_enquiry SET st_enquiry_flow_status=$enquiry_flow_status, st_enquiry_flow_change_stage=NULL WHERE st_enquiry_id='$enquiry_id'");
+                    }
+                }
                 // Automatic counselling email for Status 9 disabled; use explicit Send Email in Follow-up section instead.
                 // if($enquiry_flow_status === 9){
                 //     $eid = mysqli_real_escape_string($connection, $enquiry_id);
@@ -1252,12 +1306,42 @@ if(@$_POST['formName']=='followup_call'){
                 echo "0";
             }
         }else{
+            $has_flw_stage_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM followup_calls LIKE 'flw_followup_stage'"));
+            if ($has_flw_stage_col) {
+                $cid_fu = (int)$checkId;
+                $stRow = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT `flw_followup_stage`, `enquiry_id` FROM `followup_calls` WHERE `flw_id`=$cid_fu AND `flw_enquiry_status`=0 LIMIT 1"));
+                if (!$stRow) {
+                    echo '0';
+                    exit;
+                }
+                $rowSt = isset($stRow['flw_followup_stage']) ? trim((string)$stRow['flw_followup_stage']) : '';
+                if ($rowSt === '') {
+                    $rowSt = 'enquiry';
+                }
+                if ($rowSt !== $followup_stage_esc) {
+                    echo 'followup_stage_mismatch';
+                    exit;
+                }
+                $db_eid = trim((string)($stRow['enquiry_id'] ?? ''));
+                if ($db_eid !== $enquiry_id_trim) {
+                    echo '0';
+                    exit;
+                }
+            }
             $dates=date('Y-m-d H:i:s');
             $next_sql = $next_followup_date !== null ? "'".mysqli_real_escape_string($connection,$next_followup_date)."'" : 'NULL';
             $mode_contact_val = $contactMode ?: $followup_type;
-            $query=mysqli_query($connection,"UPDATE followup_calls SET `enquiry_id`='$enquiry_id',`flw_progress_state`='$progress_status',`flw_name`='$student_name',`flw_phone`='$contact_num',`flw_contacted_person`='$contacted_person',`flw_contacted_time`='$contacted_time',`flw_date`='$date',`flw_remarks`='$remarks',`flw_comments`='$comments',`flw_mode_contact`='$mode_contact_val',`flw_followup_type`='$followup_type',`flw_follow_up_notes`='$follow_up_notes',`flw_next_followup_date`=$next_sql,`flw_follow_up_outcome`='$follow_up_outcome',`flw_modified_date`='$dates',`flw_modifiedby`=$admin_id WHERE `flw_id`=$checkId");
+            $query=mysqli_query($connection,"UPDATE followup_calls SET `enquiry_id`='$enquiry_id',`flw_progress_state`='$progress_status',`flw_name`='$student_name',`flw_phone`='$contact_num',`flw_contacted_person`='$contacted_person',`flw_contacted_time`='$contacted_time',`flw_date`='$date',`flw_remarks`='$remarks',`flw_comments`='$comments',`flw_mode_contact`='$mode_contact_val',`flw_followup_type`='$followup_type',`flw_follow_up_notes`='$follow_up_notes',`flw_next_followup_date`=$next_sql,`flw_follow_up_outcome`='$follow_up_outcome',`flw_modified_date`='$dates',`flw_modifiedby`=$admin_id,`flw_followup_stage`='$followup_stage_esc' WHERE `flw_id`=$checkId");
             if($query){
-                if($enquiry_flow_status!==null) mysqli_query($connection,"UPDATE student_enquiry SET st_enquiry_flow_status=$enquiry_flow_status WHERE st_enquiry_id='$enquiry_id'");
+                if($enquiry_flow_status!==null) {
+                    if (!empty($followup_outcome_drove_status)) {
+                        $fu_stage_tag = ($followup_stage_esc === 'post_counselling') ? 'PCFU' : 'PEFU';
+                        $fu_stage_esc = mysqli_real_escape_string($connection, $fu_stage_tag);
+                        mysqli_query($connection,"UPDATE student_enquiry SET st_enquiry_flow_status=$enquiry_flow_status, st_enquiry_flow_change_stage='$fu_stage_esc' WHERE st_enquiry_id='$enquiry_id'");
+                    } else {
+                        mysqli_query($connection,"UPDATE student_enquiry SET st_enquiry_flow_status=$enquiry_flow_status, st_enquiry_flow_change_stage=NULL WHERE st_enquiry_id='$enquiry_id'");
+                    }
+                }
                 // Automatic counselling email for Status 9 disabled; use explicit Send Email in Follow-up section instead.
                 // if($enquiry_flow_status === 9){
                 //     $eid = mysqli_real_escape_string($connection, $enquiry_id);
@@ -1315,6 +1399,14 @@ if (@$_POST['formName'] === 'fetch_followup_history') {
         echo json_encode(array('rows' => array()));
         exit;
     }
+    $has_fu_stage = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM followup_calls LIKE 'flw_followup_stage'"));
+    $followup_stage_filter_sql = '';
+    if ($has_fu_stage) {
+        $fs = isset($_POST['followup_stage']) ? trim((string)$_POST['followup_stage']) : 'enquiry';
+        $fs = ($fs === 'post_counselling') ? 'post_counselling' : 'enquiry';
+        $fs_esc = mysqli_real_escape_string($connection, $fs);
+        $followup_stage_filter_sql = " AND f.`flw_followup_stage` = '$fs_esc' ";
+    }
     $status_labels = array(
         1 => 'New',
         2 => 'Contacted',
@@ -1343,7 +1435,8 @@ if (@$_POST['formName'] === 'fetch_followup_history') {
         'Planning to relocate to other state',
         'Wants to get COE for visa purpose',
     );
-    $q = mysqli_query($connection, "SELECT f.`flw_id`, f.`enquiry_id`, f.`flw_name`, f.`flw_phone`, f.`flw_contacted_person`, f.`flw_contacted_time`, f.`flw_date`, f.`flw_followup_type`, f.`flw_follow_up_notes`, f.`flw_follow_up_outcome`, f.`flw_progress_state`, f.`flw_next_followup_date`, f.`flw_mode_contact`, f.`flw_remarks`, f.`flw_comments`, f.`flw_created_by`, f.`flw_created_date`, f.`flw_modified_date`, f.`flw_modifiedby`, u.`user_name` AS `created_by_name`, um.`user_name` AS `modified_by_name` FROM `followup_calls` f LEFT JOIN `users` u ON u.`user_id` = f.`flw_created_by` AND u.`user_status` != 1 LEFT JOIN `users` um ON um.`user_id` = f.`flw_modifiedby` AND um.`user_status` != 1 WHERE f.`enquiry_id`='$eid' AND f.`flw_enquiry_status`=0 ORDER BY f.`flw_id` DESC");
+    $fu_stage_sel = $has_fu_stage ? 'f.`flw_followup_stage`,' : '';
+    $q = mysqli_query($connection, "SELECT f.`flw_id`, f.`enquiry_id`, f.`flw_name`, f.`flw_phone`, f.`flw_contacted_person`, f.`flw_contacted_time`, f.`flw_date`, f.`flw_followup_type`, f.`flw_follow_up_notes`, f.`flw_follow_up_outcome`, f.`flw_progress_state`, f.`flw_next_followup_date`, f.`flw_mode_contact`, f.`flw_remarks`, f.`flw_comments`, f.`flw_created_by`, f.`flw_created_date`, f.`flw_modified_date`, f.`flw_modifiedby`, $fu_stage_sel u.`user_name` AS `created_by_name`, um.`user_name` AS `modified_by_name` FROM `followup_calls` f LEFT JOIN `users` u ON u.`user_id` = f.`flw_created_by` AND u.`user_status` != 1 LEFT JOIN `users` um ON um.`user_id` = f.`flw_modifiedby` AND um.`user_status` != 1 WHERE f.`enquiry_id`='$eid' AND f.`flw_enquiry_status`=0 $followup_stage_filter_sql ORDER BY f.`flw_id` DESC");
     $rows = array();
     if ($q) {
         while ($r = mysqli_fetch_assoc($q)) {
@@ -1388,13 +1481,22 @@ if (@$_POST['formName'] === 'fetch_followup_history') {
                 }
             }
             $r['remarks_text'] = $remarks_text;
+            $stg = isset($r['flw_followup_stage']) ? (string) $r['flw_followup_stage'] : '';
+            $r['followup_stage_label'] = ($stg === 'post_counselling') ? 'Post-counselling' : 'Post-enquiry';
             $rows[] = $r;
         }
     }
-    echo json_encode(array('rows' => $rows));
+    $applied_fu_stage = null;
+    if ($has_fu_stage) {
+        $applied_fu_stage = isset($fs) ? $fs : 'enquiry';
+    }
+    echo json_encode(array('rows' => $rows, 'followup_stage' => $applied_fu_stage));
     exit;
 }
 if(@$_POST['formName']=='counseling_form'){
+        if (!mysqli_fetch_assoc(@mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_flow_change_stage'"))) {
+            @mysqli_query($connection, "ALTER TABLE `student_enquiry` ADD COLUMN `st_enquiry_flow_change_stage` VARCHAR(8) NULL DEFAULT NULL COMMENT 'PEFU or PCFU when enquiry status last set from follow-up outcome'");
+        }
         /* All fields optional: defaults match typical form presets so partial saves never 500/fail. */
         $enquiry_id=isset($_POST['enquiry_id']) ? trim((string)$_POST['enquiry_id']) : '';
         if ($enquiry_id === '0') {
@@ -1493,7 +1595,7 @@ if(@$_POST['formName']=='counseling_form'){
             if ($counselling_outcome_trim !== '' && $enquiry_id_sql !== '') {
                 $auto_cs = enquiry_flow_status_for_counselling_outcome($counselling_outcome_trim);
                 if ($auto_cs !== null) {
-                    mysqli_query($connection, 'UPDATE student_enquiry SET st_enquiry_flow_status=' . (int) $auto_cs . " WHERE st_enquiry_id='$enquiry_id_sql' AND st_enquiry_status!=1 LIMIT 1");
+                    mysqli_query($connection, 'UPDATE student_enquiry SET st_enquiry_flow_status=' . (int) $auto_cs . ", st_enquiry_flow_change_stage=NULL WHERE st_enquiry_id='$enquiry_id_sql' AND st_enquiry_status!=1 LIMIT 1");
                 }
             }
             $resp_cs = '1';
@@ -1524,7 +1626,7 @@ if(@$_POST['formName']=='counseling_form'){
             if ($counselling_outcome_trim !== '' && $enquiry_id_sql !== '') {
                 $auto_cs = enquiry_flow_status_for_counselling_outcome($counselling_outcome_trim);
                 if ($auto_cs !== null) {
-                    mysqli_query($connection, 'UPDATE student_enquiry SET st_enquiry_flow_status=' . (int) $auto_cs . " WHERE st_enquiry_id='$enquiry_id_sql' AND st_enquiry_status!=1 LIMIT 1");
+                    mysqli_query($connection, 'UPDATE student_enquiry SET st_enquiry_flow_status=' . (int) $auto_cs . ", st_enquiry_flow_change_stage=NULL WHERE st_enquiry_id='$enquiry_id_sql' AND st_enquiry_status!=1 LIMIT 1");
                 }
             }
             echo "1";
@@ -3757,6 +3859,9 @@ if(@$_POST['formName']=='fetchEnquiryDashboard'){
 
 // Enquiry list for View Enquiries: filters, sort, next_followup_date, status (HTML or DataTables JSON)
 if(@$_POST['formName']=='fetchEnquiryList'){
+    if (!mysqli_fetch_assoc(@mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_flow_change_stage'"))) {
+        @mysqli_query($connection, "ALTER TABLE `student_enquiry` ADD COLUMN `st_enquiry_flow_change_stage` VARCHAR(8) NULL DEFAULT NULL COMMENT 'PEFU or PCFU when enquiry status last set from follow-up outcome'");
+    }
     $search = isset($_POST['search']) ? mysqli_real_escape_string($connection, trim($_POST['search'])) : '';
     $filter_course = isset($_POST['filter_course']) ? (int)$_POST['filter_course'] : 0;
     $filter_status = isset($_POST['filter_status']) ? (int)$_POST['filter_status'] : -1;
@@ -3843,7 +3948,7 @@ if(@$_POST['formName']=='fetchEnquiryList'){
         11=>'warning'
     );
     // Canonical outcome keys (same as Follow Up Outcome in followup_accordion_form.php) for normalising DB values
-    $outcome_keys_canonical = array('No Answer','Call Back Later','Booked Counselling','Application Started','Enrolled','Requested More Information','Not Interested','Do not Call');
+    $outcome_keys_canonical = array('No Answer','Call Back Later','Booked Counselling','Application Started','Enrolled','Requested More Information','Not Interested','Do not Call','Wrong No','Enrolled Elsewhere','Course not Offered','Funding Enquiry');
     $outcome_normalize = array();
     foreach($outcome_keys_canonical as $k) $outcome_normalize[strtolower(trim($k))] = $k;
 
@@ -3856,17 +3961,56 @@ if(@$_POST['formName']=='fetchEnquiryList'){
         'Enrolled' => array('label'=>'Enrolled','outcome_btn'=>'btn-fup-converted'),
         'Requested More Information' => array('label'=>'Requested More Information','outcome_btn'=>'btn-fup-provide-info'),
         'Not Interested' => array('label'=>'Not Interested','outcome_btn'=>'btn-fup-lost'),
-        'Do not Call' => array('label'=>'Do not Call','outcome_btn'=>'btn-fup-lost')
+        'Do not Call' => array('label'=>'Do not Call','outcome_btn'=>'btn-fup-lost'),
+        'Wrong No' => array('label'=>'Wrong No','outcome_btn'=>'btn-fup-lost'),
+        'Enrolled Elsewhere' => array('label'=>'Enrolled Elsewhere','outcome_btn'=>'btn-fup-lost'),
+        'Course not Offered' => array('label'=>'Course not Offered','outcome_btn'=>'btn-fup-lost'),
+        'Funding Enquiry' => array('label'=>'Funding Enquiry','outcome_btn'=>'btn-fup-lost')
     );
 
-    /** Per-enquiry meta for View Enquiries: latest follow-up + latest counselling outcome and timestamps */
+    /** Per-enquiry meta for View Enquiries: latest follow-up (PE vs PC tracked separately, newest wins) + counselling */
     $enquiry_list_fetch_row_meta = function ($connection, $st_enquiry_id) use ($outcome_normalize) {
         $eid_esc = mysqli_real_escape_string($connection, (string) $st_enquiry_id);
         $next_fup = null;
         $follow_up_outcome = '';
         $follow_ts = 0;
-        $fq = mysqli_query($connection, "SELECT * FROM followup_calls WHERE enquiry_id='$eid_esc' AND flw_enquiry_status=0 ORDER BY flw_id DESC LIMIT 1");
-        if ($fq && ($fr = mysqli_fetch_assoc($fq))) {
+        $fr = null;
+        $has_fu_st = mysqli_fetch_assoc(@mysqli_query($connection, "SHOW COLUMNS FROM followup_calls LIKE 'flw_followup_stage'"));
+        if ($has_fu_st) {
+            $bestTs = -1;
+            $bestRow = null;
+            $bestFid = 0;
+            foreach (array('enquiry', 'post_counselling') as $stg) {
+                $stg_esc = mysqli_real_escape_string($connection, $stg);
+                $fq1 = mysqli_query($connection, "SELECT * FROM followup_calls WHERE enquiry_id='$eid_esc' AND flw_enquiry_status=0 AND flw_followup_stage='$stg_esc' ORDER BY flw_id DESC LIMIT 1");
+                if ($fq1 && ($row = mysqli_fetch_assoc($fq1))) {
+                    $md = isset($row['flw_modified_date']) ? trim((string) $row['flw_modified_date']) : '';
+                    $cd = isset($row['flw_created_date']) ? trim((string) $row['flw_created_date']) : '';
+                    $ts = 0;
+                    if ($md !== '' && $md !== '0000-00-00 00:00:00' && strtotime($md)) {
+                        $ts = strtotime($md);
+                    } elseif ($cd !== '' && strtotime($cd)) {
+                        $ts = strtotime($cd);
+                    }
+                    $fid = (int)($row['flw_id'] ?? 0);
+                    if ($ts > $bestTs || ($ts === $bestTs && $fid > $bestFid)) {
+                        $bestTs = $ts;
+                        $bestFid = $fid;
+                        $bestRow = $row;
+                    }
+                }
+            }
+            $fr = $bestRow;
+            if ($fr) {
+                $follow_ts = $bestTs > 0 ? $bestTs : 0;
+            }
+        } else {
+            $fq = mysqli_query($connection, "SELECT * FROM followup_calls WHERE enquiry_id='$eid_esc' AND flw_enquiry_status=0 ORDER BY flw_id DESC LIMIT 1");
+            if ($fq) {
+                $fr = mysqli_fetch_assoc($fq);
+            }
+        }
+        if ($fr) {
             if (isset($fr['flw_next_followup_date']) && $fr['flw_next_followup_date'] !== null && $fr['flw_next_followup_date'] !== '') {
                 $next_fup = $fr['flw_next_followup_date'];
             }
@@ -3876,12 +4020,14 @@ if(@$_POST['formName']=='fetchEnquiryList'){
                     $follow_up_outcome = $outcome_normalize[strtolower($follow_up_outcome)];
                 }
             }
-            $md = isset($fr['flw_modified_date']) ? trim((string) $fr['flw_modified_date']) : '';
-            $cd = isset($fr['flw_created_date']) ? trim((string) $fr['flw_created_date']) : '';
-            if ($md !== '' && $md !== '0000-00-00 00:00:00' && strtotime($md)) {
-                $follow_ts = strtotime($md);
-            } elseif ($cd !== '' && strtotime($cd)) {
-                $follow_ts = strtotime($cd);
+            if (!$has_fu_st) {
+                $md = isset($fr['flw_modified_date']) ? trim((string) $fr['flw_modified_date']) : '';
+                $cd = isset($fr['flw_created_date']) ? trim((string) $fr['flw_created_date']) : '';
+                if ($md !== '' && $md !== '0000-00-00 00:00:00' && strtotime($md)) {
+                    $follow_ts = strtotime($md);
+                } elseif ($cd !== '' && strtotime($cd)) {
+                    $follow_ts = strtotime($cd);
+                }
             }
         }
         $couns_outcome = '';
@@ -3930,7 +4076,8 @@ if(@$_POST['formName']=='fetchEnquiryList'){
     if($rfq && ($rfr = mysqli_fetch_row($rfq))){ $records_filtered = (int)$rfr[0]; }
 
     $rows = array();
-    $select_sql = "SELECT e.st_id, e.st_enquiry_id, e.st_name, e.st_phno, e.st_email, e.st_course, e.st_course_type, e.st_enquiry_date, e.created_date, $flow_col AS flow_status FROM student_enquiry e WHERE $where ";
+    $fu_stage_sel = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_flow_change_stage'")) ? 'e.st_enquiry_flow_change_stage' : 'NULL';
+    $select_sql = "SELECT e.st_id, e.st_enquiry_id, e.st_name, e.st_phno, e.st_email, e.st_course, e.st_course_type, e.st_enquiry_date, e.created_date, $flow_col AS flow_status, $fu_stage_sel AS flow_change_stage FROM student_enquiry e WHERE $where ";
 
     if($sort_by === 'followup_date'){
         $q = mysqli_query($connection, $select_sql.$order_sql);
@@ -3995,6 +4142,10 @@ if(@$_POST['formName']=='fetchEnquiryList'){
         $flow_status = (int)($r['flow_status'] ?? 1);
         $status_label = $status_labels[$flow_status] ?? 'New';
         $status_class = $status_classes[$flow_status] ?? 'secondary';
+        $flow_stage_acr = isset($r['flow_change_stage']) && $r['flow_change_stage'] !== null ? trim((string) $r['flow_change_stage']) : '';
+        $stage_html = ($flow_stage_acr === 'PEFU' || $flow_stage_acr === 'PCFU')
+            ? '<span class="badge bg-secondary" title="Enquiry status last set from follow-up outcome (Post Enquiry vs Post Counselling)">' . htmlspecialchars($flow_stage_acr) . '</span>'
+            : '<span class="text-muted">—</span>';
         $outcome_html = '<span class="badge bg-secondary">No follow-up yet</span>';
         $use_counselling_outcome = ($couns_outcome !== '' && ($follow_up_outcome === '' || $couns_ts > $follow_ts));
         if ($use_counselling_outcome) {
@@ -4046,6 +4197,7 @@ if(@$_POST['formName']=='fetchEnquiryList'){
                 htmlspecialchars($r['st_name']),
                 htmlspecialchars($r['st_phno']),
                 $course_name,
+                $stage_html,
                 '<span class="badge bg-'.$status_class.'">'.$status_label.'</span>',
                 $action_html
             );
@@ -4056,6 +4208,7 @@ if(@$_POST['formName']=='fetchEnquiryList'){
                 htmlspecialchars($r['st_name']),
                 htmlspecialchars($r['st_phno']),
                 $course_name,
+                $stage_html,
                 '<span class="badge bg-'.$status_class.'">'.$status_label.'</span>',
                 $action_html
             );
@@ -4081,7 +4234,7 @@ if(@$_POST['formName']=='fetchEnquiryList'){
         ));
         exit;
     }
-    $empty_colspan = $view_enq_list_admin ? 8 : 7;
+    $empty_colspan = $view_enq_list_admin ? 9 : 8;
     echo $tbody ?: '<tr><td colspan="'.$empty_colspan.'">No records</td></tr>';
     exit;
 }

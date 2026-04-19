@@ -116,9 +116,9 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
         .btn-fup-outcome.btn-fup-provide-info{ background: #495057; border: 1px solid #fd7e14; }
         .btn-fup-outcome.btn-fup-lost{ background: #dc3545; }
 
-        /* Outcome column: col 2 when checkbox present, col 1 for staff (no checkbox) */
-        table.table-enquiry-list td:nth-child(2) .badge,
-        table.table-enquiry-list.enq-list-staff td:nth-child(1) .badge{
+        /* Outcome column: col 3 when checkbox present, col 2 for staff (Stage is immediately left of Outcome) */
+        table.table-enquiry-list td:nth-child(3) .badge,
+        table.table-enquiry-list.enq-list-staff td:nth-child(2) .badge{
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -337,12 +337,12 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
                                         <?php if(!empty($view_enq_can_delete)){ ?>
                                         <th class="enq-col-select"><input type="checkbox" id="enq_select_all" class="form-check-input" title="Select all on this page" aria-label="Select all on this page"></th>
                                         <?php } ?>
+                                        <th>Stage</th>
                                         <th class="table-next-fup">Outcome</th>
                                         <th>Enquiry Date</th>
                                         <th>Name</th>
                                         <th>Mobile</th>
                                         <th>Course</th>
-                                        <th>Stage</th>
                                         <th>Status</th>
                                         <th style="min-width:96px">Action</th>
                                     </tr>

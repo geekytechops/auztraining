@@ -621,10 +621,49 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 z-index: 5;
                 pointer-events: auto;
             }
+            /* View-only (Allow editing off): disabled buttons use Theme Customizer primary — not template generic gray */
+            body.student-enquiry-controls-disabled .btn-primary:disabled,
+            body.student-enquiry-controls-disabled .btn-primary.disabled,
+            body.student-enquiry-controls-disabled fieldset:disabled .btn-primary {
+                color: #fff !important;
+                background-color: rgba(var(--primary-rgb), 0.5) !important;
+                border-color: rgba(var(--primary-rgb), 0.42) !important;
+                opacity: 1 !important;
+            }
+            body.student-enquiry-controls-disabled .btn-outline-primary:disabled,
+            body.student-enquiry-controls-disabled .btn-outline-primary.disabled {
+                color: rgba(var(--primary-rgb), 0.95) !important;
+                background-color: rgba(var(--primary-rgb), 0.12) !important;
+                border-color: rgba(var(--primary-rgb), 0.4) !important;
+                opacity: 1 !important;
+            }
+            body.student-enquiry-controls-disabled .btn-info:disabled,
+            body.student-enquiry-controls-disabled .btn-info.disabled,
+            body.student-enquiry-controls-disabled fieldset:disabled .btn-info {
+                color: #fff !important;
+                background-color: rgba(var(--primary-rgb), 0.5) !important;
+                border-color: rgba(var(--primary-rgb), 0.42) !important;
+                opacity: 1 !important;
+            }
+            body.student-enquiry-controls-disabled .btn-success:disabled,
+            body.student-enquiry-controls-disabled .btn-success.disabled,
+            body.student-enquiry-controls-disabled fieldset:disabled .btn-success {
+                color: #fff !important;
+                background-color: rgba(var(--primary-rgb), 0.5) !important;
+                border-color: rgba(var(--primary-rgb), 0.42) !important;
+                opacity: 1 !important;
+            }
+            body.student-enquiry-controls-disabled .btn-outline-secondary:disabled,
+            body.student-enquiry-controls-disabled .btn-outline-secondary.disabled {
+                color: rgba(var(--primary-rgb), 0.75) !important;
+                background-color: rgba(var(--primary-rgb), 0.08) !important;
+                border-color: rgba(var(--primary-rgb), 0.35) !important;
+                opacity: 1 !important;
+            }
         </style>
     </head>
 
-    <body>
+    <body<?php echo (isset($eqId) && (int)$eqId > 0 && !empty($enquiry_locked_start)) ? ' class="student-enquiry-controls-disabled"' : ''; ?>>
 
     <div id="loader-container">
         <div class="loader"></div>
@@ -1699,6 +1738,9 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             }
             function applyEnquiryFormLock(locked){
                 if(!window.ENQUIRY_EDIT_PAGE) return;
+                if (document.body) {
+                    document.body.classList.toggle('student-enquiry-controls-disabled', !!locked);
+                }
                 var $t = $('#enquiry_edit_mode_toggle');
                 // Keep accordion section headers clickable in view-only so users can expand/collapse to read content.
                 $('#student_enquiry_contact_bar').find(':input').not('#send_student_login_link_btn').prop('disabled', !!locked);

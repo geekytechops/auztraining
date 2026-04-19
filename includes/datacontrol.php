@@ -4192,23 +4192,23 @@ if(@$_POST['formName']=='fetchEnquiryList'){
         if($view_enq_list_admin){
             $cells = array(
                 $cb_html,
+                $stage_html,
                 $outcome_html,
                 $enquiry_date,
                 htmlspecialchars($r['st_name']),
                 htmlspecialchars($r['st_phno']),
                 $course_name,
-                $stage_html,
                 '<span class="badge bg-'.$status_class.'">'.$status_label.'</span>',
                 $action_html
             );
         } else {
             $cells = array(
+                $stage_html,
                 $outcome_html,
                 $enquiry_date,
                 htmlspecialchars($r['st_name']),
                 htmlspecialchars($r['st_phno']),
                 $course_name,
-                $stage_html,
                 '<span class="badge bg-'.$status_class.'">'.$status_label.'</span>',
                 $action_html
             );

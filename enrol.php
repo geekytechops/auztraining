@@ -12,7 +12,7 @@ define('DB_HOST', 'localhost');           // CRM database host (or IP if DB is o
 define('DB_USER', 'root');                // CRM database username
 define('DB_PASS', '');                    // CRM database password
 define('DB_NAME', 'auztraining');         // CRM database name
-define('SITE_NAME', 'National College Australia');http://localhost/auztraining/student_enquiry.php
+define('SITE_NAME', 'National College Australia');
 define('FROM_EMAIL', 'noreply@yoursite.com');  // From address for confirmation email
 define('ADMIN_EMAIL', 'info@nca.edu.au');      // Optional: notify this email on new enquiry
 define('CRM_REGISTER_URL', 'https://your-crm-domain.com/student_register.php');  // Link shown after submit
@@ -74,11 +74,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
             // Send confirmation email to applicant
             $subject = 'Your Enquiry – ' . SITE_NAME;
             $body = "Thank you for your interest.<br><br>Your Enquiry ID: <strong>$enquiry_id</strong> (keep this for reference).<br><br><strong>Next step:</strong> Register or log in to complete your full enrolment application and submit all form details.<br><br>Register: " . CRM_REGISTER_URL . "<br>Log in: " . CRM_LOGIN_URL;
-            enrol_send_mail($emailAddress, $subject, $body);
+            enrol_send_mail($emailAddress, $subject, $body, array('email_category' => 'public_enquiry_form', 'st_enquiry_id' => $enquiry_id, 'st_id' => $lastId, 'meta' => array('recipient_role' => 'applicant')));
 
             // Optional: notify admin
             if (ADMIN_EMAIL !== '') {
-                enrol_send_mail(ADMIN_EMAIL, 'New Enquiry ' . $enquiry_id . ' – ' . $studentName . ' ' . $surname, 'A new course application was submitted. Enquiry ID: ' . $enquiry_id);
+                enrol_send_mail(ADMIN_EMAIL, 'New Enquiry ' . $enquiry_id . ' – ' . $studentName . ' ' . $surname, 'A new course application was submitted. Enquiry ID: ' . $enquiry_id, array('email_category' => 'public_enquiry_form', 'st_enquiry_id' => $enquiry_id, 'st_id' => $lastId, 'meta' => array('recipient_role' => 'admin_notify')));
             }
         } else {
             $form_error = 'Sorry, we could not save your application. Please try again or contact us.';
@@ -86,13 +86,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
     }
 }
 
-function enrol_send_mail($to, $subject, $body) {
+function enrol_send_mail($to, $subject, $body, array $ctx = array()) {
     $from = FROM_EMAIL;
     $headers = "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\nFrom: " . SITE_NAME . " <$from>\r\n";
+    $ok = true;
+    $err = null;
     if (MAIL_METHOD === 'smtp' && defined('SMTP_USER') && SMTP_USER !== '') {
         enrol_smtp_mail($to, $subject, $body, $from);
     } else {
-        @mail($to, $subject, $body, $headers);
+        $ok = @mail($to, $subject, $body, $headers);
+        if (!$ok) {
+            $err = 'mail() returned false';
+        }
+    }
+    global $conn;
+    if (!empty($conn) && $conn instanceof mysqli && file_exists(__DIR__ . '/includes/email_log_helper.php')) {
+        require_once __DIR__ . '/includes/email_log_helper.php';
+        crm_email_ensure_log_table($conn);
+        crm_email_log_record($conn, $to, $subject, $body, $ok ? 'sent' : 'failed', $err, array_merge(array('email_category' => 'public_enquiry_form'), $ctx));
     }
 }
 

@@ -104,6 +104,12 @@ $is_course_forms_active = in_array($current_page, $course_forms_pages, true);
 
                                 <?php if(@$_SESSION['user_type']==1 || @$_SESSION['user_type']==2){ ?>
                                 <li>
+                                    <a href="email_logs.php" class="<?php echo $current_page === 'email_logs.php' ? 'active' : ''; ?>"><i class="ti ti-mail-forward"></i><span>Email Logs</span></a>
+                                </li>
+                                <?php } ?>
+
+                                <?php if(@$_SESSION['user_type']==1 || @$_SESSION['user_type']==2){ ?>
+                                <li>
                                     <a href="invoices1.php" class="<?php echo $current_page === 'invoices1.php' ? 'active' : ''; ?>"><i class="ti ti-file-invoice"></i><span>Invoices</span></a>
                                 </li>
                                 <?php } ?>

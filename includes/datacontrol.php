@@ -186,7 +186,7 @@ if(isset($_POST['send_enquiry_status_email']) && isset($_POST['enquiry_id']) && 
     $save_as_default = !empty($_POST['save_as_default']) && isset($_POST['status_code']);
     $status_code = $save_as_default ? (int)$_POST['status_code'] : 0;
     $send_status_for_placeholders = isset($_POST['status_code']) ? (int)$_POST['status_code'] : 0;
-    $q = mysqli_query($connection, "SELECT st_email, st_name, st_course FROM student_enquiry WHERE st_enquiry_id='$enquiry_id' AND st_enquiry_status!=1 LIMIT 1");
+    $q = mysqli_query($connection, "SELECT st_email, st_name, st_course, st_id FROM student_enquiry WHERE st_enquiry_id='$enquiry_id' AND st_enquiry_status!=1 LIMIT 1");
     if($q && mysqli_num_rows($q)){
         $row = mysqli_fetch_assoc($q);
         $to = $row['st_email'];
@@ -257,8 +257,19 @@ if(isset($_POST['send_enquiry_status_email']) && isset($_POST['enquiry_id']) && 
             require_once(__DIR__ . '/mail_function.php');
         }
         $body_html = '<div style="font-family:Segoe UI,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#333;">' . nl2br(htmlspecialchars($body_sent, ENT_QUOTES, 'UTF-8')) . '</div>';
+        $st_id_for_log = isset($row['st_id']) ? (int) $row['st_id'] : 0;
+        $mail_ctx = array(
+            'email_category' => 'enquiry_status',
+            'st_enquiry_id' => trim((string) ($_POST['enquiry_id'] ?? '')),
+            'meta' => array(
+                'status_code' => $send_status_for_placeholders,
+            ),
+        );
+        if ($st_id_for_log > 0) {
+            $mail_ctx['st_id'] = $st_id_for_log;
+        }
         try {
-            send_mail($to, $subject, $body_html);
+            send_mail($to, $subject, $body_html, $mail_ctx);
             if ($save_as_default && (($status_code >= 1 && $status_code <= 11) || in_array($status_code, array(12, 13, 14), true))) {
                 $body_esc = mysqli_real_escape_string($connection, $body);
                 mysqli_query($connection, "UPDATE enquiry_status_email_templates SET subject='$subject', body='$body_esc', updated_at=NOW() WHERE status_code=$status_code");
@@ -2402,7 +2413,7 @@ if(!function_exists('auth_send_login_otp')){
               . '<p style="margin:0;color:#666;">This OTP is valid for 10 minutes.</p>'
               . '<p style="margin-top:14px;color:#666;">If this was not you, please ignore this email.</p>'
               . '</div>';
-        send_mail($to, $subject, $body);
+        send_mail($to, $subject, $body, array('email_category' => 'login_otp', 'meta' => array('context' => $label)));
     }
 }
 
@@ -4943,8 +4954,24 @@ if (!function_exists('crm_send_enquiry_flow_appointment_confirmation_email')) {
         }
         $html .= '</div><p style="margin:18px 8px 0;font-size:11px;line-height:1.5;color:#94a3b8;text-align:center;">You received this because an appointment was booked for you in our system. For questions, contact National College Australia using the same channel you used to reach us.</p></div>';
 
+        $st_id_ctx = null;
+        if ($eq !== '' && preg_match('/^EQ\d+$/i', $eq)) {
+            $eesc = mysqli_real_escape_string($connection, $eq);
+            $sr = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT st_id FROM student_enquiry WHERE st_enquiry_id='$eesc' AND st_enquiry_status!=1 LIMIT 1"));
+            if ($sr && isset($sr['st_id'])) {
+                $st_id_ctx = (int) $sr['st_id'];
+            }
+        }
+        $mail_ctx_appt = array(
+            'email_category' => 'appointment_confirmation',
+            'st_enquiry_id' => $eq,
+            'meta' => array('flow' => $is_reschedule_flow ? 'reschedule' : ($is_phone_flow ? 'phone' : 'standard')),
+        );
+        if ($st_id_ctx !== null && $st_id_ctx > 0) {
+            $mail_ctx_appt['st_id'] = $st_id_ctx;
+        }
         try {
-            send_mail($student_email, $subject, $html);
+            send_mail($student_email, $subject, $html, $mail_ctx_appt);
         } catch (Throwable $e) {
             // Booking must still succeed if mail transport fails
         }
@@ -5199,8 +5226,18 @@ if(@$_POST['formName']=='appointment_booking'){
                 $pn = 'Appointment';
             }
             $mail_body = 'Your appointment has been booked for ' . date('d M Y h:i A', strtotime($appointment_datetime)) . '.<br><br>Details:<br>Purpose: ' . htmlspecialchars($pn, ENT_QUOTES, 'UTF-8') . '<br>Meeting Type: ' . htmlspecialchars($meeting_type, ENT_QUOTES, 'UTF-8');
+            $eq_manual = isset($_POST['connected_enquiry_id']) ? trim((string) $_POST['connected_enquiry_id']) : '';
+            $manual_ctx = array('email_category' => 'appointment_manual');
+            if ($eq_manual !== '' && preg_match('/^EQ\d+$/i', $eq_manual)) {
+                $manual_ctx['st_enquiry_id'] = $eq_manual;
+                $em_esc = mysqli_real_escape_string($connection, $eq_manual);
+                $sr_m = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT st_id FROM student_enquiry WHERE st_enquiry_id='$em_esc' AND st_enquiry_status!=1 LIMIT 1"));
+                if ($sr_m && !empty($sr_m['st_id'])) {
+                    $manual_ctx['st_id'] = (int) $sr_m['st_id'];
+                }
+            }
             try {
-                send_mail($mail_to, $mail_subject, $mail_body);
+                send_mail($mail_to, $mail_subject, $mail_body, $manual_ctx);
             } catch (Throwable $e) {
             }
         }
@@ -5773,7 +5810,7 @@ if(@$_POST['formName']=='course_cancellation'){
             $mail_body .= "If you have any questions, please contact Client Services.<br><br>";
             $mail_body .= "Best regards,<br>National College Australia";
             
-            send_mail($mail_to, $mail_subject, $mail_body);
+            send_mail($mail_to, $mail_subject, $mail_body, array('email_category' => 'course_cancellation_submit', 'meta' => array('ref' => $uniqueId)));
         } else {
             echo '0';
         }
@@ -5837,7 +5874,7 @@ if(@$_POST['formName']=='course_extension'){
             $mail_body .= "If you have any questions, please contact Client Services.<br><br>";
             $mail_body .= "Best regards,<br>National College Australia";
             
-            send_mail($mail_to, $mail_subject, $mail_body);
+            send_mail($mail_to, $mail_subject, $mail_body, array('email_category' => 'course_extension_submit', 'meta' => array('ref' => $uniqueId)));
         } else {
             echo '0';
         }
@@ -6009,7 +6046,7 @@ if(@$_POST['formName']=='process_cancellation'){
         $mail_body .= "If you have any questions, please contact Client Services.<br><br>";
         $mail_body .= "Best regards,<br>National College Australia";
         
-        send_mail($mail_to, $mail_subject, $mail_body);
+        send_mail($mail_to, $mail_subject, $mail_body, array('email_category' => 'course_cancellation_update', 'meta' => array('cancellation_id' => $cancellation_id)));
         
         echo '1';
     } else {
@@ -6083,7 +6120,7 @@ if(@$_POST['formName']=='process_extension'){
         $mail_body .= "If you have any questions, please contact Client Services.<br><br>";
         $mail_body .= "Best regards,<br>National College Australia";
         
-        send_mail($mail_to, $mail_subject, $mail_body);
+        send_mail($mail_to, $mail_subject, $mail_body, array('email_category' => 'course_extension_update', 'meta' => array('extension_id' => $extension_id)));
         
         echo '1';
     } else {

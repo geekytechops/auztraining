@@ -4143,7 +4143,8 @@ if(@$_POST['formName']=='fetchEnquiryList'){
         } else {
             $course_name = '-';
         }
-        $enquiry_dt_raw = !empty($r['created_date']) ? $r['created_date'] : $r['st_enquiry_date'];
+        // Enquiry Date column must reflect the actual enquiry field (st_enquiry_date).
+        $enquiry_dt_raw = !empty($r['st_enquiry_date']) ? $r['st_enquiry_date'] : $r['created_date'];
         $enquiry_date = $enquiry_dt_raw ? date('d/m/Y', strtotime($enquiry_dt_raw)) : '-';
         $flow_status = (int)($r['flow_status'] ?? 1);
         $status_label = $status_labels[$flow_status] ?? 'New';

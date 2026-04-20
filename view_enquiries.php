@@ -38,7 +38,7 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
         }
         .table-enquiry-list:not(.enq-list-staff) thead th:nth-child(8),
         .table-enquiry-list:not(.enq-list-staff) tbody td:nth-child(8){
-            max-width: 100px;
+            max-width: 132px;
         }
         .table-enquiry-list.enq-list-staff thead th:nth-child(1),
         .table-enquiry-list.enq-list-staff tbody td:nth-child(1){
@@ -46,7 +46,7 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
         }
         .table-enquiry-list.enq-list-staff thead th:nth-child(7),
         .table-enquiry-list.enq-list-staff tbody td:nth-child(7){
-            max-width: 100px;
+            max-width: 132px;
         }
         .table-enquiry-list .enq-stage-badge{
             width: 58px !important;
@@ -63,9 +63,9 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
             text-overflow: ellipsis;
         }
         .table-enquiry-list .enq-status-badge{
-            width: 88px !important;
-            min-width: 88px;
-            max-width: 88px;
+            width: 120px !important;
+            min-width: 120px;
+            max-width: 120px;
             padding-left: 0.4rem;
             padding-right: 0.4rem;
             font-size: 0.72rem;

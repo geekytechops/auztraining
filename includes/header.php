@@ -29,12 +29,12 @@ $logout_url = $is_student ? 'student_logout.php' : 'index.php?name=logout';
                 <i class="ti ti-arrow-bar-to-right"></i>
             </button>
 
-            <div class="me-auto d-flex align-items-center header-search d-lg-flex d-none">
+            <!-- <div class="me-auto d-flex align-items-center header-search d-lg-flex d-none">
                 <div class="input-icon position-relative me-2">
                     <input type="text" class="form-control" placeholder="Search Keyword">
                     <span class="input-icon-addon d-inline-flex p-0 header-search-icon"><i class="ti ti-command"></i></span>
                 </div>
-            </div>
+            </div> -->
         </div>
 
         <div class="d-flex align-items-center">

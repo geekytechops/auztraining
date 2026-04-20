@@ -1247,7 +1247,7 @@ if(@$_POST['formName']=='followup_call'){
             if($lastId!=''){
                 if($enquiry_flow_status!==null) {
                     if (!empty($followup_outcome_drove_status)) {
-                        $fu_stage_tag = ($followup_stage_esc === 'post_counselling') ? 'CONS' : 'ENQ';
+                        $fu_stage_tag = ($followup_stage_esc === 'post_counselling') ? 'PCFU' : 'PEFU';
                         $fu_stage_esc = mysqli_real_escape_string($connection, $fu_stage_tag);
                         mysqli_query($connection,"UPDATE student_enquiry SET st_enquiry_flow_status=$enquiry_flow_status, st_enquiry_flow_change_stage='$fu_stage_esc' WHERE st_enquiry_id='$enquiry_id'");
                     } else {
@@ -1341,7 +1341,7 @@ if(@$_POST['formName']=='followup_call'){
             if($query){
                 if($enquiry_flow_status!==null) {
                     if (!empty($followup_outcome_drove_status)) {
-                        $fu_stage_tag = ($followup_stage_esc === 'post_counselling') ? 'CONS' : 'ENQ';
+                        $fu_stage_tag = ($followup_stage_esc === 'post_counselling') ? 'PCFU' : 'PEFU';
                         $fu_stage_esc = mysqli_real_escape_string($connection, $fu_stage_tag);
                         mysqli_query($connection,"UPDATE student_enquiry SET st_enquiry_flow_status=$enquiry_flow_status, st_enquiry_flow_change_stage='$fu_stage_esc' WHERE st_enquiry_id='$enquiry_id'");
                     } else {
@@ -4151,9 +4151,10 @@ if(@$_POST['formName']=='fetchEnquiryList'){
         $status_class = $status_classes[$flow_status] ?? 'secondary';
         $flow_stage_acr = isset($r['flow_change_stage']) && $r['flow_change_stage'] !== null ? trim((string) $r['flow_change_stage']) : '';
         if ($flow_stage_acr === 'ENQ') {
-            $stage_tooltip_esc = htmlspecialchars('ENQ → Post Enquiry Follow Up', ENT_QUOTES, 'UTF-8');
-            $stage_html = '<span class="course-tooltip" title="' . $stage_tooltip_esc . '"><span class="badge bg-secondary enq-stage-badge">' . htmlspecialchars($flow_stage_acr) . '</span></span>';
-        } elseif ($flow_stage_acr === 'CONS') {
+            // Backward compatibility for older rows saved before stage acronym migration.
+            $flow_stage_acr = 'PEFU';
+        }
+        if ($flow_stage_acr === 'CONS') {
             $stage_tooltip_esc = htmlspecialchars('CONS → Counselling', ENT_QUOTES, 'UTF-8');
             $stage_html = '<span class="course-tooltip" title="' . $stage_tooltip_esc . '"><span class="badge bg-secondary enq-stage-badge">' . htmlspecialchars($flow_stage_acr) . '</span></span>';
         } elseif ($flow_stage_acr === 'PEFU') {
@@ -5215,32 +5216,40 @@ if(@$_POST['formName']=='appointment_booking'){
             );
         }
 
-        // Optional manual “send email” from appointment form (plain template) — not duplicated when auto flow mail above ran
+        // Manual “send email” from appointment form: use the same detailed template.
         if ($send_email == 1 && $student_email !== '' && !$auto_flow_mail) {
-            if (!function_exists('send_mail')) {
-                require_once __DIR__ . '/mail_function.php';
-            }
-            $mail_to = $student_email;
-            $mail_subject = 'Appointment Confirmation';
             $pn = getPurposeName($connection, (int) $purpose_id);
             if (!is_string($pn) || $pn === '') {
                 $pn = 'Appointment';
             }
-            $mail_body = 'Your appointment has been booked for ' . date('d M Y h:i A', strtotime($appointment_datetime)) . '.<br><br>Details:<br>Purpose: ' . htmlspecialchars($pn, ENT_QUOTES, 'UTF-8') . '<br>Meeting Type: ' . htmlspecialchars($meeting_type, ENT_QUOTES, 'UTF-8');
+            $loc_n = ($location_id !== 'NULL' && $location_id !== '' && is_numeric($location_id)) ? crm_appointment_lookup_location_name($connection, $location_id) : '';
+            $plat_n = ($platform_id !== 'NULL' && $platform_id !== '' && is_numeric($platform_id)) ? crm_appointment_lookup_platform_name($connection, $platform_id) : '';
+            $staff_n = crm_appointment_lookup_user_name($connection, (int) $appointment_to_see);
             $eq_manual = isset($_POST['connected_enquiry_id']) ? trim((string) $_POST['connected_enquiry_id']) : '';
-            $manual_ctx = array('email_category' => 'appointment_manual');
-            if ($eq_manual !== '' && preg_match('/^EQ\d+$/i', $eq_manual)) {
-                $manual_ctx['st_enquiry_id'] = $eq_manual;
-                $em_esc = mysqli_real_escape_string($connection, $eq_manual);
-                $sr_m = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT st_id FROM student_enquiry WHERE st_enquiry_id='$em_esc' AND st_enquiry_status!=1 LIMIT 1"));
-                if ($sr_m && !empty($sr_m['st_id'])) {
-                    $manual_ctx['st_id'] = (int) $sr_m['st_id'];
-                }
-            }
-            try {
-                send_mail($mail_to, $mail_subject, $mail_body, $manual_ctx);
-            } catch (Throwable $e) {
-            }
+            crm_send_enquiry_flow_appointment_confirmation_email(
+                $connection,
+                $student_email,
+                false,
+                false,
+                array(
+                    'student_name' => $student_name,
+                    'student_phone' => $student_phone,
+                    'enquiry_id' => $eq_manual,
+                    'purpose_name' => $pn,
+                    'appointment_date' => $appointment_date,
+                    'appointment_time' => $appointment_time,
+                    'appointment_time_to' => $appointment_time_to,
+                    'timezone_state' => $timezone_state,
+                    'meeting_type' => $meeting_type,
+                    'location_name' => $loc_n,
+                    'platform_name' => $plat_n,
+                    'online_meeting_link' => $online_meeting_link,
+                    'staff_name' => $staff_n,
+                    'booked_by_name' => $booked_by_name,
+                    'booking_comments' => $booking_comments,
+                    'appointment_notes' => $appointment_notes,
+                )
+            );
         }
 
         if ($set_book_couns) {

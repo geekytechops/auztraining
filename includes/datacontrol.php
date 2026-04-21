@@ -316,6 +316,34 @@ if(isset($_POST['save_enquiry_status_template']) && isset($_POST['status_code'])
     exit;
 }
 
+if(isset($_POST['save_appointment_email_template']) && isset($_POST['template_code'])){
+    $template_code = preg_replace('/[^a-z0-9_\-]/i', '', (string)$_POST['template_code']);
+    $subject = mysqli_real_escape_string($connection, trim((string)($_POST['subject'] ?? '')));
+    $body = mysqli_real_escape_string($connection, (string)($_POST['body'] ?? ''));
+    $valid_codes = array(
+        'standard_booking' => 'Standard appointment confirmation',
+        'phone_call_booking' => 'Phone call booking confirmation',
+        'counselling_rescheduled' => 'Counselling rescheduled confirmation',
+    );
+    if(!isset($valid_codes[$template_code])){
+        echo '0';
+        exit;
+    }
+    @mysqli_query($connection, "CREATE TABLE IF NOT EXISTS appointment_email_templates (
+        id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        template_code VARCHAR(64) NOT NULL UNIQUE,
+        template_name VARCHAR(128) NOT NULL,
+        subject VARCHAR(255) NOT NULL,
+        body TEXT NOT NULL,
+        updated_at DATETIME NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $codeEsc = mysqli_real_escape_string($connection, $template_code);
+    $nameEsc = mysqli_real_escape_string($connection, $valid_codes[$template_code]);
+    $q = mysqli_query($connection, "INSERT INTO appointment_email_templates(template_code,template_name,subject,body,updated_at) VALUES('$codeEsc','$nameEsc','$subject','$body',NOW()) ON DUPLICATE KEY UPDATE template_name=VALUES(template_name), subject=VALUES(subject), body=VALUES(body), updated_at=NOW()");
+    echo $q ? '1' : '0';
+    exit;
+}
+
 if(@$_POST['formName']=='logout'){
     session_destroy();
     header('Location: ../index.php');
@@ -4848,6 +4876,57 @@ if(@$_POST['formName']=='fetchFollowupList'){
 
 // ==================== APPOINTMENT SYSTEM FUNCTIONS ====================
 
+if (!function_exists('crm_seed_appointment_email_templates')) {
+    function crm_seed_appointment_email_templates($connection) {
+        @mysqli_query($connection, "CREATE TABLE IF NOT EXISTS appointment_email_templates (
+            id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            template_code VARCHAR(64) NOT NULL UNIQUE,
+            template_name VARCHAR(128) NOT NULL,
+            subject VARCHAR(255) NOT NULL,
+            body TEXT NOT NULL,
+            updated_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $defaults = array(
+            'standard_booking' => array(
+                'name' => 'Standard appointment confirmation',
+                'subject' => 'Your appointment confirmation – National College Australia',
+                'body' => "Hi {{FirstName}},\n\nThis email confirms your appointment with National College Australia.\n\nYour booking details:\n- Purpose: {{PurposeName}}\n- Date: {{AppointmentDate}}\n- Time: {{AppointmentTime}}\n- Format: {{MeetingType}}\n- Team member: {{StaffName}}\n- Enquiry reference: {{EnquiryID}}\n\nIf you have any questions, please contact us."
+            ),
+            'phone_call_booking' => array(
+                'name' => 'Phone call booking confirmation',
+                'subject' => 'Your scheduled call with us – National College Australia',
+                'body' => "Hi {{FirstName}},\n\nThank you for your interest in studying with us. A member of our team will contact you at the time below.\n\nCall details:\n- Date: {{AppointmentDate}}\n- Time: {{AppointmentTime}}\n- Team member: {{StaffName}}\n- Contact number: {{StudentPhone}}\n- Enquiry reference: {{EnquiryID}}\n\nPlease keep your phone available. If this time no longer suits you, reply to this email and we will arrange another time."
+            ),
+            'counselling_rescheduled' => array(
+                'name' => 'Counselling rescheduled confirmation',
+                'subject' => 'Your rescheduled counselling session – National College Australia',
+                'body' => "Hi {{FirstName}},\n\nYour counselling session has been rescheduled. Here are your confirmed details:\n\n- Purpose: {{PurposeName}}\n- Date: {{AppointmentDate}}\n- Time: {{AppointmentTime}}\n- Format: {{MeetingType}}\n- Team member: {{StaffName}}\n- Enquiry reference: {{EnquiryID}}\n\nWe look forward to meeting you at the scheduled time."
+            ),
+        );
+
+        foreach ($defaults as $code => $cfg) {
+            $codeEsc = mysqli_real_escape_string($connection, $code);
+            $nameEsc = mysqli_real_escape_string($connection, $cfg['name']);
+            $subjectEsc = mysqli_real_escape_string($connection, $cfg['subject']);
+            $bodyEsc = mysqli_real_escape_string($connection, $cfg['body']);
+            @mysqli_query($connection, "INSERT INTO appointment_email_templates(template_code,template_name,subject,body,updated_at) VALUES('$codeEsc','$nameEsc','$subjectEsc','$bodyEsc',NOW()) ON DUPLICATE KEY UPDATE template_name=VALUES(template_name)");
+        }
+    }
+}
+
+if (!function_exists('crm_get_appointment_email_template')) {
+    function crm_get_appointment_email_template($connection, $template_code) {
+        crm_seed_appointment_email_templates($connection);
+        $code = mysqli_real_escape_string($connection, trim((string)$template_code));
+        $q = @mysqli_query($connection, "SELECT subject, body FROM appointment_email_templates WHERE template_code='$code' LIMIT 1");
+        if ($q && ($r = mysqli_fetch_assoc($q))) {
+            return array('subject' => (string)$r['subject'], 'body' => (string)$r['body']);
+        }
+        return array('subject' => '', 'body' => '');
+    }
+}
+
 /**
  * Lookups + HTML confirmation for student when booking from enquiry flows
  * (contact bar “phone call” or counselling “Rescheduled” calendar).
@@ -4939,18 +5018,36 @@ if (!function_exists('crm_send_enquiry_flow_appointment_confirmation_email')) {
         }
 
         if ($is_reschedule_flow) {
-            $subject = 'Your rescheduled counselling session – National College Australia';
-            $lead = 'Your counselling session has been rescheduled. Here are your confirmed details.';
-            $next = 'We look forward to meeting you at the scheduled time. If you need to change this appointment, please contact us as soon as possible.';
+            $tpl_code = 'counselling_rescheduled';
         } elseif ($is_phone_flow) {
-            $subject = 'Your scheduled call with us – National College Australia';
-            $lead = 'Thank you for your interest in studying with us. A member of our team will contact you at the time below.';
-            $next = 'Please keep your phone available. If this time no longer suits you, reply to this email or contact us and we will arrange another time.';
+            $tpl_code = 'phone_call_booking';
         } else {
-            $subject = 'Your appointment confirmation – National College Australia';
-            $lead = 'This email confirms an appointment with National College Australia.';
-            $next = 'If you have any questions, please contact us.';
+            $tpl_code = 'standard_booking';
         }
+        $tpl = crm_get_appointment_email_template($connection, $tpl_code);
+
+        $repl = array(
+            '{{FirstName}}' => $name !== '' ? trim(strtok($name, ' ')) : 'there',
+            '{{StudentName}}' => $name !== '' ? $name : 'there',
+            '{{EnquiryID}}' => $eq,
+            '{{PurposeName}}' => $purpose,
+            '{{AppointmentDate}}' => $dateNice,
+            '{{AppointmentTime}}' => $timeRange,
+            '{{MeetingType}}' => $meet,
+            '{{Location}}' => $loc,
+            '{{Platform}}' => $plat,
+            '{{MeetingLink}}' => $link,
+            '{{StaffName}}' => $staff,
+            '{{BookedBy}}' => $booker,
+            '{{StudentPhone}}' => $phone,
+            '{{BookingComments}}' => $comments,
+            '{{AppointmentNotes}}' => $notes,
+        );
+
+        $subject_raw = trim((string)($tpl['subject'] ?? ''));
+        $body_raw = trim((string)($tpl['body'] ?? ''));
+        $subject = strtr($subject_raw !== '' ? $subject_raw : 'Appointment Confirmation – National College Australia', $repl);
+        $body_main = strtr($body_raw, $repl);
 
         $brand = 'National College Australia';
         $html = '<div style="font-family:Segoe UI,Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;background:#f1f5f4;padding:24px;">';
@@ -4958,7 +5055,9 @@ if (!function_exists('crm_send_enquiry_flow_appointment_confirmation_email')) {
         $html .= '<p style="margin:0 0 6px;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:#158887;font-weight:600;">Appointment confirmation</p>';
         $html .= '<p style="margin:0 0 20px;font-size:18px;font-weight:600;color:#0f172a;">' . htmlspecialchars($brand, ENT_QUOTES, 'UTF-8') . '</p>';
         $html .= '<p style="margin:0 0 18px;font-size:16px;line-height:1.6;color:#334155;">Hi ' . $greet . ',</p>';
-        $html .= '<p style="margin:0 0 22px;font-size:15px;line-height:1.65;color:#334155;">' . htmlspecialchars($lead, ENT_QUOTES, 'UTF-8') . '</p>';
+        if ($body_main !== '') {
+            $html .= '<p style="margin:0 0 22px;font-size:15px;line-height:1.65;color:#334155;">' . nl2br(htmlspecialchars($body_main, ENT_QUOTES, 'UTF-8')) . '</p>';
+        }
         $html .= '<table cellpadding="0" cellspacing="0" role="presentation" style="width:100%;margin:0 0 22px;font-size:14px;line-height:1.55;color:#334155;">';
         $html .= '<tr><td style="padding:10px 12px;background:#f8fafc;border-radius:6px 6px 0 0;font-weight:600;color:#0f172a;">Your booking summary</td></tr>';
         $html .= '<tr><td style="padding:0;border:1px solid #e2e8f0;border-top:0;border-radius:0 0 6px 6px;background:#fff;">';
@@ -5008,7 +5107,6 @@ if (!function_exists('crm_send_enquiry_flow_appointment_confirmation_email')) {
         }
 
         $html .= '</table></td></tr></table>';
-        $html .= '<p style="margin:0 0 14px;font-size:14px;line-height:1.65;color:#475569;">' . htmlspecialchars($next, ENT_QUOTES, 'UTF-8') . '</p>';
         if ($booker !== '') {
             $html .= '<p style="margin:0;font-size:12px;color:#94a3b8;">Arranged by ' . htmlspecialchars($booker, ENT_QUOTES, 'UTF-8') . '</p>';
         }
@@ -5040,34 +5138,34 @@ if (!function_exists('crm_send_enquiry_flow_appointment_confirmation_email')) {
 
 // Appointment Booking
 if(@$_POST['formName']=='appointment_booking'){
-    $appointment_id = $_POST['appointment_id'];
-    $appointment_date = $_POST['appointment_date'];
-    $appointment_time = $_POST['appointment_time'];
+    $appointment_id = isset($_POST['appointment_id']) ? (int)$_POST['appointment_id'] : 0;
+    $appointment_date = isset($_POST['appointment_date']) ? mysqli_real_escape_string($connection, trim((string)$_POST['appointment_date'])) : '';
+    $appointment_time = isset($_POST['appointment_time']) ? mysqli_real_escape_string($connection, trim((string)$_POST['appointment_time'])) : '';
     $appointment_datetime = $appointment_date . ' ' . $appointment_time;
-    $appointment_time_to = isset($_POST['appointment_time_to']) && $_POST['appointment_time_to'] !== '' ? $_POST['appointment_time_to'] : $appointment_time;
+    $appointment_time_to = isset($_POST['appointment_time_to']) && $_POST['appointment_time_to'] !== '' ? mysqli_real_escape_string($connection, trim((string)$_POST['appointment_time_to'])) : $appointment_time;
     $appointment_end_datetime = $appointment_date . ' ' . $appointment_time_to;
-    $booked_by = $_POST['created_by'];
-    $booked_by_name = $_POST['booked_by_name'];
-    $booking_comments = $_POST['booking_comments'];
-    $purpose_id = $_POST['purpose_id'];
-    $appointment_to_see = $_POST['appointment_to_see'];
-    $attendee_type_id = $_POST['attendee_type_id'];
-    $student_name = isset($_POST['student_name']) ? $_POST['student_name'] : '';
-    $student_phone = isset($_POST['student_phone']) ? $_POST['student_phone'] : '';
-    $student_email = isset($_POST['student_email']) ? $_POST['student_email'] : '';
-    $business_name = isset($_POST['business_name']) ? $_POST['business_name'] : '';
-    $business_contact = isset($_POST['business_contact']) ? $_POST['business_contact'] : '';
+    $booked_by = isset($_POST['created_by']) ? (int)$_POST['created_by'] : 0;
+    $booked_by_name = mysqli_real_escape_string($connection, trim((string)($_POST['booked_by_name'] ?? '')));
+    $booking_comments = mysqli_real_escape_string($connection, trim((string)($_POST['booking_comments'] ?? '')));
+    $purpose_id = isset($_POST['purpose_id']) && $_POST['purpose_id'] !== '' ? (int)$_POST['purpose_id'] : 0;
+    $appointment_to_see = isset($_POST['appointment_to_see']) && $_POST['appointment_to_see'] !== '' ? (int)$_POST['appointment_to_see'] : 0;
+    $attendee_type_id = isset($_POST['attendee_type_id']) && $_POST['attendee_type_id'] !== '' ? (int)$_POST['attendee_type_id'] : 1;
+    $student_name = mysqli_real_escape_string($connection, trim((string)($_POST['student_name'] ?? '')));
+    $student_phone = mysqli_real_escape_string($connection, trim((string)($_POST['student_phone'] ?? '')));
+    $student_email = mysqli_real_escape_string($connection, trim((string)($_POST['student_email'] ?? '')));
+    $business_name = mysqli_real_escape_string($connection, trim((string)($_POST['business_name'] ?? '')));
+    $business_contact = mysqli_real_escape_string($connection, trim((string)($_POST['business_contact'] ?? '')));
     $send_email = isset($_POST['send_email']) ? 1 : 0;
-    $staff_member_type = $_POST['staff_member_type'];
-    $meeting_type = $_POST['meeting_type'];
-    $location_id = isset($_POST['location_id']) && $_POST['location_id'] != '' ? $_POST['location_id'] : 'NULL';
-    $platform_id = isset($_POST['platform_id']) && $_POST['platform_id'] != '' ? $_POST['platform_id'] : 'NULL';
-    $online_meeting_link = isset($_POST['online_meeting_link']) ? $_POST['online_meeting_link'] : '';
-    $timezone_state = $_POST['timezone_state'];
-    $appointment_time_state = isset($_POST['appointment_time_state']) && $_POST['appointment_time_state'] != '' ? $_POST['appointment_time_state'] : $appointment_datetime;
-    $appointment_time_adelaide = isset($_POST['appointment_time_adelaide']) && $_POST['appointment_time_adelaide'] != '' ? $_POST['appointment_time_adelaide'] : $appointment_datetime;
-    $appointment_time_india = isset($_POST['appointment_time_india']) && $_POST['appointment_time_india'] != '' ? $_POST['appointment_time_india'] : $appointment_datetime;
-    $appointment_time_philippines = isset($_POST['appointment_time_philippines']) && $_POST['appointment_time_philippines'] != '' ? $_POST['appointment_time_philippines'] : $appointment_datetime;
+    $staff_member_type = mysqli_real_escape_string($connection, trim((string)($_POST['staff_member_type'] ?? '')));
+    $meeting_type = mysqli_real_escape_string($connection, trim((string)($_POST['meeting_type'] ?? '')));
+    $location_id = isset($_POST['location_id']) && $_POST['location_id'] != '' ? (int)$_POST['location_id'] : 'NULL';
+    $platform_id = isset($_POST['platform_id']) && $_POST['platform_id'] != '' ? (int)$_POST['platform_id'] : 'NULL';
+    $online_meeting_link = mysqli_real_escape_string($connection, trim((string)($_POST['online_meeting_link'] ?? '')));
+    $timezone_state = mysqli_real_escape_string($connection, trim((string)($_POST['timezone_state'] ?? '')));
+    $appointment_time_state = isset($_POST['appointment_time_state']) && $_POST['appointment_time_state'] != '' ? mysqli_real_escape_string($connection, trim((string)$_POST['appointment_time_state'])) : $appointment_datetime;
+    $appointment_time_adelaide = isset($_POST['appointment_time_adelaide']) && $_POST['appointment_time_adelaide'] != '' ? mysqli_real_escape_string($connection, trim((string)$_POST['appointment_time_adelaide'])) : $appointment_datetime;
+    $appointment_time_india = isset($_POST['appointment_time_india']) && $_POST['appointment_time_india'] != '' ? mysqli_real_escape_string($connection, trim((string)$_POST['appointment_time_india'])) : $appointment_datetime;
+    $appointment_time_philippines = isset($_POST['appointment_time_philippines']) && $_POST['appointment_time_philippines'] != '' ? mysqli_real_escape_string($connection, trim((string)$_POST['appointment_time_philippines'])) : $appointment_datetime;
     $auto_phone_flow = isset($_POST['auto_create_enquiry_phone_flow']) && (string)$_POST['auto_create_enquiry_phone_flow'] === '1';
     $auto_couns_resched_flow = isset($_POST['auto_create_enquiry_counselling_reschedule_flow']) && (string)$_POST['auto_create_enquiry_counselling_reschedule_flow'] === '1';
     $set_book_couns = isset($_POST['set_flow_status_booked_counselling']) && (string)$_POST['set_flow_status_booked_counselling'] === '1';
@@ -5148,9 +5246,9 @@ if(@$_POST['formName']=='appointment_booking'){
     }
     $ce_for_sql = isset($_POST['connected_enquiry_id']) ? trim((string)$_POST['connected_enquiry_id']) : '';
     $connected_enquiry_id = $ce_for_sql !== '' ? "'" . mysqli_real_escape_string($connection, $ce_for_sql) . "'" : 'NULL';
-    $connected_enrolment_id = isset($_POST['connected_enrolment_id']) && $_POST['connected_enrolment_id'] != '' ? "'".$_POST['connected_enrolment_id']."'" : 'NULL';
-    $connected_counselling_id = isset($_POST['connected_counselling_id']) && $_POST['connected_counselling_id'] != '' ? $_POST['connected_counselling_id'] : 'NULL';
-    $appointment_notes = isset($_POST['appointment_notes']) ? $_POST['appointment_notes'] : '';
+    $connected_enrolment_id = isset($_POST['connected_enrolment_id']) && $_POST['connected_enrolment_id'] != '' ? "'" . mysqli_real_escape_string($connection, trim((string)$_POST['connected_enrolment_id'])) . "'" : 'NULL';
+    $connected_counselling_id = isset($_POST['connected_counselling_id']) && $_POST['connected_counselling_id'] != '' ? (int)$_POST['connected_counselling_id'] : 'NULL';
+    $appointment_notes = mysqli_real_escape_string($connection, trim((string)($_POST['appointment_notes'] ?? '')));
     // Share with (visibility)
     $share_with = isset($_POST['share_with']) ? $_POST['share_with'] : array();
     $appointment_shared_with = '';
@@ -5161,7 +5259,7 @@ if(@$_POST['formName']=='appointment_booking'){
         }
         $appointment_shared_with = implode(',', $ids);
     }
-    $created_by = $_POST['created_by'];
+    $created_by = isset($_POST['created_by']) ? (int)$_POST['created_by'] : 0;
     
     // Prevent double-booking: same attendee (student phone/email or business contact) at same start time
     if($appointment_id == '0'){

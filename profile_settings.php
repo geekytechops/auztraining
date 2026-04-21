@@ -67,6 +67,24 @@ $status_labels = array(
 );
 $email_template_codes = array_merge(range(1, 11), array(12, 13, 14));
 $templates = array();
+$appt_template_defaults = array(
+    'standard_booking' => array(
+        'name' => 'Standard appointment confirmation',
+        'subject' => 'Your appointment confirmation – National College Australia',
+        'body' => "Hi {{FirstName}},\n\nThis email confirms your appointment with National College Australia.\n\nYour booking details:\n- Purpose: {{PurposeName}}\n- Date: {{AppointmentDate}}\n- Time: {{AppointmentTime}}\n- Format: {{MeetingType}}\n- Team member: {{StaffName}}\n- Enquiry reference: {{EnquiryID}}\n\nIf you have any questions, please contact us."
+    ),
+    'phone_call_booking' => array(
+        'name' => 'Phone call booking confirmation',
+        'subject' => 'Your scheduled call with us – National College Australia',
+        'body' => "Hi {{FirstName}},\n\nThank you for your interest in studying with us. A member of our team will contact you at the time below.\n\nCall details:\n- Date: {{AppointmentDate}}\n- Time: {{AppointmentTime}}\n- Team member: {{StaffName}}\n- Contact number: {{StudentPhone}}\n- Enquiry reference: {{EnquiryID}}\n\nPlease keep your phone available. If this time no longer suits you, reply to this email and we will arrange another time."
+    ),
+    'counselling_rescheduled' => array(
+        'name' => 'Counselling rescheduled confirmation',
+        'subject' => 'Your rescheduled counselling session – National College Australia',
+        'body' => "Hi {{FirstName}},\n\nYour counselling session has been rescheduled. Here are your confirmed details:\n\n- Purpose: {{PurposeName}}\n- Date: {{AppointmentDate}}\n- Time: {{AppointmentTime}}\n- Format: {{MeetingType}}\n- Team member: {{StaffName}}\n- Enquiry reference: {{EnquiryID}}\n\nWe look forward to meeting you at the scheduled time."
+    ),
+);
+$appt_templates = array();
 if ($is_admin) {
     datacontrol_seed_counselling_outcome_email_templates($connection);
     $q = mysqli_query($connection, "SELECT id, status_code, subject, body, updated_at FROM enquiry_status_email_templates ORDER BY status_code");
@@ -78,6 +96,32 @@ if ($is_admin) {
     foreach ($email_template_codes as $i) {
         if (!isset($templates[$i])) {
             $templates[$i] = array('id' => '', 'status_code' => $i, 'subject' => '', 'body' => '', 'updated_at' => null);
+        }
+    }
+    @mysqli_query($connection, "CREATE TABLE IF NOT EXISTS appointment_email_templates (
+        id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        template_code VARCHAR(64) NOT NULL UNIQUE,
+        template_name VARCHAR(128) NOT NULL,
+        subject VARCHAR(255) NOT NULL,
+        body TEXT NOT NULL,
+        updated_at DATETIME NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    foreach ($appt_template_defaults as $code => $cfg) {
+        $codeEsc = mysqli_real_escape_string($connection, $code);
+        $nameEsc = mysqli_real_escape_string($connection, $cfg['name']);
+        $subjectEsc = mysqli_real_escape_string($connection, $cfg['subject']);
+        $bodyEsc = mysqli_real_escape_string($connection, $cfg['body']);
+        @mysqli_query($connection, "INSERT INTO appointment_email_templates(template_code,template_name,subject,body,updated_at) VALUES('$codeEsc','$nameEsc','$subjectEsc','$bodyEsc',NOW()) ON DUPLICATE KEY UPDATE template_name=VALUES(template_name)");
+    }
+    $aq = mysqli_query($connection, "SELECT template_code, template_name, subject, body, updated_at FROM appointment_email_templates ORDER BY id");
+    if ($aq && mysqli_num_rows($aq)) {
+        while ($row = mysqli_fetch_assoc($aq)) {
+            $appt_templates[$row['template_code']] = $row;
+        }
+    }
+    foreach ($appt_template_defaults as $code => $cfg) {
+        if (!isset($appt_templates[$code])) {
+            $appt_templates[$code] = array('template_code' => $code, 'template_name' => $cfg['name'], 'subject' => '', 'body' => '', 'updated_at' => null);
         }
     }
 }
@@ -169,6 +213,11 @@ if ($is_admin) {
                                         </a>
                                     </li>
                                     <li class="nav-item me-3">
+                                        <a href="javascript:void(0);" class="nav-link p-2 settings-main-tab" data-target="#settings_appt_email_section">
+                                            <i class="ti ti-calendar-event me-2"></i>Appointment Email Templates
+                                        </a>
+                                    </li>
+                                    <li class="nav-item me-3">
                                         <a href="javascript:void(0);" class="nav-link p-2 settings-main-tab" data-target="#settings_google_section">
                                             <i class="ti ti-calendar me-2"></i>Google Calendar
                                         </a>
@@ -189,6 +238,7 @@ if ($is_admin) {
                                                     <a href="javascript:void(0);" class="d-block p-2 fw-medium settings-side-link" data-target="#settings_security_section">Change Password</a>
                                                     <?php if($is_admin){ ?>
                                                     <a href="javascript:void(0);" class="d-block p-2 fw-medium settings-side-link" data-target="#settings_email_section">Enquiry Email Templates</a>
+                                                    <a href="javascript:void(0);" class="d-block p-2 fw-medium settings-side-link" data-target="#settings_appt_email_section">Appointment Email Templates</a>
                                                     <a href="javascript:void(0);" class="d-block p-2 fw-medium settings-side-link" data-target="#settings_google_section">Google Calendar</a>
                                                     <?php } ?>
                                                 </div>
@@ -339,6 +389,63 @@ if ($is_admin) {
                                             <?php } ?>
                                         </div>
 
+                                        <div id="settings_appt_email_section" class="d-none">
+                                            <div class="border-bottom mb-3 pb-3">
+                                                <h5 class="mb-0 fs-17">Appointment Email Templates</h5>
+                                            </div>
+                                            <?php if($is_admin){ ?>
+                                            <p class="text-muted">
+                                                Manage templates used when appointments are created from the portal.
+                                                Placeholders:
+                                                <code>{{FirstName}}</code>, <code>{{StudentName}}</code>, <code>{{EnquiryID}}</code>, <code>{{PurposeName}}</code>,
+                                                <code>{{AppointmentDate}}</code>, <code>{{AppointmentTime}}</code>, <code>{{MeetingType}}</code>,
+                                                <code>{{Location}}</code>, <code>{{Platform}}</code>, <code>{{MeetingLink}}</code>, <code>{{StaffName}}</code>,
+                                                <code>{{BookedBy}}</code>, <code>{{StudentPhone}}</code>, <code>{{BookingComments}}</code>, <code>{{AppointmentNotes}}</code>.
+                                            </p>
+                                            <div class="accordion" id="apptTemplatesAccordionInSettings">
+                                                <?php
+                                                $first_appt_acc = true;
+                                                foreach ($appt_template_defaults as $code => $cfg) {
+                                                    $t = $appt_templates[$code];
+                                                    $show = $first_appt_acc;
+                                                    $first_appt_acc = false;
+                                                    $sid = htmlspecialchars($code, ENT_QUOTES, 'UTF-8');
+                                                    $title = htmlspecialchars($t['template_name'] ?? $cfg['name'], ENT_QUOTES, 'UTF-8');
+                                                    $subject = htmlspecialchars($t['subject'] ?? '', ENT_QUOTES, 'UTF-8');
+                                                    $body = htmlspecialchars($t['body'] ?? '', ENT_QUOTES, 'UTF-8');
+                                                    $updated = !empty($t['updated_at']) ? date('d M Y H:i', strtotime($t['updated_at'])) : '—';
+                                                ?>
+                                                <div class="accordion-item">
+                                                    <h2 class="accordion-header" id="apptHead_<?php echo $sid; ?>">
+                                                        <button class="accordion-button <?php echo $show ? '' : 'collapsed'; ?>" type="button" data-bs-toggle="collapse" data-bs-target="#apptCollapse_<?php echo $sid; ?>">
+                                                            <?php echo $title; ?>
+                                                        </button>
+                                                    </h2>
+                                                    <div id="apptCollapse_<?php echo $sid; ?>" class="accordion-collapse collapse <?php echo $show ? 'show' : ''; ?>" data-bs-parent="#apptTemplatesAccordionInSettings">
+                                                        <div class="accordion-body">
+                                                            <div class="mb-2 small text-muted">Last updated: <?php echo $updated; ?></div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Subject</label>
+                                                                <input type="text" class="form-control appt-template-subject" data-code="<?php echo $sid; ?>" value="<?php echo $subject; ?>" placeholder="Email subject">
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Body</label>
+                                                                <textarea class="form-control appt-template-body" data-code="<?php echo $sid; ?>" rows="8" placeholder="Email body"><?php echo $body; ?></textarea>
+                                                            </div>
+                                                            <button type="button" class="btn btn-primary btn-sm save-appt-template-btn" data-code="<?php echo $sid; ?>">Save template</button>
+                                                            <span class="ms-2 appt-save-feedback" data-code="<?php echo $sid; ?>"></span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <?php } ?>
+                                            </div>
+                                            <?php } else { ?>
+                                            <p class="text-muted">
+                                                Only admin users can manage appointment email templates.
+                                            </p>
+                                            <?php } ?>
+                                        </div>
+
                                         <?php if ($is_admin) { ?>
                                         <div id="settings_google_section" class="d-none">
                                             <div class="border-bottom mb-3 pb-3">
@@ -419,7 +526,7 @@ if ($is_admin) {
         <script>
         $(function(){
             function showSection(target){
-                $('#settings_profile_section, #settings_security_section, #settings_email_section, #settings_google_section').addClass('d-none');
+                $('#settings_profile_section, #settings_security_section, #settings_email_section, #settings_appt_email_section, #settings_google_section').addClass('d-none');
                 $(target).removeClass('d-none');
                 $('.settings-main-tab, .settings-side-link').removeClass('active');
                 $('.settings-main-tab[data-target="'+target+'"]').addClass('active');
@@ -429,6 +536,8 @@ if ($is_admin) {
             var tab = (new URLSearchParams(window.location.search)).get('tab');
             if (tab === 'google') {
                 showSection('#settings_google_section');
+            } else if (tab === 'appointment_email') {
+                showSection('#settings_appt_email_section');
             }
 
             $(document).on('click','.settings-main-tab, .settings-side-link',function(e){
@@ -566,6 +675,32 @@ if ($is_admin) {
                     } else {
                         $fb.addClass('text-danger').text('Failed to save.');
                         $('.toast-text2').html('Unable to save email template. Please try again.');
+                        $('#borderedToast2Btn').trigger('click');
+                    }
+                });
+            });
+
+            $(document).on('click', '.save-appt-template-btn', function(){
+                var code = $(this).data('code');
+                var subject = $('.appt-template-subject[data-code="'+code+'"]').val().trim();
+                var body = $('.appt-template-body[data-code="'+code+'"]').val().trim();
+                var $btn = $(this).prop('disabled', true).text('Saving...');
+                var $fb = $('.appt-save-feedback[data-code="'+code+'"]').removeClass('text-success text-danger').text('');
+                if(!subject || !body){
+                    $btn.prop('disabled', false).text('Save template');
+                    $fb.addClass('text-danger').text('Subject and body are required.');
+                    return;
+                }
+                $.post('includes/datacontrol.php', { save_appointment_email_template: 1, template_code: code, subject: subject, body: body }, function(data){
+                    $btn.prop('disabled', false).text('Save template');
+                    if (String(data).trim() === '1') {
+                        $fb.addClass('text-success').text('Saved.');
+                        $('#toast-text').html('Appointment email template updated successfully');
+                        $('#borderedToast1Btn').trigger('click');
+                        setTimeout(function(){ $fb.text(''); }, 3000);
+                    } else {
+                        $fb.addClass('text-danger').text('Failed to save.');
+                        $('.toast-text2').html('Unable to save appointment email template. Please try again.');
                         $('#borderedToast2Btn').trigger('click');
                     }
                 });

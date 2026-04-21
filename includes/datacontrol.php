@@ -2702,7 +2702,7 @@ if(@$_POST['formName']=='student_register'){
     }
     $password_hash = password_hash($password, PASSWORD_DEFAULT);
     $student_id = 0;
-    $inactive = mysqli_query($connection, "SELECT id FROM student_users WHERE LOWER(TRIM(email))=LOWER('$email') ORDER BY id DESC LIMIT 1");
+    $inactive = mysqli_query($connection, "SELECT id FROM student_users WHERE status=0 AND LOWER(TRIM(email))=LOWER('$email') ORDER BY id DESC LIMIT 1");
     if($inactive && ($ir = mysqli_fetch_assoc($inactive)) && !empty($ir['id'])){
         $student_id = (int)$ir['id'];
         $up_inactive = mysqli_query($connection, "UPDATE student_users SET password_hash='$password_hash', full_name='$full_name', status=1 WHERE id=$student_id LIMIT 1");
@@ -2781,6 +2781,11 @@ if(@$_POST['formName']=='student_login_request_otp'){
         $_SESSION['login_otp_pending'] = array('bind' => $session_bind, 'channel' => 'student');
         $masked = preg_replace('/(^.).*(@.*$)/', '$1***$2', (string)$row['email']);
         echo json_encode(array('success' => true, 'message' => 'OTP sent to ' . $masked));
+        exit;
+    }
+    $qi = mysqli_query($connection, "SELECT id FROM student_users WHERE LOWER(TRIM(email))='$email_esc' AND status=0 LIMIT 1");
+    if($qi && mysqli_num_rows($qi) > 0){
+        echo json_encode(array('success' => false, 'message' => 'This account is inactive. Please submit a new enquiry and sign up again with the same email.'));
         exit;
     }
     echo json_encode(array('success' => false, 'message' => 'Invalid email or password.'));
@@ -2930,14 +2935,14 @@ if(@$_POST['formName'] == 'change_password'){
 
     if($sessionType === 'student'){
         // Self-registered student: password stored as hash in student_users
-        $res = mysqli_query($connection, "SELECT password_hash FROM student_users WHERE id=$id LIMIT 1");
+        $res = mysqli_query($connection, "SELECT password_hash FROM student_users WHERE id=$id AND status=1 LIMIT 1");
         $row = $res ? mysqli_fetch_assoc($res) : null;
         if(!$row || !password_verify($current, $row['password_hash'])){
             echo 'INVALID';
             exit;
         }
         $newHash = password_hash($new, PASSWORD_DEFAULT);
-        $ok = mysqli_query($connection, "UPDATE student_users SET password_hash='".mysqli_real_escape_string($connection,$newHash)."' WHERE id=$id");
+        $ok = mysqli_query($connection, "UPDATE student_users SET password_hash='".mysqli_real_escape_string($connection,$newHash)."' WHERE id=$id AND status=1 LIMIT 1");
         echo $ok ? '1' : '0';
     }else{
         // Users table: plain password as used elsewhere

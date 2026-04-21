@@ -8,6 +8,27 @@ require_once __DIR__ . '/../vendor/tecnickcom/tcpdf/tcpdf.php';
 
 session_start();
 
+if (!function_exists('crm_student_user_deactivate_if_no_active_enquiry_by_email')) {
+function crm_student_user_deactivate_if_no_active_enquiry_by_email($connection, $emailRaw) {
+    $email = strtolower(trim((string)$emailRaw));
+    if ($email === '') {
+        return;
+    }
+    $emailEsc = mysqli_real_escape_string($connection, $email);
+    $activeQ = @mysqli_query(
+        $connection,
+        "SELECT st_id FROM student_enquiry WHERE st_enquiry_status=0 AND LOWER(TRIM(st_email))=LOWER('".$emailEsc."') LIMIT 1"
+    );
+    if ($activeQ && mysqli_num_rows($activeQ) > 0) {
+        return;
+    }
+    @mysqli_query(
+        $connection,
+        "UPDATE student_users SET status=0 WHERE status=1 AND LOWER(TRIM(email))=LOWER('".$emailEsc."')"
+    );
+}
+}
+
 function enquiry_ack_email_body($name, $enquiry_id, $form_url, $register_url, $login_url) {
     if(!function_exists('send_mail')){
         require_once('mail_function.php');
@@ -873,7 +894,7 @@ $query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_member_n
             $new_lower = strtolower(trim($emailRaw));
             $old_lower = strtolower(trim((string)$emR['st_email']));
             if($suid > 0 && $new_lower !== $old_lower){
-                $em_exists = mysqli_query($connection, "SELECT id FROM student_users WHERE LOWER(TRIM(email))=LOWER('".$emailAddress."') AND id<>".$suid." LIMIT 1");
+                $em_exists = mysqli_query($connection, "SELECT id FROM student_users WHERE status=1 AND LOWER(TRIM(email))=LOWER('".$emailAddress."') AND id<>".$suid." LIMIT 1");
                 if($em_exists && mysqli_num_rows($em_exists) > 0){
                     echo 'email_duplicate_student_users';
                     exit;
@@ -978,9 +999,18 @@ if(@$_POST['formName']=='delete_enq'){
     $delColName=$_POST['colPrefix'].'_delete_note';
     $colPrefix=$_POST['colPrefix'].'_enquiry_status';
 
+    $deleted_enq_email = '';
+    if($tableName === 'student_enquiry'){
+        $eqid = (int)$enq_id;
+        $er = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT st_email FROM student_enquiry WHERE st_id=$eqid AND st_enquiry_status=0 LIMIT 1"));
+        if($er && !empty($er['st_email'])) $deleted_enq_email = (string)$er['st_email'];
+    }
     $query=mysqli_query($connection,"UPDATE $tableName SET `$delColName`='$note' , `$colPrefix`=1 WHERE `$primId`=$enq_id");
     // echo "UPDATE $tableName SET `$delColName`='$note' , `$colPrefix`=1 WHERE `$primId`=$enq_id";
 if($query){
+    if($tableName === 'student_enquiry' && $deleted_enq_email !== ''){
+        crm_student_user_deactivate_if_no_active_enquiry_by_email($connection, $deleted_enq_email);
+    }
     echo 1;
 }else{
     echo 0;
@@ -1014,8 +1044,20 @@ if(@$_POST['formName']=='bulk_delete_enquiry'){
         exit;
     }
     $in = implode(',', $ids);
+    $emails_to_check = array();
+    $eqEmailsQ = @mysqli_query($connection, "SELECT DISTINCT LOWER(TRIM(st_email)) AS em FROM student_enquiry WHERE st_id IN ($in) AND st_enquiry_status=0");
+    if($eqEmailsQ){
+        while($emr = mysqli_fetch_assoc($eqEmailsQ)){
+            if(!empty($emr['em'])) $emails_to_check[] = (string)$emr['em'];
+        }
+    }
     $query = mysqli_query($connection, "UPDATE student_enquiry SET st_delete_note='$note', st_enquiry_status=1 WHERE st_id IN ($in) AND st_enquiry_status=0");
     if($query){
+        if(!empty($emails_to_check)){
+            foreach(array_unique($emails_to_check) as $emx){
+                crm_student_user_deactivate_if_no_active_enquiry_by_email($connection, $emx);
+            }
+        }
         echo json_encode(array('ok'=>1, 'affected'=>(int)mysqli_affected_rows($connection)));
     } else {
         echo json_encode(array('ok'=>0, 'error'=>'db'));
@@ -2648,8 +2690,8 @@ if(@$_POST['formName']=='student_register'){
         echo json_encode(array('success' => false, 'message' => 'Password must be at least 6 characters.'));
         exit;
     }
-    $check = mysqli_query($connection, "SELECT id FROM student_users WHERE email='$email'");
-    if(mysqli_num_rows($check) > 0){
+    $check = mysqli_query($connection, "SELECT id FROM student_users WHERE LOWER(TRIM(email))=LOWER('$email') AND status=1 LIMIT 1");
+    if($check && mysqli_num_rows($check) > 0){
         echo json_encode(array('success' => false, 'message' => 'This email is already registered. Please log in.'));
         exit;
     }
@@ -2659,12 +2701,23 @@ if(@$_POST['formName']=='student_register'){
         $enq = mysqli_query($connection, "SELECT st_id FROM student_enquiry WHERE st_enquiry_status=0 AND st_email='$email' ORDER BY st_id DESC LIMIT 1");
     }
     $password_hash = password_hash($password, PASSWORD_DEFAULT);
-    $ins = mysqli_query($connection, "INSERT INTO student_users (email, password_hash, full_name, status) VALUES ('$email','$password_hash','$full_name',1)");
-    if(!$ins){
-        echo json_encode(array('success' => false, 'message' => 'Registration failed. Please try again.'));
-        exit;
+    $student_id = 0;
+    $inactive = mysqli_query($connection, "SELECT id FROM student_users WHERE LOWER(TRIM(email))=LOWER('$email') ORDER BY id DESC LIMIT 1");
+    if($inactive && ($ir = mysqli_fetch_assoc($inactive)) && !empty($ir['id'])){
+        $student_id = (int)$ir['id'];
+        $up_inactive = mysqli_query($connection, "UPDATE student_users SET password_hash='$password_hash', full_name='$full_name', status=1 WHERE id=$student_id LIMIT 1");
+        if(!$up_inactive){
+            echo json_encode(array('success' => false, 'message' => 'Registration failed. Please try again.'));
+            exit;
+        }
+    } else {
+        $ins = mysqli_query($connection, "INSERT INTO student_users (email, password_hash, full_name, status) VALUES ('$email','$password_hash','$full_name',1)");
+        if(!$ins){
+            echo json_encode(array('success' => false, 'message' => 'Registration failed. Please try again.'));
+            exit;
+        }
+        $student_id = mysqli_insert_id($connection);
     }
-    $student_id = mysqli_insert_id($connection);
     if(mysqli_num_rows($enq) > 0){
         $er = mysqli_fetch_array($enq);
         $st_id = (int)$er['st_id'];

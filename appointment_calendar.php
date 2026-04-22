@@ -402,25 +402,47 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                 });
             }
             
+            function crmToastSuccess(msg) {
+                $('#toast-text').html(msg);
+                var t = document.getElementById('borderedToast1');
+                if (t && window.bootstrap) {
+                    new bootstrap.Toast(t).show();
+                } else {
+                    $('#borderedToast1Btn').trigger('click');
+                }
+            }
+            function crmToastError(msg) {
+                $('#toast-text2').html(msg);
+                var t = document.getElementById('borderedToast2');
+                if (t && window.bootstrap) {
+                    new bootstrap.Toast(t).show();
+                } else {
+                    $('#borderedToast2Btn').trigger('click');
+                }
+            }
+
             function updateAppointmentStatus(status) {
                 $.ajax({
                     url: 'includes/datacontrol.php',
                     type: 'POST',
+                    dataType: 'text',
                     data: {
                         formName: 'update_appointment_status',
                         appointment_id: currentAppointmentId,
                         status: status
                     },
                     success: function(response) {
-                        if(response == '1') {
-                            $('#toast-text').html('Appointment status updated successfully');
-                            $('#borderedToast1Btn').trigger('click');
+                        var ok = String(response == null ? '' : response).trim() === '1';
+                        if(ok) {
+                            crmToastSuccess('Appointment status updated successfully');
                             $('#appointmentDetailsModal').modal('hide');
                             calendar.refetchEvents();
                         } else {
-                            $('.toast-text2').html('Cannot update appointment status');
-                            $('#borderedToast2Btn').trigger('click');
+                            crmToastError('Cannot update appointment status.');
                         }
+                    },
+                    error: function() {
+                        crmToastError('Cannot update appointment status (network error).');
                     }
                 });
             }
@@ -429,21 +451,24 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                 $.ajax({
                     url: 'includes/datacontrol.php',
                     type: 'POST',
+                    dataType: 'text',
                     data: {
                         formName: 'record_time_in_out',
                         appointment_id: currentAppointmentId,
                         type: type
                     },
                     success: function(response) {
-                        if(response == '1') {
-                            $('#toast-text').html('Time recorded successfully');
-                            $('#borderedToast1Btn').trigger('click');
+                        var ok = String(response == null ? '' : response).trim() === '1';
+                        if(ok) {
+                            crmToastSuccess(type === 'in' ? 'Time in recorded successfully.' : 'Time out recorded successfully.');
                             loadAppointmentDetails(currentAppointmentId);
                             calendar.refetchEvents();
                         } else {
-                            $('.toast-text2').html('Cannot record time');
-                            $('#borderedToast2Btn').trigger('click');
+                            crmToastError('Cannot record time.');
                         }
+                    },
+                    error: function() {
+                        crmToastError('Cannot record time (network error).');
                     }
                 });
             }

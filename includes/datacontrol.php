@@ -5457,14 +5457,18 @@ if(@$_POST['formName']=='get_appointments_calendar'){
               AND a.appointment_date >= '$startDate'
               AND a.appointment_date <= '$endDate'";
 
-    // Restrict visibility based on Share With for non-admin users
+    // Restrict visibility for non-admin users:
+    // allow appointments that are public/shared OR directly related to the logged-in user.
     $currentUserId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
     $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] : 0;
     if($currentUserId && $currentUserType !== 1){
         $query .= " AND (a.appointment_shared_with IS NULL 
                          OR a.appointment_shared_with = '' 
                          OR a.appointment_shared_with = 'ALL' 
-                         OR FIND_IN_SET($currentUserId, a.appointment_shared_with))";
+                         OR FIND_IN_SET($currentUserId, a.appointment_shared_with)
+                         OR a.appointment_to_see = $currentUserId
+                         OR a.created_by = $currentUserId
+                         OR a.booked_by = $currentUserId)";
     }
 
     if($staff_filter > 0){
@@ -5574,6 +5578,7 @@ if(@$_POST['formName']=='update_appointment_status'){
     $result = mysqli_query($connection, $query);
     
     echo $result ? 1 : 0;
+    exit;
 }
 
 // Record time in/out
@@ -5590,6 +5595,7 @@ if(@$_POST['formName']=='record_time_in_out'){
     
     $result = mysqli_query($connection, $query);
     echo $result ? 1 : 0;
+    exit;
 }
 
 // Get appointment reports
@@ -5636,15 +5642,8 @@ if(@$_POST['formName']=='get_appointment_reports'){
         $query .= " AND a.purpose_id = $purpose_filter";
     }
 
-    // Apply Share With visibility rules (same as calendar): admins see all, others only shared/public
-    $currentUserId   = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
-    $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] : 0;
-    if($currentUserId && $currentUserType !== 1){
-        $query .= " AND (a.appointment_shared_with IS NULL 
-                         OR a.appointment_shared_with = '' 
-                         OR a.appointment_shared_with = 'ALL' 
-                         OR FIND_IN_SET($currentUserId, a.appointment_shared_with))";
-    }
+    // Reports page should show complete data across staff/admin (controlled by filters),
+    // so do not apply Share With restrictions here.
     
     $result = mysqli_query($connection, $query);
     

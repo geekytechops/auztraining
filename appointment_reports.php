@@ -401,10 +401,7 @@ $appointmentPurposes = mysqli_query($connection, "SELECT purpose_id, purpose_nam
                     loadReports();
                 });
 
-                // Ensure Employee defaults to logged-in user if present in the list
-                if (loggedUserId && $('#staff_filter option[value="'+loggedUserId+'"]').length) {
-                    $('#staff_filter').val(String(loggedUserId));
-                }
+                // Keep "All Employees" as default so reports open with complete data.
 
                 $('#btn_reset').on('click', function(){
                     $('#date_range').val('month');

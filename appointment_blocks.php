@@ -148,9 +148,66 @@ if(@$_SESSION['user_type']!=''){
         <script>
             $(document).ready(function() {
                 loadBlocks();
+
+                function timeToMinutes(time){
+                    if(!time) return null;
+                    var p = time.split(':');
+                    return parseInt(p[0]) * 60 + parseInt(p[1]);
+                }
+
+                function minutesToTime(mins){
+                    var h = Math.floor(mins / 60);
+                    var m = mins % 60;
+                    return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+                }
+
+                function addMinute(time){
+                    var mins = timeToMinutes(time);
+                    return minutesToTime(mins + 1);
+                }
+
+                // When FROM(start) changes, keep TO(end) valid and set min
+                $('#block_start_time').on('change input', function() {
+                    var from = $(this).val();
+                    if(!from) return;
+
+                    var to = $('#block_end_time').val();
+                    var fromM = timeToMinutes(from);
+                    var toM = timeToMinutes(to);
+                    var newTo = addMinute(from);
+
+                    if(!to || toM <= fromM){
+                        $('#block_end_time').val(newTo);
+                    }
+
+                    $('#block_end_time').attr('min', newTo);
+                });
+
+                // When TO(end) changes, force TO > FROM
+                $('#block_end_time').on('change input', function() {
+                    var to = $(this).val();
+                    var from = $('#block_start_time').val();
+
+                    if(!to || !from) return;
+
+                    var fromM = timeToMinutes(from);
+                    var toM = timeToMinutes(to);
+
+                    if(toM <= fromM){
+                        $('#block_end_time').val(addMinute(from));
+                    }
+                });
                 
                 $('#block_form').on('submit', function(e) {
                     e.preventDefault();
+
+                    var startTime = $('#block_start_time').val();
+                    var endTime = $('#block_end_time').val();
+                    if(startTime && endTime && timeToMinutes(endTime) <= timeToMinutes(startTime)) {
+                        $('.toast-text2').html('End time must be after start time.');
+                        $('#borderedToast2Btn').trigger('click');
+                        return;
+                    }
                     
                     var formData = new FormData(this);
                     

@@ -1248,14 +1248,12 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                                         <select name="visa_condition" class="form-select" id="visa_condition">
                                                                             <?php $selVisa = isset($queryRes['st_visa_status']) ? (int)$queryRes['st_visa_status'] : 0; ?>
                                                                             <option value="0">--select--</option>
-                                                                            <optgroup label="Visa 500">
-                                                                                <option value="1" <?php echo $selVisa===1 ? 'selected' : ''; ?>>Main Applicant</option>
-                                                                                <option value="2" <?php echo $selVisa===2 ? 'selected' : ''; ?>>Dependent</option>
-                                                                            </optgroup>
-                                                                            <optgroup label="Visa 491">
-                                                                                <option value="3" <?php echo $selVisa===3 ? 'selected' : ''; ?>>Main Applicant</option>
-                                                                                <option value="4" <?php echo $selVisa===4 ? 'selected' : ''; ?>>Dependent</option>
-                                                                            </optgroup>
+                                                                            <option value="1" <?php echo $selVisa===1 ? 'selected' : ''; ?>>500 - Main Applicant</option>
+                                                                            <option value="2" <?php echo $selVisa===2 ? 'selected' : ''; ?>>500 - Dependent</option>
+                                                                            <option value="11" <?php echo $selVisa===11 ? 'selected' : ''; ?>>485 - Main Applicant</option>
+                                                                            <option value="12" <?php echo $selVisa===12 ? 'selected' : ''; ?>>485 - Dependent</option>
+                                                                            <option value="3" <?php echo $selVisa===3 ? 'selected' : ''; ?>>491 - Main Applicant</option>
+                                                                            <option value="4" <?php echo $selVisa===4 ? 'selected' : ''; ?>>491 - Dependent</option>
                                                                             <option value="5" <?php echo $selVisa===5 ? 'selected' : ''; ?>>Visitor Visa</option>
                                                                             <option value="6" <?php echo $selVisa===6 ? 'selected' : ''; ?>>Permanent Resident</option>
                                                                             <option value="7" <?php echo $selVisa===7 ? 'selected' : ''; ?>>Spouse Visa</option>

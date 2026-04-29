@@ -1,12 +1,98 @@
-<?php 
-require('dbconnect.php');
-require_once __DIR__ . '/enquiry_status_counselling_email_helper.php';
-require_once __DIR__ . '/enquiry_status_auto_map.php';
-require_once __DIR__ . '/../vendor/tecnickcom/tcpdf/tcpdf.php';
+<?php
+// Emergency bootstrap diagnostics for API calls.
+// Keeps datacontrol from failing with blank 500 pages by returning JSON errors.
+$GLOBALS['crm_datacontrol_boot_step'] = 'bootstrap_start';
+$crm_dc_form_name = isset($_POST['formName']) ? (string)$_POST['formName'] : '';
+$crm_dc_debug = (isset($_REQUEST['debug']) && (string)$_REQUEST['debug'] === '1')
+    || (isset($_SERVER['HTTP_X_CRM_DEBUG']) && (string)$_SERVER['HTTP_X_CRM_DEBUG'] === '1');
+$crm_dc_is_ajax = strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
+$crm_dc_is_api = ($crm_dc_form_name !== '') || $crm_dc_is_ajax;
+$crm_dc_is_export = in_array($crm_dc_form_name, array('exportEnquiryReportsExcel', 'exportEnquiryReportsPdf'), true)
+    || (isset($_GET['export']) && in_array((string)$_GET['export'], array('enquiry_reports_excel', 'enquiry_reports_pdf'), true));
+$crm_dc_should_emit_json_errors = $crm_dc_is_api && !$crm_dc_is_export;
 
+if($crm_dc_should_emit_json_errors){
+    @ini_set('display_errors', '0');
+    @error_reporting(E_ALL);
+
+    set_exception_handler(function($e){
+        if(headers_sent()){
+            return;
+        }
+        http_response_code(500);
+        header('Content-Type: application/json; charset=UTF-8');
+        $payload = array(
+            'success' => false,
+            'message' => 'Server error while processing request.',
+            'debug' => array(
+                'step' => (string)($GLOBALS['crm_datacontrol_boot_step'] ?? 'unknown'),
+                'type' => is_object($e) ? get_class($e) : 'Exception',
+                'error' => is_object($e) && method_exists($e, 'getMessage') ? (string)$e->getMessage() : 'Unknown error',
+                'file' => is_object($e) && method_exists($e, 'getFile') ? basename((string)$e->getFile()) : '',
+                'line' => is_object($e) && method_exists($e, 'getLine') ? (int)$e->getLine() : 0
+            )
+        );
+        echo json_encode($payload);
+        exit;
+    });
+
+    register_shutdown_function(function(){
+        $e = error_get_last();
+        if(!$e){
+            return;
+        }
+        $fatalTypes = array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR, E_RECOVERABLE_ERROR);
+        if(!in_array((int)$e['type'], $fatalTypes, true)){
+            return;
+        }
+        if(headers_sent()){
+            return;
+        }
+        http_response_code(500);
+        header('Content-Type: application/json; charset=UTF-8');
+        echo json_encode(array(
+            'success' => false,
+            'message' => 'Fatal server error while processing request.',
+            'debug' => array(
+                'step' => (string)($GLOBALS['crm_datacontrol_boot_step'] ?? 'unknown'),
+                'type' => (int)$e['type'],
+                'error' => (string)$e['message'],
+                'file' => basename((string)$e['file']),
+                'line' => (int)$e['line']
+            )
+        ));
+    });
+}
+
+$GLOBALS['crm_datacontrol_boot_step'] = 'require_dbconnect';
+require('dbconnect.php');
+$GLOBALS['crm_datacontrol_boot_step'] = 'require_counselling_helper';
+require_once __DIR__ . '/enquiry_status_counselling_email_helper.php';
+$GLOBALS['crm_datacontrol_boot_step'] = 'require_auto_map';
+require_once __DIR__ . '/enquiry_status_auto_map.php';
+$GLOBALS['crm_datacontrol_boot_step'] = 'post_require';
+error_reporting(E_ALL);
+if($crm_dc_should_emit_json_errors){
+    @ini_set('display_errors', '0');
+}else{
+    @ini_set('display_errors', '1');
+}
 // use TCPDF;
 
 session_start();
+
+if(!function_exists('crm_require_tcpdf')){
+function crm_require_tcpdf(){
+    if(class_exists('TCPDF', false)){
+        return true;
+    }
+    $tcpdfPath = __DIR__ . '/../vendor/tecnickcom/tcpdf/tcpdf.php';
+    if(file_exists($tcpdfPath)){
+        require_once $tcpdfPath;
+    }
+    return class_exists('TCPDF', false);
+}
+}
 
 if (!function_exists('crm_student_user_deactivate_if_no_active_enquiry_by_email')) {
 function crm_student_user_deactivate_if_no_active_enquiry_by_email($connection, $emailRaw) {
@@ -2210,7 +2296,11 @@ if (@$_POST['formName'] == 'invoice_submit_company') {
          // Update with unique invoice ID
          mysqli_query($connection, "UPDATE payment_records SET invoice_number='$uniqueId' WHERE id=$lastId");
  
-         // Generate PDF invoice
+        // Generate PDF invoice
+        if(!crm_require_tcpdf()){
+            echo '0';
+            exit;
+        }
          $pdf = new TCPDF();
          $pdf->SetCreator(PDF_CREATOR);
          $pdf->SetAuthor('Auz Training College Pty Ltd');
@@ -2326,6 +2416,10 @@ if(@$_POST['formName']=='invoice_submit'){
        
 
     // Create PDF instance
+    if(!crm_require_tcpdf()){
+        echo '0';
+        exit;
+    }
     $pdf = new TCPDF();
     $pdf->SetCreator(PDF_CREATOR);
     $pdf->SetAuthor('Auz Training');
@@ -2530,18 +2624,50 @@ if(!function_exists('auth_login_otp_ensure_table')){
           KEY `idx_expires` (`expires_at`),
           KEY `idx_created` (`created_at`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
-        $ok = (bool)mysqli_query($connection, $sql);
+        try{
+            $ok = (bool)mysqli_query($connection, $sql);
+        }catch(Exception $e){
+            $ok = false;
+        }
         if($ok){
             static $migrated = false;
             if(!$migrated){
                 $migrated = true;
-                $chk = @mysqli_query($connection, "SHOW COLUMNS FROM `login_otp_challenges` LIKE 'otp_hash'");
-                if($chk && mysqli_num_rows($chk) > 0){
-                    @mysqli_query($connection, "ALTER TABLE `login_otp_challenges` CHANGE COLUMN `otp_hash` `otp_code` varchar(10) NOT NULL COMMENT 'plain OTP (testing)'");
+                try{
+                    $chk = @mysqli_query($connection, "SHOW COLUMNS FROM `login_otp_challenges` LIKE 'otp_hash'");
+                    if($chk && mysqli_num_rows($chk) > 0){
+                        @mysqli_query($connection, "ALTER TABLE `login_otp_challenges` CHANGE COLUMN `otp_hash` `otp_code` varchar(10) NOT NULL COMMENT 'plain OTP (testing)'");
+                    }
+                }catch(Exception $e){
+                    // Ignore migration failure; OTP can still function with existing schema.
                 }
             }
         }
         return $ok;
+    }
+}
+
+if(!function_exists('auth_login_otp_random_code')){
+    function auth_login_otp_random_code(){
+        if(function_exists('random_int')){
+            return (string)random_int(100000, 999999);
+        }
+        return (string)mt_rand(100000, 999999);
+    }
+}
+
+if(!function_exists('auth_login_otp_random_bind')){
+    function auth_login_otp_random_bind(){
+        if(function_exists('random_bytes')){
+            return bin2hex(random_bytes(32));
+        }
+        if(function_exists('openssl_random_pseudo_bytes')){
+            $raw = openssl_random_pseudo_bytes(32);
+            if($raw !== false){
+                return bin2hex($raw);
+            }
+        }
+        return hash('sha256', uniqid(mt_rand(), true) . microtime(true));
     }
 }
 
@@ -2576,57 +2702,121 @@ if(!defined('AUTH_LOGIN_OTP_MAX_PER_EMAIL_HOUR')){
 }
 
 if(@$_POST['formName']=='login_request_otp'){
-    if(!auth_login_otp_ensure_table($connection)){
-        echo json_encode(array('success'=>false,'message'=>'Login verification is temporarily unavailable.'));
-        exit;
+    $debug_login = (isset($_POST['debug']) && (string)$_POST['debug'] === '1') || (isset($_GET['debug']) && (string)$_GET['debug'] === '1');
+    $debug_step = 'start';
+    if($debug_login){
+        @ini_set('display_errors', '1');
+        @error_reporting(E_ALL);
+        register_shutdown_function(function(){
+            $e = error_get_last();
+            if(!$e){ return; }
+            $fatalTypes = array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR, E_RECOVERABLE_ERROR);
+            if(!in_array((int)$e['type'], $fatalTypes, true)){ return; }
+            if(!headers_sent()){
+                header('Content-Type: application/json; charset=UTF-8');
+            }
+            echo json_encode(array(
+                'success' => false,
+                'message' => 'Fatal error during login_request_otp.',
+                'debug' => array(
+                    'type' => (int)$e['type'],
+                    'error' => (string)$e['message'],
+                    'file' => basename((string)$e['file']),
+                    'line' => (int)$e['line']
+                )
+            ));
+        });
     }
-    $email_raw = auth_login_otp_normalize_email($_POST['email'] ?? '');
-    $email_esc = mysqli_real_escape_string($connection, $email_raw);
-    $password = trim($_POST['password'] ?? '');
-    if($email_raw === '' || $password === ''){
-        echo json_encode(array('success'=>false,'message'=>'Email and password are required.'));
-        exit;
-    }
-    if(!auth_login_otp_rate_ok($connection, 'admin', $email_esc, AUTH_LOGIN_OTP_MAX_PER_EMAIL_HOUR)){
-        echo json_encode(array('success'=>false,'message'=>'Too many verification codes requested. Try again in an hour.'));
-        exit;
-    }
-    $query = mysqli_query($connection,"SELECT user_id,user_type,user_name,user_log_id,user_email FROM users WHERE LOWER(TRIM(user_email))='$email_esc' AND user_password='".mysqli_real_escape_string($connection, $password)."' LIMIT 1");
-    $id = ($query && mysqli_num_rows($query) > 0) ? mysqli_fetch_assoc($query) : null;
-    if(!$id){
-        echo json_encode(array('success'=>false,'message'=>'Invalid email or password.'));
-        exit;
-    }
-    $otp = (string)random_int(100000, 999999);
-    $otp_esc = mysqli_real_escape_string($connection, $otp);
-    $session_bind = bin2hex(random_bytes(32));
-    $bind_esc = mysqli_real_escape_string($connection, $session_bind);
-    $expires_at = date('Y-m-d H:i:s', time() + AUTH_LOGIN_OTP_TTL_SECONDS);
-    $expires_esc = mysqli_real_escape_string($connection, $expires_at);
-    $user_pk = (int)$id['user_id'];
-    $ip_esc = mysqli_real_escape_string($connection, auth_login_otp_client_ip());
-    $ua_esc = mysqli_real_escape_string($connection, auth_login_otp_user_agent());
-    auth_login_otp_revoke_active($connection, 'admin', $email_esc);
-    $ins = mysqli_query($connection, "INSERT INTO login_otp_challenges (channel,email,user_pk,otp_code,session_bind,expires_at,is_used,verify_attempts,max_verify_attempts,ip_request,user_agent,created_at) VALUES ('admin','$email_esc',$user_pk,'$otp_esc','$bind_esc','$expires_esc',0,0,5,'$ip_esc','$ua_esc',NOW())");
-    if(!$ins){
-        echo json_encode(array('success'=>false,'message'=>'Unable to start login verification. Please try again.'));
-        exit;
-    }
-    $otp_row_id = (int)mysqli_insert_id($connection);
     try{
-        auth_send_login_otp($id['user_email'], $otp, 'staff/admin');
-    }catch(Throwable $e){
-        if($otp_row_id > 0){
-            mysqli_query($connection, "UPDATE login_otp_challenges SET is_used=2 WHERE id=$otp_row_id");
+        $debug_step = 'ensure_table';
+        if(!auth_login_otp_ensure_table($connection)){
+            $resp = array('success'=>false,'message'=>'Login verification is temporarily unavailable.');
+            if($debug_login){
+                $resp['debug'] = array('step' => $debug_step, 'mysqli_error' => mysqli_error($connection));
+            }
+            echo json_encode($resp);
+            exit;
         }
-        echo json_encode(array('success'=>false,'message'=>'Unable to send OTP email right now. Please try again.'));
+        $debug_step = 'read_input';
+        $email_raw = auth_login_otp_normalize_email($_POST['email'] ?? '');
+        $email_esc = mysqli_real_escape_string($connection, $email_raw);
+        $password = trim($_POST['password'] ?? '');
+        if($email_raw === '' || $password === ''){
+            echo json_encode(array('success'=>false,'message'=>'Email and password are required.'));
+            exit;
+        }
+        $debug_step = 'rate_limit';
+        if(!auth_login_otp_rate_ok($connection, 'admin', $email_esc, AUTH_LOGIN_OTP_MAX_PER_EMAIL_HOUR)){
+            echo json_encode(array('success'=>false,'message'=>'Too many verification codes requested. Try again in an hour.'));
+            exit;
+        }
+        $debug_step = 'fetch_user';
+        $query = mysqli_query($connection,"SELECT user_id,user_type,user_name,user_log_id,user_email FROM users WHERE LOWER(TRIM(user_email))='$email_esc' AND user_password='".mysqli_real_escape_string($connection, $password)."' LIMIT 1");
+        $id = ($query && mysqli_num_rows($query) > 0) ? mysqli_fetch_assoc($query) : null;
+        if(!$id){
+            echo json_encode(array('success'=>false,'message'=>'Invalid email or password.'));
+            exit;
+        }
+        $debug_step = 'generate_otp';
+        $otp = auth_login_otp_random_code();
+        $otp_esc = mysqli_real_escape_string($connection, $otp);
+        $session_bind = auth_login_otp_random_bind();
+        $bind_esc = mysqli_real_escape_string($connection, $session_bind);
+        $expires_at = date('Y-m-d H:i:s', time() + AUTH_LOGIN_OTP_TTL_SECONDS);
+        $expires_esc = mysqli_real_escape_string($connection, $expires_at);
+        $user_pk = (int)$id['user_id'];
+        $ip_esc = mysqli_real_escape_string($connection, auth_login_otp_client_ip());
+        $ua_esc = mysqli_real_escape_string($connection, auth_login_otp_user_agent());
+        $debug_step = 'revoke_existing';
+        auth_login_otp_revoke_active($connection, 'admin', $email_esc);
+        $debug_step = 'insert_challenge';
+        $ins = mysqli_query($connection, "INSERT INTO login_otp_challenges (channel,email,user_pk,otp_code,session_bind,expires_at,is_used,verify_attempts,max_verify_attempts,ip_request,user_agent,created_at) VALUES ('admin','$email_esc',$user_pk,'$otp_esc','$bind_esc','$expires_esc',0,0,5,'$ip_esc','$ua_esc',NOW())");
+        if(!$ins){
+            $resp = array('success'=>false,'message'=>'Unable to start login verification. Please try again.');
+            if($debug_login){
+                $resp['debug'] = array('step' => $debug_step, 'mysqli_error' => mysqli_error($connection));
+            }
+            echo json_encode($resp);
+            exit;
+        }
+        $otp_row_id = (int)mysqli_insert_id($connection);
+        $debug_step = 'send_mail';
+        try{
+            auth_send_login_otp($id['user_email'], $otp, 'staff/admin');
+        }catch(Exception $e){
+            if($otp_row_id > 0){
+                mysqli_query($connection, "UPDATE login_otp_challenges SET is_used=2 WHERE id=$otp_row_id");
+            }
+            $resp = array('success'=>false,'message'=>'Unable to send OTP email right now. Please try again.');
+            if($debug_login){
+                $resp['debug'] = array('step' => $debug_step, 'exception' => $e->getMessage());
+            }
+            echo json_encode($resp);
+            exit;
+        }
+        $debug_step = 'session_write';
+        unset($_SESSION['login_otp_admin'], $_SESSION['login_otp_student'], $_SESSION['login_otp_bind']);
+        $_SESSION['login_otp_pending'] = array('bind' => $session_bind, 'channel' => 'admin');
+        $masked = preg_replace('/(^.).*(@.*$)/', '$1***$2', (string)$id['user_email']);
+        $resp = array('success'=>true,'message'=>'OTP sent to ' . $masked);
+        if($debug_login){
+            $resp['debug'] = array('step' => 'done');
+        }
+        echo json_encode($resp);
+        exit;
+    }catch(Exception $e){
+        $resp = array('success'=>false,'message'=>'Login verification failed. Please try again.');
+        if($debug_login){
+            $resp['debug'] = array(
+                'step' => $debug_step,
+                'exception' => $e->getMessage(),
+                'file' => basename((string)$e->getFile()),
+                'line' => (int)$e->getLine()
+            );
+        }
+        echo json_encode($resp);
         exit;
     }
-    unset($_SESSION['login_otp_admin'], $_SESSION['login_otp_student'], $_SESSION['login_otp_bind']);
-    $_SESSION['login_otp_pending'] = array('bind' => $session_bind, 'channel' => 'admin');
-    $masked = preg_replace('/(^.).*(@.*$)/', '$1***$2', (string)$id['user_email']);
-    echo json_encode(array('success'=>true,'message'=>'OTP sent to ' . $masked));
-    exit;
 }
 
 if(@$_POST['formName']=='login_verify_otp'){
@@ -2798,7 +2988,7 @@ if(@$_POST['formName']=='student_login_request_otp'){
         $otp_row_id = (int)mysqli_insert_id($connection);
         try{
             auth_send_login_otp($row['email'], $otp, 'student');
-        }catch(Throwable $e){
+        }catch(Exception $e){
             if($otp_row_id > 0){
                 mysqli_query($connection, "UPDATE login_otp_challenges SET is_used=2 WHERE id=$otp_row_id");
             }
@@ -4551,6 +4741,11 @@ if(@$_POST['formName']=='exportEnquiryReportsPdf' || @$_GET['export']==='enquiry
     $lost_count = 0; if($flow_col !== '1') $lost_count = (int)mysqli_fetch_row(mysqli_query($connection, "SELECT COUNT(*) FROM student_enquiry e WHERE $where AND COALESCE(e.st_enquiry_flow_status,1) = 7"))[0];
     // Ensure no previous output before sending PDF file (TCPDF requirement)
     if(function_exists('ob_get_length') && ob_get_length()){ @ob_clean(); }
+    if(!crm_require_tcpdf()){
+        header('Content-Type: application/json; charset=UTF-8');
+        echo json_encode(array('success'=>false,'message'=>'PDF export service is unavailable.'));
+        exit;
+    }
     $pdf = new TCPDF('P','mm','A4',true,'UTF-8');
     $pdf->SetCreator('Auz Training');
     $pdf->SetTitle('Enquiry Reports');
@@ -5504,6 +5699,56 @@ if(@$_POST['formName']=='get_appointments_calendar'){
         $events[] = $event;
     }
     
+    // Also include blocked slots in calendar
+    $blockQuery = "SELECT b.*, u.user_name AS blocked_staff_name, ub.user_name AS blocked_by_name
+                   FROM appointment_blocks b
+                   LEFT JOIN users u ON b.block_staff_member_id = u.user_id
+                   LEFT JOIN users ub ON b.created_by = ub.user_id
+                   WHERE b.block_status != 1
+                   AND b.block_date >= '$startDate'
+                   AND b.block_date <= '$endDate'";
+
+    // Non-admin users should only see all-staff blocks and blocks relevant to them
+    if($currentUserId && $currentUserType !== 1){
+        $blockQuery .= " AND (b.block_staff_member_id IS NULL OR b.block_staff_member_id = $currentUserId)";
+    }
+
+    if($staff_filter > 0){
+        // For staff filter, include global(all staff) blocks and selected staff blocks
+        $blockQuery .= " AND (b.block_staff_member_id IS NULL OR b.block_staff_member_id = $staff_filter)";
+    }
+
+    $blockResult = mysqli_query($connection, $blockQuery);
+    if($blockResult){
+        while($brow = mysqli_fetch_array($blockResult)){
+            $blockStart = $brow['block_date'] . ' ' . $brow['block_start_time'];
+            $blockEnd = $brow['block_date'] . ' ' . $brow['block_end_time'];
+            $blockedFor = !empty($brow['blocked_staff_name']) ? $brow['blocked_staff_name'] : 'All Staff';
+            $blockedBy = !empty($brow['blocked_by_name']) ? $brow['blocked_by_name'] : 'Unknown';
+            $blockReason = trim((string)($brow['block_reason'] ?? ''));
+
+            $title = 'BLOCKED - ' . $blockedFor . ' (By: ' . $blockedBy . ')';
+            if($blockReason !== ''){
+                $title .= ' - ' . $blockReason;
+            }
+
+            $events[] = array(
+                'id' => 'block_' . $brow['block_id'],
+                'title' => $title,
+                'start' => $blockStart,
+                'end' => $blockEnd,
+                'color' => '#ff3d60',
+                'extendedProps' => array(
+                    'event_type' => 'blocked',
+                    'block_id' => $brow['block_id'],
+                    'blocked_for' => $blockedFor,
+                    'blocked_by' => $blockedBy,
+                    'reason' => $blockReason
+                )
+            );
+        }
+    }
+
     echo json_encode($events);
 }
 

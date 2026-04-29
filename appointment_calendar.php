@@ -268,13 +268,14 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                                 meridiem: 'short'
                             }) : '';
                             var timeRange = endStr && endStr !== startStr ? (startStr + ' - ' + endStr) : startStr;
-                            var row = '<li class="list-group-item d-flex justify-content-between align-items-center more-event-item" data-id="'+ev.id+'">'+
+                            var isBlocked = (ev.extendedProps && ev.extendedProps.event_type === 'blocked');
+                            var row = '<li class="list-group-item d-flex justify-content-between align-items-center more-event-item" data-id="'+ev.id+'" data-type="'+(isBlocked ? 'blocked' : 'appointment')+'">'+
                                       '<div class="d-flex align-items-center">'+
                                       '<span class="more-events-dot" style="background:'+color+';"></span>'+
                                       '<span class="me-2 small text-muted">'+timeRange+'</span>'+
                                       '<span>'+ev.title+'</span>'+
                                       '</div>'+
-                                      '<button type="button" class="btn btn-sm btn-outline-primary">View</button>'+
+                                      '<button type="button" class="btn btn-sm btn-outline-primary">'+(isBlocked ? 'Details' : 'View')+'</button>'+
                                       '</li>';
                             $list.append(row);
                         });
@@ -306,6 +307,12 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                         });
                     },
                     eventClick: function(info) {
+                        var eventType = (info.event.extendedProps && info.event.extendedProps.event_type) ? info.event.extendedProps.event_type : 'appointment';
+                        if(eventType === 'blocked'){
+                            showBlockedSlotDetails(info.event);
+                            return;
+                        }
+
                         var appointmentId = info.event.id;
                         currentAppointmentId = appointmentId;
                         loadAppointmentDetails(appointmentId);
@@ -356,14 +363,46 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
 
                 // Delegate click for View buttons in the "more events" modal
                 $('#moreEventsList').on('click', '.more-event-item button', function(){
-                    var id = $(this).closest('.more-event-item').data('id');
+                    var $item = $(this).closest('.more-event-item');
+                    var id = $item.data('id');
+                    var type = $item.data('type') || 'appointment';
                     if(id){
                         $('#moreEventsModal').modal('hide');
-                        // Reuse existing details loader
-                        loadAppointmentDetails(id);
+                        if(type === 'blocked'){
+                            var blockedEvent = calendar.getEventById(String(id));
+                            if(blockedEvent){
+                                showBlockedSlotDetails(blockedEvent);
+                            }
+                        } else {
+                            // Reuse existing details loader
+                            loadAppointmentDetails(id);
+                        }
                     }
                 });
             });
+
+            function showBlockedSlotDetails(eventObj){
+                var blockedFor = (eventObj.extendedProps && eventObj.extendedProps.blocked_for) ? eventObj.extendedProps.blocked_for : 'All Staff';
+                var blockedBy = (eventObj.extendedProps && eventObj.extendedProps.blocked_by) ? eventObj.extendedProps.blocked_by : 'Unknown';
+                var reason = (eventObj.extendedProps && eventObj.extendedProps.reason) ? eventObj.extendedProps.reason : '';
+                var startText = eventObj.start ? FullCalendar.formatDate(eventObj.start, { weekday:'short', year:'numeric', month:'short', day:'numeric', hour:'numeric', minute:'2-digit', meridiem:'short' }) : '-';
+                var endText = eventObj.end ? FullCalendar.formatDate(eventObj.end, { hour:'numeric', minute:'2-digit', meridiem:'short' }) : '-';
+
+                var html = '<div class="row">' +
+                    '<div class="col-md-6"><strong>Type:</strong></div><div class="col-md-6">Blocked Slot</div>' +
+                    '<div class="col-md-6"><strong>Date & Time:</strong></div><div class="col-md-6">' + startText + ' - ' + endText + '</div>' +
+                    '<div class="col-md-6"><strong>Blocked For:</strong></div><div class="col-md-6">' + blockedFor + '</div>' +
+                    '<div class="col-md-6"><strong>Blocked By:</strong></div><div class="col-md-6">' + blockedBy + '</div>';
+                if(reason){
+                    html += '<div class="col-md-6"><strong>Reason:</strong></div><div class="col-md-6">' + reason + '</div>';
+                }
+                html += '</div>';
+
+                $('#appointment_details_content').html(html);
+                $('#appointmentDetailsModal').modal('show');
+                $('#edit_appointment_btn, #mark_completed_btn, #mark_no_show_btn, #cancel_appointment_btn, #time_in_btn, #time_out_btn').hide();
+                currentAppointmentId = null;
+            }
             
             function loadAppointmentDetails(appointmentId) {
                 $.ajax({
@@ -376,6 +415,7 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                     success: function(response) {
                         $('#appointment_details_content').html(response);
                         $('#appointmentDetailsModal').modal('show');
+                        $('#edit_appointment_btn').show();
                         
                         // Show/hide action buttons based on status
                         var status = $('#appointment_status_hidden').val();

@@ -859,6 +859,9 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                                 <option value="">--select--</option>
                                                 <?php
                                                 $staff_sel = isset($queryRes['st_hearedby']) ? trim((string)$queryRes['st_hearedby']) : '';
+                                                if ($staff_sel === '' && isset($_SESSION['user_name'])) {
+                                                    $staff_sel = trim((string)$_SESSION['user_name']);
+                                                }
                                                 if ($enquirySourceStaffUsers && mysqli_num_rows($enquirySourceStaffUsers) > 0) {
                                                     mysqli_data_seek($enquirySourceStaffUsers, 0);
                                                     while ($su = mysqli_fetch_array($enquirySourceStaffUsers)) {

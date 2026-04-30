@@ -32,6 +32,7 @@ $followup_Query = array_merge(array(
     'flw_progress_state' => '',
     'flw_remarks' => '',
 ), $followup_Query);
+$loggedInStaffName = isset($_SESSION['user_name']) ? trim((string)$_SESSION['user_name']) : '';
 $enquiry_flow_statuses = array(
     1 => 'New',
     2 => 'Contacted',
@@ -91,7 +92,11 @@ if ($followupUsers) {
     mysqli_data_seek($followupUsers, 0);
     while ($u = mysqli_fetch_array($followupUsers)) {
         $name = $u['user_name'];
-        $selected = ($followup_Query['flw_contacted_person'] === $name) ? 'selected' : '';
+        $selectedPerson = trim((string)($followup_Query['flw_contacted_person'] ?? ''));
+        if ($selectedPerson === '' && $loggedInStaffName !== '') {
+            $selectedPerson = $loggedInStaffName;
+        }
+        $selected = ($selectedPerson === $name) ? 'selected' : '';
         echo '<option value="'.htmlspecialchars($name).'" '.$selected.'>'.htmlspecialchars($name).'</option>';
     }
 }

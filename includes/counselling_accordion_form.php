@@ -90,14 +90,12 @@ if($counsellingUsers){
 <select name="visa_condition" class="form-select" id="counselling_visa_condition">
 <?php $selCounVisa = isset($counsil_Query['counsil_visa_condition']) ? (int)$counsil_Query['counsil_visa_condition'] : 0; ?>
 <option value="0">--select--</option>
-<optgroup label="Visa 500">
-<option value="1" <?php echo $selCounVisa===1 ? 'selected' : ''; ?>>Main Applicant</option>
-<option value="2" <?php echo $selCounVisa===2 ? 'selected' : ''; ?>>Dependent</option>
-</optgroup>
-<optgroup label="Visa 491">
-<option value="3" <?php echo $selCounVisa===3 ? 'selected' : ''; ?>>Main Applicant</option>
-<option value="4" <?php echo $selCounVisa===4 ? 'selected' : ''; ?>>Dependent</option>
-</optgroup>
+<option value="1" <?php echo $selCounVisa===1 ? 'selected' : ''; ?>>500 - Main Applicant</option>
+<option value="2" <?php echo $selCounVisa===2 ? 'selected' : ''; ?>>500 - Dependent</option>
+<option value="11" <?php echo $selCounVisa===11 ? 'selected' : ''; ?>>485 - Main Applicant</option>
+<option value="12" <?php echo $selCounVisa===12 ? 'selected' : ''; ?>>485 - Dependent</option>
+<option value="3" <?php echo $selCounVisa===3 ? 'selected' : ''; ?>>491 - Main Applicant</option>
+<option value="4" <?php echo $selCounVisa===4 ? 'selected' : ''; ?>>491 - Dependent</option>
 <option value="5" <?php echo $selCounVisa===5 ? 'selected' : ''; ?>>Visitor Visa</option>
 <option value="6" <?php echo $selCounVisa===6 ? 'selected' : ''; ?>>Permanent Resident</option>
 <option value="7" <?php echo $selCounVisa===7 ? 'selected' : ''; ?>>Spouse Visa</option>

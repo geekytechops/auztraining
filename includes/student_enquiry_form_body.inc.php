@@ -128,6 +128,9 @@
                                                                 $enquirySourceStaffUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE user_status != 1 ORDER BY user_name");
                                                             }
                                                             $staff_sel = isset($queryRes['st_hearedby']) ? trim((string)$queryRes['st_hearedby']) : '';
+                                                            if ($staff_sel === '' && isset($_SESSION['user_name'])) {
+                                                                $staff_sel = trim((string)$_SESSION['user_name']);
+                                                            }
                                                             if ($enquirySourceStaffUsers && mysqli_num_rows($enquirySourceStaffUsers) > 0) {
                                                                 mysqli_data_seek($enquirySourceStaffUsers, 0);
                                                                 while ($su = mysqli_fetch_array($enquirySourceStaffUsers)) {

@@ -25,7 +25,7 @@ var lastPageName = urlComponents[urlComponents.length - 1];
     }
     $.ajax({
         type:'post',
-        url:'includes/datacontrol.php',
+        url:'includes/datacontrol',
         data:{selected:selected,formName:forms,lastPageName:lastPageName},
         success:function(data){
             $('#lookup_select_data').html(data);
@@ -62,7 +62,7 @@ if(lastPageName=='enrolment.php'){
         $.ajax({
             type:'post',
             data:{formName:forms,selected:selected,values:$(this).val()},
-            url:'includes/datacontrol.php',
+            url:'includes/datacontrol',
             success:function(jsondata){
                 var data=JSON.parse(jsondata);
 

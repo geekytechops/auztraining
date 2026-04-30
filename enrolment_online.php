@@ -696,7 +696,7 @@ $Enquiries = mysqli_query($connection, "SELECT st_enquiry_id FROM student_enquir
             }
 
             $.ajax({
-                url: 'includes/datacontrol.php',
+                url: 'includes/datacontrol',
                 type: 'POST',
                 data: formData,
                 processData: false,

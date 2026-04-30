@@ -209,7 +209,7 @@ if(@$_SESSION['user_type']!=''){
                     },
                     scrollX: true,
                     responsive: false,
-                    ajax: 'includes/datacontrol.php?name=courseCancellations',
+                    ajax: 'includes/datacontrol?name=courseCancellations',
                     columns: [
                         { data: 'reference_id' },
                         { data: 'name' },
@@ -245,7 +245,7 @@ if(@$_SESSION['user_type']!=''){
                     
                     $.ajax({
                         type: 'POST',
-                        url: 'includes/datacontrol.php',
+                        url: 'includes/datacontrol',
                         data: formData,
                         contentType: false,
                         processData: false,

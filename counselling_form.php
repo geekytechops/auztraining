@@ -611,7 +611,7 @@ if(@$_SESSION['user_type']!=''){
                     details={formName:'counseling_form',vaccine_status:vaccine_status,job_nature:job_nature,module_result:module_result,pref_comment:pref_comment,eng_rate:eng_rate,mig_test:mig_test,overall_result:overall_result,course:course,university_name:university_name,qualification:qualification,counseling_timing:counseling_timing,counseling_end_timing:counseling_end_timing,enquiry_id:enquiry_id,counseling_type:counseling_type,member_name:member_name,aus_duration:aus_duration,work_status:work_status,visa_condition:visa_condition,education:education,remarks:remarks,aus_study:aus_study,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
                     $.ajax({
                         type:'post',
-                        url:'includes/datacontrol.php',
+                        url:'includes/datacontrol',
                         data:details,
                         success:function(data){
 

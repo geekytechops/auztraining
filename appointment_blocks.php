@@ -212,7 +212,7 @@ if(@$_SESSION['user_type']!=''){
                     var formData = new FormData(this);
                     
                     $.ajax({
-                        url: 'includes/datacontrol.php',
+                        url: 'includes/datacontrol',
                         type: 'POST',
                         data: formData,
                         contentType: false,
@@ -234,7 +234,7 @@ if(@$_SESSION['user_type']!=''){
             
             function loadBlocks() {
                 $.ajax({
-                    url: 'includes/datacontrol.php',
+                    url: 'includes/datacontrol',
                     type: 'POST',
                     data: {formName: 'get_appointment_blocks'},
                     success: function(response) {
@@ -270,7 +270,7 @@ if(@$_SESSION['user_type']!=''){
             function deleteBlock(blockId) {
                 if(!confirm('Are you sure you want to delete this blocked slot?')) return;
                 $.ajax({
-                    url: 'includes/datacontrol.php',
+                    url: 'includes/datacontrol',
                     type: 'POST',
                     data: {
                         formName: 'delete_appointment_block',

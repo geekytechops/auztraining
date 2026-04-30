@@ -336,7 +336,7 @@ $(document).on('change','#enquiry_id' , function(){
                     details={formName:'followup_call',student_name:student_name,date:date,contacted_person:contacted_person,contacted_time:contacted_time,contactMode:contactMode,progress_status:progress_status,contact_num:contact_num,enquiry_id:enquiry_id,remarks:remarks,comments:comments,checkId:checkId,admin_id:"<?php echo $_SESSION['user_id']; ?>"};
                     $.ajax({
                         type:'post',
-                        url:'includes/datacontrol.php',
+                        url:'includes/datacontrol',
                         data:details,
                         success:function(data){
 

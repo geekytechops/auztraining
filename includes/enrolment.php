@@ -340,7 +340,7 @@ if(@$_SESSION['user_type']!=''){
                     details={formName:'student_enrol',qualifications:qualifications,contactName:contactName,emailAddress:emailAddress,venues:venue,middle_name:middle_name,source:source,name_main:name_main,checkId:checkId,courseName:courseName,courses:courses,enquiry_id:enquiry_id,given_name:given_name};
                     $.ajax({
                         type:'post',
-                        url:'includes/datacontrol.php',
+                        url:'includes/datacontrol',
                         data:details,
                         success:function(data){
                             if(data==1){

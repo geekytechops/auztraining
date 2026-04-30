@@ -180,7 +180,7 @@ $users=mysqli_query($connection,"SELECT * FROM users WHERE user_type IN (1,2) OR
 
                 $.ajax({
                     type: 'POST',
-                    url: 'includes/datacontrol.php',
+                    url: 'includes/datacontrol',
                     data: details,
                     success: function(data){
                         if(data==1){
@@ -205,7 +205,7 @@ $users=mysqli_query($connection,"SELECT * FROM users WHERE user_type IN (1,2) OR
             var id = $(this).data('id');
             $.ajax({
                 type: 'POST',
-                url: 'includes/datacontrol.php',
+                url: 'includes/datacontrol',
                 data: {formName: 'get_user', user_id: id},
                 dataType: 'json',
                 success: function(user){

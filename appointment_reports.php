@@ -464,7 +464,7 @@ $appointmentPurposes = mysqli_query($connection, "SELECT purpose_id, purpose_nam
                 }
                 
                 $.ajax({
-                    url: 'includes/datacontrol.php',
+                    url: 'includes/datacontrol',
                     type: 'POST',
                     data: {
                         formName: 'get_appointment_reports',
@@ -817,7 +817,7 @@ $appointmentPurposes = mysqli_query($connection, "SELECT purpose_id, purpose_nam
             function openAppointmentDetails(id){
                 currentAppointmentId = id;
                 $.ajax({
-                    url: 'includes/datacontrol.php',
+                    url: 'includes/datacontrol',
                     type: 'POST',
                     data: {
                         formName: 'get_appointment_details',
@@ -854,7 +854,7 @@ $appointmentPurposes = mysqli_query($connection, "SELECT purpose_id, purpose_nam
 
             function updateAppointmentStatus(status) {
                 $.ajax({
-                    url: 'includes/datacontrol.php',
+                    url: 'includes/datacontrol',
                     type: 'POST',
                     data: {
                         formName: 'update_appointment_status',
@@ -877,7 +877,7 @@ $appointmentPurposes = mysqli_query($connection, "SELECT purpose_id, purpose_nam
 
             function recordTimeInOut(type) {
                 $.ajax({
-                    url: 'includes/datacontrol.php',
+                    url: 'includes/datacontrol',
                     type: 'POST',
                     data: {
                         formName: 'record_time_in_out',

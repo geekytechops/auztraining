@@ -268,7 +268,7 @@ $(document).on('input','.price-field',function(){
                     details={formName:'invoice_submit',payment_date:payment_date,amount_due:amount_due,amount_paid:amount_paid,course_fee:course_fee,enrol_id:enrol_id,course_name:course_name,student_name:student_name};
                     $.ajax({
                         type:'post',
-                        url:'includes/datacontrol.php',
+                        url:'includes/datacontrol',
                         data:details,
                         success:function(data){
                             if(data==1){

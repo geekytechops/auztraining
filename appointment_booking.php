@@ -838,7 +838,7 @@ $('#appointment_time_to').on('change input', function(){
 
                     $.ajax({
                         type: 'POST',
-                        url: 'includes/datacontrol.php',
+                        url: 'includes/datacontrol',
                         data: formData,
                         contentType: false,
                         processData: false,
@@ -930,7 +930,7 @@ $('#appointment_time_to').on('change input', function(){
             
             function loadPurposes() {
                 $.ajax({
-                    url: 'includes/datacontrol.php',
+                    url: 'includes/datacontrol',
                     type: 'POST',
                     data: {formName: 'get_purposes'},
                     success: function(response) {
@@ -941,7 +941,7 @@ $('#appointment_time_to').on('change input', function(){
             
             function loadAttendeeTypes() {
                 $.ajax({
-                    url: 'includes/datacontrol.php',
+                    url: 'includes/datacontrol',
                     type: 'POST',
                     data: {formName: 'get_attendee_types'},
                     success: function(response) {
@@ -952,7 +952,7 @@ $('#appointment_time_to').on('change input', function(){
             
             function loadLocations() {
                 $.ajax({
-                    url: 'includes/datacontrol.php',
+                    url: 'includes/datacontrol',
                     type: 'POST',
                     data: {formName: 'get_locations'},
                     success: function(response) {
@@ -963,7 +963,7 @@ $('#appointment_time_to').on('change input', function(){
             
             function loadPlatforms() {
                 $.ajax({
-                    url: 'includes/datacontrol.php',
+                    url: 'includes/datacontrol',
                     type: 'POST',
                     data: {formName: 'get_platforms'},
                     success: function(response) {
@@ -977,7 +977,7 @@ $('#appointment_time_to').on('change input', function(){
                 var color = $('#new_purpose_color').val();
                 if(name) {
                     $.ajax({
-                        url: 'includes/datacontrol.php',
+                        url: 'includes/datacontrol',
                         type: 'POST',
                         data: {
                             formName: 'add_purpose',
@@ -1004,7 +1004,7 @@ $('#appointment_time_to').on('change input', function(){
                 var name = $('#new_attendee_type_name').val();
                 if(name) {
                     $.ajax({
-                        url: 'includes/datacontrol.php',
+                        url: 'includes/datacontrol',
                         type: 'POST',
                         data: {
                             formName: 'add_attendee_type',
@@ -1030,7 +1030,7 @@ $('#appointment_time_to').on('change input', function(){
                 var name = $('#new_location_name').val();
                 if(name) {
                     $.ajax({
-                        url: 'includes/datacontrol.php',
+                        url: 'includes/datacontrol',
                         type: 'POST',
                         data: {
                             formName: 'add_location',
@@ -1056,7 +1056,7 @@ $('#appointment_time_to').on('change input', function(){
                 var name = $('#new_platform_name').val();
                 if(name) {
                     $.ajax({
-                        url: 'includes/datacontrol.php',
+                        url: 'includes/datacontrol',
                         type: 'POST',
                         data: {
                             formName: 'add_platform',

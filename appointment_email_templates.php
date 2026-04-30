@@ -145,7 +145,7 @@ $(function(){
         var body = $('.appt-template-body[data-code="'+code+'"]').val().trim();
         var $btn = $(this).prop('disabled', true).text('Saving...');
         var $fb = $('.appt-save-feedback[data-code="'+code+'"]').removeClass('text-success text-danger').text('');
-        $.post('includes/datacontrol.php', { save_appointment_email_template: 1, template_code: code, subject: subject, body: body }, function(data){
+        $.post('includes/datacontrol', { save_appointment_email_template: 1, template_code: code, subject: subject, body: body }, function(data){
             $btn.prop('disabled', false).text('Save template');
             if (String(data).trim() === '1') {
                 $fb.addClass('text-success').text('Saved.');

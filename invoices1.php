@@ -180,7 +180,7 @@ if(@$_SESSION['user_type']==1){
                 
                 $.ajax({
                     type: 'POST',
-                    url: 'includes/datacontrol.php',
+                    url: 'includes/datacontrol',
                     data: formData,
                     contentType: false,
                     processData: false,

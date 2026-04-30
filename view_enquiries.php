@@ -460,7 +460,7 @@ $(function(){
         $('#viewEnq_appointment_details_content').html('<p class="text-muted">Loading...</p>');
         $('#viewEnq_mark_completed_btn, #viewEnq_mark_no_show_btn, #viewEnq_cancel_appointment_btn, #viewEnq_time_in_btn, #viewEnq_time_out_btn').hide();
         $('#viewEnqAppointmentModal').modal('show');
-        $.post('includes/datacontrol.php', { formName: 'get_appointment_details', appointment_id: id }, function(html){
+        $.post('includes/datacontrol', { formName: 'get_appointment_details', appointment_id: id }, function(html){
             $('#viewEnq_appointment_details_content').html(html && html.trim() ? html : '<p class="text-muted">No details found.</p>');
             var status = $('#viewEnq_appointment_details_content #appointment_status_hidden').val();
             if(status == 'scheduled'){
@@ -487,7 +487,7 @@ $(function(){
 
     function viewEnqUpdateStatus(status){
         if(!viewEnqCurrentAppointmentId) return;
-        $.post('includes/datacontrol.php', { formName: 'update_appointment_status', appointment_id: viewEnqCurrentAppointmentId, status: status }, function(res){
+        $.post('includes/datacontrol', { formName: 'update_appointment_status', appointment_id: viewEnqCurrentAppointmentId, status: status }, function(res){
             if(res == '1'){
                 $('#toast-text').html('Appointment status updated successfully');
                 if(document.getElementById('borderedToast1Btn')) $('#borderedToast1Btn').trigger('click');
@@ -501,11 +501,11 @@ $(function(){
     }
     function viewEnqRecordTimeInOut(type){
         if(!viewEnqCurrentAppointmentId) return;
-        $.post('includes/datacontrol.php', { formName: 'record_time_in_out', appointment_id: viewEnqCurrentAppointmentId, type: type }, function(res){
+        $.post('includes/datacontrol', { formName: 'record_time_in_out', appointment_id: viewEnqCurrentAppointmentId, type: type }, function(res){
             if(res == '1'){
                 $('#toast-text').html('Time recorded successfully');
                 if(document.getElementById('borderedToast1Btn')) $('#borderedToast1Btn').trigger('click');
-                $.post('includes/datacontrol.php', { formName: 'get_appointment_details', appointment_id: viewEnqCurrentAppointmentId }, function(html){
+                $.post('includes/datacontrol', { formName: 'get_appointment_details', appointment_id: viewEnqCurrentAppointmentId }, function(html){
                     $('#viewEnq_appointment_details_content').html(html && html.trim() ? html : '');
                     var status = $('#viewEnq_appointment_details_content #appointment_status_hidden').val();
                     if(status == 'scheduled'){
@@ -536,7 +536,7 @@ $(function(){
             filter_counsellor: $('#filter_counsellor').val(),
             filter_source: $('#filter_source').val()
         };
-        $.post('includes/datacontrol.php', d, function(data){
+        $.post('includes/datacontrol', d, function(data){
             try {
                 var j = typeof data === 'string' ? JSON.parse(data) : data;
                 $('#card_today').text(j.total_today || 0);
@@ -556,7 +556,7 @@ $(function(){
         pageLength: 10,
         lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
         ajax: {
-            url: 'includes/datacontrol.php',
+            url: 'includes/datacontrol',
             type: 'POST',
             data: function(d){
                 d.formName = 'fetchEnquiryList';
@@ -633,7 +633,7 @@ $(function(){
             }
         }).then(function(result){
             if(!result.isConfirmed) return;
-            $.post('includes/datacontrol.php', {
+            $.post('includes/datacontrol', {
                 formName: 'delete_enq',
                 eq_id: stId,
                 tableName: 'student_enquiry',
@@ -702,7 +702,7 @@ $(function(){
             }
         }).then(function(result){
             if(!result.isConfirmed) return;
-            $.post('includes/datacontrol.php', {
+            $.post('includes/datacontrol', {
                 formName: 'bulk_delete_enquiry',
                 ids: JSON.stringify(ids),
                 note: result.value

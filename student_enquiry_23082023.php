@@ -219,7 +219,7 @@ if(@$_SESSION['user_type']!=''){
                     details={formName:'student_enquiry',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,payment:payment,visaStatus:visaStatus};
                     $.ajax({
                         type:'post',
-                        url:'includes/datacontrol.php',
+                        url:'includes/datacontrol',
                         data:details,
                         success:function(data){
                             if(data==0){

@@ -55,7 +55,7 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
                         <div class="page-title-box d-sm-flex align-items-center justify-content-between">
                             <h4 class="mb-sm-0">Enquiry Reports &amp; Analytics</h4>
                             <div class="page-title-right">
-                                <form method="post" action="includes/datacontrol.php" target="_blank" class="d-inline" id="export_excel_form">
+                                <form method="post" action="includes/datacontrol" target="_blank" class="d-inline" id="export_excel_form">
                                     <input type="hidden" name="formName" value="exportEnquiryReportsExcel">
                                     <input type="hidden" name="search" id="export_search">
                                     <input type="hidden" name="filter_course" id="export_filter_course">
@@ -66,7 +66,7 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
                                     <input type="hidden" name="filter_date_to" id="export_filter_date_to">
                                     <button type="submit" class="btn btn-success btn-sm me-1"><i class="ti ti-file-spreadsheet me-1"></i>Export Excel</button>
                                 </form>
-                                <form method="post" action="includes/datacontrol.php" target="_blank" class="d-inline" id="export_pdf_form">
+                                <form method="post" action="includes/datacontrol" target="_blank" class="d-inline" id="export_pdf_form">
                                     <input type="hidden" name="formName" value="exportEnquiryReportsPdf">
                                     <input type="hidden" name="search" id="export_pdf_search">
                                     <input type="hidden" name="filter_course" id="export_pdf_filter_course">
@@ -265,7 +265,7 @@ $(function(){
     function loadReports(){
         $('#reports_loading').removeClass('d-none');
         $('#reports_content').addClass('d-none');
-        $.post('includes/datacontrol.php', getReportFilters(), function(data){
+        $.post('includes/datacontrol', getReportFilters(), function(data){
             $('#reports_loading').addClass('d-none');
             $('#reports_content').removeClass('d-none');
             try {

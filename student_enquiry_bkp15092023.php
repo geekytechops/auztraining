@@ -741,7 +741,7 @@ if(@$_SESSION['user_type']!=''){
                     details={formName:'student_enquiry',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,payment:payment,checkId:checkId,visaStatus:visaStatus,surname:surname,enquiryDate:enquiryDate,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:hear_about,plan_to_start_date:plan_to_start_date,refer_select:refer_select,referer_name:referer_name,refer_alumni:refer_alumni,comments:comments,appointment_booked:appointment_booked,remarks:remarks,streetDetails:streetDetails,enquiryFor:enquiryFor,courseType:courseType,shore:shore,ethnicity:ethnicity,rpl_arrays:rpl_arrays,short_grps:short_grps,slot_books:slot_books,admin_id:"<?php echo $_SESSION['user_id']; ?>",formId:<?php echo $form_id; ?>,rpl_status:'<?php echo $rpl_status; ?>',short_grp_status:'<?php echo $short_grp_status; ?>',slot_book_status:'<?php echo $slot_book_status; ?>'};
                     $.ajax({
                         type:'post',
-                        url:'includes/datacontrol.php',
+                        url:'includes/datacontrol',
                         data:details,
                         success:function(data){
                             if(data==0){
@@ -777,7 +777,7 @@ if(@$_SESSION['user_type']!=''){
             function genQR(){                
 
                 // $.ajax({
-                //     url:'includes/datacontrol.php',
+                //     url:'includes/datacontrol',
                 //     data:{admin_id:"<?php echo $_SESSION['user_id']; ?>",formName:'create_qr'},
                 //     type:'post',
                 //     success:function(data){

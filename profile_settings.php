@@ -584,7 +584,7 @@ if ($is_admin) {
                 if(hasError){
                     return;
                 }
-                $.post('includes/datacontrol.php', {
+                $.post('includes/datacontrol', {
                     formName: 'update_profile',
                     user_name: name,
                     user_email: email,
@@ -632,7 +632,7 @@ if ($is_admin) {
                 if(hasError){
                     return;
                 }
-                $.post('includes/datacontrol.php', {
+                $.post('includes/datacontrol', {
                     formName: 'change_password',
                     current_password: current,
                     new_password: nw
@@ -665,7 +665,7 @@ if ($is_admin) {
                     $fb.addClass('text-danger').text('Subject and body are required.');
                     return;
                 }
-                $.post('includes/datacontrol.php', { save_enquiry_status_template: 1, status_code: status, subject: subject, body: body }, function(data){
+                $.post('includes/datacontrol', { save_enquiry_status_template: 1, status_code: status, subject: subject, body: body }, function(data){
                     $btn.prop('disabled', false).text('Save template');
                     if (data == '1') {
                         $fb.addClass('text-success').text('Saved.');
@@ -691,7 +691,7 @@ if ($is_admin) {
                     $fb.addClass('text-danger').text('Subject and body are required.');
                     return;
                 }
-                $.post('includes/datacontrol.php', { save_appointment_email_template: 1, template_code: code, subject: subject, body: body }, function(data){
+                $.post('includes/datacontrol', { save_appointment_email_template: 1, template_code: code, subject: subject, body: body }, function(data){
                     $btn.prop('disabled', false).text('Save template');
                     if (String(data).trim() === '1') {
                         $fb.addClass('text-success').text('Saved.');

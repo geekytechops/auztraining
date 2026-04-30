@@ -1310,7 +1310,7 @@ $(document).on('click','#lookedup',function(){
                     }
                     $.ajax({
                         type:'post',
-                        url:'includes/datacontrol.php',
+                        url:'includes/datacontrol',
                         data:formData,
                         contentType: false,
                         processData: false,
@@ -1354,7 +1354,7 @@ $(document).on('click','#lookedup',function(){
                     formData.append('formName', 'uploadEnrolmentExcel');
 
                     $.ajax({
-                        url: "includes/datacontrol.php", // Backend file
+                        url: "includes/datacontrol", // Backend file
                         type: "POST",
                         data: formData,
                         contentType: false,

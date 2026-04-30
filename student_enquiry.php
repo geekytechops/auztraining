@@ -240,18 +240,18 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             }
         });
         $(function(){
-            $.ajax({ type:'post', url:'includes/datacontrol.php', data:{ formName:'fetchEnquiries' }, success:function(data){
+            $.ajax({ type:'post', url:'includes/datacontrol', data:{ formName:'fetchEnquiries' }, success:function(data){
                 var html = (data && data.trim()) ? data : '<tr><td colspan="11">No records</td></tr>';
                 $('#student_filter_body').html(html);
                 $('#student_filter_body td.imp-none').removeClass('imp-none');
                 initDataTableEnquiries();
                 initCoursePopovers();
             }});
-            $.ajax({ type:'post', url:'includes/datacontrol.php', data:{ formName:'fetchCounsel' }, success:function(data){
+            $.ajax({ type:'post', url:'includes/datacontrol', data:{ formName:'fetchCounsel' }, success:function(data){
                 $('#counsel_filter_body').html(data && data.trim() ? data : '<tr><td colspan="9">No records</td></tr>');
                 initDataTableCounseling();
             }});
-            $.ajax({ type:'post', url:'includes/datacontrol.php', data:{ formName:'fetchFollowupList' }, success:function(data){
+            $.ajax({ type:'post', url:'includes/datacontrol', data:{ formName:'fetchFollowupList' }, success:function(data){
                 $('#followup_filter_body').html(data && data.trim() ? data : '<tr><td colspan="9">No records</td></tr>');
                 initDataTableFollowup();
             }});
@@ -1798,7 +1798,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     return;
                 }
                 var $btn = $('#login_link_send_email_btn').prop('disabled', true).text('Sending...');
-                $.post('includes/datacontrol.php', {
+                $.post('includes/datacontrol', {
                     send_enquiry_status_email: 1,
                     enquiry_id: enquiry_id,
                     subject: subject,
@@ -1840,7 +1840,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 $.ajax({
                     type:'post',
                     data:{number:number,formName:'phoneNumberCheck',oldNumber:oldNumber,memberName:memberName,enquiryFor:enquiryFor,check_update:check_update,oldenquiryFor:oldenquiryFor},
-                    url:'includes/datacontrol.php',
+                    url:'includes/datacontrol',
                     success:function(datas){
                         resolve(datas);
                     },
@@ -2078,7 +2078,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 }
                 $.ajax({
                     type:'post',
-                    url:'includes/datacontrol.php',
+                    url:'includes/datacontrol',
                     data:details,
                     success:function(data){
                         if(silent){
@@ -2163,7 +2163,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             function genQR(){                
 
                 // $.ajax({
-                //     url:'includes/datacontrol.php',
+                //     url:'includes/datacontrol',
                 //     data:{admin_id:"<?php echo $_SESSION['user_id']; ?>",formName:'create_qr'},
                 //     type:'post',
                 //     success:function(data){
@@ -2407,7 +2407,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var details=buildCounselingFormData();
                 var seq=++counselSaveSeq;
                 if(silent){ autosaveSetBadge('counsel','Counseling: saving…','wait'); }
-                $.ajax({type:'post',url:'includes/datacontrol.php',data:details,success:function(data){
+                $.ajax({type:'post',url:'includes/datacontrol',data:details,success:function(data){
                     if(silent){
                         if(seq!==counselSaveSeq) return;
                         if(data==1||data=='1'||/^1\|\d+$/.test(String(data).trim())){ autosaveSetBadge('counsel','Counseling: saved '+new Date().toLocaleTimeString(),'ok'); }
@@ -2465,7 +2465,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 } else {
                     $('#followupStatusEmailModal').data('emailStatusSource', 'enquiry');
                 }
-                $.post('includes/datacontrol.php', { get_enquiry_status_template: 1, status_code: status, enquiry_id: enquiry_id }, function(data){
+                $.post('includes/datacontrol', { get_enquiry_status_template: 1, status_code: status, enquiry_id: enquiry_id }, function(data){
                     try{
                         var j = JSON.parse(data);
                         $('#followup_email_subject').val(j.subject||'');
@@ -2619,7 +2619,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 if (!status) { return; }
                 var enquiry_id = ($('#counselling_enquiry_id').val() || '').toString().trim();
                 var post = $.extend({ get_enquiry_status_template: 1, status_code: status, enquiry_id: enquiry_id }, counsellingSessionPayloadForTemplate());
-                $.post('includes/datacontrol.php', post, function(data){
+                $.post('includes/datacontrol', post, function(data){
                     try{
                         var j = (typeof data === 'object' && data !== null) ? data : JSON.parse(data);
                         $('#counselling_email_subject').val(j.subject||'');
@@ -2855,7 +2855,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     formData.append('cb_surname', ($('#surname').val() || '').trim());
                 }
                 $('#fp_appointment_submit_btn').prop('disabled',true);
-                $.ajax({ type:'POST', url:'includes/datacontrol.php', data:formData, contentType:false, processData:false,
+                $.ajax({ type:'POST', url:'includes/datacontrol', data:formData, contentType:false, processData:false,
                     success:function(res){
                         var r = (res||'').toString().trim();
                         var contactPhoneFlow = !!window.__fpBookFromContactBarPhone;
@@ -2944,7 +2944,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var body=$('#followup_email_body').val().trim();
                 var save_as_default = $('#followup_save_template_default').is(':checked') ? 1 : 0;
                 var $btn=$('#followup_send_status_email').prop('disabled',true).text('Sending...');
-                $.post('includes/datacontrol.php',{ send_enquiry_status_email: 1, enquiry_id: enquiry_id, status_code: status_code, subject: subject, body: body, save_as_default: save_as_default },function(data){
+                $.post('includes/datacontrol',{ send_enquiry_status_email: 1, enquiry_id: enquiry_id, status_code: status_code, subject: subject, body: body, save_as_default: save_as_default },function(data){
                     if(data=='1'){
                         $('#toast-text').html('Email sent successfully'); $('#borderedToast1Btn').trigger('click');
                         var fm = document.getElementById('followupStatusEmailModal');
@@ -2981,7 +2981,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     body: body,
                     save_as_default: save_as_default
                 }, counsellingSessionPayloadForTemplate());
-                $.post('includes/datacontrol.php', post, function(data){
+                $.post('includes/datacontrol', post, function(data){
                     if(data=='1'){
                         $('#toast-text').html('Email sent successfully');
                         $('#borderedToast1Btn').trigger('click');
@@ -3059,7 +3059,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var details = usePostCounselling ? buildFollowupPcFormData() : buildFollowupFormData();
                 var seq=++followupSaveSeq;
                 if(silent){ autosaveSetBadge('followup','Follow-up: saving…','wait'); }
-                $.ajax({type:'post',url:'includes/datacontrol.php',data:details,success:function(data){
+                $.ajax({type:'post',url:'includes/datacontrol',data:details,success:function(data){
                     if(silent){
                         if(seq!==followupSaveSeq) return;
                         if(data==1 || data=='1' || /^1\|\d+$/.test(String(data).trim())){ autosaveSetBadge('followup','Follow-up: saved '+new Date().toLocaleTimeString(),'ok'); }
@@ -3128,7 +3128,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 $('#followup_history_loading').removeClass('d-none');
                 $('#followup_history_empty').addClass('d-none').text(emptyMsg);
                 $('#followup_history_tbody').empty();
-                $.post('includes/datacontrol.php', { formName: 'fetch_followup_history', enquiry_id: eid, followup_stage: st }, function(raw){
+                $.post('includes/datacontrol', { formName: 'fetch_followup_history', enquiry_id: eid, followup_stage: st }, function(raw){
                     $('#followup_history_loading').addClass('d-none');
                     var j;
                     try { j = (typeof raw === 'object' && raw !== null) ? raw : JSON.parse(raw); } catch (err) { j = { rows: [] }; }
@@ -3215,7 +3215,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 $('#fh_resend_status_code').text(String(sc));
                 $('#fh_resend_subject, #fh_resend_body').val('');
                 $('#fh_resend_save_default').prop('checked', false);
-                $.post('includes/datacontrol.php', { get_enquiry_status_template: 1, status_code: sc, enquiry_id: eid }, function(data){
+                $.post('includes/datacontrol', { get_enquiry_status_template: 1, status_code: sc, enquiry_id: eid }, function(data){
                     try {
                         var j = (typeof data === 'object' && data !== null) ? data : JSON.parse(data);
                         $('#fh_resend_subject').val(j.subject || '');
@@ -3243,7 +3243,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     post.save_as_default = 1;
                     post.status_code = sc;
                 }
-                $.post('includes/datacontrol.php', post, function(res){
+                $.post('includes/datacontrol', post, function(res){
                     $btn.prop('disabled', false).text('Send email');
                     if (res == '1') {
                         $('#toast-text').html('Email sent successfully');

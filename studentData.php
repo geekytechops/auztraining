@@ -288,7 +288,7 @@ if(isset($_GET['check'])){
                 $(document).ready(function () {
                     $('#datatable').DataTable({lengthMenu: [5, 10, 20],language:{paginate:{previous:"<i class='mdi mdi-chevron-left'>",next:"<i class='mdi mdi-chevron-right'>"}},drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},
                     scrollX: true,
-                        ajax: 'includes/datacontrol.php?name=singleinvoice&id=<?php echo $enrolId; ?>',
+                        ajax: 'includes/datacontrol?name=singleinvoice&id=<?php echo $enrolId; ?>',
                             columns: [
                             { data: 'autoId' },                                    
                             { data: 'course' },                                    
@@ -315,7 +315,7 @@ if(isset($_GET['check'])){
                 if(formatError==0){
                 $.ajax({
                     type:'post',
-                    url:'includes/datacontrol.php',
+                    url:'includes/datacontrol',
                     data:formDatas,
                     contentType: false,
                     processData:false,

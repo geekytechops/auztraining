@@ -681,7 +681,7 @@ function filterMain(){
 function fetchFilter(objFilter){
     $.ajax({
         type:'post',
-        url:'includes/datacontrol.php',
+        url:'includes/datacontrol',
         data:{objFilter,formName:'fetchEnquiries'},
         success:function(data){
             $('#student_filter_body').html(data);
@@ -773,7 +773,7 @@ function appoint_filterMain(){
 function appoint_fetch(objFilter){
     $.ajax({
         type:'post',
-        url:'includes/datacontrol.php',
+        url:'includes/datacontrol',
         data:{objFilter,formName:'fetchAppoints'},
         success:function(data){
             $('#appointments_table tbody').html(data);
@@ -838,7 +838,7 @@ function counsel_filterMain(){
 function counsel_fetch(objFilter){
     $.ajax({
         type:'post',
-        url:'includes/datacontrol.php',
+        url:'includes/datacontrol',
         data:{objFilter,formName:'fetchCounsel'},
         success:function(data){
             $('#counsel_table tbody').html(data);

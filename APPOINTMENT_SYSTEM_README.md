@@ -28,7 +28,7 @@ This will create the following tables:
 
 ### 3. Files Modified
 - `includes/sidebar.php` - Added Appointments menu
-- `includes/datacontrol.php` - Added all appointment backend functions
+- `includes/datacontrol` - Added all appointment backend functions
 
 ## Features Implemented
 

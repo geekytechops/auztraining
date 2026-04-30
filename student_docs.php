@@ -210,7 +210,7 @@ $selectQry = $enrolId !== '' ? mysqli_query($connection,"SELECT st_unique_id,st_
                 var enrolId='<?php echo $enrolId; ?>';
                 $.ajax({
                     type:'post',
-                    url:'includes/datacontrol.php',
+                    url:'includes/datacontrol',
                     data:{delType:delType,enrolID:enrolId,formName:"deleteProof"},
                     success:function(data){
                         if(data==1){
@@ -241,7 +241,7 @@ $selectQry = $enrolId !== '' ? mysqli_query($connection,"SELECT st_unique_id,st_
                 if(formatError==0){
                 $.ajax({
                     type:'post',
-                    url:'includes/datacontrol.php',
+                    url:'includes/datacontrol',
                     data:formDatas,
                     contentType: false,
                     processData:false,

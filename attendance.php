@@ -146,7 +146,7 @@ function send_file(){
         $.ajax({
             type:'post',
             data:formsData,
-            url:'includes/datacontrol.php',
+            url:'includes/datacontrol',
             contentType: false,
             processData:false,
             success:function(data){

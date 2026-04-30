@@ -284,7 +284,7 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                     },
                     events: function(fetchInfo, successCallback, failureCallback) {
                         $.ajax({
-                            url: 'includes/datacontrol.php',
+                            url: 'includes/datacontrol',
                             type: 'POST',
                             data: {
                                 formName: 'get_appointments_calendar',
@@ -406,7 +406,7 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
             
             function loadAppointmentDetails(appointmentId) {
                 $.ajax({
-                    url: 'includes/datacontrol.php',
+                    url: 'includes/datacontrol',
                     type: 'POST',
                     data: {
                         formName: 'get_appointment_details',
@@ -463,7 +463,7 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
 
             function updateAppointmentStatus(status) {
                 $.ajax({
-                    url: 'includes/datacontrol.php',
+                    url: 'includes/datacontrol',
                     type: 'POST',
                     dataType: 'text',
                     data: {
@@ -489,7 +489,7 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
             
             function recordTimeInOut(type) {
                 $.ajax({
-                    url: 'includes/datacontrol.php',
+                    url: 'includes/datacontrol',
                     type: 'POST',
                     dataType: 'text',
                     data: {

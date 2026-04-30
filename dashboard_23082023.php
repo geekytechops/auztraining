@@ -144,7 +144,7 @@ if(@$_SESSION['user_type']==1){
             $(document).ready(function () {
                 $('#datatable').DataTable({lengthMenu: [5, 10, 20],language:{paginate:{previous:"<i class='mdi mdi-chevron-left'>",next:"<i class='mdi mdi-chevron-right'>"}},drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},
                 scrollX: true,
-                    ajax: 'includes/datacontrol.php?name=studentEnquiry',
+                    ajax: 'includes/datacontrol?name=studentEnquiry',
                         columns: [
                         { data: 'st_enquiry_id' },                                    
                         { data: 'std_name' },                                    
@@ -158,7 +158,7 @@ if(@$_SESSION['user_type']==1){
 
                 $('#datatable_enrol').DataTable({lengthMenu: [5, 10, 20],language:{paginate:{previous:"<i class='mdi mdi-chevron-left'>",next:"<i class='mdi mdi-chevron-right'>"}},drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},
                 scrollX: true,
-                    ajax: 'includes/datacontrol.php?name=student_enrol',
+                    ajax: 'includes/datacontrol?name=student_enrol',
                         columns: [
                         { data: 'st_enrol_name' },                                    
                         { data: 'st_enrol_givenname' },
@@ -171,7 +171,7 @@ if(@$_SESSION['user_type']==1){
                 
                 $('#datatable_invoices').DataTable({lengthMenu: [5, 10, 20],language:{paginate:{previous:"<i class='mdi mdi-chevron-left'>",next:"<i class='mdi mdi-chevron-right'>"}},drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},
                 scrollX: true,
-                    ajax: 'includes/datacontrol.php?name=student_invoices',
+                    ajax: 'includes/datacontrol?name=student_invoices',
                         columns: [
                         { data: 'inv_std_name' },                                    
                         { data: 'inv_course' },

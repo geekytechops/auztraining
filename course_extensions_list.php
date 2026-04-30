@@ -202,7 +202,7 @@ if(@$_SESSION['user_type']!=''){
                     },
                     scrollX: true,
                     responsive: false,
-                    ajax: 'includes/datacontrol.php?name=courseExtensions',
+                    ajax: 'includes/datacontrol?name=courseExtensions',
                     columns: [
                         { data: 'reference_id' },
                         { data: 'name' },
@@ -237,7 +237,7 @@ if(@$_SESSION['user_type']!=''){
                     
                     $.ajax({
                         type: 'POST',
-                        url: 'includes/datacontrol.php',
+                        url: 'includes/datacontrol',
                         data: formData,
                         contentType: false,
                         processData: false,

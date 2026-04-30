@@ -383,7 +383,7 @@
                 $.ajax({
                     type:'post',
                     data:{number:number,formName:'phoneNumberCheck',oldNumber:oldNumber,memberName:memberName,enquiryFor:enquiryFor,check_update:check_update,oldenquiryFor:oldenquiryFor},
-                    url:'includes/datacontrol.php',
+                    url:'includes/datacontrol',
                     success:function(datas){
                         resolve(datas);
                     },
@@ -680,7 +680,7 @@
                     details={formName:'student_enquiry_common',studentName:studentName,contactName:contactName,emailAddress:emailAddress,courses:courses,checkId:checkId,surname:surname,suburb:suburb,stuState:stuState,postCode:postCode,visit_before:visit_before,hear_about:JSON.stringify(hear_about),hearedby:hearedby,plan_to_start_date:plan_to_start_date,refer_select:refer_select,prefComment:prefComment,memberName:memberName,referer_name:referer_name,refer_alumni:refer_alumni,streetDetails:streetDetails,enquiryFor:enquiryFor,admin_id:0,form_type:1};
                     $.ajax({
                         type:'post',
-                        url:'includes/datacontrol.php',
+                        url:'includes/datacontrol',
                         data:details,
                         success:function(data){
                             if(data==0){
@@ -726,7 +726,7 @@
             function genQR(){                
 
                 $.ajax({
-                    url:'includes/datacontrol.php',
+                    url:'includes/datacontrol',
                     data:{admin_id:"<?php echo $_SESSION['user_id']; ?>",formName:'create_qr'},
                     type:'post',
                     success:function(data){                

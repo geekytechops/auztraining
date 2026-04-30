@@ -425,7 +425,7 @@ if(isset($_SESSION['user_type'])){
                         function appoint_fetch(datas){
                             $.ajax({
                                 type:'post',
-                                url:'includes/datacontrol.php',
+                                url:'includes/datacontrol',
                                 data:{formName:'appointments_table',filter:datas},
                                 success:function(data){
                                     $('#appointments_table tbody').html(data);
@@ -924,7 +924,7 @@ $(function() {
 
             //     $.ajax({
             //         type:'post',
-            //         url:"includes/datacontrol.php",
+            //         url:"includes/datacontrol",
             //         data:{formName:"date_filter",from_date:from_date,to_date:to_date},
             //         success:function(data){
             //             $('#student_filter_body').html(data);                                                
@@ -939,7 +939,7 @@ $(function() {
             //     var state_status= $('#state_select').val()=='' ? 0 : $('#state_select').val();
             //     $.ajax({
             //         type:'post',
-            //         url:'includes/datacontrol.php',
+            //         url:'includes/datacontrol',
             //         data:{visa_status:visa_status,state_status:state_status,course_type_status:course_type_status,appointment_status:appointment_status,formName:'student_filter'},
             //         success:function(data){
             //             $('#student_filter_body').html(data);
@@ -975,7 +975,7 @@ $(function() {
                 $.ajax({
                     type:'post',
                     data:{eq_id:eq_id,tableName:tableName,colPrefix:colPrefix,note:note,formName:'delete_enq'},
-                    url:'includes/datacontrol.php',
+                    url:'includes/datacontrol',
                     success:function(data){
                         if(data==1){
                         var table = $('#datatable').DataTable();
@@ -996,7 +996,7 @@ $(function() {
                 $.ajax({
                     type:'post',
                     data:{enrol_id:enrol_id,formName:'delete_enrol'},
-                    url:'includes/datacontrol.php',
+                    url:'includes/datacontrol',
                     success:function(data){
                         if(data==1){
                             console.log(data);
@@ -1019,7 +1019,7 @@ $(function() {
                             drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},
                     sScrollX: true,
                     responsive:false,
-                    ajax: 'includes/datacontrol.php?name=studentEnquiry',
+                    ajax: 'includes/datacontrol?name=studentEnquiry',
                         columns: [
                         { data: 'st_enquiry_id' },                                    
                         { data: 'std_name' },                                    
@@ -1074,7 +1074,7 @@ $(function() {
                             next:"<i class='mdi mdi-chevron-right'>"}},
                             drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},                    
                     responsive:false,
-                    ajax: 'includes/datacontrol.php?name=followup_calls',
+                    ajax: 'includes/datacontrol?name=followup_calls',
                         columns: [
                         { data: 'enquiry_id' },                                    
                         { data: 'name' },                                    
@@ -1097,7 +1097,7 @@ $(function() {
                             next:"<i class='mdi mdi-chevron-right'>"}},
                             drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},                    
                     responsive:false,
-                    ajax: 'includes/datacontrol.php?name=counselings',
+                    ajax: 'includes/datacontrol?name=counselings',
                         columns: [
                         { data: 'member_name' },                                    
                         { data: 'counsil_type' },                                    
@@ -1254,7 +1254,7 @@ $(function() {
             function fetchFilter(objFilter){
                 $.ajax({
                     type:'post',
-                    url:'includes/datacontrol.php',
+                    url:'includes/datacontrol',
                     data:{objFilter,formName:'fetchEnquiries'},
                     success:function(data){
                         $('#student_filter_body').html(data);

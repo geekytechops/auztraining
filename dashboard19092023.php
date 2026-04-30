@@ -515,7 +515,7 @@ if(isset($_SESSION['user_type'])){
                 $.ajax({
                     type:'post',
                     data:{eq_id:eq_id,note:note,formName:'delete_enq'},
-                    url:'includes/datacontrol.php',
+                    url:'includes/datacontrol',
                     success:function(data){
                         if(data==1){
                         var table = $('#datatable').DataTable();
@@ -532,7 +532,7 @@ if(isset($_SESSION['user_type'])){
                 $.ajax({
                     type:'post',
                     data:{enrol_id:enrol_id,formName:'delete_enrol'},
-                    url:'includes/datacontrol.php',
+                    url:'includes/datacontrol',
                     success:function(data){
                         if(data==1){
                             console.log(data);
@@ -555,7 +555,7 @@ if(isset($_SESSION['user_type'])){
                             drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},
                     sScrollX: true,
                     responsive:false,
-                    ajax: 'includes/datacontrol.php?name=studentEnquiry',
+                    ajax: 'includes/datacontrol?name=studentEnquiry',
                         columns: [
                         { data: 'st_enquiry_id' },                                    
                         { data: 'std_name' },                                    
@@ -610,7 +610,7 @@ if(isset($_SESSION['user_type'])){
             //     $(".dataTables_paginate > .pagination").addClass("pagination-rounded")
             //     },
             //     scrollX: true,
-            //         ajax: 'includes/datacontrol.php?name=all_students',
+            //         ajax: 'includes/datacontrol?name=all_students',
             //             columns: [
             //             { data: 'st_unique_id' },                                    
             //             { data: 'st_enrol_name' },                                    
@@ -623,7 +623,7 @@ if(isset($_SESSION['user_type'])){
             //     });
                 // $('#datatable_enrol').DataTable({lengthMenu: [5, 10, 20],language:{paginate:{previous:"<i class='mdi mdi-chevron-left'>",next:"<i class='mdi mdi-chevron-right'>"}},drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},
                 // scrollX: true,
-                //     ajax: 'includes/datacontrol.php?name=student_enrol',
+                //     ajax: 'includes/datacontrol?name=student_enrol',
                 //         columns: [
                 //         { data: 'st_enrol_name' },                                    
                 //         { data: 'st_enrol_id' },                                    
@@ -639,7 +639,7 @@ if(isset($_SESSION['user_type'])){
                 
                 // $('#datatable_invoices').DataTable({lengthMenu: [5, 10, 20],language:{paginate:{previous:"<i class='mdi mdi-chevron-left'>",next:"<i class='mdi mdi-chevron-right'>"}},drawCallback:function(){$(".dataTables_paginate > .pagination").addClass("pagination-rounded")},
                 // scrollX: true,
-                //     ajax: 'includes/datacontrol.php?name=student_invoices',
+                //     ajax: 'includes/datacontrol?name=student_invoices',
                 //         columns: [
                 //         { data: 'inv_id' },                                    
                 //         { data: 'inv_std_name' },                                    

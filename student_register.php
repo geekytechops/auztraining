@@ -116,7 +116,7 @@ $asset_base = 'crm/html/template/assets';
         fd.append('full_name', full_name);
         fd.append('password', password);
         fd.append('enquiry_id', enquiry_id);
-        fetch('includes/datacontrol.php', { method: 'POST', body: fd })
+        fetch('includes/datacontrol', { method: 'POST', body: fd })
             .then(function(r){ return r.json(); })
             .then(function(data){
                 if(data.success){ alert(data.message); window.location.href = 'student_login.php'; }

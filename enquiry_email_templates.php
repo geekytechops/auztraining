@@ -141,7 +141,7 @@ $(function(){
         var body = $('.template-body[data-status="'+status+'"]').val().trim();
         var $btn = $(this).prop('disabled', true).text('Saving...');
         var $fb = $('.save-feedback[data-status="'+status+'"]').removeClass('text-success text-danger').text('');
-        $.post('includes/datacontrol.php', { save_enquiry_status_template: 1, status_code: status, subject: subject, body: body }, function(data){
+        $.post('includes/datacontrol', { save_enquiry_status_template: 1, status_code: status, subject: subject, body: body }, function(data){
             $btn.prop('disabled', false).text('Save template');
             if (data == '1') {
                 $fb.addClass('text-success').text('Saved.');

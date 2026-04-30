@@ -469,7 +469,7 @@
                     
                     $.ajax({
                         type: 'POST',
-                        url: 'includes/datacontrol.php',
+                        url: 'includes/datacontrol',
                         data: formData,
                         contentType: false,
                         processData: false,

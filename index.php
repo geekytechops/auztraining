@@ -128,7 +128,7 @@ if(@$_SESSION['user_id']!=''){
                 var email=$('#email').val().trim();
                 var password=$('#password').val().trim();
                 var otp=$('#login_otp').val().trim();
-                if(!loginOtpStep && (email==''||password=='')){
+                if(!loginOtpStep && email==''){
                     if(email==''){
                         $('#email').addClass('invalid-div');
                         $('#email').removeClass('valid-div');
@@ -138,15 +138,8 @@ if(@$_SESSION['user_id']!=''){
                         $('#email').removeClass('invalid-div');
                         $('#email').closest('div').find('.error-feedback').hide();
                     }
-                    if(password==''){
-                        $('#password').addClass('invalid-div');
-                        $('#password').removeClass('valid-div');
-                        $('#password').closest('div').find('.error-feedback').show();
-                    }else{
-                        $('#password').addClass('valid-div');
-                        $('#password').removeClass('invalid-div');
-                        $('#password').closest('div').find('.error-feedback').hide();
-                    }
+                    $('#password').removeClass('invalid-div');
+                    $('#password').closest('div').find('.error-feedback').hide();
                 }
                 else if(!loginOtpStep){
                     details={formName:'login_request_otp',email:email,password:password};
@@ -156,11 +149,15 @@ if(@$_SESSION['user_id']!=''){
                     adminLoginSetError('');
                     $.ajax({
                         type:'post',
-                        url:'includes/datacontrol.php',
+                        url:'includes/datacontrol',
                         data:details,
                         dataType:'json',
                         success:function(data){
                             if(data && data.success){
+                                if(data.auto_login){
+                                    window.location.href = data.redirect || "dashboard.php";
+                                    return;
+                                }
                                 loginOtpStep = true;
                                 $('#otp_wrap').show();
                                 $('#email,#password').prop('readonly',true);
@@ -187,7 +184,7 @@ if(@$_SESSION['user_id']!=''){
                     details={formName:'login_verify_otp',otp:otp};
                     $.ajax({
                         type:'post',
-                        url:'includes/datacontrol.php',
+                        url:'includes/datacontrol',
                         data:details,
                         dataType:'json',
                         success:function(data){

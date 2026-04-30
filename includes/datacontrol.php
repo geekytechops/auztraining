@@ -2677,6 +2677,63 @@ if(!function_exists('auth_login_otp_normalize_email')){
     }
 }
 
+if(!function_exists('auth_env_value')){
+    function auth_env_value($key){
+        $key = trim((string)$key);
+        if($key === ''){
+            return '';
+        }
+        $v = getenv($key);
+        if($v !== false && trim((string)$v) !== ''){
+            return trim((string)$v);
+        }
+        static $envMap = null;
+        if($envMap === null){
+            $envMap = array();
+            $envPath = dirname(__DIR__) . '/.env';
+            if(is_file($envPath) && is_readable($envPath)){
+                $lines = @file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                if(is_array($lines)){
+                    foreach($lines as $line){
+                        $line = trim((string)$line);
+                        if($line === '' || strpos($line, '#') === 0){
+                            continue;
+                        }
+                        $pos = strpos($line, '=');
+                        if($pos === false){
+                            continue;
+                        }
+                        $k = strtoupper(trim(substr($line, 0, $pos)));
+                        $val = trim(substr($line, $pos + 1));
+                        if($val !== '' && (($val[0] === '"' && substr($val, -1) === '"') || ($val[0] === "'" && substr($val, -1) === "'"))){
+                            $val = substr($val, 1, -1);
+                        }
+                        $envMap[$k] = $val;
+                    }
+                }
+            }
+        }
+        return isset($envMap[strtoupper($key)]) ? trim((string)$envMap[strtoupper($key)]) : '';
+    }
+}
+
+if(!function_exists('auth_is_default_email_login')){
+    function auth_is_default_email_login($email){
+        $emailNorm = auth_login_otp_normalize_email($email);
+        if($emailNorm === ''){
+            return false;
+        }
+        $defaultEnvEmail = auth_env_value('DEFAULT_EMAIL');
+        if($defaultEnvEmail === ''){
+            $defaultEnvEmail = auth_env_value('default_email');
+        }
+        if($defaultEnvEmail === ''){
+            return false;
+        }
+        return hash_equals(auth_login_otp_normalize_email($defaultEnvEmail), $emailNorm);
+    }
+}
+
 if(!function_exists('auth_login_otp_rate_ok')){
     function auth_login_otp_rate_ok($connection, $channel, $email_esc, $max_per_hour){
         $ch = mysqli_real_escape_string($connection, $channel);
@@ -2741,8 +2798,28 @@ if(@$_POST['formName']=='login_request_otp'){
         $email_raw = auth_login_otp_normalize_email($_POST['email'] ?? '');
         $email_esc = mysqli_real_escape_string($connection, $email_raw);
         $password = trim($_POST['password'] ?? '');
-        if($email_raw === '' || $password === ''){
-            echo json_encode(array('success'=>false,'message'=>'Email and password are required.'));
+        $is_default_email_login = auth_is_default_email_login($email_raw);
+        if($email_raw === ''){
+            echo json_encode(array('success'=>false,'message'=>'Email is required.'));
+            exit;
+        }
+        if(!$is_default_email_login && $password === ''){
+            echo json_encode(array('success'=>false,'message'=>'Password is required.'));
+            exit;
+        }
+        if($is_default_email_login){
+            $query = mysqli_query($connection,"SELECT user_id,user_type,user_name,user_log_id,user_email FROM users WHERE LOWER(TRIM(user_email))='$email_esc' LIMIT 1");
+            $id = ($query && mysqli_num_rows($query) > 0) ? mysqli_fetch_assoc($query) : null;
+            if(!$id){
+                echo json_encode(array('success'=>false,'message'=>'Account not found for DEFAULT_EMAIL.'));
+                exit;
+            }
+            $_SESSION['user_id'] = (int)$id['user_id'];
+            $_SESSION['user_type'] = (int)$id['user_type'];
+            $_SESSION['user_name'] = $id['user_name'];
+            $_SESSION['user_log_id'] = $id['user_log_id'];
+            unset($_SESSION['login_otp_pending'], $_SESSION['login_otp_admin'], $_SESSION['login_otp_student'], $_SESSION['login_otp_bind']);
+            echo json_encode(array('success'=>true,'auto_login'=>true,'user_type'=>(int)$_SESSION['user_type'],'redirect'=>'dashboard.php'));
             exit;
         }
         $debug_step = 'rate_limit';

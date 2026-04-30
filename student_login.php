@@ -116,7 +116,7 @@ $asset_base = 'crm/html/template/assets';
             studentOtpSending = true;
             sendingWrap.style.display = 'block';
             studentLoginRefreshButton();
-            fetch('includes/datacontrol.php', { method: 'POST', body: fd })
+            fetch('includes/datacontrol', { method: 'POST', body: fd })
                 .then(function(r){ return r.json(); })
                 .then(function(data){
                     if(data.success){
@@ -148,7 +148,7 @@ $asset_base = 'crm/html/template/assets';
             }
             fd.append('formName', 'student_login_verify_otp');
             fd.append('otp', otp);
-            fetch('includes/datacontrol.php', { method: 'POST', body: fd })
+            fetch('includes/datacontrol', { method: 'POST', body: fd })
                 .then(function(r){ return r.json(); })
                 .then(function(data){
                     if(data.success && data.redirect){ window.location.href = data.redirect; }

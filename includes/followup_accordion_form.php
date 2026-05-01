@@ -38,7 +38,7 @@ $enquiry_flow_statuses = array(
     2 => 'Contacted',
     3 => 'Follow-up Pending',
     4 => 'In Progress',
-    5 => 'Ready to Enrol',
+    5 => 'Enrol Pending',
     6 => 'Converted',
     7 => 'Closed / Lost',
     8 => 'Invalid / Duplicate',
@@ -85,7 +85,7 @@ $followup_enquiry_code = isset($followup_Query['enquiry_id']) ? $followup_Query[
 <div class="col-md-6"><div class="mb-3"><label class="form-label" for="<?php echo $idp; ?>contacted_time">Follow-up Date &amp; Time</label>
 <input type="datetime-local" class="form-control" id="<?php echo $idp; ?>contacted_time" value="<?php echo $followup_Query['flw_contacted_time']=='' ? '' : date('Y-m-d\TH:i',strtotime($followup_Query['flw_contacted_time'])); ?>"><div class="error-feedback">Please select the follow-up date and time</div></div></div>
 <div class="col-md-6"><div class="mb-3"><label class="form-label" for="<?php echo $idp; ?>contacted_person">Responsible Staff</label>
-<select class="form-select" id="<?php echo $idp; ?>contacted_person">
+<select class="form-select" id="<?php echo $idp; ?>contacted_person" disabled>
 <option value="">--select--</option>
 <?php
 if ($followupUsers) {
@@ -121,16 +121,21 @@ if ($followupUsers) {
 <small class="text-muted ms-2">Opens New Appointment with this enquiry’s student details pre-filled.</small></div>
 <div class="col-12"><div class="mb-3"><label class="form-label" for="<?php echo $idp; ?>enquiry_flow_status">Email Template</label>
 <select class="form-select" id="<?php echo $idp; ?>enquiry_flow_status">
+<?php
+$stored_enquiry_flow_status = (isset($followup_Query['enquiry_flow_status']) && (string)$followup_Query['enquiry_flow_status'] !== '')
+    ? (int)$followup_Query['enquiry_flow_status'] : null;
+?>
+<option value=""<?php echo $stored_enquiry_flow_status === null ? ' selected' : ''; ?>>Select email template</option>
 <?php foreach ($enquiry_flow_statuses as $k => $v) {
-    $sel = (isset($followup_Query['enquiry_flow_status']) && $followup_Query['enquiry_flow_status']==$k) ? 'selected' : '';
+    $sel = ($stored_enquiry_flow_status !== null && $stored_enquiry_flow_status === (int)$k) ? 'selected' : '';
     $dis = ($k==9 && !$has_counselling_appointment) ? ' disabled' : '';
     echo '<option value="'.$k.'" '.$sel.$dis.'>'.$v.'</option>';
 } ?>
 </select>
 <?php
-$followup_status_actual = (isset($followup_Query['enquiry_flow_status']) && (string)$followup_Query['enquiry_flow_status'] !== '') ? (int)$followup_Query['enquiry_flow_status'] : 1;
+$followup_status_actual = $stored_enquiry_flow_status !== null ? (int)$stored_enquiry_flow_status : '';
 ?>
-<input type="hidden" id="<?php echo $idp; ?>enquiry_status_actual" value="<?php echo $followup_status_actual; ?>">
+<input type="hidden" id="<?php echo $idp; ?>enquiry_status_actual" value="<?php echo $followup_status_actual !== '' ? (int)$followup_status_actual : ''; ?>">
 <small class="text-muted d-block">Follow Up Outcome sets enquiry status automatically. Changing <strong>Email Template</strong> only opens the email popup and does not change enquiry status.</small></div></div>
 <div class="col-12"><div class="mb-3"><label class="form-label" for="<?php echo $idp; ?>follow_up_notes">Follow-Up Notes</label>
 <textarea class="form-control" id="<?php echo $idp; ?>follow_up_notes" rows="3" placeholder="Free text notes"><?php echo htmlspecialchars(isset($followup_Query['flw_follow_up_notes']) ? $followup_Query['flw_follow_up_notes'] : ''); ?></textarea></div></div>

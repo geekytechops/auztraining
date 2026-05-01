@@ -4,6 +4,11 @@ if(!isset($counsilEqId)) $counsilEqId = 0;
 if(!isset($counsil_Query)) $counsil_Query = array();
 $counsil_Query = array_merge(array('st_enquiry_id'=>'','counsil_timing'=>'','counsil_end_time'=>'','counsil_type'=>'','counsil_mem_name'=>'','counsil_preferred_intake_date'=>'','counsil_mode_of_study'=>'','counsil_aus_stay_time'=>'','counsil_work_status'=>'','counsil_visa_condition'=>'','counsil_education'=>'','counsil_aus_study_status'=>'','counsil_course'=>'','counsil_university'=>'','counsil_qualification'=>'','counsil_eng_rate'=>'','counsil_migration_test'=>'','counsil_overall_result'=>'','counsil_module_result'=>'','counsil_job_nature'=>'','counsil_vaccine_status'=>'','counsil_remarks'=>'','counsil_notes'=>'','counsil_outcome'=>''), $counsil_Query);
 $counsellingUsers = isset($counsellingUsers) ? $counsellingUsers : mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE user_status != 1 ORDER BY user_name");
+$loggedInStaffName = isset($_SESSION['user_name']) ? trim((string)$_SESSION['user_name']) : '';
+$selectedCounsellor = isset($counsil_Query['counsil_mem_name']) ? trim((string)$counsil_Query['counsil_mem_name']) : '';
+if ($selectedCounsellor === '' && $loggedInStaffName !== '') {
+    $selectedCounsellor = $loggedInStaffName;
+}
 $co_raw = isset($counsil_Query['counsil_outcome']) ? trim((string) $counsil_Query['counsil_outcome']) : '';
 $co_norm_map = array(
     'counselling done' => 'Counselling Done',
@@ -57,14 +62,14 @@ if($counsil_date_val==''){
 <input type="radio" id="counseling_type1" name="counseling_type" class="form-check-input counseling_type" value="1" <?php echo $counsil_Query['counsil_type']==''||$counsil_Query['counsil_type']==1 ? 'checked' : ''; ?>><label for="counseling_type1">Face to Face</label>
 <input type="radio" id="counseling_type2" name="counseling_type" class="form-check-input counseling_type" value="2" <?php echo $counsil_Query['counsil_type']==2 ? 'checked' : ''; ?>><label for="counseling_type2">Video</label></div></div>
 <div class="col-md-6"><div class="mb-3"><label class="form-label" for="counselling_member_name">Counsellor's Name</label>
-<select class="form-select" id="counselling_member_name">
+<select class="form-select" id="counselling_member_name" disabled>
 <option value="">--select--</option>
 <?php
 if($counsellingUsers){
     mysqli_data_seek($counsellingUsers, 0);
     while($u = mysqli_fetch_array($counsellingUsers)){
         $name = $u['user_name'];
-        $selected = ($counsil_Query['counsil_mem_name'] === $name) ? 'selected' : '';
+        $selected = ($selectedCounsellor === $name) ? 'selected' : '';
         echo '<option value="'.htmlspecialchars($name).'" '.$selected.'>'.htmlspecialchars($name).'</option>';
     }
 }
@@ -162,12 +167,12 @@ foreach ($couns_outcomes as $ov => $ol) {
 </div></div>
 <div class="col-12"><div class="mb-3"><label class="form-label" for="counselling_email_template_status">Email template</label>
 <select class="form-select" id="counselling_email_template_status">
-<option value="">-- select outcome first --</option>
-<option value="12" <?php echo ($co_sel === 'Counselling Done') ? 'selected' : ''; ?>>Counselling Done</option>
-<option value="13" <?php echo ($co_sel === 'Rescheduled') ? 'selected' : ''; ?>>Rescheduling</option>
-<option value="14" <?php echo ($co_sel === 'Rejected') ? 'selected' : ''; ?>>Rejected</option>
+<option value="">Select email template</option>
+<option value="12">Counselling Done</option>
+<option value="13">Rescheduling</option>
+<option value="14">Rejected</option>
 </select>
-<small class="text-muted d-block">Changing <strong>Counselling outcome</strong> updates this selection. Choosing a template opens a window to review and send the email only (it does not change enquiry status).</small></div></div>
+<small class="text-muted d-block">Choose a template to preview and send email only (it does not change enquiry status).</small></div></div>
 <div class="col-12 mb-2" id="counselling_reschedule_calendar_wrap" style="display:<?php echo ($co_sel === 'Rescheduled') ? 'block' : 'none'; ?>;">
 <button type="button" class="btn btn-outline-primary" id="counselling_open_calendar_btn"><i class="ti ti-calendar"></i> Calendar</button>
 <small class="text-muted ms-2">Book the rescheduled session; enquiry status is set to Counselling Pending.</small>

@@ -339,8 +339,8 @@ $(document).on('change','#enquiry_id' , function(){
                         url:'includes/datacontrol',
                         data:details,
                         success:function(data){
-
-                            if(data==1){
+                            var _ds = String(data === null || data === undefined ? '' : data).trim();
+                            if(_ds === '1' || /^1\|/.test(_ds)){
                                 $('#toast-text').html('Record Added Successfully');
                                 $('#borderedToast1Btn').trigger('click');
                                 setTimeout(() => {

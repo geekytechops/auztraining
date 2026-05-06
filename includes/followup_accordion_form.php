@@ -169,6 +169,11 @@ for ($i = $half + 1; $i < $total_remarks; $i++) {
 <?php } ?>
 </div>
 <p class="text-muted small mb-2">Each submit adds a new entry in <strong>this</strong> section&rsquo;s history (Post Enquiry and Post Counselling are stored separately). Use <strong>Follow-up history</strong> on this accordion header to review or resend status emails for this section only.</p>
+<?php
+$__followup_check_row_id = $is_post_counselling_followup
+    ? (isset($followup_pc_EqId) ? (int)$followup_pc_EqId : 0)
+    : (isset($followupEqId) ? (int)$followupEqId : 0);
+?>
 <button class="btn btn-primary" type="button" id="<?php echo $idp; ?>check">Submit Follow Up</button>
-<input type="hidden" value="<?php echo $followupEqId; ?>" id="<?php echo $idp; ?>check_update">
+<input type="hidden" value="<?php echo $__followup_check_row_id; ?>" id="<?php echo $idp; ?>check_update">
 </form>

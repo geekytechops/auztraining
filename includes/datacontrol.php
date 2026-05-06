@@ -1450,7 +1450,7 @@ if(@$_POST['formName']=='followup_call'){
                     $end_dt = date('Y-m-d H:i:s', strtotime($next_followup_date) + 1800);
                     @google_calendar_create_event($connection, $title, $next_followup_date, $end_dt, $follow_up_notes ?: 'Enquiry follow-up reminder.');
                 }
-                $resp_fu = '1';
+                $resp_fu = '1|fu:' . (int)$lastId;
                 if ($followup_auto_linked_enquiry) {
                     $sid_fu = $followup_side_crm_st_id;
                     if ($sid_fu <= 0) {
@@ -1760,7 +1760,7 @@ if(@$_POST['formName']=='counseling_form'){
                     mysqli_query($connection, 'UPDATE student_enquiry SET st_enquiry_flow_status=' . (int) $auto_cs . ", st_enquiry_flow_change_stage='CONS' WHERE st_enquiry_id='$enquiry_id_sql' AND st_enquiry_status!=1 LIMIT 1");
                 }
             }
-            $resp_cs = '1';
+            $resp_cs = '1|cs:' . (int)$lastId;
             if ($counsel_auto_linked_enquiry) {
                 $sid_cs = $counsel_side_crm_st_id;
                 if ($sid_cs <= 0) {

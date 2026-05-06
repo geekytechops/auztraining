@@ -429,6 +429,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
     $enquirySourceStaffUsers = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE user_status != 1 ORDER BY user_name");
     $counsilEqId=0;
     $followupEqId=0;
+    $followup_pc_EqId=0;
     $counsil_Query=array('st_enquiry_id'=>'','counsil_timing'=>'','counsil_end_time'=>'','counsil_type'=>'','counsil_mem_name'=>'','counsil_aus_stay_time'=>'','counsil_work_status'=>'','counsil_visa_condition'=>'','counsil_education'=>'','counsil_aus_study_status'=>'','counsil_course'=>'','counsil_university'=>'','counsil_qualification'=>'','counsil_eng_rate'=>'','counsil_migration_test'=>'','counsil_overall_result'=>'','counsil_module_result'=>'','counsil_job_nature'=>'','counsil_vaccine_status'=>'','counsil_pref_comments'=>'','counsil_remarks'=>'','counsil_outcome'=>'');
     $followup_Query=array('enquiry_id'=>'','flw_name'=>'','flw_phone'=>'','flw_contacted_person'=>'','flw_contacted_time'=>'','flw_date'=>'','flw_mode_contact'=>'','flw_followup_type'=>'','flw_follow_up_notes'=>'','flw_next_followup_date'=>'','flw_follow_up_outcome'=>'','flw_comments'=>'','flw_progress_state'=>'','flw_remarks'=>'');
     $followup_pc_Query=array('enquiry_id'=>'','flw_name'=>'','flw_phone'=>'','flw_contacted_person'=>'','flw_contacted_time'=>'','flw_date'=>'','flw_mode_contact'=>'','flw_followup_type'=>'','flw_follow_up_notes'=>'','flw_next_followup_date'=>'','flw_follow_up_outcome'=>'','flw_comments'=>'','flw_progress_state'=>'','flw_remarks'=>'');
@@ -436,8 +437,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
     // When editing a specific enquiry, pre-fill counselling & follow-up context from that enquiry
     if(!empty($queryRes['st_id'])){
         $current_enquiry_code = !empty($queryRes['st_enquiry_id']) ? $queryRes['st_enquiry_id'] : sprintf('EQ%05d', (int)$queryRes['st_id']);
-        // Always INSERT a new follow-up_calls row on each save (full history). Form is still prefilled from the latest row.
-        $followupEqId = 0;
+        // Latest follow-up row id is used for autosave (UPDATE). Submit buttons clear the hidden field so each explicit submit INSERTs a new history row.
         $counsil_Query['st_enquiry_id'] = $current_enquiry_code;
         $followup_Query['enquiry_id'] = $current_enquiry_code;
         $followup_Query['flw_name'] = $queryRes['st_name'] ?: $queryRes['st_member_name'];
@@ -494,6 +494,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
         $flw_q = mysqli_query($connection, "SELECT * FROM followup_calls WHERE enquiry_id = '" . mysqli_real_escape_string($connection, $current_enquiry_code) . "' AND flw_enquiry_status = 0 AND flw_followup_stage = 'enquiry' ORDER BY flw_id DESC LIMIT 1");
         if ($flw_q && mysqli_num_rows($flw_q) > 0) {
             $frow = mysqli_fetch_assoc($flw_q);
+            $followupEqId = isset($frow['flw_id']) ? (int)$frow['flw_id'] : 0;
             $followup_Query = array_merge($followup_Query, array(
                 'enquiry_id' => $frow['enquiry_id'] ?? $current_enquiry_code,
                 'flw_name' => $frow['flw_name'] ?? $followup_Query['flw_name'],
@@ -524,6 +525,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
         $flw_pc_q = mysqli_query($connection, "SELECT * FROM followup_calls WHERE enquiry_id = '" . mysqli_real_escape_string($connection, $current_enquiry_code) . "' AND flw_enquiry_status = 0 AND flw_followup_stage = 'post_counselling' ORDER BY flw_id DESC LIMIT 1");
         if ($flw_pc_q && mysqli_num_rows($flw_pc_q) > 0) {
             $fpc = mysqli_fetch_assoc($flw_pc_q);
+            $followup_pc_EqId = isset($fpc['flw_id']) ? (int)$fpc['flw_id'] : 0;
             $followup_pc_Query = array_merge($followup_pc_Query, array(
                 'enquiry_id' => $fpc['enquiry_id'] ?? $current_enquiry_code,
                 'flw_name' => $fpc['flw_name'] ?? $followup_pc_Query['flw_name'],
@@ -1740,6 +1742,32 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 else if(state==='wait') $b.addClass('bg-warning');
                 else $b.addClass('bg-secondary');
             }
+            /** Accepts 1, 1|st_id, 1|fu:row_id, 1|cs:row_id from includes/datacontrol */
+            function parseCrmSavePayload(data){
+                var s = String(data === null || data === undefined ? '' : data).trim();
+                var meta = { ok: false, stId: null, fuId: null, csId: null };
+                if (s === '1') {
+                    meta.ok = true;
+                    return meta;
+                }
+                var m;
+                if ((m = /^1\|(\d+)$/.exec(s))) {
+                    meta.ok = true;
+                    meta.stId = m[1];
+                    return meta;
+                }
+                if ((m = /^1\|fu:(\d+)$/i.exec(s))) {
+                    meta.ok = true;
+                    meta.fuId = m[1];
+                    return meta;
+                }
+                if ((m = /^1\|cs:(\d+)$/i.exec(s))) {
+                    meta.ok = true;
+                    meta.csId = m[1];
+                    return meta;
+                }
+                return meta;
+            }
 
             function enquiryEditingAllowed(){
                 if(!window.ENQUIRY_EDIT_PAGE) return true;
@@ -2395,8 +2423,8 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var hasExistingCounsel = !!checkId && checkId !== '0';
                 var enquiryId = ($('#counselling_enquiry_id').val() || '').toString().trim();
                 if (enquiryId === '0') enquiryId = '';
-                // For new counselling records (checkId=0), allow manual submit but skip autosave.
-                if(!hasExistingCounsel && silent) return;
+                // New counselling with no row yet: autosave once enquiry exists (server INSERT); hidden checkId updated from 1|cs:id response.
+                if(!hasExistingCounsel && silent && !enquiryId) return;
                 if(!hasExistingCounsel && !enquiryId){
                     if(!studentEnquiryValidEmail()){
                         if(!silent){
@@ -2418,11 +2446,14 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 $.ajax({type:'post',url:'includes/datacontrol',data:details,success:function(data){
                     if(silent){
                         if(seq!==counselSaveSeq) return;
-                        if(data==1||data=='1'||/^1\|\d+$/.test(String(data).trim())){ autosaveSetBadge('counsel','Counseling: saved '+new Date().toLocaleTimeString(),'ok'); }
+                        var _crm = parseCrmSavePayload(data);
+                        if(_crm.csId){ $('#counselling_check_update').val(_crm.csId); }
+                        if(_crm.ok){ autosaveSetBadge('counsel','Counseling: saved '+new Date().toLocaleTimeString(),'ok'); }
                         else { autosaveSetBadge('counsel','Counseling: failed','err'); }
                         return;
                     }
-                    if(data==1||data=='1'||/^1\|\d+$/.test(String(data).trim())){
+                    var _crmN = parseCrmSavePayload(data);
+                    if(_crmN.ok){
                         if(studentEnquiryNavigateAfterSideSave(data)) return;
                         $('#toast-text').html('Record Added Successfully');$('#borderedToast1Btn').trigger('click');setTimeout(function(){location.reload();},400);
                     }
@@ -3043,7 +3074,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var hasExistingFollowup = !!checkId && checkId !== '0';
                 var enquiryId = ($('#' + prefix + 'enquiry_id').val() || '').toString().trim();
                 if (enquiryId === '0') enquiryId = '';
-                if(!hasExistingFollowup && silent) return;
+                if(!hasExistingFollowup && silent && !enquiryId) return;
                 if(!hasExistingFollowup && !enquiryId){
                     if(!studentEnquiryValidEmail()){
                         if(!silent){
@@ -3060,11 +3091,17 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 $.ajax({type:'post',url:'includes/datacontrol',data:details,success:function(data){
                     if(silent){
                         if(seq!==followupSaveSeq) return;
-                        if(data==1 || data=='1' || /^1\|\d+$/.test(String(data).trim())){ autosaveSetBadge('followup','Follow-up: saved '+new Date().toLocaleTimeString(),'ok'); }
+                        var _fu = parseCrmSavePayload(data);
+                        if(_fu.fuId){
+                            if(usePostCounselling){ $('#followup_pc_check_update').val(_fu.fuId); }
+                            else { $('#followup_check_update').val(_fu.fuId); }
+                        }
+                        if(_fu.ok){ autosaveSetBadge('followup','Follow-up: saved '+new Date().toLocaleTimeString(),'ok'); }
                         else { autosaveSetBadge('followup','Follow-up: failed','err'); }
                         return;
                     }
-                    if(data==1 || data=='1' || /^1\|\d+$/.test(String(data).trim())){
+                    var _fuN = parseCrmSavePayload(data);
+                    if(_fuN.ok){
                         if(studentEnquiryNavigateAfterSideSave(data)) return;
                         $('#toast-text').html('Follow-up saved successfully');$('#borderedToast1Btn').trigger('click');setTimeout(function(){location.reload();},600);
                     }
@@ -3075,8 +3112,14 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     if(silent && seq===followupSaveSeq){ autosaveSetBadge('followup','Follow-up: error','err'); }
                 }});
             }
-            $(document).on('click','#followup_check',function(){ performFollowupSave(false, false); });
-            $(document).on('click','#followup_pc_check',function(){ performFollowupSave(false, true); });
+            $(document).on('click','#followup_check',function(){
+                $('#followup_check_update').val('0');
+                performFollowupSave(false, false);
+            });
+            $(document).on('click','#followup_pc_check',function(){
+                $('#followup_pc_check_update').val('0');
+                performFollowupSave(false, true);
+            });
             $(document).on('input change','#followup_form_embed :input',function(e){
                 if(!window.STUDENT_ENQUIRY_AUTO_SAVE) return;
                 if(!enquiryEditingAllowed()) return;

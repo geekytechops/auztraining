@@ -111,7 +111,7 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
             padding-top: 0.25rem;
             padding-bottom: 0.25rem;
         }
-        /* Outcome column: date buttons (No Answer, Call Back Later, Booked Counselling) */
+        /* Outcome column: date buttons (No Answer, Call Back Later); Booked Counselling shows label only */
         .btn-fup-date{
             cursor: pointer;
             border: none;
@@ -127,7 +127,7 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            width: 115px;
+            width: 125px;
         }
         .badge{
             width: 140px;

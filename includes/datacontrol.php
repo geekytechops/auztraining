@@ -989,7 +989,8 @@ $query=mysqli_query($connection,"INSERT INTO student_enquiry(st_name,st_member_n
             $appointment_booked_time=date('Y-m-d H:i:s',strtotime($slot_books->slot_book_time));
 
             $query=mysqli_query($connection,"INSERT INTO `slot_book` (`enq_form_id`,`slot_bk_datetime`,`slot_bk_purpose`,`slot_bk_on`,`slot_book_by`,`slot_book_email_link`) VALUES( $lastId,'".$appointment_booked_time."','".$slot_books->slot_book_purpose."','".$slot_books->slot_book_date."','".$slot_books->slot_book_by."',".$slot_books->slot_book_link." )");
-        }        
+        }
+        student_enquiry_set_contacted_when_counselling_slot_booked($connection, (int) $lastId, $appointment_booked);
 
     }
 
@@ -1090,6 +1091,7 @@ if(mysqli_query($connection,"UPDATE student_enquiry SET `st_name`='$studentName'
 
         }
 
+        student_enquiry_set_contacted_when_counselling_slot_booked($connection, (int) $checkId, $appointment_booked);
 
         echo 2;
     }else{
@@ -4307,16 +4309,17 @@ if(@$_POST['formName']=='fetchEnquiryList'){
         11=>'warning'
     );
     // Canonical outcome keys (same as Follow Up Outcome in followup_accordion_form.php) for normalising DB values
-    $outcome_keys_canonical = array('No Answer','Call Back Later','Booked Counselling','Application Started','Enrolled','Requested More Information','Not Interested','Do not Call','Wrong No','Enrolled Elsewhere','Course not Offered','Funding Enquiry');
+    $outcome_keys_canonical = array('No Answer','Call Back Later','Booked Counselling','Application Started','Delayed','Enrolled','Requested More Information','Not Interested','Do not Call','Wrong No','Enrolled Elsewhere','Course not Offered','Funding Enquiry');
     $outcome_normalize = array();
     foreach($outcome_keys_canonical as $k) $outcome_normalize[strtolower(trim($k))] = $k;
 
     $outcome_display = array(
         'No Answer' => array('label'=>'No Answer','btn'=>'btn-fup-no-answer','date_btn'=>true),
         'Call Back Later' => array('label'=>'Call Back Later','btn'=>'btn-fup-callback','date_btn'=>true),
-        'Booked Counselling' => array('label'=>'Booked Counselling','btn'=>'btn-fup-booked','date_btn'=>true),
+        'Booked Counselling' => array('label'=>'Booked Counselling','btn'=>'btn-fup-booked','date_btn'=>false),
         // Outcome column should show exact follow-up outcome text; Status column shows mapped business state.
         'Application Started' => array('label'=>'Application Started','outcome_btn'=>'btn-fup-progressing'),
+        'Delayed' => array('label'=>'Delayed','outcome_btn'=>'btn-fup-progressing'),
         'Enrolled' => array('label'=>'Enrolled','outcome_btn'=>'btn-fup-converted'),
         'Requested More Information' => array('label'=>'Requested More Information','outcome_btn'=>'btn-fup-provide-info'),
         'Not Interested' => array('label'=>'Not Interested','outcome_btn'=>'btn-fup-lost'),
@@ -4517,7 +4520,8 @@ if(@$_POST['formName']=='fetchEnquiryList'){
             $stage_tooltip_esc = htmlspecialchars('PCFU → Post Counselling Follow-Up', ENT_QUOTES, 'UTF-8');
             $stage_html = '<span class="course-tooltip" title="' . $stage_tooltip_esc . '"><span class="badge bg-secondary enq-stage-badge">' . htmlspecialchars($flow_stage_acr) . '</span></span>';
         } else {
-            $stage_html = '<span class="text-muted">—</span>';
+            $stage_tooltip_esc = htmlspecialchars('ENQ → Enquiry', ENT_QUOTES, 'UTF-8');
+            $stage_html = '<span class="course-tooltip" title="' . $stage_tooltip_esc . '"><span class="badge bg-secondary enq-stage-badge">ENQ</span></span>';
         }
         $status_tip = htmlspecialchars($status_label, ENT_QUOTES, 'UTF-8');
         $status_cell_html = '<span class="course-tooltip" title="' . $status_tip . '"><span class="badge bg-' . $status_class . ' enq-status-badge">' . htmlspecialchars($status_label, ENT_QUOTES, 'UTF-8') . '</span></span>';
@@ -4535,7 +4539,10 @@ if(@$_POST['formName']=='fetchEnquiryList'){
             $outcome_html = '<span class="badge bg-' . $cbc . '">' . htmlspecialchars($couns_outcome) . '</span>';
         } elseif ($follow_up_outcome !== '' && isset($outcome_display[$follow_up_outcome])) {
             $od = $outcome_display[$follow_up_outcome];
-            if (!empty($od['date_btn'])) {
+            if ($follow_up_outcome === 'Booked Counselling') {
+                $attr = $appointment_id ? ' data-appointment-id="' . (int) $appointment_id . '"' : '';
+                $outcome_html = '<span class="btn-fup-date ' . $od['btn'] . '"' . $attr . ' title="' . htmlspecialchars($od['label']) . '">' . htmlspecialchars($od['label']) . '</span>';
+            } elseif (!empty($od['date_btn'])) {
                 $date_show = ($appointment_date !== null && $appointment_date !== '') ? $appointment_date : $next_fup;
                 $date_str = $date_show ? date('d/m/Y', strtotime($date_show)) : '';
                 if ($date_str !== '') {
@@ -5479,7 +5486,7 @@ if(@$_POST['formName']=='appointment_booking'){
         $new_eq_esc = mysqli_real_escape_string($connection, $new_eq);
         $loc_esc = mysqli_real_escape_string($connection, trim((string)($_POST['cb_location'] ?? '')));
         $staff_esc = mysqli_real_escape_string($connection, $cb_staff);
-        mysqli_query($connection, "UPDATE student_enquiry SET st_enquiry_source=2, st_enquiry_flow_status=9, st_location='$loc_esc', st_hearedby='$staff_esc' WHERE st_enquiry_id='$new_eq_esc' AND st_enquiry_status!=1 LIMIT 1");
+        mysqli_query($connection, "UPDATE student_enquiry SET st_enquiry_source=2, st_enquiry_flow_status=2, st_location='$loc_esc', st_hearedby='$staff_esc' WHERE st_enquiry_id='$new_eq_esc' AND st_enquiry_status!=1 LIMIT 1");
         $_POST['connected_enquiry_id'] = $new_eq;
         $appointment_return_new_st_id = isset($ens['st_id']) ? (int)$ens['st_id'] : 0;
     }
@@ -5687,7 +5694,7 @@ if(@$_POST['formName']=='appointment_booking'){
                 $loc_esc = mysqli_real_escape_string($connection, trim((string)($_POST['cb_location'] ?? '')));
                 $staff_raw = trim((string)($_POST['cb_responsible_staff'] ?? ''));
                 $staff_esc = mysqli_real_escape_string($connection, $staff_raw);
-                $upd = "UPDATE student_enquiry SET st_enquiry_flow_status=9, st_enquiry_source=2, st_location='$loc_esc'";
+                $upd = "UPDATE student_enquiry SET st_enquiry_flow_status=2, st_enquiry_source=2, st_location='$loc_esc'";
                 if ($staff_raw !== '') {
                     $upd .= ", st_hearedby='$staff_esc'";
                 }

@@ -893,7 +893,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                 <div class="row" id="enquiry_source_phone_calendar_wrap" style="display:<?php echo ($sel_source === 2) ? 'block' : 'none'; ?>;">
                                     <div class="col-12 mb-2">
                                         <button type="button" class="btn btn-outline-primary" id="contact_bar_open_calendar_btn"><i class="ti ti-calendar"></i> Calendar</button>
-                                        <small class="text-muted ms-2">Book a counselling appointment (same as Follow-up). With no enquiry yet, saving the appointment creates the enquiry and sets status to Booked Counselling.</small>
+                                        <small class="text-muted ms-2">Book a counselling appointment (same as Follow-up). With no enquiry yet, saving the appointment creates the enquiry and sets status to Contacted.</small>
                                     </div>
                                 </div>
                                 <div class="row mt-2 pt-2 border-top">
@@ -902,6 +902,15 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                             <label class="form-label" for="st_contact_notes">Notes</label>
                                             <textarea class="form-control" id="st_contact_notes" name="st_contact_notes" rows="3" placeholder="Notes about this contact (internal)"><?php echo htmlspecialchars((string)($queryRes['st_contact_notes'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></textarea>
                                         </div>
+                                    </div>
+                                </div>
+                                <div class="row mt-2 pt-2 border-top">
+                                    <div class="col-12 d-flex justify-content-start flex-wrap gap-2">
+                                        <?php if ($eqId == 0) { ?>
+                                        <button class="btn btn-primary enquiry_form_submit" type="button">Submit Enquiry</button>
+                                        <?php } else { ?>
+                                        <button class="btn btn-primary enquiry_form_submit" type="button">Update Enquiry</button>
+                                        <?php } ?>
                                     </div>
                                 </div>
                             </div>
@@ -1486,10 +1495,10 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                             <div class="card-body" id="student_enquiry_form_parent">
                                                 <div class="row">
                                                     <div class="col-md-6">
-                                                        <?php if($eqId==0){ ?>
-                                                        <button class="btn btn-primary" type="button" id="enquiry_form">Submit Enquiry</button>
-                                                        <?php }else{ ?>
-                                                        <button class="btn btn-primary" type="button" id="enquiry_form">Update Enquiry</button>
+                                                        <?php if ($eqId == 0) { ?>
+                                                        <button class="btn btn-primary enquiry_form_submit" type="button">Submit Enquiry</button>
+                                                        <?php } else { ?>
+                                                        <button class="btn btn-primary enquiry_form_submit" type="button">Update Enquiry</button>
                                                         <?php } ?>
                                                         <input type="hidden" value="<?php echo $eqId; ?>" id="check_update">
                                                         <input type="hidden" id="current_enquiry_code" value="<?php echo isset($current_enquiry_code) ? htmlspecialchars($current_enquiry_code, ENT_QUOTES, 'UTF-8') : ''; ?>">
@@ -1786,7 +1795,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 $('#student_enquiry_form').find(':input').not($t).not('.accordion-button').prop('disabled', !!locked);
                 $('#counselling_form').find(':input').not('.accordion-button').prop('disabled', !!locked);
                 $('#followup_form_embed,#followup_pc_form_embed').find(':input').not('.accordion-button').prop('disabled', !!locked);
-                $('#enquiry_form,#counseling_submit,#followup_check,#followup_pc_check,#followup_send_status_email,#counselling_send_status_email,#followup_open_calendar_btn,#followup_pc_open_calendar_btn,#contact_bar_open_calendar_btn,#counselling_open_calendar_btn').prop('disabled', !!locked);
+                $('.enquiry_form_submit,#counseling_submit,#followup_check,#followup_pc_check,#followup_send_status_email,#counselling_send_status_email,#followup_open_calendar_btn,#followup_pc_open_calendar_btn,#contact_bar_open_calendar_btn,#counselling_open_calendar_btn').prop('disabled', !!locked);
                 $('.btn-followup-history-accordion').prop('disabled', false);
                 $('#fp_appointment_submit_btn').prop('disabled', !!locked);
                 $('#enquiry_source_responsible_staff').prop('disabled', true);
@@ -2185,12 +2194,12 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 });
             }
 
-            $(document).on('click','#enquiry_form',async function(){ await performStudentEnquirySave(false); });
+            $(document).on('click','.enquiry_form_submit',async function(){ await performStudentEnquirySave(false); });
 
             $(document).on('input change','#student_enquiry_form :input, #student_enquiry_contact_bar :input', function(e){
                 if(!window.STUDENT_ENQUIRY_AUTO_SAVE) return;
                 if(!enquiryEditingAllowed()) return;
-                if($(e.target).attr('id')==='enquiry_form') return;
+                if($(e.target).closest('.enquiry_form_submit').length) return;
                 clearTimeout(enquiryAutoSaveTimer);
                 enquiryAutoSaveTimer = setTimeout(function(){ performStudentEnquirySave(true); }, 1000);
             })
@@ -2536,7 +2545,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 loadFollowupTemplateForCurrentStatus({ showModal: true, prefix: 'followup_pc_' });
             });
             function followupOutcomeToStatusMap(){
-                return { 'No Answer':'3', 'Call Back Later':'3', 'Booked Counselling':'2', 'Requested More Information':'2', 'Application Started':'4', 'Enrolled':'6', 'Not Interested':'7', 'Do not Call':'7', 'Wrong No':'7', 'Enrolled Elsewhere':'7', 'Course not Offered':'7', 'Funding Enquiry':'7' };
+                return { 'No Answer':'3', 'Call Back Later':'3', 'Booked Counselling':'2', 'Requested More Information':'2', 'Application Started':'4', 'Delayed':'4', 'Enrolled':'6', 'Not Interested':'7', 'Do not Call':'7', 'Wrong No':'7', 'Enrolled Elsewhere':'7', 'Course not Offered':'7', 'Funding Enquiry':'7' };
             }
             function toggleFollowupCalendarBtnForPrefix(prefix){
                 var outcome = ($('#' + prefix + 'follow_up_outcome').val() || '').toString();
@@ -2907,7 +2916,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                         }
                         if (contactPhoneFlow && r === '1') {
                             $('#followupAppointmentModal').modal('hide');
-                            $('#toast-text').html('Appointment saved. Enquiry updated to Booked Counselling.');
+                            $('#toast-text').html('Appointment saved. Enquiry status set to Contacted.');
                             $('#borderedToast1Btn').trigger('click');
                             $f[0].reset();
                             $('#fp_appointment_submit_btn').prop('disabled', false);

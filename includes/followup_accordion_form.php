@@ -64,6 +64,9 @@ $follow_up_outcomes = array(
     'Course not Offered' => 'Course not Offered',
     'Funding Enquiry' => 'Funding Enquiry',
 );
+if ($is_post_counselling_followup) {
+    $follow_up_outcomes['Delayed'] = 'Delayed';
+}
 
 $fid = $is_post_counselling_followup ? 'followup_pc_form_embed' : 'followup_form_embed';
 $idp = $is_post_counselling_followup ? 'followup_pc_' : 'followup_';
@@ -115,7 +118,7 @@ if ($followupUsers) {
     echo '<option value="'.htmlspecialchars($k).'" '.((isset($followup_Query['flw_follow_up_outcome']) && $followup_Query['flw_follow_up_outcome']==$k) ? 'selected' : '').'>'.htmlspecialchars($v).'</option>';
 } ?>
 </select>
-<small class="text-muted d-block mt-1">Follow Up Outcome updates Enquiry status automatically. No Answer / Call Back Later / Booked Counselling: use Calendar to book when needed.</small></div></div>
+<small class="text-muted d-block mt-1">Follow Up Outcome updates enquiry status automatically (e.g. Booked Counselling → Contacted). No Answer / Call Back Later / Booked Counselling: use Calendar to book when needed.</small></div></div>
 <div class="col-12 mb-2" id="<?php echo $idp; ?>calendar_btn_wrap" style="display:none;">
 <button type="button" class="btn btn-outline-primary" id="<?php echo $idp; ?>open_calendar_btn"><i class="ti ti-calendar"></i> Calendar</button>
 <small class="text-muted ms-2">Opens New Appointment with this enquiry’s student details pre-filled.</small></div>

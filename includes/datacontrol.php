@@ -204,6 +204,162 @@ function crm_ensure_enquiry_from_sidebar_contact($connection, $admin_id) {
 }
 }
 
+/**
+ * Merge full student enquiry form payload into an existing st row (used when Phone call / reschedule
+ * calendar auto-creates a minimal enquiry before the appointments insert).
+ *
+ * @param array $snap Decoded JSON from the same shape as buildStudentEnquiryFormData() / student_enquiry POST.
+ */
+if (!function_exists('crm_apply_student_enquiry_snapshot_from_array')) {
+function crm_apply_student_enquiry_snapshot_from_array($connection, $st_id, $snap, $admin_id) {
+    $st_id = (int)$st_id;
+    $admin_id = (int)$admin_id;
+    if ($st_id <= 0 || !is_array($snap)) {
+        return false;
+    }
+    $enquiryFor = isset($snap['enquiryFor']) && $snap['enquiryFor'] !== '' ? (int)$snap['enquiryFor'] : 1;
+    if ($enquiryFor === 1) {
+        $studentName = mysqli_real_escape_string($connection, trim((string)($snap['studentName'] ?? '')));
+        $memberName = mysqli_real_escape_string($connection, trim((string)($snap['memberName'] ?? '')));
+    } else {
+        $studentName = mysqli_real_escape_string($connection, trim((string)($snap['memberName'] ?? '')));
+        $memberName = mysqli_real_escape_string($connection, trim((string)($snap['studentName'] ?? '')));
+    }
+    $contactName = mysqli_real_escape_string($connection, trim((string)($snap['contactName'] ?? '')));
+    $emailAddress = mysqli_real_escape_string($connection, trim((string)($snap['emailAddress'] ?? '')));
+    $courses_raw = isset($snap['courses']) && is_array($snap['courses']) ? $snap['courses'] : array();
+    $courses = mysqli_real_escape_string($connection, json_encode($courses_raw));
+    $payment = mysqli_real_escape_string($connection, trim((string)($snap['payment'] ?? '')));
+    $visaStatus = isset($snap['visaStatus']) && $snap['visaStatus'] !== '' ? (int)$snap['visaStatus'] : 0;
+    $visaCondition = isset($snap['visaCondition']) && $snap['visaCondition'] !== '' ? (int)$snap['visaCondition'] : 1;
+    $visaNote = mysqli_real_escape_string($connection, trim((string)($snap['visaNote'] ?? '')));
+    $surname = mysqli_real_escape_string($connection, trim((string)($snap['surname'] ?? '')));
+    $suburb = mysqli_real_escape_string($connection, trim((string)($snap['suburb'] ?? '')));
+    $stuState = isset($snap['stuState']) && $snap['stuState'] !== '' ? mysqli_real_escape_string($connection, (string)$snap['stuState']) : '0';
+    $postCode = isset($snap['postCode']) && $snap['postCode'] !== '' ? (int)$snap['postCode'] : 0;
+    $visit_before = isset($snap['visit_before']) && $snap['visit_before'] !== '' ? (int)$snap['visit_before'] : 0;
+    $hear_about = mysqli_real_escape_string($connection, trim((string)($snap['hear_about'] ?? '')));
+    $hearedby = mysqli_real_escape_string($connection, trim((string)($snap['hearedby'] ?? '')));
+    $plan_to_start_date = mysqli_real_escape_string($connection, trim((string)($snap['plan_to_start_date'] ?? '')));
+    $refer_select = isset($snap['refer_select']) && $snap['refer_select'] !== '' ? (int)$snap['refer_select'] : 0;
+    $referer_name = mysqli_real_escape_string($connection, trim((string)($snap['referer_name'] ?? '')));
+    $refer_alumni = isset($snap['refer_alumni']) && $snap['refer_alumni'] !== '' ? (int)$snap['refer_alumni'] : 0;
+    $comments = mysqli_real_escape_string($connection, trim((string)($snap['comments'] ?? '')));
+    $prefComment = mysqli_real_escape_string($connection, trim((string)($snap['prefComment'] ?? '')));
+    $appointment_booked = isset($snap['appointment_booked']) && $snap['appointment_booked'] !== '' ? (int)$snap['appointment_booked'] : 0;
+    $remarks_raw = isset($snap['remarks']) && is_array($snap['remarks']) ? $snap['remarks'] : array();
+    $remarks = mysqli_real_escape_string($connection, json_encode($remarks_raw));
+    $reg_grp_names = mysqli_real_escape_string($connection, trim((string)($snap['reg_grp_names'] ?? '')));
+    $streetDetails = mysqli_real_escape_string($connection, trim((string)($snap['streetDetails'] ?? '')));
+    $courseType = isset($snap['courseType']) && $snap['courseType'] !== '' ? (int)$snap['courseType'] : 0;
+    $shore = isset($snap['shore']) && $snap['shore'] !== '' ? (int)$snap['shore'] : 0;
+    $ethnicity = mysqli_real_escape_string($connection, trim((string)($snap['ethnicity'] ?? '')));
+    $enquiry_source = isset($snap['enquiry_source']) ? (int)$snap['enquiry_source'] : 0;
+    $enquiry_source_sql = $enquiry_source > 0 ? (string)$enquiry_source : 'NULL';
+    $enquiry_college = isset($snap['enquiry_college']) ? (int)$snap['enquiry_college'] : 0;
+    $enquiry_college_sql = $enquiry_college > 0 ? (string)$enquiry_college : 'NULL';
+    $location = mysqli_real_escape_string($connection, trim((string)($snap['location'] ?? '')));
+    $contact_notes = mysqli_real_escape_string($connection, trim((string)($snap['contact_notes'] ?? '')));
+    $enquiryDate = trim((string)($snap['enquiryDate'] ?? ''));
+    $enquiryDate = ($enquiryDate === '') ? date('Y-m-d H:i:s') : $enquiryDate;
+    $enquiryDate = mysqli_real_escape_string($connection, $enquiryDate);
+    $now = date('Y-m-d H:i:s');
+
+    $rpl_raw = isset($snap['rpl_arrays']) ? $snap['rpl_arrays'] : '{}';
+    if (is_string($rpl_raw)) {
+        $rpl_arrays = json_decode($rpl_raw);
+    } else {
+        $rpl_arrays = is_object($rpl_raw) ? $rpl_raw : json_decode(json_encode($rpl_raw));
+    }
+    if ($rpl_arrays === null) {
+        $rpl_arrays = (object)array('rpl_exp' => '', 'exp_in' => '', 'exp_docs' => '', 'exp_prev' => '', 'exp_name' => '', 'exp_years' => '', 'exp_prev_name' => '');
+    }
+    $sg_raw = isset($snap['short_grps']) ? $snap['short_grps'] : '{}';
+    if (is_string($sg_raw)) {
+        $short_grps = json_decode($sg_raw);
+    } else {
+        $short_grps = is_object($sg_raw) ? $sg_raw : json_decode(json_encode($sg_raw));
+    }
+    if ($short_grps === null) {
+        $short_grps = (object)array();
+    }
+    $sb_raw = isset($snap['slot_books']) ? $snap['slot_books'] : '{}';
+    if (is_string($sb_raw)) {
+        $slot_books = json_decode($sb_raw);
+    } else {
+        $slot_books = is_object($sb_raw) ? $sb_raw : json_decode(json_encode($sb_raw));
+    }
+    if ($slot_books === null) {
+        $slot_books = (object)array('slot_book_time' => '', 'slot_book_purpose' => '', 'slot_book_date' => '', 'slot_book_by' => '', 'slot_book_link' => 0);
+    }
+
+    $has_contact_notes = mysqli_fetch_assoc(@mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_contact_notes'"));
+    $upd = "UPDATE student_enquiry SET `st_name`='$studentName',`st_member_name`='$memberName',`st_phno`='$contactName',`st_email`='$emailAddress',`st_course`='$courses',`st_fee`='$payment',`st_visa_status`=$visaStatus,`st_visa_condition`=$visaCondition,`st_visa_note`='$visaNote',`st_surname`='$surname',`st_suburb`='$suburb',`st_state`='$stuState',`st_post_code`=$postCode,`st_visited`=$visit_before,`st_heared`='$hear_about',`st_hearedby`='$hearedby',`st_startplan_date`='$plan_to_start_date',`st_refered`=$refer_select,`st_refer_name`='$referer_name',`st_refer_alumni`=$refer_alumni,`st_comments`='$comments',`st_pref_comments`='$prefComment',`st_appoint_book`=$appointment_booked,`st_remarks`='$remarks',`st_street_details`='$streetDetails',`st_enquiry_for`=$enquiryFor,`st_enquiry_date`='$enquiryDate',`st_course_type`=$courseType,`st_shore`=$shore,`st_ethnicity`='$ethnicity',`st_enquiry_source`=$enquiry_source_sql,`st_location`='$location',`st_enquiry_college`=$enquiry_college_sql";
+    if ($has_contact_notes) {
+        $upd .= ",`st_contact_notes`='$contact_notes'";
+    }
+    if ($admin_id > 0) {
+        $upd .= ",`st_modified_by`=$admin_id,`st_modified_date`='$now'";
+    }
+    $upd .= " WHERE `st_id`=$st_id AND st_enquiry_status!=1 LIMIT 1";
+    if (!mysqli_query($connection, $upd)) {
+        return false;
+    }
+
+    mysqli_query($connection, 'DELETE FROM rpl_enquries WHERE enq_form_id=' . $st_id);
+    mysqli_query($connection, 'DELETE FROM short_group_form WHERE enq_form_id=' . $st_id);
+    mysqli_query($connection, 'DELETE FROM regular_group_form WHERE enq_form_id=' . $st_id);
+    mysqli_query($connection, 'DELETE FROM slot_book WHERE enq_form_id=' . $st_id);
+
+    if ($courseType === 1) {
+        $ei = mysqli_real_escape_string($connection, (string)($rpl_arrays->exp_in ?? ''));
+        $en = mysqli_real_escape_string($connection, (string)($rpl_arrays->exp_name ?? ''));
+        $ey = mysqli_real_escape_string($connection, (string)($rpl_arrays->exp_years ?? ''));
+        $ed = mysqli_real_escape_string($connection, (string)($rpl_arrays->exp_docs ?? ''));
+        $ep = mysqli_real_escape_string($connection, (string)($rpl_arrays->exp_prev ?? ''));
+        $eqn = mysqli_real_escape_string($connection, (string)($rpl_arrays->exp_prev_name ?? ''));
+        $re = mysqli_real_escape_string($connection, (string)($rpl_arrays->rpl_exp ?? ''));
+        mysqli_query($connection, "INSERT INTO `rpl_enquries` (`enq_form_id`,`rpl_exp_in`,`rpl_exp_role`,`rpl_exp_years`,`rpl_exp_docs`,`rpl_exp_prev_qual`,`rpl_exp_qual_name`,`rpl_exp`) VALUES($st_id,'$ei','$en','$ey','$ed','$ep','$eqn','$re')");
+    } elseif ($courseType === 5 || $courseType === 4) {
+        $o = $short_grps;
+        $sg1 = mysqli_real_escape_string($connection, (string)($o->short_grp_org_name ?? ''));
+        $sg2 = mysqli_real_escape_string($connection, (string)($o->short_grp_org_type ?? ''));
+        $sg3 = mysqli_real_escape_string($connection, (string)($o->short_grp_campus ?? ''));
+        $sg4 = mysqli_real_escape_string($connection, (string)($o->short_grp_date ?? ''));
+        $sg5 = mysqli_real_escape_string($connection, (string)($o->short_grp_num_std ?? ''));
+        $sg6 = mysqli_real_escape_string($connection, (string)($o->short_grp_ind_exp ?? ''));
+        $sg7 = mysqli_real_escape_string($connection, (string)($o->short_grp_before ?? ''));
+        $sg8 = mysqli_real_escape_string($connection, (string)($o->short_grp_con_type ?? ''));
+        $sg9 = mysqli_real_escape_string($connection, (string)($o->short_grp_con_num ?? ''));
+        $sg10 = mysqli_real_escape_string($connection, (string)($o->short_grp_con_name ?? ''));
+        $sg11 = mysqli_real_escape_string($connection, (string)($o->short_grp_con_email ?? ''));
+        mysqli_query($connection, "INSERT INTO `short_group_form` (`enq_form_id`) VALUES($st_id)");
+        mysqli_query($connection, "UPDATE `short_group_form` SET `sh_org_name`='$sg1',`sh_grp_org_type`='$sg2',`sh_grp_campus`='$sg3',`sh_grp_date`='$sg4',`sh_grp_num_stds`='$sg5',`sh_grp_ind_exp`='$sg6',`sh_grp_train_bef`='$sg7',`sh_grp_con_us`='$sg8',`sh_grp_phone`='$sg9',`sh_grp_name`='$sg10',`sh_grp_email`='$sg11' WHERE `enq_form_id`=$st_id");
+    } elseif ($courseType === 3) {
+        mysqli_query($connection, "INSERT INTO `regular_group_form` (`enq_form_id`,`reg_grp_names`) VALUES($st_id,'$reg_grp_names')");
+    }
+
+    if ($appointment_booked === 1) {
+        $st = trim((string)($slot_books->slot_book_time ?? ''));
+        $sp = trim((string)($slot_books->slot_book_purpose ?? ''));
+        $sd = trim((string)($slot_books->slot_book_date ?? ''));
+        $sb = trim((string)($slot_books->slot_book_by ?? ''));
+        $sl = isset($slot_books->slot_book_link) ? (int)$slot_books->slot_book_link : 0;
+        if ($st !== '' && $sp !== '' && $sd !== '' && $sb !== '' && $sl > 0) {
+            $t = date('Y-m-d H:i:s', strtotime($st));
+            $t_esc = mysqli_real_escape_string($connection, $t);
+            $sp_esc = mysqli_real_escape_string($connection, $sp);
+            $sd_esc = mysqli_real_escape_string($connection, $sd);
+            $sb_esc = mysqli_real_escape_string($connection, $sb);
+            mysqli_query($connection, "INSERT INTO `slot_book` (`enq_form_id`,`slot_bk_datetime`,`slot_bk_purpose`,`slot_bk_on`,`slot_book_by`,`slot_book_email_link`) VALUES($st_id,'$t_esc','$sp_esc','$sd_esc','$sb_esc',$sl)");
+        }
+    }
+
+    student_enquiry_set_contacted_when_counselling_slot_booked($connection, $st_id, $appointment_booked);
+    return true;
+}
+}
+
 // Enquiry status email template (load by status code) and send email
 if(isset($_POST['get_enquiry_status_template']) && isset($_POST['status_code'])){
     $status_code = (int)$_POST['status_code'];
@@ -5522,6 +5678,14 @@ if(@$_POST['formName']=='appointment_booking'){
         mysqli_query($connection, "UPDATE student_enquiry SET st_enquiry_flow_status=11 WHERE st_enquiry_id='$new_eq2_esc' AND st_enquiry_status!=1 LIMIT 1");
         $_POST['connected_enquiry_id'] = $new_eq2;
         $appointment_return_new_st_id = isset($ens2['st_id']) ? (int)$ens2['st_id'] : 0;
+    }
+    $crm_snap_st_id = ($appointment_return_new_st_id !== null && (int)$appointment_return_new_st_id > 0) ? (int)$appointment_return_new_st_id : 0;
+    if ($crm_snap_st_id > 0 && !empty($_POST['cb_enquiry_snapshot']) && is_string($_POST['cb_enquiry_snapshot'])) {
+        $crm_snap_dec = json_decode($_POST['cb_enquiry_snapshot'], true);
+        if (is_array($crm_snap_dec)) {
+            $crm_snap_admin = isset($_POST['created_by']) ? (int)$_POST['created_by'] : 0;
+            crm_apply_student_enquiry_snapshot_from_array($connection, $crm_snap_st_id, $crm_snap_dec, $crm_snap_admin);
+        }
     }
     $ce_for_sql = isset($_POST['connected_enquiry_id']) ? trim((string)$_POST['connected_enquiry_id']) : '';
     $connected_enquiry_id = $ce_for_sql !== '' ? "'" . mysqli_real_escape_string($connection, $ce_for_sql) . "'" : 'NULL';

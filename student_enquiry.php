@@ -2880,6 +2880,14 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     formData.append('cb_surname', ($('#surname').val() || '').trim());
                     formData.append('cb_responsible_staff', ($('#enquiry_source_responsible_staff').val() || '').trim());
                     formData.append('cb_location', ($('#location').val() || '').trim());
+                    try {
+                        if (typeof buildStudentEnquiryFormData === 'function') {
+                            var snapPayload = buildStudentEnquiryFormData();
+                            if (snapPayload) {
+                                formData.append('cb_enquiry_snapshot', JSON.stringify(snapPayload));
+                            }
+                        }
+                    } catch (eSnap) {}
                 }
                 if (window.__fpBookFromCounsellingReschedule) {
                     formData.append('set_flow_status_counselling_pending', '1');
@@ -2894,6 +2902,14 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     formData.append('cb_member_name', ($('#member_name').val() || '').trim());
                     formData.append('cb_contact_num', ($('#contact_num').val() || '').trim());
                     formData.append('cb_surname', ($('#surname').val() || '').trim());
+                    try {
+                        if (typeof buildStudentEnquiryFormData === 'function') {
+                            var snapPayloadCr = buildStudentEnquiryFormData();
+                            if (snapPayloadCr) {
+                                formData.append('cb_enquiry_snapshot', JSON.stringify(snapPayloadCr));
+                            }
+                        }
+                    } catch (eSnapCr) {}
                 }
                 $('#fp_appointment_submit_btn').prop('disabled',true);
                 $.ajax({ type:'POST', url:'includes/datacontrol', data:formData, contentType:false, processData:false,

@@ -166,17 +166,10 @@ if(@$_SESSION['user_type']!=''){
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label">Time Zone (State) <span class="asterisk">*</span></label>
-                                                        <select class="form-select" id="timezone_state" name="timezone_state" required>
-                                                            <option value="">-- Select State --</option>
-                                                            <option value="Adelaide" <?php echo $editMode && $appointmentData['timezone_state'] == 'Adelaide' ? 'selected' : ''; ?>>Adelaide (ACST)</option>
-                                                            <option value="Melbourne" <?php echo $editMode && $appointmentData['timezone_state'] == 'Melbourne' ? 'selected' : ''; ?>>Melbourne (AEST)</option>
-                                                            <option value="Sydney" <?php echo $editMode && $appointmentData['timezone_state'] == 'Sydney' ? 'selected' : ''; ?>>Sydney (AEST)</option>
-                                                            <option value="Perth" <?php echo $editMode && $appointmentData['timezone_state'] == 'Perth' ? 'selected' : ''; ?>>Perth (AWST)</option>
-                                                            <option value="Darwin" <?php echo $editMode && $appointmentData['timezone_state'] == 'Darwin' ? 'selected' : ''; ?>>Darwin (ACST)</option>
-                                                            <option value="Brisbane" <?php echo $editMode && $appointmentData['timezone_state'] == 'Brisbane' ? 'selected' : ''; ?>>Brisbane (AEST)</option>
-                                                        </select>
-                                                        <div class="error-feedback">Please select timezone</div>
+                                                        <label class="form-label">Time zone</label>
+                                                        <input type="hidden" id="timezone_state" name="timezone_state" value="Adelaide">
+                                                        <p class="form-control-plaintext mb-0 fw-medium">Australian Central Standard Time — Adelaide (ACST, GMT+9:30)</p>
+                                                        <small class="text-muted">All appointment times are entered and stored in Adelaide time, regardless of your location.</small>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
@@ -642,6 +635,9 @@ if(@$_SESSION['user_type']!=''){
         
         <script>
             $(document).ready(function() {
+                if (typeof crmInitMomentDefaultTz === 'function') {
+                    crmInitMomentDefaultTz();
+                }
                 // Initialize selectpicker
                 $('.selectpicker').selectpicker();
                 
@@ -769,10 +765,9 @@ $('#appointment_time_to').on('change input', function(){
                 
                 // Disable previous dates (min = today) for new bookings; when date is today, disable past times
                 function applyAppointmentDateMin() {
-                    var today = new Date();
-                    var todayStr = today.toISOString().slice(0, 10);
+                    var todayStr = typeof crmAppTodayYmd === 'function' ? crmAppTodayYmd() : new Date().toISOString().slice(0, 10);
                     var selectedDate = ($('#appointment_date').val() || '').toString().trim();
-                    var nowTimeStr = today.toTimeString().slice(0, 5); // HH:MM
+                    var nowTimeStr = typeof crmAppNowTimeHm === 'function' ? crmAppNowTimeHm() : new Date().toTimeString().slice(0, 5);
                     if (selectedDate === todayStr) {
                         $('#appointment_time, #appointment_time_to').attr('min', nowTimeStr);
                     } else {
@@ -818,16 +813,7 @@ $('#appointment_time_to').on('change input', function(){
                     
                     // Ensure timezone fields are set
                     if(!$('#appointment_time_state').val()) {
-                        var date = $('#appointment_date').val();
-                        var time = $('#appointment_time').val();
-                        var state = $('#timezone_state').val();
-                        if(date && time && state) {
-                            var stateDateTime = date + ' ' + time;
-                            $('#appointment_time_state').val(stateDateTime);
-                            $('#appointment_time_adelaide').val(stateDateTime);
-                            $('#appointment_time_india').val(stateDateTime);
-                            $('#appointment_time_philippines').val(stateDateTime);
-                        }
+                        calculateTimezones();
                     }
                     
                     var formData = new FormData(this);
@@ -893,39 +879,21 @@ $('#appointment_time_to').on('change input', function(){
             function calculateTimezones() {
                 var date = $('#appointment_date').val();
                 var time = $('#appointment_time').val();
-                var state = $('#timezone_state').val();
-                
-                if(date && time && state) {
-                    var stateDateTime = date + ' ' + time;
-                    var stateMoment = moment.tz(stateDateTime, getTimezone(state));
-                    
-                    $('#display_state_time').text(stateMoment.format('YYYY-MM-DD HH:mm:ss') + ' (' + state + ')');
-                    $('#display_adelaide_time').text(stateMoment.clone().tz('Australia/Adelaide').format('YYYY-MM-DD HH:mm:ss') + ' (Adelaide)');
-                    $('#display_india_time').text(stateMoment.clone().tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss') + ' (IST)');
-                    $('#display_philippines_time').text(stateMoment.clone().tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss') + ' (PHT)');
-                    
-                    $('#timezone_display').show();
-                    
-                    // Store in hidden fields for submission
-                    $('#appointment_time_state').val(stateMoment.format('YYYY-MM-DD HH:mm:ss'));
-                    $('#appointment_time_adelaide').val(stateMoment.clone().tz('Australia/Adelaide').format('YYYY-MM-DD HH:mm:ss'));
-                    $('#appointment_time_india').val(stateMoment.clone().tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss'));
-                    $('#appointment_time_philippines').val(stateMoment.clone().tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss'));
-                } else {
-                    $('#timezone_display').hide();
+                if (!date || !time) {
+                    return;
                 }
-            }
-            
-            function getTimezone(state) {
-                var timezones = {
-                    'Adelaide': 'Australia/Adelaide',
-                    'Melbourne': 'Australia/Melbourne',
-                    'Sydney': 'Australia/Sydney',
-                    'Perth': 'Australia/Perth',
-                    'Darwin': 'Australia/Darwin',
-                    'Brisbane': 'Australia/Brisbane'
-                };
-                return timezones[state] || 'Australia/Adelaide';
+                var adelaideDt = date + ' ' + time + ':00';
+                if (typeof moment !== 'undefined' && moment.tz) {
+                    var m = moment.tz(date + ' ' + time, 'YYYY-MM-DD HH:mm', 'Australia/Adelaide');
+                    adelaideDt = m.format('YYYY-MM-DD HH:mm:ss');
+                    $('#appointment_time_india').val(m.clone().tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss'));
+                    $('#appointment_time_philippines').val(m.clone().tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss'));
+                } else {
+                    $('#appointment_time_india').val(adelaideDt);
+                    $('#appointment_time_philippines').val(adelaideDt);
+                }
+                $('#appointment_time_state').val(adelaideDt);
+                $('#appointment_time_adelaide').val(adelaideDt);
             }
             
             function loadPurposes() {
@@ -1079,9 +1047,6 @@ $('#appointment_time_to').on('change input', function(){
             }
         </script>
         
-        <!-- Moment.js with timezone support -->
-        <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/moment-timezone@0.5.43/moment-timezone.min.js"></script>
     </body>
 </html>
 <?php }else{ 

@@ -52,17 +52,9 @@ if(!isset($fp_usersForShare)) $fp_usersForShare = null;
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">Time Zone (State) </label>
-                                <select class="form-select" id="fp_timezone_state" name="timezone_state">
-                                    <option value="">-- Select State --</option>
-                                    <option value="Adelaide">Adelaide (ACST)</option>
-                                    <option value="Melbourne">Melbourne (AEST)</option>
-                                    <option value="Sydney">Sydney (AEST)</option>
-                                    <option value="Perth">Perth (AWST)</option>
-                                    <option value="Darwin">Darwin (ACST)</option>
-                                    <option value="Brisbane">Brisbane (AEST)</option>
-                                </select>
-                                <div class="error-feedback">Please select timezone</div>
+                                <label class="form-label">Time zone</label>
+                                <input type="hidden" id="fp_timezone_state" name="timezone_state" value="Adelaide">
+                                <p class="form-control-plaintext mb-0 small">Adelaide (ACST, GMT+9:30)</p>
                             </div>
                         </div>
                         <div class="col-md-6">

@@ -206,7 +206,7 @@ function google_calendar_create_event($connection, $title, $start_datetime, $end
     $end_ts   = is_numeric($end_datetime)   ? $end_datetime   : strtotime($end_datetime);
     if (!$start_ts || !$end_ts) return null;
     if ($end_ts <= $start_ts) $end_ts = $start_ts + 1800;
-    $tz = 'Australia/Sydney';
+    $tz = defined('CRM_APP_TIMEZONE') ? CRM_APP_TIMEZONE : 'Australia/Adelaide';
     $start_rfc = date('Y-m-d\TH:i:s', $start_ts);
     $end_rfc   = date('Y-m-d\TH:i:s', $end_ts);
     $attendees = [];

@@ -228,11 +228,34 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
         <script>
             var calendar;
             var currentAppointmentId = null;
+            var CRM_CAL_TZ = 'Australia/Adelaide';
+
+            function crmCalFormat(d, opts) {
+                if (!d) return '';
+                opts = opts || {};
+                opts.timeZone = CRM_CAL_TZ;
+                return FullCalendar.formatDate(d, opts);
+            }
+
+            function crmCalEventTimeRange(ev) {
+                var props = ev.extendedProps || {};
+                if (props.time_start_display) {
+                    var endDisp = props.time_end_display || '';
+                    if (endDisp && endDisp !== props.time_start_display) {
+                        return props.time_start_display + ' - ' + endDisp;
+                    }
+                    return props.time_start_display;
+                }
+                var startStr = crmCalFormat(ev.start, { hour: 'numeric', minute: '2-digit', meridiem: 'short' });
+                var endStr = ev.end ? crmCalFormat(ev.end, { hour: 'numeric', minute: '2-digit', meridiem: 'short' }) : '';
+                return endStr && endStr !== startStr ? (startStr + ' - ' + endStr) : startStr;
+            }
             
             document.addEventListener('DOMContentLoaded', function() {
                 var calendarEl = document.getElementById('calendar');
                 
                 calendar = new FullCalendar.Calendar(calendarEl, {
+                    timeZone: 'Australia/Adelaide',
                     initialView: 'dayGridMonth',
                     headerToolbar: {
                         left: 'prev,next today',
@@ -242,7 +265,8 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                     eventTimeFormat: {
                         hour: 'numeric',
                         minute: '2-digit',
-                        meridiem: 'short'
+                        meridiem: 'short',
+                        timeZone: CRM_CAL_TZ
                     },
                     dayMaxEvents: 3,
                     moreLinkContent: function(arg){
@@ -252,22 +276,12 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                         // Build modal list of all events for this day
                         var $list = $('#moreEventsList');
                         $list.empty();
-                        var dateLabel = FullCalendar.formatDate(arg.date, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
+                        var dateLabel = crmCalFormat(arg.date, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
                         $('#moreEventsDate').text(dateLabel);
                         arg.allSegs.forEach(function(seg){
                             var ev = seg.event;
                             var color = ev.backgroundColor || ev.borderColor || '#0bb197';
-                            var startStr = FullCalendar.formatDate(ev.start, {
-                                hour: 'numeric',
-                                minute: '2-digit',
-                                meridiem: 'short'
-                            });
-                            var endStr = ev.end ? FullCalendar.formatDate(ev.end, {
-                                hour: 'numeric',
-                                minute: '2-digit',
-                                meridiem: 'short'
-                            }) : '';
-                            var timeRange = endStr && endStr !== startStr ? (startStr + ' - ' + endStr) : startStr;
+                            var timeRange = crmCalEventTimeRange(ev);
                             var isBlocked = (ev.extendedProps && ev.extendedProps.event_type === 'blocked');
                             var row = '<li class="list-group-item d-flex justify-content-between align-items-center more-event-item" data-id="'+ev.id+'" data-type="'+(isBlocked ? 'blocked' : 'appointment')+'">'+
                                       '<div class="d-flex align-items-center">'+
@@ -385,8 +399,8 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                 var blockedFor = (eventObj.extendedProps && eventObj.extendedProps.blocked_for) ? eventObj.extendedProps.blocked_for : 'All Staff';
                 var blockedBy = (eventObj.extendedProps && eventObj.extendedProps.blocked_by) ? eventObj.extendedProps.blocked_by : 'Unknown';
                 var reason = (eventObj.extendedProps && eventObj.extendedProps.reason) ? eventObj.extendedProps.reason : '';
-                var startText = eventObj.start ? FullCalendar.formatDate(eventObj.start, { weekday:'short', year:'numeric', month:'short', day:'numeric', hour:'numeric', minute:'2-digit', meridiem:'short' }) : '-';
-                var endText = eventObj.end ? FullCalendar.formatDate(eventObj.end, { hour:'numeric', minute:'2-digit', meridiem:'short' }) : '-';
+                var startText = eventObj.start ? crmCalFormat(eventObj.start, { weekday:'short', year:'numeric', month:'short', day:'numeric', hour:'numeric', minute:'2-digit', meridiem:'short' }) : '-';
+                var endText = eventObj.end ? crmCalFormat(eventObj.end, { hour:'numeric', minute:'2-digit', meridiem:'short' }) : '-';
 
                 var html = '<div class="row">' +
                     '<div class="col-md-6"><strong>Type:</strong></div><div class="col-md-6">Blocked Slot</div>' +

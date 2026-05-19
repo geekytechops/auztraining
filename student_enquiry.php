@@ -2137,9 +2137,9 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                             }else if(data==='email_duplicate' || data=='email_duplicate' || data==='email_duplicate_student_users' || data=='email_duplicate_student_users'){
                                 autosaveSetBadge('enquiry','Enquiry: email conflict','err');
                             }else if(data==2 || data=='2'){
-                                autosaveSetBadge('enquiry','Enquiry: saved '+new Date().toLocaleTimeString(),'ok');
+                                autosaveSetBadge('enquiry','Enquiry: saved '+(typeof crmAppFormatTimeDisplay==='function'?crmAppFormatTimeDisplay():new Date().toLocaleTimeString())+' (ACST)','ok');
                             }else{
-                                autosaveSetBadge('enquiry','Enquiry: saved '+new Date().toLocaleTimeString(),'ok');
+                                autosaveSetBadge('enquiry','Enquiry: saved '+(typeof crmAppFormatTimeDisplay==='function'?crmAppFormatTimeDisplay():new Date().toLocaleTimeString())+' (ACST)','ok');
                             }
                             return;
                         }
@@ -2457,7 +2457,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                         if(seq!==counselSaveSeq) return;
                         var _crm = parseCrmSavePayload(data);
                         if(_crm.csId){ $('#counselling_check_update').val(_crm.csId); }
-                        if(_crm.ok){ autosaveSetBadge('counsel','Counseling: saved '+new Date().toLocaleTimeString(),'ok'); }
+                        if(_crm.ok){ autosaveSetBadge('counsel','Counseling: saved '+(typeof crmAppFormatTimeDisplay==='function'?crmAppFormatTimeDisplay():new Date().toLocaleTimeString())+' (ACST)','ok'); }
                         else { autosaveSetBadge('counsel','Counseling: failed','err'); }
                         return;
                     }
@@ -2573,8 +2573,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             });
             function fpPrepareAndOpenAppointmentModal(){
                 var enquiryDateStr = ($('#enquiry_date').val() || '').toString().trim();
-                var today = new Date();
-                var todayStr = today.toISOString().slice(0,10);
+                var todayStr = typeof crmAppTodayYmd === 'function' ? crmAppTodayYmd() : new Date().toISOString().slice(0,10);
                 var minDate = todayStr;
                 if(enquiryDateStr && enquiryDateStr > minDate){
                     minDate = enquiryDateStr;
@@ -2585,7 +2584,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     $('#fp_appointment_date').val(minDate);
                     currentApptDate = minDate;
                 }
-                var nowTimeStr = today.toTimeString().slice(0,5);
+                var nowTimeStr = typeof crmAppNowTimeHm === 'function' ? crmAppNowTimeHm() : new Date().toTimeString().slice(0,5);
                 if(currentApptDate === todayStr){
                     $('#fp_appointment_time,#fp_appointment_time_to').attr('min', nowTimeStr);
                 } else {
@@ -2775,10 +2774,9 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 }
             }
             function fpApplyAppointmentDateMin(){
-                var today=new Date();
-                var todayStr=today.toISOString().slice(0,10);
+                var todayStr=typeof crmAppTodayYmd==='function'?crmAppTodayYmd():new Date().toISOString().slice(0,10);
                 var selectedDate=($('#fp_appointment_date').val()||'').toString().trim();
-                var nowTimeStr=today.toTimeString().slice(0,5);
+                var nowTimeStr=typeof crmAppNowTimeHm==='function'?crmAppNowTimeHm():new Date().toTimeString().slice(0,5);
                 if(selectedDate===todayStr){
                     $('#fp_appointment_time').attr('min',nowTimeStr);
                 }else{
@@ -2856,13 +2854,19 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 $f.find('[required]').prop('required',false);
                 var date = $('#fp_appointment_date').val();
                 var time = $('#fp_appointment_time').val();
-                var state = $('#fp_timezone_state').val();
-                if(date && time && state){
-                    var stateDt = date + ' ' + time;
-                    $('#fp_appointment_time_state').val(stateDt);
-                    $('#fp_appointment_time_adelaide').val(stateDt);
-                    $('#fp_appointment_time_india').val(stateDt);
-                    $('#fp_appointment_time_philippines').val(stateDt);
+                if(date && time){
+                    var adelaideDt = date + ' ' + time + ':00';
+                    if (typeof moment !== 'undefined' && moment.tz) {
+                        var m = moment.tz(date + ' ' + time, 'YYYY-MM-DD HH:mm', 'Australia/Adelaide');
+                        adelaideDt = m.format('YYYY-MM-DD HH:mm:ss');
+                        $('#fp_appointment_time_india').val(m.clone().tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss'));
+                        $('#fp_appointment_time_philippines').val(m.clone().tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss'));
+                    } else {
+                        $('#fp_appointment_time_india').val(adelaideDt);
+                        $('#fp_appointment_time_philippines').val(adelaideDt);
+                    }
+                    $('#fp_appointment_time_state').val(adelaideDt);
+                    $('#fp_appointment_time_adelaide').val(adelaideDt);
                 }
                 var formData = new FormData(this);
                 if (window.__fpBookFromContactBarPhone) {
@@ -3121,7 +3125,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                             if(usePostCounselling){ $('#followup_pc_check_update').val(_fu.fuId); }
                             else { $('#followup_check_update').val(_fu.fuId); }
                         }
-                        if(_fu.ok){ autosaveSetBadge('followup','Follow-up: saved '+new Date().toLocaleTimeString(),'ok'); }
+                        if(_fu.ok){ autosaveSetBadge('followup','Follow-up: saved '+(typeof crmAppFormatTimeDisplay==='function'?crmAppFormatTimeDisplay():new Date().toLocaleTimeString())+' (ACST)','ok'); }
                         else { autosaveSetBadge('followup','Follow-up: failed','err'); }
                         return;
                     }

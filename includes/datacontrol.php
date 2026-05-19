@@ -5447,9 +5447,7 @@ if (!function_exists('crm_send_enquiry_flow_appointment_confirmation_email')) {
             $ts = date('g:i A', strtotime($dateYmd . ' ' . $t1));
             $te = ($t2 !== '' && strtotime($dateYmd . ' ' . $t2)) ? date('g:i A', strtotime($dateYmd . ' ' . $t2)) : $ts;
             $timeRange = ($ts === $te) ? $ts : ($ts . ' – ' . $te);
-            if ($tz !== '') {
-                $timeRange .= ' (' . $tz . ')';
-            }
+            $timeRange .= ' (' . CRM_APP_TIMEZONE_LABEL . ')';
         }
 
         if ($is_reschedule_flow) {
@@ -5596,11 +5594,11 @@ if(@$_POST['formName']=='appointment_booking'){
     $location_id = isset($_POST['location_id']) && $_POST['location_id'] != '' ? (int)$_POST['location_id'] : 'NULL';
     $platform_id = isset($_POST['platform_id']) && $_POST['platform_id'] != '' ? (int)$_POST['platform_id'] : 'NULL';
     $online_meeting_link = mysqli_real_escape_string($connection, trim((string)($_POST['online_meeting_link'] ?? '')));
-    $timezone_state = mysqli_real_escape_string($connection, trim((string)($_POST['timezone_state'] ?? '')));
-    $appointment_time_state = isset($_POST['appointment_time_state']) && $_POST['appointment_time_state'] != '' ? mysqli_real_escape_string($connection, trim((string)$_POST['appointment_time_state'])) : $appointment_datetime;
-    $appointment_time_adelaide = isset($_POST['appointment_time_adelaide']) && $_POST['appointment_time_adelaide'] != '' ? mysqli_real_escape_string($connection, trim((string)$_POST['appointment_time_adelaide'])) : $appointment_datetime;
-    $appointment_time_india = isset($_POST['appointment_time_india']) && $_POST['appointment_time_india'] != '' ? mysqli_real_escape_string($connection, trim((string)$_POST['appointment_time_india'])) : $appointment_datetime;
-    $appointment_time_philippines = isset($_POST['appointment_time_philippines']) && $_POST['appointment_time_philippines'] != '' ? mysqli_real_escape_string($connection, trim((string)$_POST['appointment_time_philippines'])) : $appointment_datetime;
+    $timezone_state = mysqli_real_escape_string($connection, CRM_APP_TIMEZONE_STATE);
+    $appointment_time_state = mysqli_real_escape_string($connection, $appointment_datetime);
+    $appointment_time_adelaide = mysqli_real_escape_string($connection, $appointment_datetime);
+    $appointment_time_india = mysqli_real_escape_string($connection, crm_app_datetime_in_tz($appointment_date, $appointment_time, 'Asia/Kolkata') ?: $appointment_datetime);
+    $appointment_time_philippines = mysqli_real_escape_string($connection, crm_app_datetime_in_tz($appointment_date, $appointment_time, 'Asia/Manila') ?: $appointment_datetime);
     $auto_phone_flow = isset($_POST['auto_create_enquiry_phone_flow']) && (string)$_POST['auto_create_enquiry_phone_flow'] === '1';
     $auto_couns_resched_flow = isset($_POST['auto_create_enquiry_counselling_reschedule_flow']) && (string)$_POST['auto_create_enquiry_counselling_reschedule_flow'] === '1';
     $set_book_couns = isset($_POST['set_flow_status_booked_counselling']) && (string)$_POST['set_flow_status_booked_counselling'] === '1';
@@ -5931,18 +5929,25 @@ if(@$_POST['formName']=='get_appointments_calendar'){
             $title .= ' - ' . $row['business_name'];
         }
         
+        $startIso = crm_app_datetime_iso($row['appointment_datetime']);
+        $endIso = '';
+        if ($has_end_cols && isset($row['appointment_end_datetime']) && !empty($row['appointment_end_datetime'])) {
+            $endIso = crm_app_datetime_iso($row['appointment_end_datetime']);
+        }
         $event = array(
             'id' => $row['appointment_id'],
             'title' => $title,
-            'start' => $row['appointment_datetime'],
+            'start' => $startIso,
             'color' => $row['purpose_color'],
             'extendedProps' => array(
                 'status' => $row['appointment_status'],
-                'purpose' => $row['purpose_name']
+                'purpose' => $row['purpose_name'],
+                'time_start_display' => crm_app_format_time_display($row['appointment_datetime']),
+                'time_end_display' => $endIso !== '' ? crm_app_format_time_display($row['appointment_end_datetime']) : '',
             )
         );
-        if($has_end_cols && isset($row['appointment_end_datetime']) && !empty($row['appointment_end_datetime'])){
-            $event['end'] = $row['appointment_end_datetime'];
+        if ($endIso !== '') {
+            $event['end'] = $endIso;
         }
         $events[] = $event;
     }
@@ -5983,15 +5988,17 @@ if(@$_POST['formName']=='get_appointments_calendar'){
             $events[] = array(
                 'id' => 'block_' . $brow['block_id'],
                 'title' => $title,
-                'start' => $blockStart,
-                'end' => $blockEnd,
+                'start' => crm_app_datetime_iso($blockStart),
+                'end' => crm_app_datetime_iso($blockEnd),
                 'color' => '#ff3d60',
                 'extendedProps' => array(
                     'event_type' => 'blocked',
                     'block_id' => $brow['block_id'],
                     'blocked_for' => $blockedFor,
                     'blocked_by' => $blockedBy,
-                    'reason' => $blockReason
+                    'reason' => $blockReason,
+                    'time_start_display' => crm_app_format_time_display($blockStart),
+                    'time_end_display' => crm_app_format_time_display($blockEnd),
                 )
             );
         }
@@ -6018,7 +6025,7 @@ if(@$_POST['formName']=='get_appointment_details'){
     
     $html = '<input type="hidden" id="appointment_status_hidden" value="'.$appointment['appointment_status'].'">';
     $html .= '<div class="row">';
-    $html .= '<div class="col-md-6"><strong>Date & Time:</strong></div><div class="col-md-6">' . date('d M Y h:i A', strtotime($appointment['appointment_datetime'])) . '</div>';
+    $html .= '<div class="col-md-6"><strong>Date & Time:</strong></div><div class="col-md-6">' . crm_app_format_datetime_display($appointment['appointment_datetime']) . '</div>';
     $html .= '<div class="col-md-6"><strong>Purpose:</strong></div><div class="col-md-6"><span class="color-preview" style="background:'.$appointment['purpose_color'].'"></span>' . $appointment['purpose_name'] . '</div>';
     $html .= '<div class="col-md-6"><strong>Status:</strong></div><div class="col-md-6"><span class="status-badge status-'.$appointment['appointment_status'].'">' . ucfirst(str_replace('-', ' ', $appointment['appointment_status'])) . '</span></div>';
     $html .= '<div class="col-md-6"><strong>Booked By:</strong></div><div class="col-md-6">' . $appointment['booked_by_name'] . '</div>';

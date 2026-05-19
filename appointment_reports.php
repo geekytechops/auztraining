@@ -720,7 +720,7 @@ $appointmentPurposes = mysqli_query($connection, "SELECT purpose_id, purpose_nam
                     tbody.append('<tr><td colspan="8" class="text-center text-muted">No appointments</td></tr>');
                     return;
                 }
-                var today = new Date().toISOString().slice(0,10);
+                var today = typeof crmAppTodayYmd === 'function' ? crmAppTodayYmd() : new Date().toISOString().slice(0,10);
                 var any = false;
                 appointments.forEach(function(appt){
                     if(appt.date_raw === today){
@@ -750,7 +750,7 @@ $appointmentPurposes = mysqli_query($connection, "SELECT purpose_id, purpose_nam
                     tbody.append('<tr><td colspan="8" class="text-center text-muted">No appointments</td></tr>');
                     return;
                 }
-                var today = new Date().toISOString().slice(0,10);
+                var today = typeof crmAppTodayYmd === 'function' ? crmAppTodayYmd() : new Date().toISOString().slice(0,10);
                 var any = false;
                 appointments.forEach(function(appt){
                     if(appt.date_raw > today && appt.status !== 'cancelled'){

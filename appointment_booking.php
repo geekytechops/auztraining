@@ -134,13 +134,14 @@ if(@$_SESSION['user_type']!=''){
                                             
                                             <!-- Basic Information -->
                                             <h5 class="mb-3">Basic Information</h5>
+                                            <div class="alert alert-danger d-none mb-3" id="appointment_slot_alert" role="alert"></div>
                                             <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                         <label class="form-label">Appointment Date <span class="asterisk">*</span></label>
                                                         <input type="date" class="form-control" id="appointment_date" name="appointment_date" 
                                                                value="<?php echo $editMode ? date('Y-m-d', strtotime($appointmentData['appointment_date'])) : ''; ?>" 
-                                                               <?php if(!$editMode) echo ' min="'.date('Y-m-d').'"'; ?> required>
+                                                               <?php if(!$editMode) echo ' min="'.htmlspecialchars(crm_app_today(), ENT_QUOTES, 'UTF-8').'"'; ?> required>
                                                         <div class="error-feedback">Please select appointment date</div>
                                                     </div>
                                                 </div>
@@ -162,6 +163,7 @@ if(@$_SESSION['user_type']!=''){
                                                         <small class="text-muted d-block mt-1">To is set to From + 1 minute when you pick From. You can change To to a later time.</small>
                                                         <div class="error-feedback" style="display:none;">Please select appointment time</div>
                                                         <div class="error-feedback" id="time_slot_range_error" style="display:none;">To must be at least 1 minute after From.</div>
+                                                        <div class="error-feedback text-danger" id="appointment_past_time_error" style="display:none;">Appointment cannot be in the past (Adelaide time).</div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
@@ -763,19 +765,23 @@ $('#appointment_time_to').on('change input', function(){
                 $('#meeting_type').trigger('change');
                 <?php endif; ?>
                 
-                // Disable previous dates (min = today) for new bookings; when date is today, disable past times
+                var apptBookingUi = window.CRM_APPOINTMENT_BOOKING_UI || {
+                    dateSel: '#appointment_date', fromSel: '#appointment_time', toSel: '#appointment_time_to',
+                    errorSel: '#appointment_past_time_error', alertSel: '#appointment_slot_alert'
+                };
                 function applyAppointmentDateMin() {
-                    var todayStr = typeof crmAppTodayYmd === 'function' ? crmAppTodayYmd() : new Date().toISOString().slice(0, 10);
-                    var selectedDate = ($('#appointment_date').val() || '').toString().trim();
-                    var nowTimeStr = typeof crmAppNowTimeHm === 'function' ? crmAppNowTimeHm() : new Date().toTimeString().slice(0, 5);
-                    if (selectedDate === todayStr) {
-                        $('#appointment_time, #appointment_time_to').attr('min', nowTimeStr);
-                    } else {
-                        $('#appointment_time, #appointment_time_to').removeAttr('min');
+                    if (typeof crmAppApplyAppointmentMins === 'function') {
+                        crmAppApplyAppointmentMins(apptBookingUi.dateSel, apptBookingUi.fromSel, apptBookingUi.toSel);
                     }
                 }
-                $('#appointment_date').on('change', applyAppointmentDateMin);
-                applyAppointmentDateMin(); // run on load (e.g. when today is pre-selected or in edit mode)
+                function clearAppointmentSlotUiError() {
+                    if (typeof crmAppClearAppointmentSlotError === 'function') {
+                        crmAppClearAppointmentSlotError(apptBookingUi);
+                    }
+                }
+                $('#appointment_date').on('change input', function(){ clearAppointmentSlotUiError(); applyAppointmentDateMin(); });
+                $('#appointment_time, #appointment_time_to').on('change input', function(){ clearAppointmentSlotUiError(); applyAppointmentDateMin(); });
+                applyAppointmentDateMin();
 
                 // Calculate timezone conversions
                 $('#appointment_date, #appointment_time, #timezone_state').on('change', function() {
@@ -807,6 +813,18 @@ $('#appointment_time_to').on('change input', function(){
                         $('#borderedToast2Btn').trigger('click');
                         return;
                     }
+
+                    applyAppointmentDateMin();
+                    var slotCheck = typeof crmAppValidateAppointmentSlot === 'function'
+                        ? crmAppValidateAppointmentSlot($('#appointment_date').val(), $('#appointment_time').val(), $('#appointment_time_to').val())
+                        : { ok: true };
+                    if (!slotCheck.ok) {
+                        $('#appointment_past_time_error').text(slotCheck.message).show();
+                        $('.toast-text2').html(slotCheck.message);
+                        $('#borderedToast2Btn').trigger('click');
+                        return;
+                    }
+                    $('#appointment_past_time_error').hide();
                     
                     // Calculate timezones before submit
                     calculateTimezones();
@@ -847,6 +865,13 @@ $('#appointment_time_to').on('change input', function(){
                             } else if(res === '3') {
                                 $('.toast-text2').html('This time slot is blocked for the selected staff member. Please choose a different time or staff.');
                                 $('#borderedToast2Btn').trigger('click');
+                            } else if(res === 'past_datetime' || res === 'invalid_time_range' || res === 'missing_datetime') {
+                                if (typeof crmAppHandleAppointmentApiError === 'function') {
+                                    crmAppHandleAppointmentApiError(res, apptBookingUi);
+                                } else {
+                                    $('.toast-text2').html('Appointment cannot be in the past (Adelaide time).');
+                                    $('#borderedToast2Btn').trigger('click');
+                                }
                             } else {
                                 $('.toast-text2').html('Cannot save appointment. Please try again.');
                                 $('#borderedToast2Btn').trigger('click');
@@ -896,10 +921,39 @@ $('#appointment_time_to').on('change input', function(){
                 $('#appointment_time_adelaide').val(adelaideDt);
             }
             
+            function crmDcOk(response) {
+                return String(response == null ? '' : response).trim() === '1';
+            }
+            function crmToastSuccess(msg) {
+                $('#toast-text').html(msg);
+                $('#borderedToast1Btn').trigger('click');
+            }
+            function crmToastError(msg) {
+                $('.toast-text2').html(msg);
+                $('#borderedToast2Btn').trigger('click');
+            }
+
+            function refreshPurposeSelect(selectNewId) {
+                var current = selectNewId || $('#purpose_id').val();
+                $.ajax({
+                    url: 'includes/datacontrol',
+                    type: 'POST',
+                    dataType: 'html',
+                    data: { formName: 'get_purpose_options', selected_id: current },
+                    success: function(html) {
+                        $('#purpose_id').html(html);
+                        if (selectNewId) {
+                            $('#purpose_id').val(String(selectNewId));
+                        }
+                    }
+                });
+            }
+
             function loadPurposes() {
                 $.ajax({
                     url: 'includes/datacontrol',
                     type: 'POST',
+                    dataType: 'html',
                     data: {formName: 'get_purposes'},
                     success: function(response) {
                         $('#purposes_list').html(response);
@@ -941,110 +995,197 @@ $('#appointment_time_to').on('change input', function(){
             }
             
             function addPurpose() {
-                var name = $('#new_purpose_name').val();
-                var color = $('#new_purpose_color').val();
-                if(name) {
-                    $.ajax({
-                        url: 'includes/datacontrol',
-                        type: 'POST',
-                        data: {
-                            formName: 'add_purpose',
-                            purpose_name: name,
-                            purpose_color: color
-                        },
-                        success: function(response) {
-                            if(response == '1') {
-                                $('#toast-text').html('Purpose added successfully');
-                                $('#borderedToast1Btn').trigger('click');
-                                $('#new_purpose_name').val('');
-                                loadPurposes();
-                                location.reload();
-                            } else {
-                                $('.toast-text2').html('Cannot add purpose');
-                                $('#borderedToast2Btn').trigger('click');
-                            }
-                        }
-                    });
+                var name = ($('#new_purpose_name').val() || '').toString().trim();
+                var color = ($('#new_purpose_color').val() || '#0bb197').toString().trim();
+                if (!name) {
+                    crmToastError('Please enter a purpose name.');
+                    return;
                 }
+                $.ajax({
+                    url: 'includes/datacontrol',
+                    type: 'POST',
+                    dataType: 'text',
+                    data: {
+                        formName: 'add_purpose',
+                        purpose_name: name,
+                        purpose_color: color
+                    },
+                    success: function(response) {
+                        if (crmDcOk(response)) {
+                            crmToastSuccess('Purpose added successfully.');
+                            $('#new_purpose_name').val('');
+                            $('#new_purpose_color').val('#0bb197');
+                            loadPurposes();
+                            refreshPurposeSelect();
+                        } else {
+                            crmToastError('Cannot add purpose. Please try again.');
+                        }
+                    },
+                    error: function() {
+                        crmToastError('Cannot add purpose (network error).');
+                    }
+                });
+            }
+
+            function deletePurpose(purposeId) {
+                if (!purposeId) return;
+                if (!confirm('Delete this purpose? It will be removed from the list.')) return;
+                $.ajax({
+                    url: 'includes/datacontrol',
+                    type: 'POST',
+                    dataType: 'text',
+                    data: { formName: 'delete_purpose', purpose_id: purposeId },
+                    success: function(response) {
+                        if (crmDcOk(response)) {
+                            crmToastSuccess('Purpose deleted.');
+                            if ($('#purpose_id').val() == String(purposeId)) {
+                                $('#purpose_id').val('');
+                            }
+                            loadPurposes();
+                            refreshPurposeSelect();
+                        } else {
+                            crmToastError('Cannot delete purpose.');
+                        }
+                    },
+                    error: function() {
+                        crmToastError('Cannot delete purpose (network error).');
+                    }
+                });
             }
             
             function addAttendeeType() {
-                var name = $('#new_attendee_type_name').val();
-                if(name) {
-                    $.ajax({
-                        url: 'includes/datacontrol',
-                        type: 'POST',
-                        data: {
-                            formName: 'add_attendee_type',
-                            type_name: name
-                        },
-                        success: function(response) {
-                            if(response == '1') {
-                                $('#toast-text').html('Attendee type added successfully');
-                                $('#borderedToast1Btn').trigger('click');
-                                $('#new_attendee_type_name').val('');
-                                loadAttendeeTypes();
-                                location.reload();
-                            } else {
-                                $('.toast-text2').html('Cannot add attendee type');
-                                $('#borderedToast2Btn').trigger('click');
-                            }
-                        }
-                    });
+                var name = ($('#new_attendee_type_name').val() || '').toString().trim();
+                if (!name) {
+                    crmToastError('Please enter a type name.');
+                    return;
                 }
+                $.ajax({
+                    url: 'includes/datacontrol',
+                    type: 'POST',
+                    dataType: 'text',
+                    data: { formName: 'add_attendee_type', type_name: name },
+                    success: function(response) {
+                        if (crmDcOk(response)) {
+                            crmToastSuccess('Attendee type added successfully.');
+                            $('#new_attendee_type_name').val('');
+                            loadAttendeeTypes();
+                        } else {
+                            crmToastError('Cannot add attendee type.');
+                        }
+                    },
+                    error: function() { crmToastError('Cannot add attendee type (network error).'); }
+                });
+            }
+
+            function deleteAttendeeType(typeId) {
+                if (!typeId || !confirm('Delete this attendee type?')) return;
+                $.ajax({
+                    url: 'includes/datacontrol',
+                    type: 'POST',
+                    dataType: 'text',
+                    data: { formName: 'delete_attendee_type', type_id: typeId },
+                    success: function(response) {
+                        if (crmDcOk(response)) {
+                            crmToastSuccess('Attendee type deleted.');
+                            loadAttendeeTypes();
+                        } else {
+                            crmToastError('Cannot delete attendee type.');
+                        }
+                    },
+                    error: function() { crmToastError('Cannot delete attendee type (network error).'); }
+                });
             }
             
             function addLocation() {
-                var name = $('#new_location_name').val();
-                if(name) {
-                    $.ajax({
-                        url: 'includes/datacontrol',
-                        type: 'POST',
-                        data: {
-                            formName: 'add_location',
-                            location_name: name
-                        },
-                        success: function(response) {
-                            if(response == '1') {
-                                $('#toast-text').html('Location added successfully');
-                                $('#borderedToast1Btn').trigger('click');
-                                $('#new_location_name').val('');
-                                loadLocations();
-                                location.reload();
-                            } else {
-                                $('.toast-text2').html('Cannot add location');
-                                $('#borderedToast2Btn').trigger('click');
-                            }
-                        }
-                    });
+                var name = ($('#new_location_name').val() || '').toString().trim();
+                if (!name) {
+                    crmToastError('Please enter a location name.');
+                    return;
                 }
+                $.ajax({
+                    url: 'includes/datacontrol',
+                    type: 'POST',
+                    dataType: 'text',
+                    data: { formName: 'add_location', location_name: name },
+                    success: function(response) {
+                        if (crmDcOk(response)) {
+                            crmToastSuccess('Location added successfully.');
+                            $('#new_location_name').val('');
+                            loadLocations();
+                        } else {
+                            crmToastError('Cannot add location.');
+                        }
+                    },
+                    error: function() { crmToastError('Cannot add location (network error).'); }
+                });
+            }
+
+            function deleteLocation(locationId) {
+                if (!locationId || !confirm('Delete this location?')) return;
+                $.ajax({
+                    url: 'includes/datacontrol',
+                    type: 'POST',
+                    dataType: 'text',
+                    data: { formName: 'delete_location', location_id: locationId },
+                    success: function(response) {
+                        if (crmDcOk(response)) {
+                            crmToastSuccess('Location deleted.');
+                            loadLocations();
+                        } else {
+                            crmToastError('Cannot delete location.');
+                        }
+                    },
+                    error: function() { crmToastError('Cannot delete location (network error).'); }
+                });
             }
             
             function addPlatform() {
-                var name = $('#new_platform_name').val();
-                if(name) {
-                    $.ajax({
-                        url: 'includes/datacontrol',
-                        type: 'POST',
-                        data: {
-                            formName: 'add_platform',
-                            platform_name: name
-                        },
-                        success: function(response) {
-                            if(response == '1') {
-                                $('#toast-text').html('Platform added successfully');
-                                $('#borderedToast1Btn').trigger('click');
-                                $('#new_platform_name').val('');
-                                loadPlatforms();
-                                location.reload();
-                            } else {
-                                $('.toast-text2').html('Cannot add platform');
-                                $('#borderedToast2Btn').trigger('click');
-                            }
-                        }
-                    });
+                var name = ($('#new_platform_name').val() || '').toString().trim();
+                if (!name) {
+                    crmToastError('Please enter a platform name.');
+                    return;
                 }
+                $.ajax({
+                    url: 'includes/datacontrol',
+                    type: 'POST',
+                    dataType: 'text',
+                    data: { formName: 'add_platform', platform_name: name },
+                    success: function(response) {
+                        if (crmDcOk(response)) {
+                            crmToastSuccess('Platform added successfully.');
+                            $('#new_platform_name').val('');
+                            loadPlatforms();
+                        } else {
+                            crmToastError('Cannot add platform.');
+                        }
+                    },
+                    error: function() { crmToastError('Cannot add platform (network error).'); }
+                });
             }
+
+            function deletePlatform(platformId) {
+                if (!platformId || !confirm('Delete this platform?')) return;
+                $.ajax({
+                    url: 'includes/datacontrol',
+                    type: 'POST',
+                    dataType: 'text',
+                    data: { formName: 'delete_platform', platform_id: platformId },
+                    success: function(response) {
+                        if (crmDcOk(response)) {
+                            crmToastSuccess('Platform deleted.');
+                            loadPlatforms();
+                        } else {
+                            crmToastError('Cannot delete platform.');
+                        }
+                    },
+                    error: function() { crmToastError('Cannot delete platform (network error).'); }
+                });
+            }
+
+            $('#managePurposesModal').on('shown.bs.modal', function() { loadPurposes(); });
+            $('#manageAttendeeTypesModal').on('shown.bs.modal', function() { loadAttendeeTypes(); });
+            $('#manageLocationsModal').on('shown.bs.modal', function() { loadLocations(); });
+            $('#managePlatformsModal').on('shown.bs.modal', function() { loadPlatforms(); });
         </script>
         
     </body>

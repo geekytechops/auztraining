@@ -2584,11 +2584,8 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     $('#fp_appointment_date').val(minDate);
                     currentApptDate = minDate;
                 }
-                var nowTimeStr = typeof crmAppNowTimeHm === 'function' ? crmAppNowTimeHm() : new Date().toTimeString().slice(0,5);
-                if(currentApptDate === todayStr){
-                    $('#fp_appointment_time,#fp_appointment_time_to').attr('min', nowTimeStr);
-                } else {
-                    $('#fp_appointment_time,#fp_appointment_time_to').removeAttr('min');
+                if (typeof crmAppApplyAppointmentMins === 'function') {
+                    crmAppApplyAppointmentMins('#fp_appointment_date', '#fp_appointment_time', '#fp_appointment_time_to', minDate);
                 }
                 var enquiryForVal = ($('#enquiry_for').val()||'0').toString();
                 var studentName = enquiryForVal === '1' ? ($('#member_name').val()||'').trim() : ($('#student_name').val()||'').trim();
@@ -2774,13 +2771,14 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 }
             }
             function fpApplyAppointmentDateMin(){
-                var todayStr=typeof crmAppTodayYmd==='function'?crmAppTodayYmd():new Date().toISOString().slice(0,10);
-                var selectedDate=($('#fp_appointment_date').val()||'').toString().trim();
-                var nowTimeStr=typeof crmAppNowTimeHm==='function'?crmAppNowTimeHm():new Date().toTimeString().slice(0,5);
-                if(selectedDate===todayStr){
-                    $('#fp_appointment_time').attr('min',nowTimeStr);
-                }else{
-                    $('#fp_appointment_time').removeAttr('min');
+                var enquiryDateStr = ($('#enquiry_date').val() || '').toString().trim();
+                var todayStr = typeof crmAppTodayYmd === 'function' ? crmAppTodayYmd() : '';
+                var minDate = todayStr;
+                if (enquiryDateStr && enquiryDateStr > minDate) {
+                    minDate = enquiryDateStr;
+                }
+                if (typeof crmAppApplyAppointmentMins === 'function') {
+                    crmAppApplyAppointmentMins('#fp_appointment_date', '#fp_appointment_time', '#fp_appointment_time_to', minDate);
                 }
                 fpUpdateToMin();
             }
@@ -2839,9 +2837,17 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 fpApplyAppointmentDateMin();
             }
             // Wire up follow-up appointment time/date events
-            $(document).on('change','#fp_appointment_date',fpApplyAppointmentDateMin);
-            $(document).on('change input','#fp_appointment_time',fpOnFromTimeUpdate);
-            $(document).on('change input','#fp_appointment_time_to',fpOnToTimeUpdate);
+            function fpClearSlotUiError(){
+                if (typeof crmAppClearAppointmentSlotError === 'function') {
+                    crmAppClearAppointmentSlotError(window.CRM_APPOINTMENT_FP_UI || {
+                        dateSel:'#fp_appointment_date', fromSel:'#fp_appointment_time', toSel:'#fp_appointment_time_to',
+                        errorSel:'#fp_appointment_past_time_error', alertSel:'#fp_appointment_slot_alert'
+                    });
+                }
+            }
+            $(document).on('change input','#fp_appointment_date',function(){ fpClearSlotUiError(); fpApplyAppointmentDateMin(); });
+            $(document).on('change input','#fp_appointment_time',function(){ fpClearSlotUiError(); fpOnFromTimeUpdate(); });
+            $(document).on('change input','#fp_appointment_time_to',function(){ fpClearSlotUiError(); fpOnToTimeUpdate(); });
             // Initialise when modal opens (safe to call multiple times)
             fpEnsureFromBeforeTo();
             fpUpdateToMin();
@@ -2852,6 +2858,26 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 var $f = $(this);
                 $f.find('.error-feedback').hide();
                 $f.find('[required]').prop('required',false);
+                fpApplyAppointmentDateMin();
+                var slotCheck = typeof crmAppValidateAppointmentSlot === 'function'
+                    ? crmAppValidateAppointmentSlot($('#fp_appointment_date').val(), $('#fp_appointment_time').val(), $('#fp_appointment_time_to').val())
+                    : { ok: true };
+                var apptFpUi = window.CRM_APPOINTMENT_FP_UI || {
+                    dateSel: '#fp_appointment_date', fromSel: '#fp_appointment_time', toSel: '#fp_appointment_time_to',
+                    errorSel: '#fp_appointment_past_time_error', alertSel: '#fp_appointment_slot_alert'
+                };
+                if (!slotCheck.ok) {
+                    if (typeof crmAppShowAppointmentSlotError === 'function') {
+                        crmAppShowAppointmentSlotError($.extend({}, apptFpUi, { message: slotCheck.message }));
+                    } else {
+                        $('.toast-text2').html(slotCheck.message);
+                        $('#borderedToast2Btn').trigger('click');
+                    }
+                    return;
+                }
+                if (typeof crmAppClearAppointmentSlotError === 'function') {
+                    crmAppClearAppointmentSlotError(apptFpUi);
+                }
                 var date = $('#fp_appointment_date').val();
                 var time = $('#fp_appointment_time').val();
                 if(date && time){
@@ -2969,6 +2995,14 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                             $('.toast-text2').html('This time falls in a blocked period. Choose a different time.');
                             $('#borderedToast2Btn').trigger('click');
                             $('#fp_appointment_submit_btn').prop('disabled',false);
+                        } else if(r==='past_datetime' || r==='invalid_time_range' || r==='missing_datetime'){
+                            if (typeof crmAppHandleAppointmentApiError === 'function') {
+                                crmAppHandleAppointmentApiError(r, apptFpUi);
+                            } else {
+                                $('.toast-text2').html('Appointment cannot be in the past (Adelaide time).');
+                                $('#borderedToast2Btn').trigger('click');
+                            }
+                            $('#fp_appointment_submit_btn').prop('disabled',false);
                         } else if(r==='invalid_email'){
                             $('.toast-text2').html('Please enter a valid email on the contact card before booking.');
                             $('#borderedToast2Btn').trigger('click');
@@ -2986,7 +3020,11 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     error:function(){ $('.toast-text2').html('An error occurred.'); $('#borderedToast2Btn').trigger('click'); $('#fp_appointment_submit_btn').prop('disabled',false); }
                 });
             });
-            $('#followupAppointmentModal').on('shown.bs.modal',function(){ $('#fp_attendee_type_id').trigger('change'); $('#fp_meeting_type').trigger('change'); });
+            $('#followupAppointmentModal').on('shown.bs.modal',function(){
+                fpApplyAppointmentDateMin();
+                $('#fp_attendee_type_id').trigger('change');
+                $('#fp_meeting_type').trigger('change');
+            });
             $('#followupAppointmentModal').on('hidden.bs.modal', function(){
                 window.__fpBookFromContactBarPhone = false;
                 window.__fpBookFromCounsellingReschedule = false;

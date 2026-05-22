@@ -108,6 +108,43 @@ if (!function_exists('crm_app_timezone_init')) {
         $dt = crm_app_parse_mysql_datetime($mysqlDatetime);
         return $dt ? $dt->format($format) . ' (' . CRM_APP_TIMEZONE_LABEL . ')' : '';
     }
+
+    function crm_app_is_date_before_today($dateYmd)
+    {
+        $dateYmd = trim((string) $dateYmd);
+        return $dateYmd !== '' && $dateYmd < crm_app_today();
+    }
+
+    /** True if $dateYmd + $timeHm (Adelaide wall clock) is strictly before now in Adelaide. */
+    function crm_app_is_past_datetime($dateYmd, $timeHm)
+    {
+        $dateYmd = trim((string) $dateYmd);
+        $timeHm = trim((string) $timeHm);
+        if ($dateYmd === '' || $timeHm === '') {
+            return false;
+        }
+        if (preg_match('/^\d{1,2}:\d{2}$/', $timeHm)) {
+            $timeHm .= ':00';
+        }
+        $dt = crm_app_parse_mysql_datetime($dateYmd . ' ' . $timeHm);
+        if (!$dt) {
+            $dt = crm_app_parse_mysql_datetime($dateYmd . ' ' . substr($timeHm, 0, 5));
+        }
+        if (!$dt) {
+            return false;
+        }
+        $now = new DateTime('now', new DateTimeZone(CRM_APP_TIMEZONE));
+        return $dt < $now;
+    }
+
+    function crm_app_datetime_compare($dateYmd, $timeHm)
+    {
+        $timeHm = trim((string) $timeHm);
+        if (preg_match('/^\d{1,2}:\d{2}$/', $timeHm)) {
+            $timeHm .= ':00';
+        }
+        return crm_app_parse_mysql_datetime(trim((string) $dateYmd) . ' ' . $timeHm);
+    }
 }
 
 crm_app_timezone_init();

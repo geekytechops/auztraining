@@ -24,6 +24,7 @@ if(!isset($fp_usersForShare)) $fp_usersForShare = null;
                     <input type="hidden" name="connected_enquiry_id" id="fp_connected_enquiry_id" value="">
 
                     <h5 class="mb-3">Basic Information</h5>
+                    <div class="alert alert-danger d-none mb-3" id="fp_appointment_slot_alert" role="alert"></div>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -48,6 +49,7 @@ if(!isset($fp_usersForShare)) $fp_usersForShare = null;
                                 <small class="text-muted d-block mt-1">To is set to From + 1 minute when you pick From. You can change To to a later time.</small>
                                 <div class="error-feedback" style="display:none;">Please select appointment time</div>
                                 <div class="error-feedback" id="fp_time_slot_range_error" style="display:none;">To must be at least 1 minute after From.</div>
+                                <div class="error-feedback text-danger" id="fp_appointment_past_time_error" style="display:none;">Appointment cannot be in the past (Adelaide time).</div>
                             </div>
                         </div>
                         <div class="col-md-6">

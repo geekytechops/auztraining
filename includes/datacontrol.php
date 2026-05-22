@@ -5599,6 +5599,38 @@ if(@$_POST['formName']=='appointment_booking'){
     $appointment_time_adelaide = mysqli_real_escape_string($connection, $appointment_datetime);
     $appointment_time_india = mysqli_real_escape_string($connection, crm_app_datetime_in_tz($appointment_date, $appointment_time, 'Asia/Kolkata') ?: $appointment_datetime);
     $appointment_time_philippines = mysqli_real_escape_string($connection, crm_app_datetime_in_tz($appointment_date, $appointment_time, 'Asia/Manila') ?: $appointment_datetime);
+
+    if ($appointment_date === '' || $appointment_time === '') {
+        echo 'missing_datetime';
+        exit;
+    }
+    $skip_past_check = false;
+    if ($appointment_id > 0) {
+        $orig_q = @mysqli_query($connection, 'SELECT appointment_datetime, appointment_end_datetime FROM appointments WHERE appointment_id=' . (int) $appointment_id . ' LIMIT 1');
+        if ($orig_q && ($orig_row = mysqli_fetch_assoc($orig_q))) {
+            $orig_start = trim((string) ($orig_row['appointment_datetime'] ?? ''));
+            $orig_end = trim((string) ($orig_row['appointment_end_datetime'] ?? ''));
+            if ($orig_end === '') {
+                $orig_end = $orig_start;
+            }
+            if ($appointment_datetime === $orig_start && $appointment_end_datetime === $orig_end) {
+                $skip_past_check = true;
+            }
+        }
+    }
+    if (!$skip_past_check) {
+        if (crm_app_is_date_before_today($appointment_date) || crm_app_is_past_datetime($appointment_date, $appointment_time)) {
+            echo 'past_datetime';
+            exit;
+        }
+        $start_cmp = crm_app_datetime_compare($appointment_date, $appointment_time);
+        $end_cmp = crm_app_datetime_compare($appointment_date, $appointment_time_to);
+        if ($start_cmp && $end_cmp && $end_cmp <= $start_cmp) {
+            echo 'invalid_time_range';
+            exit;
+        }
+    }
+
     $auto_phone_flow = isset($_POST['auto_create_enquiry_phone_flow']) && (string)$_POST['auto_create_enquiry_phone_flow'] === '1';
     $auto_couns_resched_flow = isset($_POST['auto_create_enquiry_counselling_reschedule_flow']) && (string)$_POST['auto_create_enquiry_counselling_reschedule_flow'] === '1';
     $set_book_couns = isset($_POST['set_flow_status_booked_counselling']) && (string)$_POST['set_flow_status_booked_counselling'] === '1';
@@ -6260,26 +6292,75 @@ if(@$_POST['formName']=='get_purposes'){
     $result = mysqli_query($connection, $query);
     
     $html = '<table class="table table-sm"><thead><tr><th>Purpose</th><th>Color</th><th>Actions</th></tr></thead><tbody>';
-    while($row = mysqli_fetch_array($result)){
-        $html .= '<tr>';
-        $html .= '<td>'.$row['purpose_name'].'</td>';
-        $html .= '<td><span class="color-preview" style="background:'.$row['purpose_color'].'"></span></td>';
-        $html .= '<td><button class="btn btn-sm btn-danger" onclick="deletePurpose('.$row['purpose_id'].')">Delete</button></td>';
-        $html .= '</tr>';
+    if ($result && mysqli_num_rows($result)) {
+        while($row = mysqli_fetch_array($result)){
+            $pid = (int) $row['purpose_id'];
+            $pname = htmlspecialchars((string) $row['purpose_name'], ENT_QUOTES, 'UTF-8');
+            $pcolor = htmlspecialchars((string) $row['purpose_color'], ENT_QUOTES, 'UTF-8');
+            $html .= '<tr>';
+            $html .= '<td>'.$pname.'</td>';
+            $html .= '<td><span class="color-preview" style="background:'.$pcolor.'"></span></td>';
+            $html .= '<td><button type="button" class="btn btn-sm btn-danger" onclick="deletePurpose('.$pid.')">Delete</button></td>';
+            $html .= '</tr>';
+        }
+    } else {
+        $html .= '<tr><td colspan="3" class="text-muted">No purposes found.</td></tr>';
     }
     $html .= '</tbody></table>';
     
+    header('Content-Type: text/html; charset=UTF-8');
     echo $html;
+    exit;
+}
+
+if(@$_POST['formName']=='get_purpose_options'){
+    $query = "SELECT purpose_id, purpose_name, purpose_color FROM appointment_purposes WHERE purpose_status != 1 ORDER BY purpose_name";
+    $result = mysqli_query($connection, $query);
+    $selected = isset($_POST['selected_id']) ? (int) $_POST['selected_id'] : 0;
+    $html = '<option value="">-- Select Purpose --</option>';
+    if ($result) {
+        while ($row = mysqli_fetch_array($result)) {
+            $pid = (int) $row['purpose_id'];
+            $sel = ($selected === $pid) ? ' selected' : '';
+            $pname = htmlspecialchars((string) $row['purpose_name'], ENT_QUOTES, 'UTF-8');
+            $pcolor = htmlspecialchars((string) $row['purpose_color'], ENT_QUOTES, 'UTF-8');
+            $html .= '<option value="'.$pid.'" data-color="'.$pcolor.'"'.$sel.'>'.$pname.'</option>';
+        }
+    }
+    header('Content-Type: text/html; charset=UTF-8');
+    echo $html;
+    exit;
 }
 
 if(@$_POST['formName']=='add_purpose'){
-    $purpose_name = $_POST['purpose_name'];
-    $purpose_color = $_POST['purpose_color'];
-    
-    $query = "INSERT INTO appointment_purposes (purpose_name, purpose_color) VALUES ('$purpose_name', '$purpose_color')";
+    $purpose_name = mysqli_real_escape_string($connection, trim((string)($_POST['purpose_name'] ?? '')));
+    $purpose_color = mysqli_real_escape_string($connection, trim((string)($_POST['purpose_color'] ?? '#0bb197')));
+    if ($purpose_name === '') {
+        header('Content-Type: text/plain; charset=UTF-8');
+        echo '0';
+        exit;
+    }
+    if ($purpose_color === '') {
+        $purpose_color = '#0bb197';
+    }
+    $query = "INSERT INTO appointment_purposes (purpose_name, purpose_color, purpose_status) VALUES ('$purpose_name', '$purpose_color', 0)";
     $result = mysqli_query($connection, $query);
-    
-    echo $result ? 1 : 0;
+    header('Content-Type: text/plain; charset=UTF-8');
+    echo $result ? '1' : '0';
+    exit;
+}
+
+if(@$_POST['formName']=='delete_purpose'){
+    $purpose_id = isset($_POST['purpose_id']) ? (int) $_POST['purpose_id'] : 0;
+    if ($purpose_id <= 0) {
+        header('Content-Type: text/plain; charset=UTF-8');
+        echo '0';
+        exit;
+    }
+    $result = mysqli_query($connection, "UPDATE appointment_purposes SET purpose_status=1 WHERE purpose_id=$purpose_id LIMIT 1");
+    header('Content-Type: text/plain; charset=UTF-8');
+    echo $result ? '1' : '0';
+    exit;
 }
 
 // Manage attendee types
@@ -6300,12 +6381,30 @@ if(@$_POST['formName']=='get_attendee_types'){
 }
 
 if(@$_POST['formName']=='add_attendee_type'){
-    $type_name = $_POST['type_name'];
-    
-    $query = "INSERT INTO appointment_attendee_types (type_name) VALUES ('$type_name')";
+    $type_name = mysqli_real_escape_string($connection, trim((string)($_POST['type_name'] ?? '')));
+    if ($type_name === '') {
+        header('Content-Type: text/plain; charset=UTF-8');
+        echo '0';
+        exit;
+    }
+    $query = "INSERT INTO appointment_attendee_types (type_name, type_status) VALUES ('$type_name', 0)";
     $result = mysqli_query($connection, $query);
-    
-    echo $result ? 1 : 0;
+    header('Content-Type: text/plain; charset=UTF-8');
+    echo $result ? '1' : '0';
+    exit;
+}
+
+if(@$_POST['formName']=='delete_attendee_type'){
+    $type_id = isset($_POST['type_id']) ? (int) $_POST['type_id'] : 0;
+    if ($type_id <= 0) {
+        header('Content-Type: text/plain; charset=UTF-8');
+        echo '0';
+        exit;
+    }
+    $result = mysqli_query($connection, "UPDATE appointment_attendee_types SET type_status=1 WHERE type_id=$type_id LIMIT 1");
+    header('Content-Type: text/plain; charset=UTF-8');
+    echo $result ? '1' : '0';
+    exit;
 }
 
 // Manage locations
@@ -6326,12 +6425,30 @@ if(@$_POST['formName']=='get_locations'){
 }
 
 if(@$_POST['formName']=='add_location'){
-    $location_name = $_POST['location_name'];
-    
-    $query = "INSERT INTO appointment_locations (location_name) VALUES ('$location_name')";
+    $location_name = mysqli_real_escape_string($connection, trim((string)($_POST['location_name'] ?? '')));
+    if ($location_name === '') {
+        header('Content-Type: text/plain; charset=UTF-8');
+        echo '0';
+        exit;
+    }
+    $query = "INSERT INTO appointment_locations (location_name, location_status) VALUES ('$location_name', 0)";
     $result = mysqli_query($connection, $query);
-    
-    echo $result ? 1 : 0;
+    header('Content-Type: text/plain; charset=UTF-8');
+    echo $result ? '1' : '0';
+    exit;
+}
+
+if(@$_POST['formName']=='delete_location'){
+    $location_id = isset($_POST['location_id']) ? (int) $_POST['location_id'] : 0;
+    if ($location_id <= 0) {
+        header('Content-Type: text/plain; charset=UTF-8');
+        echo '0';
+        exit;
+    }
+    $result = mysqli_query($connection, "UPDATE appointment_locations SET location_status=1 WHERE location_id=$location_id LIMIT 1");
+    header('Content-Type: text/plain; charset=UTF-8');
+    echo $result ? '1' : '0';
+    exit;
 }
 
 // Manage platforms
@@ -6352,12 +6469,30 @@ if(@$_POST['formName']=='get_platforms'){
 }
 
 if(@$_POST['formName']=='add_platform'){
-    $platform_name = $_POST['platform_name'];
-    
-    $query = "INSERT INTO appointment_platforms (platform_name) VALUES ('$platform_name')";
+    $platform_name = mysqli_real_escape_string($connection, trim((string)($_POST['platform_name'] ?? '')));
+    if ($platform_name === '') {
+        header('Content-Type: text/plain; charset=UTF-8');
+        echo '0';
+        exit;
+    }
+    $query = "INSERT INTO appointment_platforms (platform_name, platform_status) VALUES ('$platform_name', 0)";
     $result = mysqli_query($connection, $query);
-    
-    echo $result ? 1 : 0;
+    header('Content-Type: text/plain; charset=UTF-8');
+    echo $result ? '1' : '0';
+    exit;
+}
+
+if(@$_POST['formName']=='delete_platform'){
+    $platform_id = isset($_POST['platform_id']) ? (int) $_POST['platform_id'] : 0;
+    if ($platform_id <= 0) {
+        header('Content-Type: text/plain; charset=UTF-8');
+        echo '0';
+        exit;
+    }
+    $result = mysqli_query($connection, "UPDATE appointment_platforms SET platform_status=1 WHERE platform_id=$platform_id LIMIT 1");
+    header('Content-Type: text/plain; charset=UTF-8');
+    echo $result ? '1' : '0';
+    exit;
 }
 
 // Appointment blocks

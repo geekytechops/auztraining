@@ -4269,6 +4269,8 @@ if(@$_POST['formName']=='fetchEnquiryDashboard'){
     $filter_date_to = isset($_POST['filter_date_to']) ? mysqli_real_escape_string($connection, $_POST['filter_date_to']) : '';
     $filter_counsellor = isset($_POST['filter_counsellor']) ? (int)$_POST['filter_counsellor'] : 0;
     $filter_source = isset($_POST['filter_source']) ? (int)$_POST['filter_source'] : -1;
+    $filter_visa_condition = isset($_POST['filter_visa_condition']) ? (int)$_POST['filter_visa_condition'] : 0;
+    $filter_visa_status = isset($_POST['filter_visa_status']) ? (int)$_POST['filter_visa_status'] : 0;
 
     $flow_status_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_flow_status'")) ? 'COALESCE(e.st_enquiry_flow_status,1)' : '1';
     $source_col = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM student_enquiry LIKE 'st_enquiry_source'")) ? 'e.st_enquiry_source' : '0';
@@ -4303,6 +4305,14 @@ if(@$_POST['formName']=='fetchEnquiryDashboard'){
     }
     if($filter_source >= 0 && $source_col !== '0'){
         $where .= " AND $source_col = ".(int)$filter_source;
+    }
+    if($filter_visa_condition > 0){
+        $where .= " AND e.st_visa_status = ".(int)$filter_visa_condition;
+    }
+    if($filter_visa_status === 1){
+        $where .= " AND (e.st_visa_condition = 1 OR e.st_visa_condition IS NULL OR e.st_visa_condition = '' OR e.st_visa_condition = 0) ";
+    } elseif($filter_visa_status === 2){
+        $where .= " AND e.st_visa_condition = 2 ";
     }
 
     $base_from = " FROM student_enquiry e WHERE $where ";
@@ -4386,6 +4396,8 @@ if(@$_POST['formName']=='fetchEnquiryList'){
     $filter_date_to = isset($_POST['filter_date_to']) ? mysqli_real_escape_string($connection, $_POST['filter_date_to']) : '';
     $filter_counsellor = isset($_POST['filter_counsellor']) ? (int)$_POST['filter_counsellor'] : 0;
     $filter_source = isset($_POST['filter_source']) ? (int)$_POST['filter_source'] : -1;
+    $filter_visa_condition = isset($_POST['filter_visa_condition']) ? (int)$_POST['filter_visa_condition'] : 0;
+    $filter_visa_status = isset($_POST['filter_visa_status']) ? (int)$_POST['filter_visa_status'] : 0;
     $sort_by = isset($_POST['sort_by']) ? $_POST['sort_by'] : 'latest';
     $draw = isset($_POST['draw']) ? (int)$_POST['draw'] : 0;
     $is_datatable = ($draw > 0);
@@ -4430,6 +4442,14 @@ if(@$_POST['formName']=='fetchEnquiryList'){
     }
     if($filter_source >= 0){
         $where .= " AND $source_col = ".(int)$filter_source;
+    }
+    if($filter_visa_condition > 0){
+        $where .= " AND e.st_visa_status = ".(int)$filter_visa_condition;
+    }
+    if($filter_visa_status === 1){
+        $where .= " AND (e.st_visa_condition = 1 OR e.st_visa_condition IS NULL OR e.st_visa_condition = '' OR e.st_visa_condition = 0) ";
+    } elseif($filter_visa_status === 2){
+        $where .= " AND e.st_visa_condition = 2 ";
     }
     // "Latest" = newest enquiry date first (same basis as Enquiry Date column: created_date or st_enquiry_date)
     $enquiry_dt_expr = "COALESCE(e.created_date, e.st_enquiry_date)";

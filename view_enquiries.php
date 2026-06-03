@@ -15,6 +15,20 @@ $view_enq_can_delete = ($ut === 1);
 $courses_q = mysqli_query($connection, "SELECT course_id, course_sname, course_name FROM courses WHERE course_status!=1 ORDER BY course_sname");
 $sources = array('','Website form','Phone call','Walk-in','Email','WhatsApp','Facebook / Instagram ads','Agent / referral (legacy)');
 $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE user_status!=1 ORDER BY user_name");
+$visa_conditions = array(
+    1 => '500 - Main Applicant',
+    2 => '500 - Dependent',
+    11 => '485 - Main Applicant',
+    12 => '485 - Dependent',
+    3 => '491 - Main Applicant',
+    4 => '491 - Dependent',
+    5 => 'Visitor Visa',
+    6 => 'Permanent Resident',
+    7 => 'Spouse Visa',
+    8 => 'Working Holiday Visa',
+    9 => 'AU/NZ Citizen',
+    10 => 'Other'
+);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -334,6 +348,21 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
                                 </select>
                             </div>
                             <div class="col-md-2">
+                                <label class="form-label small">Visa Condition</label>
+                                <select id="filter_visa_condition" class="form-select form-select-sm">
+                                    <option value="0">All</option>
+                                    <?php foreach($visa_conditions as $vid => $vlabel){ echo '<option value="'.(int)$vid.'">'.htmlspecialchars($vlabel).'</option>'; } ?>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Visa Status</label>
+                                <select id="filter_visa_status" class="form-select form-select-sm">
+                                    <option value="0">All</option>
+                                    <option value="1">Approved</option>
+                                    <option value="2">Not Approved</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
                                 <label class="form-label small">Counsellor</label>
                                 <select id="filter_counsellor" class="form-select form-select-sm">
                                     <option value="0">All</option>
@@ -534,7 +563,9 @@ $(function(){
             filter_date_from: $('#filter_date_from').val(),
             filter_date_to: $('#filter_date_to').val(),
             filter_counsellor: $('#filter_counsellor').val(),
-            filter_source: $('#filter_source').val()
+            filter_source: $('#filter_source').val(),
+            filter_visa_condition: $('#filter_visa_condition').val(),
+            filter_visa_status: $('#filter_visa_status').val()
         };
         $.post('includes/datacontrol', d, function(data){
             try {
@@ -567,6 +598,8 @@ $(function(){
                 d.filter_date_to = $('#filter_date_to').val();
                 d.filter_counsellor = $('#filter_counsellor').val();
                 d.filter_source = $('#filter_source').val();
+                d.filter_visa_condition = $('#filter_visa_condition').val();
+                d.filter_visa_status = $('#filter_visa_status').val();
                 d.sort_by = $('#sort_by').val();
             }
         },
@@ -733,6 +766,7 @@ $(function(){
         $('#filter_counsellor').val('0');
         $('#filter_course').val('0');
         $('#filter_status,#filter_source').val('-1');
+        $('#filter_visa_condition,#filter_visa_status').val('0');
         $('#filter_date_from,#filter_date_to').val('');
         $('#sort_by').val('latest');
         reloadEnquiryTable(true);
@@ -746,6 +780,10 @@ $(function(){
     });
     // Quick UX: apply Status filter immediately on change.
     $('#filter_status').on('change', function(){
+        reloadEnquiryTable(true);
+        loadDashboard();
+    });
+    $('#filter_visa_condition, #filter_visa_status').on('change', function(){
         reloadEnquiryTable(true);
         loadDashboard();
     });

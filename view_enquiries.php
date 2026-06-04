@@ -36,7 +36,7 @@ $visa_conditions = array(
     <meta charset="utf-8">
     <title>View Enquiries | Enquiry List</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="assets/images/favicon.ico">
+    <link rel="shortcut icon" href="assets/images/logo-dark.png">
     <?php include('includes/app_includes.php'); ?>
     <style>
         .enquiry-card{ transition: transform .15s ease; }

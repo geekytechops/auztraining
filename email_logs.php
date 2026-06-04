@@ -42,7 +42,7 @@ $category_options = array(
     <meta charset="utf-8">
     <title>Email Logs | CRM</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="assets/images/favicon.ico">
+    <link rel="shortcut icon" href="assets/images/logo-dark.png">
     <?php include 'includes/app_includes.php'; ?>
     <style>
         .email-log-filters .form-control-sm, .email-log-filters .form-select-sm { height: 38px; }

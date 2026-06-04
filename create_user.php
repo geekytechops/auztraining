@@ -17,7 +17,7 @@ $users=mysqli_query($connection,"SELECT * FROM users WHERE user_type IN (1,2) OR
     <meta charset="utf-8" />
     <title>Staff Management</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="assets/images/favicon.ico">
+    <link rel="shortcut icon" href="assets/images/logo-dark.png">
     <?php include('includes/app_includes.php'); ?>
 </head>
 

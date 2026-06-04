@@ -15,7 +15,7 @@ $Enquiries = mysqli_query($connection, "SELECT st_enquiry_id FROM student_enquir
     <title>Enrolment Form (Online)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php include('includes/app_includes.php'); ?>
-    <link rel="shortcut icon" href="assets/images/favicon.ico">
+    <link rel="shortcut icon" href="assets/images/logo-dark.png">
 </head>
 <body>
     <div class="main-wrapper">

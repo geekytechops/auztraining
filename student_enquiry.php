@@ -567,7 +567,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
         <meta content="Premium Multipurpose Admin & Dashboard Template" name="description" />
         <meta content="Themesdesign" name="author" />
         <!-- App favicon -->
-        <link rel="shortcut icon" href="assets/images/favicon.ico">
+        <link rel="shortcut icon" href="assets/images/logo-dark.png">
         <?php 
         include('includes/app_includes.php'); 
         ?>

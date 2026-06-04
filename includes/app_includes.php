@@ -96,6 +96,8 @@
                 });
             })();
         </script>
+        <link rel="icon" type="image/png" href="assets/images/logo-dark.png">
+        <link rel="shortcut icon" href="assets/images/logo-dark.png">
         <link rel="stylesheet" href="<?php echo $CRM_ASSET_BASE; ?>/css/bootstrap.min.css">
         <link rel="stylesheet" href="<?php echo $CRM_ASSET_BASE; ?>/plugins/tabler-icons/tabler-icons.min.css">
         <link rel="stylesheet" href="<?php echo $CRM_ASSET_BASE; ?>/plugins/simplebar/simplebar.min.css">

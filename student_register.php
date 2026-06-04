@@ -13,7 +13,8 @@ $asset_base = 'crm/html/template/assets';
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Student Register | National College Australia</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="<?php echo $asset_base; ?>/img/favicon.png">
+    <link rel="icon" type="image/png" href="assets/images/logo-dark.png">
+    <link rel="shortcut icon" href="assets/images/logo-dark.png">
     <link rel="stylesheet" href="<?php echo $asset_base; ?>/css/bootstrap.min.css">
     <link rel="stylesheet" href="<?php echo $asset_base; ?>/plugins/tabler-icons/tabler-icons.min.css">
     <link rel="stylesheet" href="<?php echo $asset_base; ?>/css/style.css" id="app-style">

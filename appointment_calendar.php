@@ -18,7 +18,7 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
         <meta content="Premium Multipurpose Admin & Dashboard Template" name="description" />
         <meta content="Themesdesign" name="author" />
         <!-- App favicon -->
-        <link rel="shortcut icon" href="assets/images/favicon.ico">
+        <link rel="shortcut icon" href="assets/images/logo-dark.png">
         <?php include('includes/app_includes.php'); ?>
         
         <!-- FullCalendar CSS -->

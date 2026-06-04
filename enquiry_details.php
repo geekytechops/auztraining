@@ -78,7 +78,7 @@ $sources = array('','Website form','Phone call','Walk-in','Email','WhatsApp','Fa
     <meta charset="utf-8">
     <title>Enquiry Details | <?php echo htmlspecialchars($enquiry['st_enquiry_id']); ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="assets/images/favicon.ico">
+    <link rel="shortcut icon" href="assets/images/logo-dark.png">
     <?php include('includes/app_includes.php'); ?>
     <style>
         .detail-section{ margin-bottom: 1.5rem; }

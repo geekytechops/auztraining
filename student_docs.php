@@ -39,7 +39,7 @@ $selectQry = $enrolId !== '' ? mysqli_query($connection,"SELECT st_unique_id,st_
         <meta content="Premium Multipurpose Admin & Dashboard Template" name="description" />
         <meta content="Themesdesign" name="author" />
         <!-- App favicon -->
-        <link rel="shortcut icon" href="assets/images/favicon.ico">
+        <link rel="shortcut icon" href="assets/images/logo-dark.png">
         <?php include('includes/app_includes.php'); ?>
     </head>
 

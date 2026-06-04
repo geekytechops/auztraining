@@ -11,7 +11,7 @@ if(@$_SESSION['user_type']==1){
     <meta charset="utf-8" />
     <title>Create / Edit User</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="assets/images/favicon.ico">
+    <link rel="shortcut icon" href="assets/images/logo-dark.png">
     <?php include('includes/app_includes.php'); ?>
 </head>
 

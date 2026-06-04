@@ -20,7 +20,7 @@ $staff_q = mysqli_query($connection, "SELECT user_id, user_name FROM users WHERE
     <meta charset="utf-8">
     <title>Enquiry Reports &amp; Analytics</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="assets/images/favicon.ico">
+    <link rel="shortcut icon" href="assets/images/logo-dark.png">
     <?php include('includes/app_includes.php'); ?>
     <style>
         .report-card{ margin-bottom: 1.25rem; }

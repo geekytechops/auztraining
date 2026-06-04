@@ -191,7 +191,10 @@
     var API_SLOT_MESSAGES = {
         past_datetime: 'This appointment is in the past. Please choose a future date and time (Adelaide / ACST).',
         invalid_time_range: 'End time must be at least 1 minute after the start time.',
-        missing_datetime: 'Please select appointment date and start time.'
+        missing_datetime: 'Please select appointment date and start time.',
+        '2': 'This person already has an appointment overlapping the selected time (Adelaide / ACST). Please choose a different time.',
+        '3': 'This time slot is blocked for the selected staff member. Please choose a different time or staff.',
+        '4': 'This staff member already has another appointment overlapping the selected time (Adelaide / ACST). Please choose a different time or staff member.'
     };
 
     function crmAppSlotMessageForCode(code, fallback) {

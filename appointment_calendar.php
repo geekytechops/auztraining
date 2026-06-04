@@ -28,7 +28,7 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
             .fc-event {
                 cursor: pointer;
             }
-            /* Ensure calendar event text is readable and not overlapping */
+            /* Month view: readable event chips */
             .fc-daygrid-event {
                 display: flex;
                 align-items: center;
@@ -51,6 +51,59 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                 color: #000 !important;
                 font-weight: 600;
             }
+            /* Week / day time grid: compact blocks, no squished columns */
+            .fc-timegrid-event {
+                border-radius: 4px;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+            }
+            .fc-timegrid-event .fc-event-main {
+                padding: 2px 4px;
+                overflow: hidden;
+            }
+            .fc-ev-compact {
+                line-height: 1.2;
+                overflow: hidden;
+                min-width: 0;
+            }
+            .fc-ev-compact-time {
+                font-size: 0.68rem;
+                font-weight: 700;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .fc-ev-compact-title {
+                font-size: 0.72rem;
+                font-weight: 500;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                opacity: 0.95;
+            }
+            /* "+N more" in time slots */
+            .fc-timegrid-more-link {
+                font-size: 0.72rem !important;
+                font-weight: 600;
+                background: rgba(13, 110, 253, 0.14) !important;
+                color: #0d6efd !important;
+                border-radius: 4px;
+                padding: 2px 6px !important;
+                margin: 1px 2px;
+            }
+            .fc-timegrid-more-link:hover {
+                background: rgba(13, 110, 253, 0.28) !important;
+            }
+            /* Blocked slots: background band (appointments stay readable on top) */
+            .fc-bg-event.fc-event-blocked-bg {
+                opacity: 0.22;
+            }
+            .fc-bg-event.fc-event-blocked-bg .fc-event-title,
+            .fc-blocked-bg-label {
+                font-size: 0.7rem;
+                font-weight: 700;
+                letter-spacing: 0.02em;
+                color: #b02a37;
+            }
             .appointment-actions {
                 margin-bottom: 20px;
             }
@@ -71,6 +124,12 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                 border-radius: 50%;
                 display: inline-block;
                 margin-right: 6px;
+            }
+            #moreEventsList .more-event-item {
+                cursor: pointer;
+            }
+            #moreEventsList .more-event-item:hover {
+                background: #f8f9fa;
             }
             /* Ensure list view text is readable */
             .fc-list-event-title, .fc-list-event-time, .fc-list-event-title a {
@@ -250,6 +309,52 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                 var endStr = ev.end ? crmCalFormat(ev.end, { hour: 'numeric', minute: '2-digit', meridiem: 'short' }) : '';
                 return endStr && endStr !== startStr ? (startStr + ' - ' + endStr) : startStr;
             }
+
+            function crmCalEscapeHtml(s) {
+                if (!s) return '';
+                return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            }
+
+            function crmCalShortEventTitle(title, isBlocked) {
+                if (isBlocked) return 'Blocked';
+                if (!title) return '';
+                var dash = title.indexOf(' - ');
+                if (dash > 0) {
+                    return title.substring(0, dash) + ' · ' + title.substring(dash + 3);
+                }
+                return title;
+            }
+
+            function crmCalOpenMoreEventsModal(arg) {
+                var $list = $('#moreEventsList');
+                $list.empty();
+                var isTimeGrid = arg.view && arg.view.type && arg.view.type.indexOf('timeGrid') === 0;
+                var dateLabel = isTimeGrid
+                    ? crmCalFormat(arg.date, { weekday: 'long', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', meridiem: 'short' })
+                    : crmCalFormat(arg.date, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
+                $('#moreEventsDate').text(dateLabel);
+                var segs = (arg.allSegs || []).slice().sort(function(a, b) {
+                    var ta = a.event.start ? a.event.start.getTime() : 0;
+                    var tb = b.event.start ? b.event.start.getTime() : 0;
+                    return ta - tb;
+                });
+                segs.forEach(function(seg) {
+                    var ev = seg.event;
+                    var color = ev.backgroundColor || ev.borderColor || '#0bb197';
+                    var timeRange = crmCalEventTimeRange(ev);
+                    var isBlocked = (ev.extendedProps && ev.extendedProps.event_type === 'blocked');
+                    var row = '<li class="list-group-item d-flex justify-content-between align-items-center more-event-item" data-id="'+ev.id+'" data-type="'+(isBlocked ? 'blocked' : 'appointment')+'">'+
+                              '<div class="d-flex align-items-center flex-grow-1 me-2 min-w-0">'+
+                              '<span class="more-events-dot flex-shrink-0" style="background:'+color+';"></span>'+
+                              '<span class="me-2 small text-muted flex-shrink-0">'+crmCalEscapeHtml(timeRange)+'</span>'+
+                              '<span class="text-truncate">'+crmCalEscapeHtml(ev.title)+'</span>'+
+                              '</div>'+
+                              '<button type="button" class="btn btn-sm btn-outline-primary flex-shrink-0">'+(isBlocked ? 'Details' : 'View')+'</button>'+
+                              '</li>';
+                    $list.append(row);
+                });
+                $('#moreEventsModal').modal('show');
+            }
             
             document.addEventListener('DOMContentLoaded', function() {
                 var calendarEl = document.getElementById('calendar');
@@ -268,33 +373,47 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                         meridiem: 'short',
                         timeZone: CRM_CAL_TZ
                     },
-                    dayMaxEvents: 3,
+                    slotMinTime: '06:00:00',
+                    slotMaxTime: '21:00:00',
+                    scrollTime: '08:00:00',
+                    nowIndicator: true,
+                    slotEventOverlap: false,
+                    eventMinHeight: 24,
+                    views: {
+                        dayGridMonth: {
+                            dayMaxEvents: 3
+                        },
+                        timeGridWeek: {
+                            eventMaxStack: 2
+                        },
+                        timeGridDay: {
+                            eventMaxStack: 2
+                        }
+                    },
                     moreLinkContent: function(arg){
                         return { html: '<span class="text-primary fw-semibold">+'+arg.num+' more</span>' };
                     },
                     moreLinkClick: function(arg){
-                        // Build modal list of all events for this day
-                        var $list = $('#moreEventsList');
-                        $list.empty();
-                        var dateLabel = crmCalFormat(arg.date, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
-                        $('#moreEventsDate').text(dateLabel);
-                        arg.allSegs.forEach(function(seg){
-                            var ev = seg.event;
-                            var color = ev.backgroundColor || ev.borderColor || '#0bb197';
-                            var timeRange = crmCalEventTimeRange(ev);
-                            var isBlocked = (ev.extendedProps && ev.extendedProps.event_type === 'blocked');
-                            var row = '<li class="list-group-item d-flex justify-content-between align-items-center more-event-item" data-id="'+ev.id+'" data-type="'+(isBlocked ? 'blocked' : 'appointment')+'">'+
-                                      '<div class="d-flex align-items-center">'+
-                                      '<span class="more-events-dot" style="background:'+color+';"></span>'+
-                                      '<span class="me-2 small text-muted">'+timeRange+'</span>'+
-                                      '<span>'+ev.title+'</span>'+
-                                      '</div>'+
-                                      '<button type="button" class="btn btn-sm btn-outline-primary">'+(isBlocked ? 'Details' : 'View')+'</button>'+
-                                      '</li>';
-                            $list.append(row);
-                        });
-                        $('#moreEventsModal').modal('show');
-                        return false; // prevent default popover
+                        crmCalOpenMoreEventsModal(arg);
+                        return false;
+                    },
+                    eventContent: function(arg) {
+                        var vtype = arg.view.type;
+                        if (vtype !== 'timeGridWeek' && vtype !== 'timeGridDay') {
+                            return true;
+                        }
+                        if (arg.event.display === 'background') {
+                            return { html: '<span class="fc-blocked-bg-label">BLOCKED</span>' };
+                        }
+                        var timeRange = crmCalEventTimeRange(arg.event);
+                        var isBlocked = (arg.event.extendedProps && arg.event.extendedProps.event_type === 'blocked');
+                        var shortTitle = crmCalShortEventTitle(arg.event.title, isBlocked);
+                        return {
+                            html: '<div class="fc-ev-compact">' +
+                                '<div class="fc-ev-compact-time">' + crmCalEscapeHtml(timeRange) + '</div>' +
+                                '<div class="fc-ev-compact-title">' + crmCalEscapeHtml(shortTitle) + '</div>' +
+                                '</div>'
+                        };
                     },
                     events: function(fetchInfo, successCallback, failureCallback) {
                         $.ajax({
@@ -332,8 +451,27 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                         loadAppointmentDetails(appointmentId);
                     },
                     eventDidMount: function(info) {
-                        // Add tooltip
-                        $(info.el).attr('title', info.event.title);
+                        var tip = crmCalEventTimeRange(info.event) + ' — ' + info.event.title;
+                        info.el.setAttribute('title', tip);
+                        if (info.event.display === 'background') {
+                            info.el.classList.add('fc-event-blocked-bg');
+                        }
+                        if (window.bootstrap && bootstrap.Tooltip) {
+                            var existing = bootstrap.Tooltip.getInstance(info.el);
+                            if (existing) existing.dispose();
+                            new bootstrap.Tooltip(info.el, {
+                                placement: 'top',
+                                trigger: 'hover',
+                                container: 'body',
+                                title: tip
+                            });
+                        }
+                    },
+                    eventWillUnmount: function(info) {
+                        if (window.bootstrap && bootstrap.Tooltip) {
+                            var t = bootstrap.Tooltip.getInstance(info.el);
+                            if (t) t.dispose();
+                        }
                     }
                 });
                 
@@ -375,9 +513,10 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                     calendar.refetchEvents();
                 });
 
-                // Delegate click for View buttons in the "more events" modal
-                $('#moreEventsList').on('click', '.more-event-item button', function(){
-                    var $item = $(this).closest('.more-event-item');
+                // Delegate click for rows / View buttons in the "more events" modal
+                $('#moreEventsList').on('click', '.more-event-item', function(e){
+                    if ($(e.target).closest('button').length && !$(e.target).is('button')) return;
+                    var $item = $(this);
                     var id = $item.data('id');
                     var type = $item.data('type') || 'appointment';
                     if(id){
@@ -388,7 +527,6 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                                 showBlockedSlotDetails(blockedEvent);
                             }
                         } else {
-                            // Reuse existing details loader
                             loadAppointmentDetails(id);
                         }
                     }

@@ -145,6 +145,82 @@ if (!function_exists('crm_app_timezone_init')) {
         }
         return crm_app_parse_mysql_datetime(trim((string) $dateYmd) . ' ' . $timeHm);
     }
+
+    /**
+     * Normalise appointment range to Adelaide wall-clock MySQL datetimes (end defaults +1h if missing/invalid).
+     *
+     * @return array{start:string,end:string}|null
+     */
+    function crm_appointment_normalize_range($startDatetime, $endDatetime)
+    {
+        $startDt = crm_app_parse_mysql_datetime($startDatetime);
+        if (!$startDt) {
+            return null;
+        }
+        $endDt = crm_app_parse_mysql_datetime($endDatetime);
+        if (!$endDt || $endDt <= $startDt) {
+            $endDt = clone $startDt;
+            $endDt->modify('+1 hour');
+        }
+        return array(
+            'start' => $startDt->format('Y-m-d H:i:s'),
+            'end' => $endDt->format('Y-m-d H:i:s'),
+        );
+    }
+
+    /** SQL expression for appointment end (Adelaide datetimes stored in DB). */
+    function crm_appointment_end_sql_expr($connection)
+    {
+        static $expr = null;
+        if ($expr !== null) {
+            return $expr;
+        }
+        $hasEndCol = mysqli_fetch_assoc(@mysqli_query($connection, "SHOW COLUMNS FROM appointments LIKE 'appointment_end_datetime'"));
+        $expr = $hasEndCol
+            ? "COALESCE(NULLIF(appointment_end_datetime, ''), DATE_ADD(appointment_datetime, INTERVAL 1 HOUR))"
+            : 'DATE_ADD(appointment_datetime, INTERVAL 1 HOUR)';
+        return $expr;
+    }
+
+    /**
+     * Overlap: existing_start < new_end AND existing_end > new_start (Adelaide wall-clock in appointment_datetime columns).
+     *
+     * @return array<string,mixed>|null Conflicting row or null
+     */
+    function crm_appointment_find_overlap_conflict($connection, $startDatetime, $endDatetime, $excludeAppointmentId, $staffId = 0, $attendeeOrSql = '')
+    {
+        $range = crm_appointment_normalize_range($startDatetime, $endDatetime);
+        if (!$range) {
+            return null;
+        }
+        $startEsc = mysqli_real_escape_string($connection, $range['start']);
+        $endEsc = mysqli_real_escape_string($connection, $range['end']);
+        $exclude = (int) $excludeAppointmentId;
+        $excludeSql = $exclude > 0 ? " AND appointment_id != $exclude " : '';
+        $endExpr = crm_appointment_end_sql_expr($connection);
+        $staffSql = '';
+        $staffId = (int) $staffId;
+        if ($staffId > 0) {
+            $staffSql = " AND appointment_to_see = $staffId ";
+        }
+        $attendeeSql = trim((string) $attendeeOrSql) !== '' ? " AND ($attendeeOrSql) " : '';
+        $sql = "SELECT appointment_id, student_name, business_name, appointment_datetime, appointment_end_datetime
+            FROM appointments
+            WHERE delete_status != 1
+              AND appointment_status NOT IN ('cancelled', 'no-show')
+              $excludeSql
+              $staffSql
+              $attendeeSql
+              AND appointment_datetime < '$endEsc'
+              AND $endExpr > '$startEsc'
+            ORDER BY appointment_datetime ASC
+            LIMIT 1";
+        $res = @mysqli_query($connection, $sql);
+        if ($res && ($row = mysqli_fetch_assoc($res))) {
+            return $row;
+        }
+        return null;
+    }
 }
 
 crm_app_timezone_init();

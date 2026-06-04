@@ -2988,12 +2988,20 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                             $('#fp_appointment_submit_btn').prop('disabled',false);
                             $('#followup_enquiry_flow_status option[value="9"], #followup_pc_enquiry_flow_status option[value="9"]').prop('disabled', false);
                         } else if(r==='2'){
-                            $('.toast-text2').html('Time slot already booked for this person. Choose a different time.');
+                            $('.toast-text2').html('Time slot already booked for this person (overlapping time, Adelaide). Choose a different time.');
                             $('#borderedToast2Btn').trigger('click');
                             $('#fp_appointment_submit_btn').prop('disabled',false);
                         } else if(r==='3'){
                             $('.toast-text2').html('This time falls in a blocked period. Choose a different time.');
                             $('#borderedToast2Btn').trigger('click');
+                            $('#fp_appointment_submit_btn').prop('disabled',false);
+                        } else if(r==='4'){
+                            if (typeof crmAppHandleAppointmentApiError === 'function') {
+                                crmAppHandleAppointmentApiError('4', apptFpUi);
+                            } else {
+                                $('.toast-text2').html('This staff member already has an appointment at the selected time (Adelaide). Choose another time or staff.');
+                                $('#borderedToast2Btn').trigger('click');
+                            }
                             $('#fp_appointment_submit_btn').prop('disabled',false);
                         } else if(r==='past_datetime' || r==='invalid_time_range' || r==='missing_datetime'){
                             if (typeof crmAppHandleAppointmentApiError === 'function') {

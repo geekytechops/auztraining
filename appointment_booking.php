@@ -849,8 +849,9 @@ $('#appointment_time_to').on('change input', function(){
                         success: function(response) {
                             // Backend echoes:
                             // 1 = success
-                            // 2 = double-booking conflict for this attendee
+                            // 2 = double-booking conflict for this attendee (overlapping time)
                             // 3 = falls inside a blocked slot for this staff/all staff
+                            // 4 = staff member already has an overlapping appointment
                             // 0 or others = failure
                             var res = (response || '').toString().trim();
                             if(res === '1') {
@@ -860,11 +861,18 @@ $('#appointment_time_to').on('change input', function(){
                                     window.location.href = 'appointment_calendar.php';
                                 }, 600);
                             } else if(res === '2') {
-                                $('.toast-text2').html('Time Slot Already Booked. This person is already booked for the selected time. Please choose a different time slot.');
+                                $('.toast-text2').html('Time Slot Already Booked. This person already has an appointment overlapping the selected time (Adelaide). Please choose a different time slot.');
                                 $('#borderedToast2Btn').trigger('click');
                             } else if(res === '3') {
                                 $('.toast-text2').html('This time slot is blocked for the selected staff member. Please choose a different time or staff.');
                                 $('#borderedToast2Btn').trigger('click');
+                            } else if(res === '4') {
+                                if (typeof crmAppHandleAppointmentApiError === 'function') {
+                                    crmAppHandleAppointmentApiError('4', apptBookingUi);
+                                } else {
+                                    $('.toast-text2').html('This staff member already has an appointment at the selected time (Adelaide). Choose another time or staff member.');
+                                    $('#borderedToast2Btn').trigger('click');
+                                }
                             } else if(res === 'past_datetime' || res === 'invalid_time_range' || res === 'missing_datetime') {
                                 if (typeof crmAppHandleAppointmentApiError === 'function') {
                                     crmAppHandleAppointmentApiError(res, apptBookingUi);

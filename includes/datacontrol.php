@@ -5754,21 +5754,46 @@ if(@$_POST['formName']=='appointment_booking'){
     }
     $created_by = isset($_POST['created_by']) ? (int)$_POST['created_by'] : 0;
     
-    // Prevent double-booking: same attendee (student phone/email or business contact) at same start time
-    if($appointment_id == '0'){
-        $conflict_where = "appointment_datetime='$appointment_datetime' AND delete_status!=1";
-    } else {
-        $conflict_where = "appointment_datetime='$appointment_datetime' AND delete_status!=1 AND appointment_id!=$appointment_id";
+    $exclude_appt_id = $appointment_id > 0 ? $appointment_id : 0;
+
+    // Prevent double-booking: same staff member — overlapping time range (Adelaide)
+    if ($appointment_to_see > 0) {
+        $staff_conflict = crm_appointment_find_overlap_conflict(
+            $connection,
+            $appointment_datetime,
+            $appointment_end_datetime,
+            $exclude_appt_id,
+            $appointment_to_see,
+            ''
+        );
+        if ($staff_conflict) {
+            echo '4';
+            exit;
+        }
     }
-    $attendee_where = array();
-    if($student_phone !== '') $attendee_where[] = "(student_phone='".mysqli_real_escape_string($connection,$student_phone)."')";
-    if($student_email !== '') $attendee_where[] = "(student_email='".mysqli_real_escape_string($connection,$student_email)."')";
-    if($business_contact !== '') $attendee_where[] = "(business_contact='".mysqli_real_escape_string($connection,$business_contact)."')";
-    if(count($attendee_where)){
-        $check_sql = "SELECT COUNT(*) FROM appointments WHERE ".$conflict_where." AND (".implode(' OR ',$attendee_where).")";
-        $conf_res = mysqli_query($connection,$check_sql);
-        if($conf_res && ($cr = mysqli_fetch_row($conf_res)) && (int)$cr[0] > 0){
-            echo 2;
+
+    // Prevent double-booking: same attendee (phone/email/business contact) — overlapping time range
+    $attendee_or = array();
+    if ($student_phone !== '') {
+        $attendee_or[] = "student_phone='" . mysqli_real_escape_string($connection, $student_phone) . "'";
+    }
+    if ($student_email !== '') {
+        $attendee_or[] = "student_email='" . mysqli_real_escape_string($connection, $student_email) . "'";
+    }
+    if ($business_contact !== '') {
+        $attendee_or[] = "business_contact='" . mysqli_real_escape_string($connection, $business_contact) . "'";
+    }
+    if (count($attendee_or)) {
+        $attendee_conflict = crm_appointment_find_overlap_conflict(
+            $connection,
+            $appointment_datetime,
+            $appointment_end_datetime,
+            $exclude_appt_id,
+            0,
+            implode(' OR ', $attendee_or)
+        );
+        if ($attendee_conflict) {
+            echo '2';
             exit;
         }
     }
@@ -6042,6 +6067,7 @@ if(@$_POST['formName']=='get_appointments_calendar'){
                 'title' => $title,
                 'start' => crm_app_datetime_iso($blockStart),
                 'end' => crm_app_datetime_iso($blockEnd),
+                'display' => 'background',
                 'color' => '#ff3d60',
                 'extendedProps' => array(
                     'event_type' => 'blocked',

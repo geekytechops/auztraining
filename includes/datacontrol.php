@@ -5593,10 +5593,20 @@ if (!function_exists('crm_send_enquiry_flow_appointment_confirmation_email')) {
 if(@$_POST['formName']=='appointment_booking'){
     $appointment_id = isset($_POST['appointment_id']) ? (int)$_POST['appointment_id'] : 0;
     $appointment_date = isset($_POST['appointment_date']) ? mysqli_real_escape_string($connection, trim((string)$_POST['appointment_date'])) : '';
-    $appointment_time = isset($_POST['appointment_time']) ? mysqli_real_escape_string($connection, trim((string)$_POST['appointment_time'])) : '';
-    $appointment_datetime = $appointment_date . ' ' . $appointment_time;
-    $appointment_time_to = isset($_POST['appointment_time_to']) && $_POST['appointment_time_to'] !== '' ? mysqli_real_escape_string($connection, trim((string)$_POST['appointment_time_to'])) : $appointment_time;
-    $appointment_end_datetime = $appointment_date . ' ' . $appointment_time_to;
+    $appointment_time_raw = isset($_POST['appointment_time']) ? trim((string)$_POST['appointment_time']) : '';
+    $appointment_time_to_raw = isset($_POST['appointment_time_to']) ? trim((string)$_POST['appointment_time_to']) : '';
+    $appointment_time_norm = function_exists('crm_app_normalize_time_hm') ? crm_app_normalize_time_hm($appointment_time_raw) : $appointment_time_raw;
+    $appointment_time_to_norm = $appointment_time_to_raw !== ''
+        ? (function_exists('crm_app_normalize_time_hm') ? crm_app_normalize_time_hm($appointment_time_to_raw) : $appointment_time_to_raw)
+        : $appointment_time_norm;
+    $appointment_datetime = function_exists('crm_app_build_datetime')
+        ? crm_app_build_datetime($appointment_date, $appointment_time_norm)
+        : ($appointment_date . ' ' . $appointment_time_norm);
+    $appointment_end_datetime = function_exists('crm_app_build_datetime')
+        ? crm_app_build_datetime($appointment_date, $appointment_time_to_norm)
+        : ($appointment_date . ' ' . $appointment_time_to_norm);
+    $appointment_time = mysqli_real_escape_string($connection, $appointment_time_norm);
+    $appointment_time_to = mysqli_real_escape_string($connection, $appointment_time_to_norm);
     $booked_by = isset($_POST['created_by']) ? (int)$_POST['created_by'] : 0;
     $booked_by_name = mysqli_real_escape_string($connection, trim((string)($_POST['booked_by_name'] ?? '')));
     $booking_comments = mysqli_real_escape_string($connection, trim((string)($_POST['booking_comments'] ?? '')));
@@ -5620,7 +5630,7 @@ if(@$_POST['formName']=='appointment_booking'){
     $appointment_time_india = mysqli_real_escape_string($connection, crm_app_datetime_in_tz($appointment_date, $appointment_time, 'Asia/Kolkata') ?: $appointment_datetime);
     $appointment_time_philippines = mysqli_real_escape_string($connection, crm_app_datetime_in_tz($appointment_date, $appointment_time, 'Asia/Manila') ?: $appointment_datetime);
 
-    if ($appointment_date === '' || $appointment_time === '') {
+    if ($appointment_date === '' || $appointment_time === '' || $appointment_datetime === '' || $appointment_end_datetime === '') {
         echo 'missing_datetime';
         exit;
     }

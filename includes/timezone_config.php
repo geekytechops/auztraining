@@ -168,17 +168,49 @@ if (!function_exists('crm_app_timezone_init')) {
         );
     }
 
-    /** SQL expression for appointment end (Adelaide datetimes stored in DB). */
+    /** Normalise HH:mm or HH:mm:ss to HH:mm:ss for MySQL DATETIME columns. */
+    function crm_app_normalize_time_hm($timeHm)
+    {
+        $timeHm = trim((string) $timeHm);
+        if ($timeHm === '') {
+            return '';
+        }
+        if (preg_match('/^(\d{1,2}):(\d{2})$/', $timeHm, $m)) {
+            return sprintf('%02d:%02d:00', (int) $m[1], (int) $m[2]);
+        }
+        if (preg_match('/^(\d{1,2}):(\d{2}):(\d{2})$/', $timeHm, $m)) {
+            return sprintf('%02d:%02d:%02d', (int) $m[1], (int) $m[2], (int) $m[3]);
+        }
+        return $timeHm;
+    }
+
+    /** Build Y-m-d H:i:s from date + time; returns '' if invalid. */
+    function crm_app_build_datetime($dateYmd, $timeHm)
+    {
+        $dateYmd = trim((string) $dateYmd);
+        $timeHm = crm_app_normalize_time_hm($timeHm);
+        if ($dateYmd === '' || $timeHm === '') {
+            return '';
+        }
+        $dt = crm_app_parse_mysql_datetime($dateYmd . ' ' . $timeHm);
+        return $dt ? $dt->format('Y-m-d H:i:s') : '';
+    }
+
+    /** SQL expression for appointment end — skips rows with empty/invalid datetimes (MySQL 8 strict). */
     function crm_appointment_end_sql_expr($connection)
     {
         static $expr = null;
         if ($expr !== null) {
             return $expr;
         }
+        $validStart = "(appointment_datetime IS NOT NULL AND appointment_datetime <> '' AND appointment_datetime > '1970-01-01 00:00:00')";
         $hasEndCol = mysqli_fetch_assoc(@mysqli_query($connection, "SHOW COLUMNS FROM appointments LIKE 'appointment_end_datetime'"));
-        $expr = $hasEndCol
-            ? "COALESCE(NULLIF(appointment_end_datetime, ''), DATE_ADD(appointment_datetime, INTERVAL 1 HOUR))"
-            : 'DATE_ADD(appointment_datetime, INTERVAL 1 HOUR)';
+        if ($hasEndCol) {
+            $validEnd = "(appointment_end_datetime IS NOT NULL AND appointment_end_datetime <> '' AND appointment_end_datetime > '1970-01-01 00:00:00')";
+            $expr = "(CASE WHEN NOT $validStart THEN NULL WHEN $validEnd THEN appointment_end_datetime ELSE DATE_ADD(appointment_datetime, INTERVAL 1 HOUR) END)";
+        } else {
+            $expr = "(CASE WHEN $validStart THEN DATE_ADD(appointment_datetime, INTERVAL 1 HOUR) ELSE NULL END)";
+        }
         return $expr;
     }
 
@@ -193,31 +225,55 @@ if (!function_exists('crm_app_timezone_init')) {
         if (!$range) {
             return null;
         }
-        $startEsc = mysqli_real_escape_string($connection, $range['start']);
-        $endEsc = mysqli_real_escape_string($connection, $range['end']);
+        $newStartDt = crm_app_parse_mysql_datetime($range['start']);
+        $newEndDt = crm_app_parse_mysql_datetime($range['end']);
+        if (!$newStartDt || !$newEndDt) {
+            return null;
+        }
+        $dateOnly = mysqli_real_escape_string($connection, substr($range['start'], 0, 10));
         $exclude = (int) $excludeAppointmentId;
         $excludeSql = $exclude > 0 ? " AND appointment_id != $exclude " : '';
-        $endExpr = crm_appointment_end_sql_expr($connection);
         $staffSql = '';
         $staffId = (int) $staffId;
         if ($staffId > 0) {
             $staffSql = " AND appointment_to_see = $staffId ";
         }
         $attendeeSql = trim((string) $attendeeOrSql) !== '' ? " AND ($attendeeOrSql) " : '';
+        // Avoid SQL datetime expressions (MySQL 8 errors on '' / zero dates in legacy rows).
         $sql = "SELECT appointment_id, student_name, business_name, appointment_datetime, appointment_end_datetime
             FROM appointments
             WHERE delete_status != 1
               AND appointment_status NOT IN ('cancelled', 'no-show')
+              AND appointment_date = '$dateOnly'
               $excludeSql
               $staffSql
               $attendeeSql
-              AND appointment_datetime < '$endEsc'
-              AND $endExpr > '$startEsc'
-            ORDER BY appointment_datetime ASC
-            LIMIT 1";
+            ORDER BY appointment_datetime ASC";
         $res = @mysqli_query($connection, $sql);
-        if ($res && ($row = mysqli_fetch_assoc($res))) {
-            return $row;
+        if (!$res) {
+            return null;
+        }
+        while ($row = mysqli_fetch_assoc($res)) {
+            $existingStart = trim((string) ($row['appointment_datetime'] ?? ''));
+            if ($existingStart === '' || !crm_app_parse_mysql_datetime($existingStart)) {
+                continue;
+            }
+            $existingEnd = trim((string) ($row['appointment_end_datetime'] ?? ''));
+            $existingRange = crm_appointment_normalize_range(
+                $existingStart,
+                $existingEnd !== '' ? $existingEnd : $existingStart
+            );
+            if (!$existingRange) {
+                continue;
+            }
+            $existStartDt = crm_app_parse_mysql_datetime($existingRange['start']);
+            $existEndDt = crm_app_parse_mysql_datetime($existingRange['end']);
+            if (!$existStartDt || !$existEndDt) {
+                continue;
+            }
+            if ($existStartDt < $newEndDt && $existEndDt > $newStartDt) {
+                return $row;
+            }
         }
         return null;
     }

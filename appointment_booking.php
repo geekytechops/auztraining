@@ -1,4 +1,5 @@
 <?php include('includes/dbconnect.php'); ?>
+<?php require_once __DIR__ . '/includes/appointment_time_picker.inc.php'; ?>
 <?php 
 session_start();
 if(@$_SESSION['user_type']!=''){
@@ -151,16 +152,20 @@ if(@$_SESSION['user_type']!=''){
                                                         <div class="row g-2 align-items-end">
                                                             <div class="col">
                                                                 <label class="form-label small text-muted mb-0">From</label>
-                                                                <input type="time" class="form-control" id="appointment_time" name="appointment_time"
-                                                                       value="<?php echo $editMode ? date('H:i', strtotime($appointmentData['appointment_time'])) : ''; ?>" required>
+                                                                <?php
+                                                                $aptFrom24 = $editMode ? date('H:i', strtotime($appointmentData['appointment_time'])) : '';
+                                                                echo crm_render_appointment_time_picker('appointment_time', 'appointment_time', $aptFrom24, array('required' => true));
+                                                                ?>
                                                             </div>
                                                             <div class="col">
                                                                 <label class="form-label small text-muted mb-0">To</label>
-                                                                <input type="time" class="form-control" id="appointment_time_to" name="appointment_time_to"
-                                                                       value="<?php echo $editMode && !empty($appointmentData['appointment_end_time']) ? date('H:i', strtotime($appointmentData['appointment_end_time'])) : ''; ?>">
+                                                                <?php
+                                                                $aptTo24 = ($editMode && !empty($appointmentData['appointment_end_time'])) ? date('H:i', strtotime($appointmentData['appointment_end_time'])) : '';
+                                                                echo crm_render_appointment_time_picker('appointment_time_to', 'appointment_time_to', $aptTo24);
+                                                                ?>
                                                             </div>
                                                         </div>
-                                                        <small class="text-muted d-block mt-1">To is set to From + 1 minute when you pick From. You can change To to a later time.</small>
+                                                        <small class="text-muted d-block mt-1">Times are in 12-hour format (AM/PM), Adelaide (ACST). To is set to From + 1 minute when you change From.</small>
                                                         <div class="error-feedback" style="display:none;">Please select appointment time</div>
                                                         <div class="error-feedback" id="time_slot_range_error" style="display:none;">To must be at least 1 minute after From.</div>
                                                         <div class="error-feedback text-danger" id="appointment_past_time_error" style="display:none;">Appointment cannot be in the past (Adelaide time).</div>
@@ -649,66 +654,10 @@ if(@$_SESSION['user_type']!=''){
                 loadLocations();
                 loadPlatforms();
 
-                // -------- Time Slot Control --------
+                function apptTimeGet(sel) {
+                    return typeof crmAppTimeGetVal === 'function' ? crmAppTimeGetVal(sel) : $(sel).val();
+                }
 
-function timeToMinutes(time){
-    if(!time) return null;
-    var p = time.split(':');
-    return parseInt(p[0])*60 + parseInt(p[1]);
-}
-
-function minutesToTime(mins){
-    var h = Math.floor(mins/60);
-    var m = mins%60;
-    return (h<10?'0':'')+h+':' + (m<10?'0':'')+m;
-}
-
-function addMinute(time){
-    var mins = timeToMinutes(time);
-    return minutesToTime(mins+1);
-}
-
-// When FROM changes
-$('#appointment_time').on('change input', function(){
-
-    var from = $(this).val();
-    if(!from) return;
-
-    var to = $('#appointment_time_to').val();
-
-    var fromM = timeToMinutes(from);
-    var toM   = timeToMinutes(to);
-
-    var newTo = addMinute(from);
-
-    // auto set if empty or invalid
-    if(!to || toM <= fromM){
-        $('#appointment_time_to').val(newTo);
-    }
-
-    // enforce minimum
-    $('#appointment_time_to').attr('min', newTo);
-});
-
-
-// When TO changes
-$('#appointment_time_to').on('change input', function(){
-
-    var to   = $(this).val();
-    var from = $('#appointment_time').val();
-
-    if(!to || !from) return;
-
-    var fromM = timeToMinutes(from);
-    var toM   = timeToMinutes(to);
-
-    if(toM <= fromM){
-        var fixed = addMinute(from);
-        $('#appointment_time_to').val(fixed);
-    }
-
-});
-                
                 // Show/hide sections based on selections
                 $('#attendee_type_id').on('change', function() {
                     var typeId = $(this).val();
@@ -769,26 +718,23 @@ $('#appointment_time_to').on('change input', function(){
                     dateSel: '#appointment_date', fromSel: '#appointment_time', toSel: '#appointment_time_to',
                     errorSel: '#appointment_past_time_error', alertSel: '#appointment_slot_alert'
                 };
-                function applyAppointmentDateMin() {
-                    if (typeof crmAppApplyAppointmentMins === 'function') {
-                        crmAppApplyAppointmentMins(apptBookingUi.dateSel, apptBookingUi.fromSel, apptBookingUi.toSel);
-                    }
-                }
                 function clearAppointmentSlotUiError() {
                     if (typeof crmAppClearAppointmentSlotError === 'function') {
                         crmAppClearAppointmentSlotError(apptBookingUi);
                     }
                 }
-                $('#appointment_date').on('change input', function(){ clearAppointmentSlotUiError(); applyAppointmentDateMin(); });
-                $('#appointment_time, #appointment_time_to').on('change input', function(){ clearAppointmentSlotUiError(); applyAppointmentDateMin(); });
-                applyAppointmentDateMin();
+                if (typeof crmAppInitTimePickers12 === 'function') {
+                    crmAppInitTimePickers12();
+                }
+                if (typeof crmAppWireAppointmentSlot === 'function') {
+                    crmAppWireAppointmentSlot({
+                        dateSel: apptBookingUi.dateSel,
+                        fromSel: apptBookingUi.fromSel,
+                        toSel: apptBookingUi.toSel,
+                        onClearError: clearAppointmentSlotUiError
+                    });
+                }
 
-                // Calculate timezone conversions
-                $('#appointment_date, #appointment_time, #timezone_state').on('change', function() {
-                    calculateTimezones();
-                });
-                
-                // Initial calculation if editing
                 <?php if($editMode): ?>
                 calculateTimezones();
                 <?php endif; ?>
@@ -814,9 +760,11 @@ $('#appointment_time_to').on('change input', function(){
                         return;
                     }
 
-                    applyAppointmentDateMin();
+                    if (typeof crmAppApplyAppointmentMins === 'function') {
+                        crmAppApplyAppointmentMins(apptBookingUi.dateSel, apptBookingUi.fromSel, apptBookingUi.toSel);
+                    }
                     var slotCheck = typeof crmAppValidateAppointmentSlot === 'function'
-                        ? crmAppValidateAppointmentSlot($('#appointment_date').val(), $('#appointment_time').val(), $('#appointment_time_to').val())
+                        ? crmAppValidateAppointmentSlot($('#appointment_date').val(), apptTimeGet('#appointment_time'), apptTimeGet('#appointment_time_to'))
                         : { ok: true };
                     if (!slotCheck.ok) {
                         $('#appointment_past_time_error').text(slotCheck.message).show();
@@ -911,7 +859,7 @@ $('#appointment_time_to').on('change input', function(){
             
             function calculateTimezones() {
                 var date = $('#appointment_date').val();
-                var time = $('#appointment_time').val();
+                var time = typeof crmAppTimeGetVal === 'function' ? crmAppTimeGetVal('#appointment_time') : $('#appointment_time').val();
                 if (!date || !time) {
                     return;
                 }

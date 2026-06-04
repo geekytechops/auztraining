@@ -1,0 +1,5 @@
+.crm-time-picker-12 .crm-tp-hour { width: 4.25rem; min-width: 4.25rem; }
+.crm-time-picker-12 .crm-tp-minute { width: 4.5rem; min-width: 4.5rem; }
+.crm-time-picker-12 .crm-tp-ampm { width: 4.75rem; min-width: 4.75rem; }
+.crm-time-picker-12.is-invalid .crm-tp-controls .form-select { border-color: var(--bs-form-invalid-border-color, #dc3545); }
+.crm-time-picker-12 .crm-tp-hint { font-size: 0.8rem; }

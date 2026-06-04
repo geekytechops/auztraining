@@ -2586,6 +2586,11 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 }
                 if (typeof crmAppApplyAppointmentMins === 'function') {
                     crmAppApplyAppointmentMins('#fp_appointment_date', '#fp_appointment_time', '#fp_appointment_time_to', minDate);
+                } else if (typeof crmAppApplyAppointmentMinsDebounced === 'function') {
+                    crmAppApplyAppointmentMinsDebounced('#fp_appointment_date', '#fp_appointment_time', '#fp_appointment_time_to', minDate, 0);
+                }
+                if (typeof crmAppInitTimePickers12 === 'function') {
+                    crmAppInitTimePickers12('#followupAppointmentModal');
                 }
                 var enquiryForVal = ($('#enquiry_for').val()||'0').toString();
                 var studentName = enquiryForVal === '1' ? ($('#member_name').val()||'').trim() : ($('#student_name').val()||'').trim();
@@ -2738,8 +2743,18 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 else { $('#fp_location_section,#fp_platform_section,#fp_meeting_link_section').hide(); }
                 $('#fp_location_id,#fp_platform_id').prop('required',false);
             });
-            // Follow-up appointment time helpers (match main appointment page behaviour)
+            // Follow-up appointment time helpers (12h AM/PM pickers → hidden HH:mm, Adelaide)
             var FP_MIN_GAP_MINUTES = 1;
+            function fpTimeGet(sel) {
+                return typeof crmAppTimeGetVal === 'function' ? crmAppTimeGetVal(sel) : ($(sel).val() || '').toString().trim();
+            }
+            function fpTimeSet(sel, hm) {
+                if (typeof crmAppTimeSetVal === 'function') {
+                    crmAppTimeSetVal(sel, hm);
+                } else {
+                    $(sel).val(hm);
+                }
+            }
             function fpTimeToMinutes(hhmm){
                 if(!hhmm || typeof hhmm!=='string') return null;
                 var p = hhmm.trim().split(':'); if(p.length<2) return null;
@@ -2753,12 +2768,15 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 return (h<10?'0':'')+h+':' + (mn<10?'0':'')+mn;
             }
             function fpAddMinutes(hhmm,mins){
+                if (typeof crmAppTimeAddMinutes === 'function') {
+                    return crmAppTimeAddMinutes(hhmm, mins);
+                }
                 var mm=fpTimeToMinutes(hhmm);
                 return mm==null?null:fpMinutesToTime(mm+mins);
             }
             function fpUpdateTimeSlotError(){
-                var fromVal=($('#fp_appointment_time').val()||'').toString().trim();
-                var toVal=($('#fp_appointment_time_to').val()||'').toString().trim();
+                var fromVal=fpTimeGet('#fp_appointment_time');
+                var toVal=fpTimeGet('#fp_appointment_time_to');
                 var fromM=fpTimeToMinutes(fromVal), toM=fpTimeToMinutes(toVal);
                 var invalid=(fromVal && toVal && fromM!=null && toM!=null && fromM>=toM);
                 var $err=$('#fp_time_slot_range_error');
@@ -2783,60 +2801,30 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 fpUpdateToMin();
             }
             function fpUpdateToMin(){
-                var fromVal=($('#fp_appointment_time').val()||'').toString().trim();
-                if(fromVal){
-                    var minTo=fpAddMinutes(fromVal,1);
-                    if(minTo) $('#fp_appointment_time_to').attr('min',minTo);
-                }else{
-                    $('#fp_appointment_time_to').removeAttr('min');
-                }
+                fpApplyAppointmentDateMin();
             }
             function fpEnsureFromBeforeTo(){
-                var fromVal=($('#fp_appointment_time').val()||'').toString().trim();
-                var toVal=($('#fp_appointment_time_to').val()||'').toString().trim();
+                var fromVal=fpTimeGet('#fp_appointment_time');
+                var toVal=fpTimeGet('#fp_appointment_time_to');
                 if(!fromVal && !toVal){ fpUpdateTimeSlotError(); return; }
                 if(fromVal && !toVal){
                     var toNew=fpAddMinutes(fromVal,FP_MIN_GAP_MINUTES);
-                    if(toNew) $('#fp_appointment_time_to').val(toNew);
+                    if(toNew) fpTimeSet('#fp_appointment_time_to', toNew);
                     fpUpdateTimeSlotError(); return;
                 }
                 if(toVal && !fromVal){
                     var fromNew=fpAddMinutes(toVal,-FP_MIN_GAP_MINUTES);
-                    if(fromNew) $('#fp_appointment_time').val(fromNew);
+                    if(fromNew) fpTimeSet('#fp_appointment_time', fromNew);
                     fpUpdateTimeSlotError(); return;
                 }
                 var fromM=fpTimeToMinutes(fromVal), toM=fpTimeToMinutes(toVal);
                 if(fromM==null||toM==null){ fpUpdateTimeSlotError(); return; }
                 if(fromM>=toM){
                     var toNew=fpAddMinutes(fromVal,FP_MIN_GAP_MINUTES);
-                    if(toNew) $('#fp_appointment_time_to').val(toNew);
+                    if(toNew) fpTimeSet('#fp_appointment_time_to', toNew);
                 }
                 fpUpdateTimeSlotError();
             }
-            function fpOnFromTimeUpdate(){
-                var val=($('#fp_appointment_time').val()||'').toString().trim();
-                if(!val){ fpUpdateTimeSlotError(); return; }
-                var toNew=fpAddMinutes(val,FP_MIN_GAP_MINUTES);
-                if(toNew) $('#fp_appointment_time_to').val(toNew);
-                fpEnsureFromBeforeTo();
-                fpUpdateToMin();
-                fpApplyAppointmentDateMin();
-            }
-            function fpOnToTimeUpdate(){
-                var val=($('#fp_appointment_time_to').val()||'').toString().trim();
-                var fromVal=($('#fp_appointment_time').val()||'').toString().trim();
-                if(val && fromVal){
-                    var fromM=fpTimeToMinutes(fromVal), toM=fpTimeToMinutes(val);
-                    if(fromM!=null && toM!=null && toM<=fromM){
-                        var toNew=fpAddMinutes(fromVal,FP_MIN_GAP_MINUTES);
-                        if(toNew) $('#fp_appointment_time_to').val(toNew);
-                    }
-                }
-                fpEnsureFromBeforeTo();
-                fpUpdateToMin();
-                fpApplyAppointmentDateMin();
-            }
-            // Wire up follow-up appointment time/date events
             function fpClearSlotUiError(){
                 if (typeof crmAppClearAppointmentSlotError === 'function') {
                     crmAppClearAppointmentSlotError(window.CRM_APPOINTMENT_FP_UI || {
@@ -2845,12 +2833,26 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     });
                 }
             }
-            $(document).on('change input','#fp_appointment_date',function(){ fpClearSlotUiError(); fpApplyAppointmentDateMin(); });
-            $(document).on('change input','#fp_appointment_time',function(){ fpClearSlotUiError(); fpOnFromTimeUpdate(); });
-            $(document).on('change input','#fp_appointment_time_to',function(){ fpClearSlotUiError(); fpOnToTimeUpdate(); });
-            // Initialise when modal opens (safe to call multiple times)
-            fpEnsureFromBeforeTo();
-            fpUpdateToMin();
+            function fpMinDateForAppointment() {
+                var enquiryDateStr = ($('#enquiry_date').val() || '').toString().trim();
+                var todayStr = typeof crmAppTodayYmd === 'function' ? crmAppTodayYmd() : '';
+                if (enquiryDateStr && enquiryDateStr > todayStr) {
+                    return enquiryDateStr;
+                }
+                return todayStr;
+            }
+            if (typeof crmAppWireAppointmentSlot === 'function') {
+                crmAppWireAppointmentSlot({
+                    dateSel: '#fp_appointment_date',
+                    fromSel: '#fp_appointment_time',
+                    toSel: '#fp_appointment_time_to',
+                    gapMinutes: FP_MIN_GAP_MINUTES,
+                    minDateOptFn: fpMinDateForAppointment,
+                    onClearError: fpClearSlotUiError,
+                    onAfterChange: fpUpdateTimeSlotError
+                });
+            }
+            $(document).on('change','#fp_appointment_date',function(){ fpClearSlotUiError(); });
             $('#fp_share_all').on('change',function(){ var c=$(this).is(':checked'); $('.fp-share-with-item').prop('checked',c); });
             $('.fp-share-with-item').on('change',function(){ if(!$(this).is(':checked')) $('#fp_share_all').prop('checked',false); });
             $(document).on('submit','#fp_appointment_form',function(e){
@@ -2860,7 +2862,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 $f.find('[required]').prop('required',false);
                 fpApplyAppointmentDateMin();
                 var slotCheck = typeof crmAppValidateAppointmentSlot === 'function'
-                    ? crmAppValidateAppointmentSlot($('#fp_appointment_date').val(), $('#fp_appointment_time').val(), $('#fp_appointment_time_to').val())
+                    ? crmAppValidateAppointmentSlot($('#fp_appointment_date').val(), fpTimeGet('#fp_appointment_time'), fpTimeGet('#fp_appointment_time_to'))
                     : { ok: true };
                 var apptFpUi = window.CRM_APPOINTMENT_FP_UI || {
                     dateSel: '#fp_appointment_date', fromSel: '#fp_appointment_time', toSel: '#fp_appointment_time_to',
@@ -2879,7 +2881,7 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     crmAppClearAppointmentSlotError(apptFpUi);
                 }
                 var date = $('#fp_appointment_date').val();
-                var time = $('#fp_appointment_time').val();
+                var time = fpTimeGet('#fp_appointment_time');
                 if(date && time){
                     var adelaideDt = date + ' ' + time + ':00';
                     if (typeof moment !== 'undefined' && moment.tz) {

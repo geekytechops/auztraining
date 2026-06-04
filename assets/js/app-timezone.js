@@ -3,6 +3,40 @@
  */
 (function (global) {
     var TZ = 'Australia/Adelaide';
+    var CLOCK_TTL_MS = 45000;
+    var _adelaideClockCache = { ts: 0, today: '', nowHm: '' };
+    var _tpEmitTimers = {};
+    var _applyMinsTimers = {};
+    var _crmTpSilent = false;
+
+    function crmAppDebounce(key, fn, waitMs) {
+        clearTimeout(_applyMinsTimers[key]);
+        _applyMinsTimers[key] = setTimeout(fn, waitMs);
+    }
+
+    function crmAppRefreshAdelaideClock() {
+        var now = Date.now();
+        if (now - _adelaideClockCache.ts < CLOCK_TTL_MS && _adelaideClockCache.today) {
+            return _adelaideClockCache;
+        }
+        var p = crmIntlParts(new Date());
+        if (p && p.year) {
+            _adelaideClockCache.today = p.year + '-' + p.month + '-' + p.day;
+            _adelaideClockCache.nowHm = p.hour + ':' + p.minute;
+        } else {
+            var m = crmAppMoment();
+            if (m) {
+                _adelaideClockCache.today = m.format('YYYY-MM-DD');
+                _adelaideClockCache.nowHm = m.format('HH:mm');
+            } else {
+                var d = new Date();
+                _adelaideClockCache.today = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+                _adelaideClockCache.nowHm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+            }
+        }
+        _adelaideClockCache.ts = now;
+        return _adelaideClockCache;
+    }
 
     function hasMomentTz() {
         return typeof global.moment !== 'undefined' && typeof global.moment.tz === 'function';
@@ -38,29 +72,11 @@
     }
 
     function crmAppTodayYmd() {
-        var m = crmAppMoment();
-        if (m) {
-            return m.format('YYYY-MM-DD');
-        }
-        var p = crmIntlParts(new Date());
-        if (p && p.year) {
-            return p.year + '-' + p.month + '-' + p.day;
-        }
-        var d = new Date();
-        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        return crmAppRefreshAdelaideClock().today;
     }
 
     function crmAppNowTimeHm() {
-        var m = crmAppMoment();
-        if (m) {
-            return m.format('HH:mm');
-        }
-        var p = crmIntlParts(new Date());
-        if (p && p.hour !== '') {
-            return p.hour + ':' + p.minute;
-        }
-        var d = new Date();
-        return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+        return crmAppRefreshAdelaideClock().nowHm;
     }
 
     function crmAppFormatTimeDisplay() {
@@ -127,6 +143,292 @@
         return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
     }
 
+    function crmAppTime24ToParts(timeHm) {
+        timeHm = (timeHm || '').toString().trim().substring(0, 5);
+        if (!timeHm || timeHm.indexOf(':') < 0) {
+            return { hour: '', minute: '00', ampm: 'AM' };
+        }
+        var p = timeHm.split(':');
+        var h24 = parseInt(p[0], 10);
+        var min = (p[1] || '00').substring(0, 2);
+        if (isNaN(h24)) {
+            return { hour: '', minute: '00', ampm: 'AM' };
+        }
+        var ampm = h24 >= 12 ? 'PM' : 'AM';
+        var h12 = h24 % 12;
+        if (h12 === 0) {
+            h12 = 12;
+        }
+        return { hour: String(h12), minute: min.length === 1 ? '0' + min : min, ampm: ampm };
+    }
+
+    function crmAppPartsTo24(hour12, minute, ampm) {
+        hour12 = parseInt(hour12, 10);
+        minute = (minute || '00').toString().trim();
+        ampm = (ampm || 'AM').toString().trim().toUpperCase();
+        if (isNaN(hour12) || hour12 < 1 || hour12 > 12) {
+            return '';
+        }
+        if (minute.length === 1) {
+            minute = '0' + minute;
+        }
+        var h24 = hour12 % 12;
+        if (ampm === 'PM') {
+            h24 += 12;
+        }
+        return String(h24).padStart(2, '0') + ':' + minute.substring(0, 2);
+    }
+
+    function crmAppFormatHm12(timeHm) {
+        var parts = crmAppTime24ToParts(timeHm);
+        if (!parts.hour) {
+            return '';
+        }
+        return parts.hour + ':' + parts.minute + ' ' + parts.ampm;
+    }
+
+    /** Read HH:mm from hidden picker or legacy type="time" input. */
+    function crmAppTimeGetVal(sel) {
+        var $ = global.jQuery;
+        if (!$) {
+            return '';
+        }
+        var $el = $(sel);
+        if (!$el.length) {
+            return '';
+        }
+        return ($el.val() || '').toString().trim();
+    }
+
+    function crmAppTimeSetVal(sel, timeHm, silent) {
+        var $ = global.jQuery;
+        if (!$) {
+            return;
+        }
+        var $el = $(sel);
+        if (!$el.length) {
+            return;
+        }
+        timeHm = (timeHm || '').toString().trim().substring(0, 5);
+        if (($el.val() || '').toString().trim() === timeHm) {
+            return;
+        }
+        _crmTpSilent = true;
+        $el.val(timeHm);
+        var $wrap = $el.closest('.crm-time-picker-12');
+        if ($wrap.length) {
+            crmAppTimePickerSyncFromHidden($wrap);
+        }
+        _crmTpSilent = false;
+        if (!silent) {
+            crmAppTimePickerScheduleHiddenChange($el);
+        }
+    }
+
+    function crmAppTimePickerScheduleHiddenChange($hidden) {
+        var $ = global.jQuery;
+        if (!$ || !$hidden || !$hidden.length) {
+            return;
+        }
+        var id = $hidden.attr('id') || 'tp-anon';
+        clearTimeout(_tpEmitTimers[id]);
+        _tpEmitTimers[id] = setTimeout(function () {
+            if (!_crmTpSilent) {
+                $hidden.trigger('change');
+            }
+        }, 120);
+    }
+
+    function crmAppTimeAddMinutes(timeHm, mins) {
+        var m = crmTimeToMinutes(timeHm);
+        if (m === null) {
+            return '';
+        }
+        m = Math.max(0, Math.min(m + mins, 24 * 60 - 1));
+        var h = Math.floor(m / 60);
+        var mn = m % 60;
+        return String(h).padStart(2, '0') + ':' + String(mn).padStart(2, '0');
+    }
+
+    function crmAppTimePickerWrapForHidden($hidden) {
+        return $hidden.closest('.crm-time-picker-12');
+    }
+
+    function crmAppTimePickerSyncFromSelects($wrap) {
+        var $ = global.jQuery;
+        if (!$ || !$wrap || !$wrap.length) {
+            return '';
+        }
+        var hour = $wrap.find('.crm-tp-hour').val();
+        var minute = $wrap.find('.crm-tp-minute').val();
+        var ampm = $wrap.find('.crm-tp-ampm').val();
+        var hm = '';
+        if (hour) {
+            hm = crmAppPartsTo24(hour, minute, ampm);
+        }
+        var $hidden = $wrap.find('.crm-tp-hidden');
+        $hidden.val(hm);
+        crmAppTimePickerUpdateHint($wrap, hm);
+        return hm;
+    }
+
+    function crmAppTimePickerSyncFromHidden($wrap) {
+        var $hidden = $wrap.find('.crm-tp-hidden');
+        var parts = crmAppTime24ToParts($hidden.val());
+        $wrap.find('.crm-tp-hour').val(parts.hour || '');
+        $wrap.find('.crm-tp-minute').val(parts.minute || '00');
+        $wrap.find('.crm-tp-ampm').val(parts.ampm || 'AM');
+        crmAppTimePickerUpdateHint($wrap, $hidden.val());
+    }
+
+    function crmAppTimePickerUpdateHint($wrap, hm) {
+        hm = (hm || '').toString().trim();
+        var label = hm ? crmAppFormatHm12(hm) + ' (Adelaide)' : 'Select time (Adelaide / ACST)';
+        $wrap.find('.crm-tp-hint').text(label);
+    }
+
+    function crmAppTimePickerEnforceMin($wrap) {
+        if (!$wrap || !$wrap.length) {
+            return;
+        }
+        var minHm = ($wrap.attr('data-min-time') || '').toString().trim();
+        if (!minHm) {
+            return;
+        }
+        var $hidden = $wrap.find('.crm-tp-hidden');
+        var cur = ($hidden.val() || '').toString().trim();
+        var curM = crmTimeToMinutes(cur);
+        var minM = crmTimeToMinutes(minHm);
+        if (curM !== null && minM !== null && curM < minM) {
+            crmAppTimeSetVal($hidden, minHm, true);
+        }
+    }
+
+    function crmAppBumpToAfterFrom(fromSel, toSel, gapMinutes) {
+        gapMinutes = gapMinutes || 1;
+        var from = crmAppTimeGetVal(fromSel);
+        if (!from) {
+            return;
+        }
+        var to = crmAppTimeGetVal(toSel);
+        var fromM = crmTimeToMinutes(from);
+        var toM = crmTimeToMinutes(to);
+        var newTo = crmAppTimeAddMinutes(from, gapMinutes);
+        if (!to || (fromM !== null && toM !== null && toM <= fromM)) {
+            crmAppTimeSetVal(toSel, newTo, true);
+        }
+    }
+
+    function crmAppFixToAfterFrom(fromSel, toSel, gapMinutes) {
+        gapMinutes = gapMinutes || 1;
+        var from = crmAppTimeGetVal(fromSel);
+        var to = crmAppTimeGetVal(toSel);
+        if (!from || !to) {
+            return;
+        }
+        var fromM = crmTimeToMinutes(from);
+        var toM = crmTimeToMinutes(to);
+        if (fromM !== null && toM !== null && toM <= fromM) {
+            crmAppTimeSetVal(toSel, crmAppTimeAddMinutes(from, gapMinutes), true);
+        }
+    }
+
+    function crmAppApplyAppointmentMinsDebounced(dateSel, fromSel, toSel, minDateOpt, waitMs) {
+        var key = [dateSel, fromSel, toSel, minDateOpt].join('|');
+        crmAppDebounce('mins-' + key, function () {
+            crmAppApplyAppointmentMins(dateSel, fromSel, toSel, minDateOpt);
+        }, waitMs || 200);
+    }
+
+    /**
+     * Wire date/from/to once — debounced mins, silent to auto-bump, no duplicate handlers.
+     */
+    function crmAppWireAppointmentSlot(opts) {
+        var $ = global.jQuery;
+        if (!$ || !opts) {
+            return;
+        }
+        var dateSel = opts.dateSel;
+        var fromSel = opts.fromSel;
+        var toSel = opts.toSel;
+        var gap = opts.gapMinutes || 1;
+        var minDateFn = opts.minDateOptFn;
+        var clearFn = opts.onClearError;
+
+        var afterFn = opts.onAfterChange;
+
+        function runMins() {
+            var minDate = minDateFn ? minDateFn() : (opts.minDateOpt || '');
+            crmAppApplyAppointmentMinsDebounced(dateSel, fromSel, toSel, minDate, 200);
+        }
+
+        function finishChange() {
+            if (afterFn) {
+                crmAppDebounce('after-' + dateSel + fromSel, afterFn, 80);
+            }
+        }
+
+        $(dateSel).off('change.crmApptSlot').on('change.crmApptSlot', function () {
+            if (clearFn) {
+                clearFn();
+            }
+            runMins();
+            finishChange();
+        });
+        $(fromSel).off('change.crmApptSlot').on('change.crmApptSlot', function () {
+            crmAppBumpToAfterFrom(fromSel, toSel, gap);
+            if (clearFn) {
+                clearFn();
+            }
+            runMins();
+            finishChange();
+        });
+        if (toSel) {
+            $(toSel).off('change.crmApptSlot').on('change.crmApptSlot', function () {
+                crmAppFixToAfterFrom(fromSel, toSel, gap);
+                if (clearFn) {
+                    clearFn();
+                }
+                runMins();
+                finishChange();
+            });
+        }
+        runMins();
+    }
+
+    function crmAppInitTimePickers12(root) {
+        var $ = global.jQuery;
+        if (!$) {
+            return;
+        }
+        var $root = root ? $(root) : $(document);
+        $root.find('.crm-time-picker-12').each(function () {
+            var $wrap = $(this);
+            if ($wrap.data('crmTpInited')) {
+                return;
+            }
+            $wrap.data('crmTpInited', true);
+            crmAppTimePickerSyncFromHidden($wrap);
+            crmAppTimePickerEnforceMin($wrap);
+        });
+    }
+
+    function crmAppWireTimePicker12() {
+        var $ = global.jQuery;
+        if (!$) {
+            return;
+        }
+        $(document).on('change', '.crm-time-picker-12 select', function () {
+            var $wrap = $(this).closest('.crm-time-picker-12');
+            crmAppTimePickerSyncFromSelects($wrap);
+            crmAppTimePickerEnforceMin($wrap);
+            crmAppTimePickerScheduleHiddenChange($wrap.find('.crm-tp-hidden'));
+        });
+        $(function () {
+            crmAppInitTimePickers12();
+        });
+    }
+
     /**
      * Validate appointment date/from/to in Adelaide time.
      * @returns {{ ok: boolean, message: string }}
@@ -143,7 +445,11 @@
             return { ok: false, message: 'Appointment date cannot be in the past (Adelaide time).' };
         }
         if (crmAppIsPastAppointment(dateYmd, fromHm)) {
-            return { ok: false, message: 'Appointment start time cannot be in the past (Adelaide time).' };
+            var picked = crmAppFormatHm12(fromHm);
+            var nowLbl = crmAppFormatTimeDisplay();
+            var detail = picked ? (' You selected ' + picked + '.') : '';
+            var nowPart = nowLbl ? (' It is now ' + nowLbl + ' in Adelaide.') : '';
+            return { ok: false, message: 'Appointment start time cannot be in the past (Adelaide time).' + detail + nowPart };
         }
         if (toHm) {
             var fromM = crmTimeToMinutes(fromHm);
@@ -173,17 +479,50 @@
         var $to = toSel ? global.jQuery(toSel) : null;
         if (selectedDate === todayStr) {
             if ($from.length) {
-                $from.attr('min', nowTimeStr);
+                var $fromWrap = $from.closest('.crm-time-picker-12');
+                if ($fromWrap.length) {
+                    $fromWrap.attr('data-min-time', nowTimeStr);
+                    crmAppTimePickerEnforceMin($fromWrap);
+                } else {
+                    $from.attr('min', nowTimeStr);
+                }
             }
             if ($to && $to.length) {
-                $to.attr('min', nowTimeStr);
+                var $toWrap = $to.closest('.crm-time-picker-12');
+                if ($toWrap.length) {
+                    $toWrap.attr('data-min-time', nowTimeStr);
+                    crmAppTimePickerEnforceMin($toWrap);
+                } else {
+                    $to.attr('min', nowTimeStr);
+                }
             }
         } else {
             if ($from.length) {
-                $from.removeAttr('min');
+                var $fw = $from.closest('.crm-time-picker-12');
+                if ($fw.length) {
+                    $fw.removeAttr('data-min-time');
+                } else {
+                    $from.removeAttr('min');
+                }
             }
             if ($to && $to.length) {
-                $to.removeAttr('min');
+                var $tw = $to.closest('.crm-time-picker-12');
+                if ($tw.length) {
+                    $tw.removeAttr('data-min-time');
+                } else {
+                    $to.removeAttr('min');
+                }
+            }
+        }
+        var fromHm = crmAppTimeGetVal(fromSel);
+        if (fromHm && $to && $to.length) {
+            var minTo = crmAppTimeAddMinutes(fromHm, 1);
+            var $toW = $to.closest('.crm-time-picker-12');
+            if ($toW.length) {
+                $toW.attr('data-min-time', minTo);
+                crmAppTimePickerEnforceMin($toW);
+            } else if (minTo) {
+                $to.attr('min', minTo);
             }
         }
     }
@@ -217,6 +556,11 @@
             var $el = $(sel);
             if ($el.length) {
                 $el.addClass('is-invalid');
+                var $wrap = $el.closest('.crm-time-picker-12');
+                if ($wrap.length) {
+                    $wrap.addClass('is-invalid');
+                    $wrap.find('select').addClass('is-invalid');
+                }
                 $el.closest('.mb-3').addClass('crm-slot-invalid-wrap');
             }
         });
@@ -255,6 +599,11 @@
             var $el = $(sel);
             if ($el.length) {
                 $el.removeClass('is-invalid');
+                var $wrap = $el.closest('.crm-time-picker-12');
+                if ($wrap.length) {
+                    $wrap.removeClass('is-invalid');
+                    $wrap.find('select').removeClass('is-invalid');
+                }
                 $el.closest('.mb-3').removeClass('crm-slot-invalid-wrap');
             }
         });
@@ -289,6 +638,13 @@
     global.crmAppTodayYmd = crmAppTodayYmd;
     global.crmAppNowTimeHm = crmAppNowTimeHm;
     global.crmAppFormatTimeDisplay = crmAppFormatTimeDisplay;
+    global.crmAppFormatHm12 = crmAppFormatHm12;
+    global.crmAppTimeGetVal = crmAppTimeGetVal;
+    global.crmAppTimeSetVal = crmAppTimeSetVal;
+    global.crmAppTimeAddMinutes = crmAppTimeAddMinutes;
+    global.crmAppInitTimePickers12 = crmAppInitTimePickers12;
+    global.crmAppWireAppointmentSlot = crmAppWireAppointmentSlot;
+    global.crmAppApplyAppointmentMinsDebounced = crmAppApplyAppointmentMinsDebounced;
     global.crmAppValidateAppointmentSlot = crmAppValidateAppointmentSlot;
     global.crmAppApplyAppointmentMins = crmAppApplyAppointmentMins;
     global.crmAppIsPastAppointment = crmAppIsPastAppointment;
@@ -313,9 +669,12 @@
         alertSel: '#fp_appointment_slot_alert'
     };
 
+    crmAppWireTimePicker12();
+
     if (typeof global.jQuery !== 'undefined') {
         global.jQuery(function () {
             crmInitMomentDefaultTz();
+            crmAppInitTimePickers12();
         });
     } else {
         crmInitMomentDefaultTz();

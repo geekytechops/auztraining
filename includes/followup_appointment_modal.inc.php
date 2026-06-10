@@ -47,7 +47,7 @@ if(!isset($fp_usersForShare)) $fp_usersForShare = null;
                                         <?php echo crm_render_appointment_time_picker('fp_appointment_time_to', 'appointment_time_to', ''); ?>
                                     </div>
                                 </div>
-                                <small class="text-muted d-block mt-1">12-hour AM/PM, Adelaide (ACST). To is set to From + 1 minute when you change From.</small>
+                                <small class="text-muted d-block mt-1">12-hour AM/PM picker, Adelaide (ACST). To is set to From + 1 minute when you change From.</small>
                                 <div class="error-feedback" style="display:none;">Please select appointment time</div>
                                 <div class="error-feedback" id="fp_time_slot_range_error" style="display:none;">To must be at least 1 minute after From.</div>
                                 <div class="error-feedback text-danger" id="fp_appointment_past_time_error" style="display:none;">Appointment cannot be in the past (Adelaide time).</div>

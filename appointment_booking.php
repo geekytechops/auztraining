@@ -165,7 +165,7 @@ if(@$_SESSION['user_type']!=''){
                                                                 ?>
                                                             </div>
                                                         </div>
-                                                        <small class="text-muted d-block mt-1">Times are in 12-hour format (AM/PM), Adelaide (ACST). To is set to From + 1 minute when you change From.</small>
+                                                        <small class="text-muted d-block mt-1">12-hour AM/PM picker, Adelaide (ACST). To is set to From + 1 minute when you change From.</small>
                                                         <div class="error-feedback" style="display:none;">Please select appointment time</div>
                                                         <div class="error-feedback" id="time_slot_range_error" style="display:none;">To must be at least 1 minute after From.</div>
                                                         <div class="error-feedback text-danger" id="appointment_past_time_error" style="display:none;">Appointment cannot be in the past (Adelaide time).</div>
@@ -723,8 +723,8 @@ if(@$_SESSION['user_type']!=''){
                         crmAppClearAppointmentSlotError(apptBookingUi);
                     }
                 }
-                if (typeof crmAppInitTimePickers12 === 'function') {
-                    crmAppInitTimePickers12();
+                if (typeof crmAppInitFlatpickrTimePickers === 'function') {
+                    crmAppInitFlatpickrTimePickers();
                 }
                 if (typeof crmAppWireAppointmentSlot === 'function') {
                     crmAppWireAppointmentSlot({
@@ -767,12 +767,12 @@ if(@$_SESSION['user_type']!=''){
                         ? crmAppValidateAppointmentSlot($('#appointment_date').val(), apptTimeGet('#appointment_time'), apptTimeGet('#appointment_time_to'))
                         : { ok: true };
                     if (!slotCheck.ok) {
-                        $('#appointment_past_time_error').text(slotCheck.message).show();
-                        $('.toast-text2').html(slotCheck.message);
-                        $('#borderedToast2Btn').trigger('click');
+                        if (typeof crmAppShowAppointmentSlotError === 'function') {
+                            crmAppShowAppointmentSlotError($.extend({}, apptBookingUi, { message: slotCheck.message }));
+                        }
                         return;
                     }
-                    $('#appointment_past_time_error').hide();
+                    clearAppointmentSlotUiError();
                     
                     // Calculate timezones before submit
                     calculateTimezones();
@@ -808,24 +808,11 @@ if(@$_SESSION['user_type']!=''){
                                 setTimeout(function(){
                                     window.location.href = 'appointment_calendar.php';
                                 }, 600);
-                            } else if(res === '2') {
-                                $('.toast-text2').html('Time Slot Already Booked. This person already has an appointment overlapping the selected time (Adelaide). Please choose a different time slot.');
-                                $('#borderedToast2Btn').trigger('click');
-                            } else if(res === '3') {
-                                $('.toast-text2').html('This time slot is blocked for the selected staff member. Please choose a different time or staff.');
-                                $('#borderedToast2Btn').trigger('click');
-                            } else if(res === '4') {
-                                if (typeof crmAppHandleAppointmentApiError === 'function') {
-                                    crmAppHandleAppointmentApiError('4', apptBookingUi);
-                                } else {
-                                    $('.toast-text2').html('This staff member already has an appointment at the selected time (Adelaide). Choose another time or staff member.');
-                                    $('#borderedToast2Btn').trigger('click');
-                                }
-                            } else if(res === 'past_datetime' || res === 'invalid_time_range' || res === 'missing_datetime') {
+                            } else if(res === '2' || res === '3' || res === '4' || res === 'past_datetime' || res === 'invalid_time_range' || res === 'missing_datetime') {
                                 if (typeof crmAppHandleAppointmentApiError === 'function') {
                                     crmAppHandleAppointmentApiError(res, apptBookingUi);
                                 } else {
-                                    $('.toast-text2').html('Appointment cannot be in the past (Adelaide time).');
+                                    $('.toast-text2').html('Cannot save appointment. Please check date and time.');
                                     $('#borderedToast2Btn').trigger('click');
                                 }
                             } else {

@@ -103,6 +103,7 @@
         <link rel="stylesheet" href="<?php echo $CRM_ASSET_BASE; ?>/plugins/simplebar/simplebar.min.css">
         <link rel="stylesheet" href="<?php echo $CRM_ASSET_BASE; ?>/plugins/datatables/css/dataTables.bootstrap5.min.css">
         <link rel="stylesheet" href="<?php echo $CRM_ASSET_BASE; ?>/plugins/daterangepicker/daterangepicker.css">
+        <link rel="stylesheet" href="<?php echo $CRM_ASSET_BASE; ?>/plugins/flatpickr/flatpickr.min.css">
         <link rel="stylesheet" href="<?php echo $CRM_ASSET_BASE; ?>/plugins/select2/css/select2.min.css">
         <link rel="stylesheet" href="<?php echo $CRM_ASSET_BASE; ?>/css/style.css" id="app-style">
         <link rel="stylesheet" href="assets/css/panel.css?v=<?php echo time(); ?>">

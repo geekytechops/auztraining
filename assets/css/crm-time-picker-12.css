@@ -1,5 +1,18 @@
-.crm-time-picker-12 .crm-tp-hour { width: 4.25rem; min-width: 4.25rem; }
-.crm-time-picker-12 .crm-tp-minute { width: 4.5rem; min-width: 4.5rem; }
-.crm-time-picker-12 .crm-tp-ampm { width: 4.75rem; min-width: 4.75rem; }
-.crm-time-picker-12.is-invalid .crm-tp-controls .form-select { border-color: var(--bs-form-invalid-border-color, #dc3545); }
-.crm-time-picker-12 .crm-tp-hint { font-size: 0.8rem; }
+.crm-appt-time-fp-wrap .crm-appt-time-fp.form-control[readonly] {
+    background-color: var(--bs-body-bg, #fff);
+    cursor: pointer;
+}
+.crm-appt-time-fp-wrap.is-invalid .crm-appt-time-fp,
+.crm-appt-time-fp-wrap.is-invalid .flatpickr-input {
+    border-color: var(--bs-form-invalid-border-color, #dc3545);
+}
+.crm-appt-time-fp-wrap .crm-tp-hint {
+    font-size: 0.8rem;
+}
+.modal .flatpickr-calendar.open {
+    z-index: 1065;
+}
+.flatpickr-calendar.static.open {
+    position: relative;
+    top: 2px;
+}

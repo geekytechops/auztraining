@@ -5782,7 +5782,7 @@ if(@$_POST['formName']=='appointment_booking'){
         }
     }
 
-    // Prevent double-booking: same attendee (phone/email/business contact) — overlapping time range
+    // Prevent double-booking: same attendee (phone/email/business contact/enquiry) — overlapping time range
     $attendee_or = array();
     if ($student_phone !== '') {
         $attendee_or[] = "student_phone='" . mysqli_real_escape_string($connection, $student_phone) . "'";
@@ -5792,6 +5792,9 @@ if(@$_POST['formName']=='appointment_booking'){
     }
     if ($business_contact !== '') {
         $attendee_or[] = "business_contact='" . mysqli_real_escape_string($connection, $business_contact) . "'";
+    }
+    if ($ce_for_sql !== '') {
+        $attendee_or[] = "connected_enquiry_id='" . mysqli_real_escape_string($connection, $ce_for_sql) . "'";
     }
     if (count($attendee_or)) {
         $attendee_conflict = crm_appointment_find_overlap_conflict(

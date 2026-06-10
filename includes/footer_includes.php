@@ -5,9 +5,10 @@
 <script src="assets/js/pages/bootstrap-toasts.init.js"></script>
 <script src="<?php echo $CRM_ASSET_BASE; ?>/js/moment.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/moment-timezone@0.5.43/moment-timezone-with-data.min.js"></script>
-<link href="assets/css/crm-time-picker-12.css?v=1" rel="stylesheet">
-<script src="assets/js/app-timezone.js?v=<?php echo defined('CRM_APP_TIMEZONE') ? '5' : time(); ?>"></script>
+<link href="assets/css/crm-time-picker-12.css?v=2" rel="stylesheet">
+<script src="assets/js/app-timezone.js?v=<?php echo defined('CRM_APP_TIMEZONE') ? '6' : time(); ?>"></script>
 <script src="<?php echo $CRM_ASSET_BASE; ?>/plugins/daterangepicker/daterangepicker.js"></script>
+<script src="<?php echo $CRM_ASSET_BASE; ?>/plugins/flatpickr/flatpickr.min.js"></script>
 <script src="<?php echo $CRM_ASSET_BASE; ?>/plugins/datatables/js/jquery.dataTables.min.js"></script>
 <script src="<?php echo $CRM_ASSET_BASE; ?>/plugins/datatables/js/dataTables.bootstrap5.min.js"></script>
 <script src="<?php echo $CRM_ASSET_BASE; ?>/plugins/simplebar/simplebar.min.js"></script>

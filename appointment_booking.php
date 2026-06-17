@@ -742,21 +742,25 @@ if(@$_SESSION['user_type']!=''){
                 // Form submission
                 $('#appointment_form').on('submit', function(e) {
                     e.preventDefault();
-                    
-                    // Validate required fields
-                    var isValid = true;
-                    $(this).find('input[required], select[required]').each(function() {
-                        if(!$(this).val()) {
-                            isValid = false;
-                            $(this).closest('.mb-3').find('.error-feedback').show();
+
+                    if (typeof crmAppClearAppointmentFormValidation === 'function') {
+                        crmAppClearAppointmentFormValidation('#appointment_form');
+                    }
+                    var formCheck = typeof crmAppValidateAppointmentForm === 'function'
+                        ? crmAppValidateAppointmentForm({
+                            formSel: '#appointment_form',
+                            prefix: '',
+                            timeFromSel: '#appointment_time',
+                            timeToSel: '#appointment_time_to'
+                        })
+                        : { ok: true };
+                    if (!formCheck.ok) {
+                        if (typeof crmAppShowAppointmentFormError === 'function') {
+                            crmAppShowAppointmentFormError(formCheck.message);
                         } else {
-                            $(this).closest('.mb-3').find('.error-feedback').hide();
+                            $('.toast-text2').html(formCheck.message || 'Please fill all required fields.');
+                            $('#borderedToast2Btn').trigger('click');
                         }
-                    });
-                    
-                    if(!isValid) {
-                        $('.toast-text2').html('Please fill all required fields.');
-                        $('#borderedToast2Btn').trigger('click');
                         return;
                     }
 
@@ -815,6 +819,19 @@ if(@$_SESSION['user_type']!=''){
                                     $('.toast-text2').html('Cannot save appointment. Please check date and time.');
                                     $('#borderedToast2Btn').trigger('click');
                                 }
+                            } else if(res === 'missing_required_fields') {
+                                if (typeof crmAppShowAppointmentFormError === 'function') {
+                                    crmAppShowAppointmentFormError('Please fill all required fields.');
+                                } else {
+                                    $('.toast-text2').html('Please fill all required fields.');
+                                    $('#borderedToast2Btn').trigger('click');
+                                }
+                            } else if(res === 'invalid_email') {
+                                $('.toast-text2').html('Please enter a valid student email address.');
+                                $('#borderedToast2Btn').trigger('click');
+                            } else if(res === 'contact_phone_staff_required') {
+                                $('.toast-text2').html('Please select responsible staff for Phone call.');
+                                $('#borderedToast2Btn').trigger('click');
                             } else {
                                 $('.toast-text2').html('Cannot save appointment. Please try again.');
                                 $('#borderedToast2Btn').trigger('click');
@@ -829,6 +846,16 @@ if(@$_SESSION['user_type']!=''){
                             $('#appointment_form').css('opacity','');
                         }
                     });
+                });
+
+                $(document).on('input change', '#appointment_form input, #appointment_form select, #appointment_form textarea', function() {
+                    var $field = $(this);
+                    if (typeof crmAppClearFieldInvalid === 'function') {
+                        crmAppClearFieldInvalid($field);
+                    } else if ($field.hasClass('is-invalid')) {
+                        $field.removeClass('is-invalid');
+                        $field.closest('.mb-3').find('.error-feedback').hide();
+                    }
                 });
 
                 // Share With: select all toggles

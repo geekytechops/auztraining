@@ -2731,17 +2731,38 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             // Follow-up appointment popup: attendee type toggle
             $(document).on('change','#fp_attendee_type_id',function(){
                 var v = $(this).val();
-                if(v=='1'){ $('#fp_student_info_section').show(); $('#fp_business_info_section').hide(); }
-                else if(v=='2'){ $('#fp_student_info_section').hide(); $('#fp_business_info_section').show(); }
-                else { $('#fp_student_info_section').hide(); $('#fp_business_info_section').hide(); }
-                $('#fp_student_name,#fp_student_phone,#fp_student_email,#fp_business_name,#fp_business_contact').prop('required',false);
+                if(v=='1'){
+                    $('#fp_student_info_section').show();
+                    $('#fp_business_info_section').hide();
+                    $('#fp_student_name, #fp_student_phone, #fp_student_email').prop('required', true);
+                    $('#fp_business_name, #fp_business_contact').prop('required', false);
+                } else if(v=='2'){
+                    $('#fp_student_info_section').hide();
+                    $('#fp_business_info_section').show();
+                    $('#fp_student_name, #fp_student_phone, #fp_student_email').prop('required', false);
+                    $('#fp_business_name, #fp_business_contact').prop('required', true);
+                } else {
+                    $('#fp_student_info_section').hide();
+                    $('#fp_business_info_section').hide();
+                    $('#fp_student_name, #fp_student_phone, #fp_student_email, #fp_business_name, #fp_business_contact').prop('required', false);
+                }
             });
             $(document).on('change','#fp_meeting_type',function(){
                 var v = $(this).val();
-                if(v=='Online'){ $('#fp_platform_section,#fp_meeting_link_section').show(); $('#fp_location_section').hide(); }
-                else if(v=='Face to Face'){ $('#fp_location_section').show(); $('#fp_platform_section,#fp_meeting_link_section').hide(); }
-                else { $('#fp_location_section,#fp_platform_section,#fp_meeting_link_section').hide(); }
-                $('#fp_location_id,#fp_platform_id').prop('required',false);
+                if(v=='Online'){
+                    $('#fp_platform_section,#fp_meeting_link_section').show();
+                    $('#fp_location_section').hide();
+                    $('#fp_platform_id').prop('required', true);
+                    $('#fp_location_id').prop('required', false);
+                } else if(v=='Face to Face'){
+                    $('#fp_location_section').show();
+                    $('#fp_platform_section,#fp_meeting_link_section').hide();
+                    $('#fp_location_id').prop('required', true);
+                    $('#fp_platform_id').prop('required', false);
+                } else {
+                    $('#fp_location_section,#fp_platform_section,#fp_meeting_link_section').hide();
+                    $('#fp_location_id, #fp_platform_id').prop('required', false);
+                }
             });
             // Follow-up appointment time helpers (12h AM/PM pickers → hidden HH:mm, Adelaide)
             var FP_MIN_GAP_MINUTES = 1;
@@ -2798,10 +2819,6 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                 if (typeof crmAppApplyAppointmentMins === 'function') {
                     crmAppApplyAppointmentMins('#fp_appointment_date', '#fp_appointment_time', '#fp_appointment_time_to', minDate);
                 }
-                fpUpdateToMin();
-            }
-            function fpUpdateToMin(){
-                fpApplyAppointmentDateMin();
             }
             function fpEnsureFromBeforeTo(){
                 var fromVal=fpTimeGet('#fp_appointment_time');
@@ -2858,8 +2875,26 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
             $(document).on('submit','#fp_appointment_form',function(e){
                 e.preventDefault();
                 var $f = $(this);
-                $f.find('.error-feedback').hide();
-                $f.find('[required]').prop('required',false);
+                if (typeof crmAppClearAppointmentFormValidation === 'function') {
+                    crmAppClearAppointmentFormValidation('#fp_appointment_form');
+                }
+                var formCheck = typeof crmAppValidateAppointmentForm === 'function'
+                    ? crmAppValidateAppointmentForm({
+                        formSel: '#fp_appointment_form',
+                        prefix: 'fp_',
+                        timeFromSel: '#fp_appointment_time',
+                        timeToSel: '#fp_appointment_time_to'
+                    })
+                    : { ok: true };
+                if (!formCheck.ok) {
+                    if (typeof crmAppShowAppointmentFormError === 'function') {
+                        crmAppShowAppointmentFormError(formCheck.message);
+                    } else {
+                        $('.toast-text2').html(formCheck.message || 'Please fill all required fields.');
+                        $('#borderedToast2Btn').trigger('click');
+                    }
+                    return;
+                }
                 fpApplyAppointmentDateMin();
                 var slotCheck = typeof crmAppValidateAppointmentSlot === 'function'
                     ? crmAppValidateAppointmentSlot($('#fp_appointment_date').val(), fpTimeGet('#fp_appointment_time'), fpTimeGet('#fp_appointment_time_to'))
@@ -2997,6 +3032,14 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                                 $('#borderedToast2Btn').trigger('click');
                             }
                             $('#fp_appointment_submit_btn').prop('disabled',false);
+                        } else if(r==='missing_required_fields'){
+                            if (typeof crmAppShowAppointmentFormError === 'function') {
+                                crmAppShowAppointmentFormError('Please fill all required fields.');
+                            } else {
+                                $('.toast-text2').html('Please fill all required fields.');
+                                $('#borderedToast2Btn').trigger('click');
+                            }
+                            $('#fp_appointment_submit_btn').prop('disabled',false);
                         } else if(r==='invalid_email'){
                             $('.toast-text2').html('Please enter a valid email on the contact card before booking.');
                             $('#borderedToast2Btn').trigger('click');
@@ -3013,6 +3056,15 @@ if(isset($_GET['view']) && $_GET['view']=='list'){
                     },
                     error:function(){ $('.toast-text2').html('An error occurred.'); $('#borderedToast2Btn').trigger('click'); $('#fp_appointment_submit_btn').prop('disabled',false); }
                 });
+            });
+            $(document).on('input change','#fp_appointment_form input, #fp_appointment_form select, #fp_appointment_form textarea',function(){
+                var $field = $(this);
+                if (typeof crmAppClearFieldInvalid === 'function') {
+                    crmAppClearFieldInvalid($field);
+                } else if ($field.hasClass('is-invalid')) {
+                    $field.removeClass('is-invalid');
+                    $field.closest('.mb-3').find('.error-feedback').hide();
+                }
             });
             $('#followupAppointmentModal').on('shown.bs.modal',function(){
                 if (typeof crmAppInitFlatpickrTimePickers === 'function') {

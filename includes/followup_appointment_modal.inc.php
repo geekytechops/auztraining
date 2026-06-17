@@ -18,7 +18,7 @@ if(!isset($fp_usersForShare)) $fp_usersForShare = null;
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="fp_appointment_form">
+                <form id="fp_appointment_form" novalidate>
                     <input type="hidden" name="formName" value="appointment_booking">
                     <input type="hidden" name="appointment_id" value="0">
                     <input type="hidden" name="created_by" value="<?php echo (int)($_SESSION['user_id'] ?? 0); ?>">
@@ -29,18 +29,18 @@ if(!isset($fp_usersForShare)) $fp_usersForShare = null;
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">Appointment Date </label>
-                                <input type="date" class="form-control" id="fp_appointment_date" name="appointment_date">
+                                <label class="form-label">Appointment Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="fp_appointment_date" name="appointment_date" required>
                                 <div class="error-feedback">Please select appointment date</div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <!-- <label class="form-label">Time Slot </label> -->
+                                <!-- <label class="form-label">Time Slot <span class="text-danger">*</span></label> -->
                                 <div class="row g-2 align-items-end">
                                     <div class="col">
-                                        <label class="form-label small text-muted mb-0">From</label>
-                                        <?php echo crm_render_appointment_time_picker('fp_appointment_time', 'appointment_time', ''); ?>
+                                        <label class="form-label small text-muted mb-0">From <span class="text-danger">*</span></label>
+                                        <?php echo crm_render_appointment_time_picker('fp_appointment_time', 'appointment_time', '', array('required' => true)); ?>
                                     </div>
                                     <div class="col">
                                         <label class="form-label small text-muted mb-0">To</label>
@@ -62,8 +62,8 @@ if(!isset($fp_usersForShare)) $fp_usersForShare = null;
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">Booked By </label>
-                                <input type="text" class="form-control" id="fp_booked_by_name" name="booked_by_name" value="<?php echo htmlspecialchars($_SESSION['user_name'] ?? ''); ?>">
+                                <label class="form-label">Booked By <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="fp_booked_by_name" name="booked_by_name" value="<?php echo htmlspecialchars($_SESSION['user_name'] ?? ''); ?>" required>
                                 <div class="error-feedback">Please enter who booked this appointment</div>
                             </div>
                         </div>
@@ -85,8 +85,8 @@ if(!isset($fp_usersForShare)) $fp_usersForShare = null;
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">Purpose of Appointment </label>
-                                <select class="form-select" id="fp_purpose_id" name="purpose_id">
+                                <label class="form-label">Purpose of Appointment <span class="text-danger">*</span></label>
+                                <select class="form-select" id="fp_purpose_id" name="purpose_id" required>
                                     <option value="">-- Select Purpose --</option>
                                     <?php if($fp_purposes){ mysqli_data_seek($fp_purposes,0); while($p = mysqli_fetch_array($fp_purposes)){ echo "<option value='".(int)$p['purpose_id']."'>".htmlspecialchars($p['purpose_name'])."</option>"; } } ?>
                                 </select>
@@ -95,8 +95,8 @@ if(!isset($fp_usersForShare)) $fp_usersForShare = null;
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">Appointment To See </label>
-                                <select class="form-select" id="fp_appointment_to_see" name="appointment_to_see">
+                                <label class="form-label">Appointment To See <span class="text-danger">*</span></label>
+                                <select class="form-select" id="fp_appointment_to_see" name="appointment_to_see" required>
                                     <option value="">-- Select Staff --</option>
                                     <?php if($fp_users){ mysqli_data_seek($fp_users,0); while($u = mysqli_fetch_array($fp_users)){ echo "<option value='".(int)$u['user_id']."'>".htmlspecialchars($u['user_name'])." (".htmlspecialchars($u['user_email'] ?? '').")</option>"; } } ?>
                                 </select>
@@ -105,8 +105,8 @@ if(!isset($fp_usersForShare)) $fp_usersForShare = null;
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">Staff Member Type </label>
-                                <select class="form-select" id="fp_staff_member_type" name="staff_member_type">
+                                <label class="form-label">Staff Member Type <span class="text-danger">*</span></label>
+                                <select class="form-select" id="fp_staff_member_type" name="staff_member_type" required>
                                     <option value="">-- Select Type --</option>
                                     <option value="Admin">Admin</option>
                                     <option value="Trainers">Trainers</option>
@@ -139,8 +139,8 @@ if(!isset($fp_usersForShare)) $fp_usersForShare = null;
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">Who wants to come for meeting? </label>
-                                <select class="form-select" id="fp_attendee_type_id" name="attendee_type_id">
+                                <label class="form-label">Who wants to come for meeting? <span class="text-danger">*</span></label>
+                                <select class="form-select" id="fp_attendee_type_id" name="attendee_type_id" required>
                                     <option value="">-- Select Type --</option>
                                     <?php if($fp_attendeeTypes){ mysqli_data_seek($fp_attendeeTypes,0); while($t = mysqli_fetch_array($fp_attendeeTypes)){ $sel = ($t['type_id']==1) ? 'selected' : ''; echo "<option value='".(int)$t['type_id']."' {$sel}>".htmlspecialchars($t['type_name'])."</option>"; } } ?>
                                 </select>
@@ -151,21 +151,21 @@ if(!isset($fp_usersForShare)) $fp_usersForShare = null;
                     <div class="row" id="fp_student_info_section">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">Student Name </label>
+                                <label class="form-label">Student Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="fp_student_name" name="student_name">
                                 <div class="error-feedback">Please enter student name</div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">Student Phone </label>
+                                <label class="form-label">Student Phone <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="fp_student_phone" name="student_phone">
                                 <div class="error-feedback">Please enter student phone</div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">Student Email </label>
+                                <label class="form-label">Student Email <span class="text-danger">*</span></label>
                                 <input type="email" class="form-control" id="fp_student_email" name="student_email">
                                 <div class="error-feedback">Please enter student email</div>
                             </div>
@@ -174,14 +174,14 @@ if(!isset($fp_usersForShare)) $fp_usersForShare = null;
                     <div class="row" id="fp_business_info_section" style="display:none;">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">Business Name </label>
+                                <label class="form-label">Business Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="fp_business_name" name="business_name">
                                 <div class="error-feedback">Please enter business name</div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">Business Contact </label>
+                                <label class="form-label">Business Contact <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="fp_business_contact" name="business_contact">
                                 <div class="error-feedback">Please enter business contact</div>
                             </div>
@@ -193,8 +193,8 @@ if(!isset($fp_usersForShare)) $fp_usersForShare = null;
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">Meeting Type </label>
-                                <select class="form-select" id="fp_meeting_type" name="meeting_type">
+                                <label class="form-label">Meeting Type <span class="text-danger">*</span></label>
+                                <select class="form-select" id="fp_meeting_type" name="meeting_type" required>
                                     <option value="">-- Select Type --</option>
                                     <option value="Online">Online</option>
                                     <option value="Face to Face">Face to Face</option>
@@ -205,7 +205,7 @@ if(!isset($fp_usersForShare)) $fp_usersForShare = null;
                         </div>
                         <div class="col-md-6" id="fp_location_section" style="display:none;">
                             <div class="mb-3">
-                                <label class="form-label">Location </label>
+                                <label class="form-label">Location <span class="text-danger">*</span></label>
                                 <select class="form-select" id="fp_location_id" name="location_id">
                                     <option value="">-- Select Location --</option>
                                     <?php if($fp_locations){ mysqli_data_seek($fp_locations,0); while($loc = mysqli_fetch_array($fp_locations)){ echo "<option value='".(int)$loc['location_id']."'>".htmlspecialchars($loc['location_name'])."</option>"; } } ?>
@@ -215,7 +215,7 @@ if(!isset($fp_usersForShare)) $fp_usersForShare = null;
                         </div>
                         <div class="col-md-6" id="fp_platform_section" style="display:none;">
                             <div class="mb-3">
-                                <label class="form-label">Online Platform </label>
+                                <label class="form-label">Online Platform <span class="text-danger">*</span></label>
                                 <select class="form-select" id="fp_platform_id" name="platform_id">
                                     <option value="">-- Select Platform --</option>
                                     <?php if($fp_platforms){ mysqli_data_seek($fp_platforms,0); while($plat = mysqli_fetch_array($fp_platforms)){ echo "<option value='".(int)$plat['platform_id']."'>".htmlspecialchars($plat['platform_name'])."</option>"; } } ?>

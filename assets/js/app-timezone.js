@@ -657,6 +657,215 @@
         });
     }
 
+    function crmAppMarkFieldInvalid($el) {
+        if (!$el || !$el.length) {
+            return;
+        }
+        if ($el.attr('data-crm-time-picker') === '1' || $el.hasClass('crm-appt-time-fp')) {
+            crmAppMarkTimeFieldInvalid($el);
+            return;
+        }
+        $el.addClass('is-invalid');
+    }
+
+    function crmAppClearFieldInvalid($el) {
+        if (!$el || !$el.length) {
+            return;
+        }
+        if ($el.attr('data-crm-time-picker') === '1' || $el.hasClass('crm-appt-time-fp')) {
+            crmAppClearTimeFieldInvalid($el);
+            return;
+        }
+        $el.removeClass('is-invalid');
+        $el.closest('.mb-3').find('.error-feedback').hide();
+    }
+
+    function crmAppFieldId(prefix, name) {
+        return '#' + (prefix || '') + name;
+    }
+
+    function crmAppIsValidEmail(val) {
+        val = (val || '').toString().trim();
+        if (!val) {
+            return false;
+        }
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+    }
+
+    function crmAppShowFieldError($field, message) {
+        crmAppMarkFieldInvalid($field);
+        var $wrap = $field.closest('.mb-3');
+        var $fb = $wrap.find('.error-feedback').not('[id*="past_time"],[id*="time_slot_range"]').first();
+        if ($fb.length && message) {
+            $fb.text(message).show();
+        } else if ($fb.length) {
+            $fb.show();
+        }
+    }
+
+    function crmAppClearAppointmentFormValidation(formSel) {
+        var $ = global.jQuery;
+        if (!$) {
+            return;
+        }
+        var $form = $(formSel);
+        if (!$form.length) {
+            return;
+        }
+        $form.find('input, select, textarea').each(function () {
+            crmAppClearFieldInvalid($(this));
+        });
+        $form.find('.error-feedback').hide();
+        $form.find('.crm-slot-invalid-wrap').removeClass('crm-slot-invalid-wrap');
+    }
+
+    function crmAppShowAppointmentFormError(message) {
+        var $ = global.jQuery;
+        message = message || 'Please fill all required fields.';
+        if ($) {
+            var $toastBody = $('.toast-text2');
+            if ($toastBody.length) {
+                $toastBody.html(message);
+            }
+            var $toastBtn = $('#borderedToast2Btn');
+            if ($toastBtn.length) {
+                $toastBtn.trigger('click');
+                return;
+            }
+        }
+        if (global.Swal && typeof global.Swal.fire === 'function') {
+            global.Swal.fire({ icon: 'error', title: 'Validation error', text: message });
+        }
+    }
+
+    function crmAppScrollToField(sel) {
+        var $ = global.jQuery;
+        if (!$ || !sel) {
+            return;
+        }
+        var $el = $(sel);
+        if (!$el.length) {
+            return;
+        }
+        var node = $el[0];
+        if (node.scrollIntoView) {
+            node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    /**
+     * Validate appointment booking form fields (standalone page or follow-up modal).
+     * opts: { formSel, prefix, timeFromSel, timeToSel }
+     * @returns {{ ok: boolean, message: string, firstSel: string|null, invalidCount: number }}
+     */
+    function crmAppValidateAppointmentForm(opts) {
+        opts = opts || {};
+        var $ = global.jQuery;
+        var result = { ok: true, message: '', firstSel: null, invalidCount: 0 };
+        if (!$) {
+            return result;
+        }
+        var prefix = (opts.prefix || '').toString();
+        var formSel = opts.formSel || '#appointment_form';
+        var $form = $(formSel);
+        if (!$form.length) {
+            return result;
+        }
+
+        function id(name) {
+            return crmAppFieldId(prefix, name);
+        }
+
+        function val(name) {
+            var $el = $(id(name));
+            if (!$el.length) {
+                return '';
+            }
+            return ($el.val() || '').toString().trim();
+        }
+
+        function fail(sel, msg) {
+            var $field = $(sel);
+            if ($field.length) {
+                crmAppShowFieldError($field, msg);
+            }
+            result.ok = false;
+            result.invalidCount++;
+            if (!result.firstSel) {
+                result.firstSel = sel;
+                result.message = msg;
+            }
+        }
+
+        var dateSel = opts.dateSel || id('appointment_date');
+        var timeFromSel = opts.timeFromSel || id('appointment_time');
+
+        if (!val('appointment_date')) {
+            fail(dateSel, 'Please select appointment date');
+        }
+        var fromTime = typeof crmAppTimeGetVal === 'function'
+            ? crmAppTimeGetVal(timeFromSel)
+            : ($(timeFromSel).val() || '').toString().trim();
+        if (!fromTime) {
+            fail(timeFromSel, 'Please select appointment time');
+        }
+        if (!val('booked_by_name')) {
+            fail(id('booked_by_name'), 'Please enter who booked this appointment');
+        }
+        if (!val('purpose_id')) {
+            fail(id('purpose_id'), 'Please select purpose');
+        }
+        if (!val('appointment_to_see')) {
+            fail(id('appointment_to_see'), 'Please select staff member');
+        }
+        if (!val('staff_member_type')) {
+            fail(id('staff_member_type'), 'Please select staff member type');
+        }
+        if (!val('attendee_type_id')) {
+            fail(id('attendee_type_id'), 'Please select attendee type');
+        }
+        if (!val('meeting_type')) {
+            fail(id('meeting_type'), 'Please select meeting type');
+        }
+
+        var attendeeType = val('attendee_type_id');
+        if (attendeeType === '1') {
+            if (!val('student_name')) {
+                fail(id('student_name'), 'Please enter student name');
+            }
+            if (!val('student_phone')) {
+                fail(id('student_phone'), 'Please enter student phone');
+            }
+            if (!val('student_email')) {
+                fail(id('student_email'), 'Please enter student email');
+            } else if (!crmAppIsValidEmail(val('student_email'))) {
+                fail(id('student_email'), 'Please enter a valid student email');
+            }
+        } else if (attendeeType === '2') {
+            if (!val('business_name')) {
+                fail(id('business_name'), 'Please enter business name');
+            }
+            if (!val('business_contact')) {
+                fail(id('business_contact'), 'Please enter business contact');
+            }
+        }
+
+        var meetingType = val('meeting_type');
+        if (meetingType === 'Online' && !val('platform_id')) {
+            fail(id('platform_id'), 'Please select platform');
+        } else if (meetingType === 'Face to Face' && !val('location_id')) {
+            fail(id('location_id'), 'Please select location');
+        }
+
+        if (!result.ok && !result.message) {
+            result.message = 'Please fill all required fields.';
+        }
+        if (!result.ok && result.firstSel) {
+            crmAppScrollToField(result.firstSel);
+        }
+        return result;
+    }
+
     function crmInitMomentDefaultTz() {
         if (hasMomentTz()) {
             global.moment.tz.setDefault(TZ);
@@ -684,6 +893,11 @@
     global.crmAppClearAppointmentSlotError = crmAppClearAppointmentSlotError;
     global.crmAppHandleAppointmentApiError = crmAppHandleAppointmentApiError;
     global.crmAppSlotMessageForCode = crmAppSlotMessageForCode;
+    global.crmAppMarkFieldInvalid = crmAppMarkFieldInvalid;
+    global.crmAppClearFieldInvalid = crmAppClearFieldInvalid;
+    global.crmAppClearAppointmentFormValidation = crmAppClearAppointmentFormValidation;
+    global.crmAppValidateAppointmentForm = crmAppValidateAppointmentForm;
+    global.crmAppShowAppointmentFormError = crmAppShowAppointmentFormError;
     global.crmInitMomentDefaultTz = crmInitMomentDefaultTz;
 
     global.CRM_APPOINTMENT_BOOKING_UI = {

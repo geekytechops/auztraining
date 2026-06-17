@@ -5661,6 +5661,33 @@ if(@$_POST['formName']=='appointment_booking'){
         }
     }
 
+    $missing_required = false;
+    if ($booked_by_name === '' || $purpose_id <= 0 || $appointment_to_see <= 0 || $staff_member_type === '' || $meeting_type === '') {
+        $missing_required = true;
+    }
+    if (!$missing_required && $attendee_type_id === 1) {
+        if ($student_name === '' || $student_phone === '' || $student_email === '') {
+            $missing_required = true;
+        } elseif (!filter_var($student_email, FILTER_VALIDATE_EMAIL)) {
+            echo 'invalid_email';
+            exit;
+        }
+    } elseif (!$missing_required && $attendee_type_id === 2) {
+        if ($business_name === '' || $business_contact === '') {
+            $missing_required = true;
+        }
+    }
+    if (!$missing_required && $meeting_type === 'Online' && ($platform_id === 'NULL' || (int)$platform_id <= 0)) {
+        $missing_required = true;
+    }
+    if (!$missing_required && $meeting_type === 'Face to Face' && ($location_id === 'NULL' || (int)$location_id <= 0)) {
+        $missing_required = true;
+    }
+    if ($missing_required) {
+        echo 'missing_required_fields';
+        exit;
+    }
+
     $auto_phone_flow = isset($_POST['auto_create_enquiry_phone_flow']) && (string)$_POST['auto_create_enquiry_phone_flow'] === '1';
     $auto_couns_resched_flow = isset($_POST['auto_create_enquiry_counselling_reschedule_flow']) && (string)$_POST['auto_create_enquiry_counselling_reschedule_flow'] === '1';
     $set_book_couns = isset($_POST['set_flow_status_booked_counselling']) && (string)$_POST['set_flow_status_booked_counselling'] === '1';

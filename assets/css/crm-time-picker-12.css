@@ -9,6 +9,12 @@
 .crm-appt-time-fp-wrap .crm-tp-hint {
     font-size: 0.8rem;
 }
+#appointment_form .form-control.is-invalid,
+#appointment_form .form-select.is-invalid,
+#fp_appointment_form .form-control.is-invalid,
+#fp_appointment_form .form-select.is-invalid {
+    border-color: var(--bs-form-invalid-border-color, #dc3545);
+}
 .modal .flatpickr-calendar.open {
     z-index: 1065;
 }

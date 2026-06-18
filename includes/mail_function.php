@@ -33,7 +33,7 @@ function send_mail($to, $subject, $body, array $context = array()) {
 
     $conn = (isset($connection) && $connection instanceof mysqli) ? $connection : null;
 
-    $transport = Transport::fromDsn('smtp://noreply@nationalcollege.edu.au:Noreply@2026mail@smtp.hostinger.com?encryption=ssl');
+    $transport = Transport::fromDsn('smtp://noreply%40nationalcollege.edu.au:Noreply%402026mail@smtp.hostinger.com:465?encryption=ssl');
     $mailer = new Mailer($transport);
     $email = (new Email())
         ->from('National College of Australia <noreply@nationalcollege.edu.au>')

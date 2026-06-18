@@ -108,6 +108,7 @@ if(@$_SESSION['user_id']!=''){
         <script>
             var loginOtpStep = false;
             var loginOtpSending = false;
+            var loginOtpBypass = false;
             function adminLoginRefreshButton(){
                 var $b = $('#login');
                 if(loginOtpSending){
@@ -159,6 +160,7 @@ if(@$_SESSION['user_id']!=''){
                                     return;
                                 }
                                 loginOtpStep = true;
+                                loginOtpBypass = !!(data && data.otp_bypass);
                                 $('#otp_wrap').show();
                                 $('#email,#password').prop('readonly',true);
                                 adminLoginSetError(data.message || 'OTP sent to your email.');
@@ -176,7 +178,7 @@ if(@$_SESSION['user_id']!=''){
                         }
                     });
                 }else{
-                    if(!/^\d{6}$/.test(otp)){
+                    if(!loginOtpBypass && !/^\d{6}$/.test(otp)){
                         $('#login_otp').addClass('invalid-div');
                         $('#login_otp').closest('div').find('.error-feedback').show();
                         return;

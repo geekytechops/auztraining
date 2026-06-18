@@ -85,6 +85,7 @@ $asset_base = 'crm/html/template/assets';
     <script>
     var studentOtpStep = false;
     var studentOtpSending = false;
+    var studentOtpBypass = false;
     function studentLoginRefreshButton(){
         var btn = document.getElementById('login_btn');
         if(studentOtpSending){
@@ -122,6 +123,7 @@ $asset_base = 'crm/html/template/assets';
                 .then(function(data){
                     if(data.success){
                         studentOtpStep = true;
+                        studentOtpBypass = !!data.otp_bypass;
                         document.getElementById('otp_wrap').style.display = 'block';
                         document.getElementById('email').readOnly = true;
                         document.getElementById('password').readOnly = true;
@@ -143,7 +145,7 @@ $asset_base = 'crm/html/template/assets';
                     studentLoginRefreshButton();
                 });
         }else{
-            if(!/^\d{6}$/.test(otp)){
+            if(!studentOtpBypass && !/^\d{6}$/.test(otp)){
                 document.getElementById('otp_err').style.setProperty('display','block','important');
                 return;
             }

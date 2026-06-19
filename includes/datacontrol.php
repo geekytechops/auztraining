@@ -2886,6 +2886,17 @@ if(!function_exists('auth_is_otp_bypass')){
     }
 }
 
+if(!function_exists('auth_is_google_enabled')){
+    function auth_is_google_enabled(){
+        $v = auth_env_value('AUTH_GOOGLE');
+        if($v === ''){
+            $v = auth_env_value('auth_google');
+        }
+        $v = strtolower(trim((string)$v));
+        return in_array($v, array('1', 'true', 'yes', 'on'), true);
+    }
+}
+
 if(!function_exists('auth_is_default_email_login')){
     function auth_is_default_email_login($email){
         $emailNorm = auth_login_otp_normalize_email($email);
@@ -2997,11 +3008,45 @@ if(@$_POST['formName']=='login_request_otp'){
             exit;
         }
         $debug_step = 'fetch_user';
-        $query = mysqli_query($connection,"SELECT user_id,user_type,user_name,user_log_id,user_email FROM users WHERE LOWER(TRIM(user_email))='$email_esc' AND user_password='".mysqli_real_escape_string($connection, $password)."' LIMIT 1");
+        $query = mysqli_query($connection,"SELECT user_id,user_type,user_name,user_log_id,user_email,google_auth_secret FROM users WHERE LOWER(TRIM(user_email))='$email_esc' AND user_password='".mysqli_real_escape_string($connection, $password)."' LIMIT 1");
         $id = ($query && mysqli_num_rows($query) > 0) ? mysqli_fetch_assoc($query) : null;
         if(!$id){
             echo json_encode(array('success'=>false,'message'=>'Invalid email or password.'));
             exit;
+        }
+        
+        if (auth_is_google_enabled()) {
+            require_once __DIR__ . '/google_auth_helper.php';
+            $secret = trim((string)$id['google_auth_secret']);
+            if ($secret !== '') {
+                unset($_SESSION['login_otp_pending'], $_SESSION['login_otp_admin'], $_SESSION['login_otp_student'], $_SESSION['login_otp_bind']);
+                $_SESSION['temp_login_user_id'] = (int)$id['user_id'];
+                $_SESSION['temp_login_channel'] = 'admin';
+                echo json_encode(array(
+                    'success' => true,
+                    'method' => 'google_auth',
+                    'setup' => false,
+                    'message' => 'Please enter verification code from Google Authenticator.'
+                ));
+                exit;
+            } else {
+                unset($_SESSION['login_otp_pending'], $_SESSION['login_otp_admin'], $_SESSION['login_otp_student'], $_SESSION['login_otp_bind']);
+                $new_secret = GoogleAuthenticatorHelper::generateSecret();
+                $_SESSION['temp_login_user_id'] = (int)$id['user_id'];
+                $_SESSION['temp_login_channel'] = 'admin';
+                $_SESSION['temp_google_auth_secret'] = $new_secret;
+                
+                $totp_uri = GoogleAuthenticatorHelper::getProvisioningUri($id['user_email'], $new_secret);
+                echo json_encode(array(
+                    'success' => true,
+                    'method' => 'google_auth',
+                    'setup' => true,
+                    'secret' => $new_secret,
+                    'totp_uri' => $totp_uri,
+                    'message' => 'Scan the QR code to set up Google Authenticator.'
+                ));
+                exit;
+            }
         }
         if(auth_is_otp_bypass()){
             $session_bind = auth_login_otp_random_bind();
@@ -3184,6 +3229,57 @@ if(@$_POST['formName']=='login_verify_otp'){
     exit;
 }
 
+if(@$_POST['formName']=='login_verify_google_auth'){
+    $temp_uid = $_SESSION['temp_login_user_id'] ?? 0;
+    $temp_channel = $_SESSION['temp_login_channel'] ?? '';
+    if($temp_uid <= 0 || $temp_channel !== 'admin'){
+        echo json_encode(array('success'=>false,'message'=>'Verification session expired. Please login again.'));
+        exit;
+    }
+    $code = trim($_POST['code'] ?? '');
+    if($code === ''){
+        echo json_encode(array('success'=>false,'message'=>'Please enter verification code.'));
+        exit;
+    }
+    require_once __DIR__ . '/google_auth_helper.php';
+    
+    $uq = mysqli_query($connection, "SELECT user_id, user_type, user_name, user_log_id, user_email, google_auth_secret FROM users WHERE user_id=$temp_uid LIMIT 1");
+    $u = ($uq && mysqli_num_rows($uq) > 0) ? mysqli_fetch_assoc($uq) : null;
+    if(!$u){
+        echo json_encode(array('success'=>false,'message'=>'Account not found. Please contact support.'));
+        exit;
+    }
+    
+    $secret = trim((string)$u['google_auth_secret']);
+    $is_setup = false;
+    if($secret === ''){
+        $secret = $_SESSION['temp_google_auth_secret'] ?? '';
+        if($secret === ''){
+            echo json_encode(array('success'=>false,'message'=>'Verification session expired. Please login again.'));
+            exit;
+        }
+        $is_setup = true;
+    }
+    
+    if(!GoogleAuthenticatorHelper::verifyCode($secret, $code)){
+        echo json_encode(array('success'=>false,'message'=>'Invalid verification code. Please try again.'));
+        exit;
+    }
+    
+    if($is_setup){
+        $secret_esc = mysqli_real_escape_string($connection, $secret);
+        mysqli_query($connection, "UPDATE users SET google_auth_secret='$secret_esc' WHERE user_id=$temp_uid");
+    }
+    
+    $_SESSION['user_id'] = (int)$u['user_id'];
+    $_SESSION['user_type'] = (int)$u['user_type'];
+    $_SESSION['user_name'] = $u['user_name'];
+    $_SESSION['user_log_id'] = $u['user_log_id'];
+    unset($_SESSION['temp_login_user_id'], $_SESSION['temp_login_channel'], $_SESSION['temp_google_auth_secret']);
+    echo json_encode(array('success'=>true,'user_type'=>(int)$_SESSION['user_type']));
+    exit;
+}
+
 // Student portal: register (link enquiry by email)
 if(@$_POST['formName']=='student_register'){
     $email = mysqli_real_escape_string($connection, trim($_POST['email'] ?? ''));
@@ -3252,12 +3348,46 @@ if(@$_POST['formName']=='student_login_request_otp'){
         echo json_encode(array('success'=>false,'message'=>'Too many verification codes requested. Try again in an hour.'));
         exit;
     }
-    $q = mysqli_query($connection, "SELECT id, full_name, password_hash, email FROM student_users WHERE LOWER(TRIM(email))='$email_esc' AND status=1 LIMIT 1");
+    $q = mysqli_query($connection, "SELECT id, full_name, password_hash, email, google_auth_secret FROM student_users WHERE LOWER(TRIM(email))='$email_esc' AND status=1 LIMIT 1");
     if($q && mysqli_num_rows($q) > 0){
         $row = mysqli_fetch_assoc($q);
         if(!password_verify($password, $row['password_hash'])){
             echo json_encode(array('success' => false, 'message' => 'Invalid email or password.'));
             exit;
+        }
+        
+        if (auth_is_google_enabled()) {
+            require_once __DIR__ . '/google_auth_helper.php';
+            $secret = trim((string)$row['google_auth_secret']);
+            if ($secret !== '') {
+                unset($_SESSION['login_otp_pending'], $_SESSION['login_otp_admin'], $_SESSION['login_otp_student'], $_SESSION['login_otp_bind']);
+                $_SESSION['temp_login_user_id'] = (int)$row['id'];
+                $_SESSION['temp_login_channel'] = 'student';
+                echo json_encode(array(
+                    'success' => true,
+                    'method' => 'google_auth',
+                    'setup' => false,
+                    'message' => 'Please enter verification code from Google Authenticator.'
+                ));
+                exit;
+            } else {
+                unset($_SESSION['login_otp_pending'], $_SESSION['login_otp_admin'], $_SESSION['login_otp_student'], $_SESSION['login_otp_bind']);
+                $new_secret = GoogleAuthenticatorHelper::generateSecret();
+                $_SESSION['temp_login_user_id'] = (int)$row['id'];
+                $_SESSION['temp_login_channel'] = 'student';
+                $_SESSION['temp_google_auth_secret'] = $new_secret;
+                
+                $totp_uri = GoogleAuthenticatorHelper::getProvisioningUri($row['email'], $new_secret);
+                echo json_encode(array(
+                    'success' => true,
+                    'method' => 'google_auth',
+                    'setup' => true,
+                    'secret' => $new_secret,
+                    'totp_uri' => $totp_uri,
+                    'message' => 'Scan the QR code to set up Google Authenticator.'
+                ));
+                exit;
+            }
         }
         if(auth_is_otp_bypass()){
             $session_bind = bin2hex(random_bytes(32));
@@ -3417,6 +3547,62 @@ if(@$_POST['formName']=='student_login_verify_otp'){
     $eq = mysqli_query($connection, "SELECT st_id FROM student_enquiry WHERE st_email='$em' AND st_enquiry_status!=1 ORDER BY st_id DESC LIMIT 1");
     $_SESSION['student_eq_id'] = ($eq && mysqli_num_rows($eq) > 0) ? (int)mysqli_fetch_assoc($eq)['st_id'] : 0;
     unset($_SESSION['login_otp_pending'], $_SESSION['login_otp_admin'], $_SESSION['login_otp_student'], $_SESSION['login_otp_bind']);
+    echo json_encode(array('success'=>true,'redirect'=>'student_enquiry_form.php'));
+    exit;
+}
+
+if(@$_POST['formName']=='student_login_verify_google_auth'){
+    $temp_uid = $_SESSION['temp_login_user_id'] ?? 0;
+    $temp_channel = $_SESSION['temp_login_channel'] ?? '';
+    if($temp_uid <= 0 || $temp_channel !== 'student'){
+        echo json_encode(array('success'=>false,'message'=>'Verification session expired. Please login again.'));
+        exit;
+    }
+    $code = trim($_POST['code'] ?? '');
+    if($code === ''){
+        echo json_encode(array('success'=>false,'message'=>'Please enter verification code.'));
+        exit;
+    }
+    require_once __DIR__ . '/google_auth_helper.php';
+    
+    $uq = mysqli_query($connection, "SELECT id, full_name, email, google_auth_secret FROM student_users WHERE id=$temp_uid AND status=1 LIMIT 1");
+    $srow = ($uq && mysqli_num_rows($uq) > 0) ? mysqli_fetch_assoc($uq) : null;
+    if(!$srow){
+        echo json_encode(array('success'=>false,'message'=>'Account not found. Please contact support.'));
+        exit;
+    }
+    
+    $secret = trim((string)$srow['google_auth_secret']);
+    $is_setup = false;
+    if($secret === ''){
+        $secret = $_SESSION['temp_google_auth_secret'] ?? '';
+        if($secret === ''){
+            echo json_encode(array('success'=>false,'message'=>'Verification session expired. Please login again.'));
+            exit;
+        }
+        $is_setup = true;
+    }
+    
+    if(!GoogleAuthenticatorHelper::verifyCode($secret, $code)){
+        echo json_encode(array('success'=>false,'message'=>'Invalid verification code. Please try again.'));
+        exit;
+    }
+    
+    if($is_setup){
+        $secret_esc = mysqli_real_escape_string($connection, $secret);
+        mysqli_query($connection, "UPDATE student_users SET google_auth_secret='$secret_esc' WHERE id=$temp_uid");
+    }
+    
+    $_SESSION['user_id'] = (int)$srow['id'];
+    $_SESSION['user_type'] = 'student';
+    $_SESSION['user_name'] = $srow['full_name'];
+    $_SESSION['student_email'] = $srow['email'];
+    
+    $em = mysqli_real_escape_string($connection, $srow['email']);
+    $eq = mysqli_query($connection, "SELECT st_id FROM student_enquiry WHERE st_email='$em' AND st_enquiry_status!=1 ORDER BY st_id DESC LIMIT 1");
+    $_SESSION['student_eq_id'] = ($eq && mysqli_num_rows($eq) > 0) ? (int)mysqli_fetch_assoc($eq)['st_id'] : 0;
+    
+    unset($_SESSION['temp_login_user_id'], $_SESSION['temp_login_channel'], $_SESSION['temp_google_auth_secret']);
     echo json_encode(array('success'=>true,'redirect'=>'student_enquiry_form.php'));
     exit;
 }

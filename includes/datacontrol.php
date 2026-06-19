@@ -3331,12 +3331,8 @@ if(@$_POST['formName']=='student_register'){
     exit;
 }
 
-// Student login (student_login.php): students only from student_users. user_type=0 = staff (admin login).
+// Student login (student_login.php): students only — email/password, no OTP or Google Authenticator.
 if(@$_POST['formName']=='student_login_request_otp'){
-    if(!auth_login_otp_ensure_table($connection)){
-        echo json_encode(array('success'=>false,'message'=>'Login verification is temporarily unavailable.'));
-        exit;
-    }
     $email_raw = auth_login_otp_normalize_email($_POST['email'] ?? '');
     $email_esc = mysqli_real_escape_string($connection, $email_raw);
     $password = $_POST['password'] ?? '';
@@ -3344,99 +3340,23 @@ if(@$_POST['formName']=='student_login_request_otp'){
         echo json_encode(array('success' => false, 'message' => 'Email and password required.'));
         exit;
     }
-    if(!auth_login_otp_rate_ok($connection, 'student', $email_esc, AUTH_LOGIN_OTP_MAX_PER_EMAIL_HOUR)){
-        echo json_encode(array('success'=>false,'message'=>'Too many verification codes requested. Try again in an hour.'));
-        exit;
-    }
-    $q = mysqli_query($connection, "SELECT id, full_name, password_hash, email, google_auth_secret FROM student_users WHERE LOWER(TRIM(email))='$email_esc' AND status=1 LIMIT 1");
+    $q = mysqli_query($connection, "SELECT id, full_name, password_hash, email FROM student_users WHERE LOWER(TRIM(email))='$email_esc' AND status=1 LIMIT 1");
     if($q && mysqli_num_rows($q) > 0){
         $row = mysqli_fetch_assoc($q);
         if(!password_verify($password, $row['password_hash'])){
             echo json_encode(array('success' => false, 'message' => 'Invalid email or password.'));
             exit;
         }
-        
-        if (auth_is_google_enabled()) {
-            require_once __DIR__ . '/google_auth_helper.php';
-            $secret = trim((string)$row['google_auth_secret']);
-            if ($secret !== '') {
-                unset($_SESSION['login_otp_pending'], $_SESSION['login_otp_admin'], $_SESSION['login_otp_student'], $_SESSION['login_otp_bind']);
-                $_SESSION['temp_login_user_id'] = (int)$row['id'];
-                $_SESSION['temp_login_channel'] = 'student';
-                echo json_encode(array(
-                    'success' => true,
-                    'method' => 'google_auth',
-                    'setup' => false,
-                    'message' => 'Please enter verification code from Google Authenticator.'
-                ));
-                exit;
-            } else {
-                unset($_SESSION['login_otp_pending'], $_SESSION['login_otp_admin'], $_SESSION['login_otp_student'], $_SESSION['login_otp_bind']);
-                $new_secret = GoogleAuthenticatorHelper::generateSecret();
-                $_SESSION['temp_login_user_id'] = (int)$row['id'];
-                $_SESSION['temp_login_channel'] = 'student';
-                $_SESSION['temp_google_auth_secret'] = $new_secret;
-                
-                $totp_uri = GoogleAuthenticatorHelper::getProvisioningUri($row['email'], $new_secret);
-                echo json_encode(array(
-                    'success' => true,
-                    'method' => 'google_auth',
-                    'setup' => true,
-                    'secret' => $new_secret,
-                    'totp_uri' => $totp_uri,
-                    'message' => 'Scan the QR code to set up Google Authenticator.'
-                ));
-                exit;
-            }
-        }
-        if(auth_is_otp_bypass()){
-            $session_bind = bin2hex(random_bytes(32));
-            unset($_SESSION['login_otp_admin'], $_SESSION['login_otp_student'], $_SESSION['login_otp_bind']);
-            $_SESSION['login_otp_pending'] = array(
-                'bind' => $session_bind,
-                'channel' => 'student',
-                'bypass' => true,
-                'user_pk' => (int)$row['id']
-            );
-            $masked = preg_replace('/(^.).*(@.*$)/', '$1***$2', (string)$row['email']);
-            echo json_encode(array('success' => true, 'message' => 'OTP sent to ' . $masked, 'otp_bypass' => true));
-            exit;
-        }
-        $otp = (string)random_int(100000, 999999);
-        $otp_esc = mysqli_real_escape_string($connection, $otp);
-        $session_bind = bin2hex(random_bytes(32));
-        $bind_esc = mysqli_real_escape_string($connection, $session_bind);
-        $expires_at = date('Y-m-d H:i:s', time() + AUTH_LOGIN_OTP_TTL_SECONDS);
-        $expires_esc = mysqli_real_escape_string($connection, $expires_at);
-        $user_pk = (int)$row['id'];
-        $stu_email_esc = mysqli_real_escape_string($connection, auth_login_otp_normalize_email($row['email']));
-        $ip_esc = mysqli_real_escape_string($connection, auth_login_otp_client_ip());
-        $ua_esc = mysqli_real_escape_string($connection, auth_login_otp_user_agent());
-        auth_login_otp_revoke_active($connection, 'student', $stu_email_esc);
-        $ins = mysqli_query($connection, "INSERT INTO login_otp_challenges (channel,email,user_pk,otp_code,session_bind,expires_at,is_used,verify_attempts,max_verify_attempts,ip_request,user_agent,created_at) VALUES ('student','$stu_email_esc',$user_pk,'$otp_esc','$bind_esc','$expires_esc',0,0,5,'$ip_esc','$ua_esc',NOW())");
-        if(!$ins){
-            echo json_encode(array('success'=>false,'message'=>'Unable to start login verification. Please try again.'));
-            exit;
-        }
-        $otp_row_id = (int)mysqli_insert_id($connection);
-        try{
-            auth_send_login_otp($row['email'], $otp, 'student');
-        }catch(Exception $e){
-            if($otp_row_id > 0){
-                mysqli_query($connection, "UPDATE login_otp_challenges SET is_used=2 WHERE id=$otp_row_id");
-            }
-            $errMsg = (string)$e->getMessage();
-            $userMsg = 'Unable to send OTP email right now. Please try again.';
-            if(stripos($errMsg, 'ratelimit') !== false){
-                $userMsg = 'Email sending is temporarily rate-limited by the mail server. Please wait a few minutes and try again.';
-            }
-            echo json_encode(array('success'=>false,'message'=>$userMsg));
-            exit;
-        }
-        unset($_SESSION['login_otp_admin'], $_SESSION['login_otp_student'], $_SESSION['login_otp_bind']);
-        $_SESSION['login_otp_pending'] = array('bind' => $session_bind, 'channel' => 'student');
-        $masked = preg_replace('/(^.).*(@.*$)/', '$1***$2', (string)$row['email']);
-        echo json_encode(array('success' => true, 'message' => 'OTP sent to ' . $masked));
+        $_SESSION['user_id'] = (int)$row['id'];
+        $_SESSION['user_type'] = 'student';
+        $_SESSION['user_name'] = $row['full_name'];
+        $_SESSION['student_email'] = $row['email'];
+        $em = mysqli_real_escape_string($connection, $row['email']);
+        $eq = mysqli_query($connection, "SELECT st_id FROM student_enquiry WHERE st_email='$em' AND st_enquiry_status!=1 ORDER BY st_id DESC LIMIT 1");
+        $_SESSION['student_eq_id'] = ($eq && mysqli_num_rows($eq) > 0) ? (int)mysqli_fetch_assoc($eq)['st_id'] : 0;
+        unset($_SESSION['login_otp_pending'], $_SESSION['login_otp_admin'], $_SESSION['login_otp_student'], $_SESSION['login_otp_bind'],
+            $_SESSION['temp_login_user_id'], $_SESSION['temp_login_channel'], $_SESSION['temp_google_auth_secret']);
+        echo json_encode(array('success' => true, 'auto_login' => true, 'redirect' => 'student_enquiry_form.php'));
         exit;
     }
     $qi = mysqli_query($connection, "SELECT id FROM student_users WHERE LOWER(TRIM(email))='$email_esc' AND status=0 LIMIT 1");

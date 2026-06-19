@@ -25,40 +25,56 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
         <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.css" rel="stylesheet" />
         
         <style>
-            .fc-event {
-                cursor: pointer;
+            /* Override CRM theme FC v4 styles (style.css) that break FC5 daygrid rendering */
+            #calendar .fc-event {
+                cursor: pointer !important;
+                margin: 1px 2px !important;
+                padding: 2px 4px !important;
+                text-align: left !important;
+                border: none !important;
+                border-radius: 3px !important;
             }
-            /* Month view: readable event chips */
-            .fc-daygrid-event {
-                display: flex;
-                align-items: center;
-                gap: 4px;
-                color: #000 !important;
-                font-size: 0.85rem;
+            #calendar .fc-daygrid-day-frame {
+                min-height: 90px;
             }
-            .fc-daygrid-event .fc-event-dot {
-                width: 8px;
-                height: 8px;
-                border-radius: 50%;
-                margin-right: 4px;
-                flex-shrink: 0;
+            #calendar .fc-daygrid-event-harness {
+                margin-top: 1px;
             }
-            .fc-daygrid-event .fc-event-time {
-                color: #000 !important;
-                font-weight: 500;
+            #calendar .fc-daygrid-event {
+                display: block !important;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                min-height: 22px;
+                line-height: 1.35;
+                font-size: 0.78rem;
             }
-            .fc-daygrid-event .fc-event-title {
-                color: #000 !important;
+            #calendar .fc-daygrid-event .fc-event-main {
+                padding: 1px 4px;
+                overflow: hidden;
+                color: #fff !important;
+            }
+            #calendar .fc-daygrid-event .fc-event-time,
+            #calendar .fc-daygrid-event .fc-event-title {
+                color: #fff !important;
                 font-weight: 600;
             }
+            #calendar .fc-daygrid-event .fc-event-time {
+                font-weight: 500;
+                margin-right: 4px;
+            }
+            #calendar .fc-daygrid-dot-event .fc-daygrid-event-dot {
+                display: none;
+            }
             /* Week / day time grid: compact blocks, no squished columns */
-            .fc-timegrid-event {
+            #calendar .fc-timegrid-event {
                 border-radius: 4px;
                 box-shadow: 0 1px 2px rgba(0,0,0,0.12);
             }
-            .fc-timegrid-event .fc-event-main {
+            #calendar .fc-timegrid-event .fc-event-main {
                 padding: 2px 4px;
                 overflow: hidden;
+                color: #fff !important;
             }
             .fc-ev-compact {
                 line-height: 1.2;
@@ -134,6 +150,11 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
             /* Ensure list view text is readable */
             .fc-list-event-title, .fc-list-event-time, .fc-list-event-title a {
                 color: #000 !important;
+            }
+            /* Custom modal replaces FC default more-popover; visibility:hidden avoids FC sizing errors */
+            .fc-more-popover {
+                visibility: hidden !important;
+                pointer-events: none !important;
             }
         </style>
     </head>
@@ -333,7 +354,9 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                     ? crmCalFormat(arg.date, { weekday: 'long', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', meridiem: 'short' })
                     : crmCalFormat(arg.date, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
                 $('#moreEventsDate').text(dateLabel);
-                var segs = (arg.allSegs || []).slice().sort(function(a, b) {
+                var segs = (arg.allSegs || []).filter(function(seg) {
+                    return seg.event.display !== 'background';
+                }).slice().sort(function(a, b) {
                     var ta = a.event.start ? a.event.start.getTime() : 0;
                     var tb = b.event.start ? b.event.start.getTime() : 0;
                     return ta - tb;
@@ -379,15 +402,17 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                     nowIndicator: true,
                     slotEventOverlap: false,
                     eventMinHeight: 24,
+                    expandRows: true,
                     views: {
                         dayGridMonth: {
-                            dayMaxEvents: 3
+                            dayMaxEvents: 6,
+                            eventDisplay: 'block'
                         },
                         timeGridWeek: {
-                            eventMaxStack: 2
+                            eventMaxStack: 4
                         },
                         timeGridDay: {
-                            eventMaxStack: 2
+                            eventMaxStack: 4
                         }
                     },
                     moreLinkContent: function(arg){
@@ -395,10 +420,26 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                     },
                     moreLinkClick: function(arg){
                         crmCalOpenMoreEventsModal(arg);
-                        return false;
+                        requestAnimationFrame(function() {
+                            document.querySelectorAll('.fc-more-popover').forEach(function(el) {
+                                el.remove();
+                            });
+                        });
                     },
                     eventContent: function(arg) {
                         var vtype = arg.view.type;
+                        if (vtype === 'dayGridMonth') {
+                            if (arg.event.display === 'background') {
+                                return true;
+                            }
+                            var timeRange = crmCalEventTimeRange(arg.event);
+                            return {
+                                html: '<div class="fc-event-main">' +
+                                    '<span class="fc-event-time">' + crmCalEscapeHtml(timeRange) + '</span>' +
+                                    '<span class="fc-event-title">' + crmCalEscapeHtml(arg.event.title) + '</span>' +
+                                    '</div>'
+                            };
+                        }
                         if (vtype !== 'timeGridWeek' && vtype !== 'timeGridDay') {
                             return true;
                         }
@@ -455,6 +496,12 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                         info.el.setAttribute('title', tip);
                         if (info.event.display === 'background') {
                             info.el.classList.add('fc-event-blocked-bg');
+                        } else if (info.view.type === 'dayGridMonth') {
+                            var bg = info.event.backgroundColor || info.event.borderColor;
+                            if (bg) {
+                                info.el.style.backgroundColor = bg;
+                                info.el.style.borderColor = bg;
+                            }
                         }
                         if (window.bootstrap && bootstrap.Tooltip) {
                             var existing = bootstrap.Tooltip.getInstance(info.el);

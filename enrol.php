@@ -87,6 +87,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
 }
 
 function enrol_send_mail($to, $subject, $body, array $ctx = array()) {
+    // Delegate to helper if running in local CRM environment to use Zepto Mail and database logging
+    if (file_exists(__DIR__ . '/includes/mail_function.php')) {
+        require_once __DIR__ . '/includes/mail_function.php';
+        if (function_exists('send_mail')) {
+            try {
+                $res = send_mail($to, $subject, $body, array_merge(array('email_category' => 'public_enquiry_form'), $ctx));
+                return ($res !== false);
+            } catch (Throwable $e) {
+                return false;
+            }
+        }
+    }
+
     $from = FROM_EMAIL;
     $headers = "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\nFrom: " . SITE_NAME . " <$from>\r\n";
     $ok = true;

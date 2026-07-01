@@ -98,6 +98,9 @@ $asset_base = 'crm/html/template/assets';
                                 </div>
                                 <div class="invalid-feedback d-block" id="password_error" style="display:none !important;">Please enter your password.</div>
                             </div>
+                            <div class="mb-3 text-end">
+                                <a href="forgot_password.php?portal=student" class="small fw-semibold" style="color: #4f46e5;">Forgot password?</a>
+                            </div>
                             <div class="alert alert-danger py-2 mb-3" id="login_error" style="display:none;"></div>
                             <div class="mb-3">
                                 <button type="submit" id="login_btn" class="btn btn-primary w-100">Sign In</button>

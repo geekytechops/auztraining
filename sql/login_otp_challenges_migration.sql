@@ -3,7 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS `login_otp_challenges` (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `channel` enum('admin','student') NOT NULL,
+  `channel` varchar(32) NOT NULL COMMENT 'admin, student, reset_admin, reset_student',
   `email` varchar(255) NOT NULL,
   `user_pk` bigint(20) UNSIGNED NOT NULL COMMENT 'users.user_id or student_users.id',
   `otp_code` varchar(10) NOT NULL COMMENT 'plain OTP (testing)',

@@ -34,6 +34,23 @@ if (!function_exists('send_mail')) {
 
         $conn = (isset($connection) && $connection instanceof mysqli) ? $connection : null;
 
+        // Ensure PHPMailer is loaded
+        if (!class_exists('PHPMailer\PHPMailer\PHPMailer')) {
+            $rootAutoload = dirname(__DIR__) . '/vendor/autoload.php';
+            if (file_exists($rootAutoload)) {
+                require_once $rootAutoload;
+            }
+        }
+
+        if (!class_exists('PHPMailer\PHPMailer\PHPMailer')) {
+            $err = "PHPMailer class is not available.";
+            if ($conn) {
+                crm_email_log_record($conn, $to, $subject, $body, 'failed', $err, $context);
+            }
+            throw new Exception($err);
+        }
+
+        /* Commented out Hostinger SMTP / Symfony Mailer configuration
         $transport = Transport::fromDsn('smtp://noreply%40nationalcollege.edu.au:Noreply%402026mail@smtp.hostinger.com:465?encryption=ssl');
         $mailer = new Mailer($transport);
         $email = (new Email())
@@ -41,11 +58,37 @@ if (!function_exists('send_mail')) {
             ->to($to)
             ->subject($subject)
             ->html($body);
+        */
 
         try {
-            $mailer->send($email);
-            if ($conn) {
-                crm_email_log_record($conn, $to, $subject, $body, 'sent', null, $context);
+            // Zepto Mail SMTP integration using PHPMailer
+            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+            $mail->Encoding = "base64";
+            $mail->SMTPAuth = true;
+            $mail->Host = "smtp.zeptomail.com.au";
+            $mail->Port = 587;
+            $mail->Username = "emailapikey";
+            $mail->Password = 'GkDdjPiD/lEbxVjCoNzoMYVVapYys5LqHMrkNMxSpRYs7dgJtkxOecNJkSZ+nmVK6CDGDFSdd7xx9DKC4+iLLnh9dSb5K0TuOpwzGB+edd0FvHvXUPi/9/djXEfKkfasMAxn7B8w9S9j4A==';
+            $mail->SMTPSecure = 'tls';
+            $mail->isSMTP();
+            $mail->isHTML(true);
+            $mail->CharSet = "UTF-8";
+            $mail->From = "support@nationalcollege.edu.au";
+            $mail->FromName = "National College of Australia";
+            $mail->addAddress($to);
+            $mail->Body = $body;
+            $mail->Subject = $subject;
+
+            if ($mail->send()) {
+                if ($conn) {
+                    crm_email_log_record($conn, $to, $subject, $body, 'sent', null, $context);
+                }
+            } else {
+                $err = $mail->ErrorInfo;
+                if ($conn) {
+                    crm_email_log_record($conn, $to, $subject, $body, 'failed', $err, $context);
+                }
+                throw new Exception("Email send failed: " . $err);
             }
         } catch (Throwable $e) {
             if ($conn) {

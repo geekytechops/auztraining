@@ -301,6 +301,10 @@ if(@$_SESSION['user_id']!=''){
                                 <div class="error-feedback" id="password_error">Please enter your password.</div>
                             </div>
 
+                            <div class="text-end mb-3">
+                                <a href="forgot_password.php?portal=admin" class="back-link" style="margin-top:0;">Forgot password?</a>
+                            </div>
+
                             <div class="error-feedback text-center mb-3" id="login_error" style="font-size: 14px;">Invalid credentials.</div>
 
                             <div class="d-grid">

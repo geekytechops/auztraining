@@ -6355,9 +6355,10 @@ if(@$_POST['formName']=='get_appointments_calendar'){
 
     // Use appointment_date to ensure all appointments on those days are returned,
     // regardless of time or end-time, then pass precise start/end to FullCalendar.
-    $startDate = date('Y-m-d', strtotime($start));
+    // Extract first 10 characters (YYYY-MM-DD) to prevent timezone shifts during parsing.
+    $startDate = date('Y-m-d', strtotime(substr($start, 0, 10)));
     // FullCalendar's end is exclusive, so subtract one day for inclusive date filter
-    $endDate = date('Y-m-d', strtotime($end . ' -1 day'));
+    $endDate = date('Y-m-d', strtotime(substr($end, 0, 10) . ' -1 day'));
 
     $has_end_cols = mysqli_fetch_assoc(mysqli_query($connection, "SHOW COLUMNS FROM appointments LIKE 'appointment_end_datetime'"));
     $query = "SELECT a.*, p.purpose_name, p.purpose_color FROM appointments a 

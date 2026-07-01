@@ -34,8 +34,14 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                 border: none !important;
                 border-radius: 3px !important;
             }
+            #calendar .fc-daygrid-day {
+                height: auto !important;
+            }
             #calendar .fc-daygrid-day-frame {
-                min-height: 90px;
+                height: 100% !important;
+                min-height: 90px !important;
+                display: block !important;
+                overflow: hidden !important;
             }
             #calendar .fc-daygrid-event-harness {
                 margin-top: 1px;
@@ -405,7 +411,7 @@ $currentUserType = isset($_SESSION['user_type']) ? (int)$_SESSION['user_type'] :
                     expandRows: true,
                     views: {
                         dayGridMonth: {
-                            dayMaxEvents: 6,
+                            dayMaxEvents: true,
                             eventDisplay: 'block'
                         },
                         timeGridWeek: {

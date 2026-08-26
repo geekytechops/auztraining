@@ -3675,9 +3675,13 @@ if(@$_POST['formName']=='student_login_verify_google_auth'){
 }
 
 if(@$_POST['formName'] == 'get_user'){
-    $id = $_POST['user_id'];
-    $result = mysqli_query($connection, "SELECT * FROM users WHERE user_id='$id'");
-    echo json_encode(mysqli_fetch_assoc($result));
+    if ((int)@$_SESSION['user_type'] !== 1) {
+        echo json_encode(null);
+        exit;
+    }
+    $id = (int)$_POST['user_id'];
+    $result = mysqli_query($connection, "SELECT user_id, user_name, user_email, user_type, user_status FROM users WHERE user_id=$id AND user_type IN (1,2) LIMIT 1");
+    echo json_encode($result ? mysqli_fetch_assoc($result) : null);
 }
 
 // Update logged-in user's own profile (Settings page)
@@ -3763,56 +3767,140 @@ if(@$_POST['formName'] == 'change_password'){
     }
 }
 
+if (!function_exists('crm_staff_mgmt_require_admin')) {
+    function crm_staff_mgmt_require_admin() {
+        if ((int)@$_SESSION['user_type'] !== 1) {
+            echo 0;
+            exit;
+        }
+    }
+}
+
+if (!function_exists('crm_staff_mgmt_reload_list')) {
+    function crm_staff_mgmt_reload_list($connection) {
+        $users = mysqli_query($connection, "SELECT * FROM users WHERE user_type IN (1,2) ORDER BY user_id DESC");
+        include __DIR__ . '/user_list_partial.php';
+    }
+}
+
 // EDIT USER (admins only)
 if(@$_POST['formName'] == 'edit_user'){
-    if((int)@$_SESSION['user_type'] !== 1){
-        echo 0;
-        exit;
-    }
-    $id = $_POST['user_id'];
-    $name = $_POST['user_name'];
-    $email = $_POST['user_email'];
-    $password = $_POST['user_password'];
-    $type = $_POST['user_type'];
-    $status = $_POST['user_status'];
+    crm_staff_mgmt_require_admin();
+    $id = (int)$_POST['user_id'];
+    $name = mysqli_real_escape_string($connection, trim((string)$_POST['user_name']));
+    $email = mysqli_real_escape_string($connection, strtolower(trim((string)$_POST['user_email'])));
+    $password = (string)$_POST['user_password'];
+    $type = (int)$_POST['user_type'];
+    $status = (int)$_POST['user_status'];
     $modified = date('Y-m-d H:i:s');
 
-    if($password != ''){
-        $update = mysqli_query($connection, "UPDATE users SET user_name='$name', user_email='$email', user_password='$password', user_type='$type', user_status='$status', modified_date='$modified' WHERE user_id='$id'");
-    } else {
-        $update = mysqli_query($connection, "UPDATE users SET user_name='$name', user_email='$email', user_type='$type', user_status='$status', modified_date='$modified' WHERE user_id='$id'");
+    if ($id <= 0 || $name === '' || $email === '' || !in_array($type, array(1, 2), true)) {
+        echo 1;
+        exit;
     }
 
-    if($update){
-        // Reload staff list HTML (Admin + Staff only)
-        $users = mysqli_query($connection, "SELECT * FROM users WHERE user_type IN (1,2) ORDER BY user_id DESC");
-        include('../includes/user_list_partial.php');
-    }else{
+    // Block duplicate email on another account
+    $dup = mysqli_query($connection, "SELECT user_id FROM users WHERE LOWER(TRIM(user_email))='$email' AND user_id<>$id LIMIT 1");
+    if ($dup && mysqli_num_rows($dup) > 0) {
+        echo 'EMAIL_EXISTS';
+        exit;
+    }
+
+    if ($password !== '') {
+        $pwd = mysqli_real_escape_string($connection, $password);
+        $update = mysqli_query($connection, "UPDATE users SET user_name='$name', user_email='$email', user_password='$pwd', user_type='$type', user_status='$status', modified_date='$modified' WHERE user_id=$id AND user_type IN (1,2)");
+    } else {
+        $update = mysqli_query($connection, "UPDATE users SET user_name='$name', user_email='$email', user_type='$type', user_status='$status', modified_date='$modified' WHERE user_id=$id AND user_type IN (1,2)");
+    }
+
+    if ($update) {
+        crm_staff_mgmt_reload_list($connection);
+    } else {
         echo 1;
     }
 }
 
 if(@$_POST['formName'] == 'create_user'){
-    if((int)@$_SESSION['user_type'] !== 1){
-        echo 0;
+    crm_staff_mgmt_require_admin();
+    $name = mysqli_real_escape_string($connection, trim((string)$_POST['user_name']));
+    $email = mysqli_real_escape_string($connection, strtolower(trim((string)$_POST['user_email'])));
+    $password = mysqli_real_escape_string($connection, (string)$_POST['user_password']);
+    $type = (int)$_POST['user_type'];
+    $status = (int)$_POST['user_status'];
+
+    if ($name === '' || $email === '' || $password === '' || !in_array($type, array(1, 2), true)) {
+        echo 1;
         exit;
     }
-    $name = $_POST['user_name'];
-    $email = $_POST['user_email'];
-    $password = $_POST['user_password'];
-    $type = $_POST['user_type'];
-    $status = $_POST['user_status'];
 
-    $user_log_id = strtoupper(substr(md5(uniqid()), 0, 8));
+    $dup = mysqli_query($connection, "SELECT user_id FROM users WHERE LOWER(TRIM(user_email))='$email' LIMIT 1");
+    if ($dup && mysqli_num_rows($dup) > 0) {
+        echo 'EMAIL_EXISTS';
+        exit;
+    }
+
+    $user_log_id = strtoupper(substr(md5(uniqid('', true)), 0, 8));
     $created = date('Y-m-d H:i:s');
 
-    $insert = mysqli_query($connection, "INSERT INTO users (user_log_id, user_name, user_email, user_password, user_type, user_status, created_date)
-                                         VALUES ('$user_log_id', '$name', '$email', '$password', '$type', '$status', '$created')");
-    if($insert){
-        // Reload staff list HTML (Admin + Staff only)
-        $users = mysqli_query($connection, "SELECT * FROM users WHERE user_type IN (1,2) ORDER BY user_id DESC");
-        include('../includes/user_list_partial.php');
-    }else{
+    // New staff always starts with no MFA — login will prompt authenticator setup.
+    $hasMfaCol = mysqli_query($connection, "SHOW COLUMNS FROM `users` LIKE 'google_auth_secret'");
+    if ($hasMfaCol && mysqli_num_rows($hasMfaCol) > 0) {
+        $insert = mysqli_query($connection, "INSERT INTO users (user_log_id, user_name, user_email, user_password, user_type, user_status, google_auth_secret, created_date)
+                                             VALUES ('$user_log_id', '$name', '$email', '$password', $type, $status, NULL, '$created')");
+    } else {
+        $insert = mysqli_query($connection, "INSERT INTO users (user_log_id, user_name, user_email, user_password, user_type, user_status, created_date)
+                                             VALUES ('$user_log_id', '$name', '$email', '$password', $type, $status, '$created')");
+    }
+
+    if ($insert) {
+        crm_staff_mgmt_reload_list($connection);
+    } else {
+        echo 1;
+    }
+}
+
+// Hard-delete staff/admin so the same email can be recreated with a fresh MFA setup.
+if (@$_POST['formName'] == 'delete_user') {
+    crm_staff_mgmt_require_admin();
+    $id = (int)($_POST['user_id'] ?? 0);
+    if ($id <= 0) {
+        echo 1;
+        exit;
+    }
+    if ($id === (int)$_SESSION['user_id']) {
+        echo 'SELF';
+        exit;
+    }
+    $chk = mysqli_query($connection, "SELECT user_id FROM users WHERE user_id=$id AND user_type IN (1,2) LIMIT 1");
+    if (!$chk || mysqli_num_rows($chk) === 0) {
+        echo 1;
+        exit;
+    }
+    $ok = mysqli_query($connection, "DELETE FROM users WHERE user_id=$id AND user_type IN (1,2) LIMIT 1");
+    if ($ok && mysqli_affected_rows($connection) > 0) {
+        crm_staff_mgmt_reload_list($connection);
+    } else {
+        echo 1;
+    }
+}
+
+// Clear authenticator secret — next login will force MFA setup again.
+if (@$_POST['formName'] == 'reset_user_mfa') {
+    crm_staff_mgmt_require_admin();
+    $id = (int)($_POST['user_id'] ?? 0);
+    if ($id <= 0) {
+        echo 1;
+        exit;
+    }
+    $hasMfaCol = mysqli_query($connection, "SHOW COLUMNS FROM `users` LIKE 'google_auth_secret'");
+    if (!$hasMfaCol || mysqli_num_rows($hasMfaCol) === 0) {
+        echo 'NO_MFA_COL';
+        exit;
+    }
+    $ok = mysqli_query($connection, "UPDATE users SET google_auth_secret=NULL WHERE user_id=$id AND user_type IN (1,2) LIMIT 1");
+    if ($ok) {
+        crm_staff_mgmt_reload_list($connection);
+    } else {
         echo 1;
     }
 }

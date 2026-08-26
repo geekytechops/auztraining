@@ -113,29 +113,15 @@ $users=mysqli_query($connection,"SELECT * FROM users WHERE user_type IN (1,2) OR
                                                     <th>Email</th>
                                                     <th>Role</th>
                                                     <th>Status</th>
+                                                    <th>MFA</th>
                                                     <th>Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="user_list">
-                                                <?php 
+                                                <?php
                                                 mysqli_data_seek($users, 0);
-                                                while($user=mysqli_fetch_array($users)){ 
-                                                    $role = $user['user_type']==1 ? 'Admin' : ($user['user_type']==2 ? 'Staff' : '—');
+                                                include('includes/user_list_partial.php');
                                                 ?>
-                                                <tr>
-                                                    <td><?php echo $user['user_id']; ?></td>
-                                                    <td><?php echo htmlspecialchars($user['user_name']); ?></td>
-                                                    <td><?php echo htmlspecialchars($user['user_email']); ?></td>
-                                                    <td><?php echo $role; ?></td>
-                                                    <td><?php echo $user['user_status']==0 ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>'; ?></td>
-                                                    <td>
-                                                        <button type="button" class="btn btn-sm btn-warning edit_user d-inline-flex align-items-center px-2" data-id="<?php echo $user['user_id']; ?>">
-                                                            <i class="mdi mdi-pencil me-1"></i>
-                                                            <span>Edit</span>
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                                <?php } ?>
                                             </tbody>
                                         </table>
                                     </div>
@@ -152,6 +138,39 @@ $users=mysqli_query($connection,"SELECT * FROM users WHERE user_type IN (1,2) OR
     <?php include('includes/footer_includes.php'); ?>
 
     <script>
+        function staffMgmtToastError(msg) {
+            $('.toast-text2').html(msg || 'Operation failed. Please try again later.');
+            $('#borderedToast2Btn').trigger('click');
+        }
+        function staffMgmtToastOk(msg) {
+            $('#toast-text').html(msg);
+            $('#borderedToast1Btn').trigger('click');
+        }
+        function staffMgmtHandleListResponse(data, okMsg) {
+            if (data === '1' || data === 1 || data === '0' || data === 0) {
+                staffMgmtToastError();
+                return;
+            }
+            if (data === 'EMAIL_EXISTS') {
+                staffMgmtToastError('This email is already used by another staff account.');
+                return;
+            }
+            if (data === 'SELF') {
+                staffMgmtToastError('You cannot delete your own account.');
+                return;
+            }
+            if (data === 'NO_MFA_COL') {
+                staffMgmtToastError('Authenticator column is not available on this database.');
+                return;
+            }
+            document.getElementById('create_user_form').reset();
+            $('#edit_user_id').val('');
+            $('#form_title').html('Create Staff');
+            $('#create_user_submit').text('Create Staff');
+            staffMgmtToastOk(okMsg);
+            $('#user_list').html(data);
+        }
+
         // CREATE / UPDATE USER
         $(document).on('click', '#create_user_submit', function(){
             var id = $('#edit_user_id').val();
@@ -183,19 +202,9 @@ $users=mysqli_query($connection,"SELECT * FROM users WHERE user_type IN (1,2) OR
                     url: 'includes/datacontrol',
                     data: details,
                     success: function(data){
-                        if(data==1){
-                            $('.toast-text2').html('Operation failed. Please try again later.');
-                            $('#borderedToast2Btn').trigger('click');
-                        }else{
-                            document.getElementById('create_user_form').reset();
-                            $('#edit_user_id').val('');
-                            $('#form_title').html('Create Staff');
-                            $('#create_user_submit').text('Create Staff');
-                            $('#toast-text').html(id ? 'User updated successfully!' : 'User created successfully!');
-                            $('#borderedToast1Btn').trigger('click');
-                            $('#user_list').html(data); // reload user list
-                        }
-                    }
+                        staffMgmtHandleListResponse(data, id ? 'User updated successfully!' : 'User created successfully!');
+                    },
+                    error: function(){ staffMgmtToastError(); }
                 });
             }
         });
@@ -218,6 +227,45 @@ $users=mysqli_query($connection,"SELECT * FROM users WHERE user_type IN (1,2) OR
                     $('#user_type').val(user.user_type);
                     $('#user_status').val(user.user_status);
                 }
+            });
+        });
+
+        // RESET MFA
+        $(document).on('click', '.reset_mfa_user', function(){
+            var id = $(this).data('id');
+            var name = $(this).data('name') || 'this user';
+            if (!confirm('Reset authenticator for "' + name + '"?\n\nThey will need to set up Google Authenticator again on next login.')) {
+                return;
+            }
+            $.ajax({
+                type: 'POST',
+                url: 'includes/datacontrol',
+                data: { formName: 'reset_user_mfa', user_id: id },
+                success: function(data){
+                    staffMgmtHandleListResponse(data, 'Authenticator reset. They will set it up again on next login.');
+                },
+                error: function(){ staffMgmtToastError(); }
+            });
+        });
+
+        // HARD DELETE USER
+        $(document).on('click', '.delete_user', function(){
+            var id = $(this).data('id');
+            var name = $(this).data('name') || 'this user';
+            if (!confirm('Permanently delete "' + name + '"?\n\nThis cannot be undone.\nYou can create a new account with the same email afterwards (fresh MFA setup).')) {
+                return;
+            }
+            if (!confirm('Confirm permanent delete for "' + name + '"?')) {
+                return;
+            }
+            $.ajax({
+                type: 'POST',
+                url: 'includes/datacontrol',
+                data: { formName: 'delete_user', user_id: id },
+                success: function(data){
+                    staffMgmtHandleListResponse(data, 'User deleted permanently.');
+                },
+                error: function(){ staffMgmtToastError(); }
             });
         });
     </script>
